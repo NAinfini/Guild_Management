@@ -387,7 +387,7 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
                   fullWidth 
                   value={audioUrl}
                   onChange={(e) => { setAudioUrl(e.target.value); setIsDirty(true); }}
-                  placeholder="https://... (MP3 URL)"
+                  placeholder={t('profile.placeholder_audio_url')}
                   InputProps={{
                       startAdornment: <InputAdornment position="start"><Volume2 size={16} /></InputAdornment>,
                   }}
@@ -438,7 +438,7 @@ function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, 
              <TextField maxRows={1} label={t('profile.label_power')} type="number" fullWidth {...register('power', { valueAsNumber: true })} />
           </Stack>
 
-          <TextField maxRows={1} label={t('profile.label_wechat')} fullWidth {...register('wechat_name')} placeholder="@wechat_id" />
+          <TextField maxRows={1} label={t('profile.label_wechat')} fullWidth {...register('wechat_name')} placeholder={t('profile.placeholder_wechat')} />
 
           <Box>
              <Typography variant="h6" color="warning.main" fontWeight={900} gutterBottom>{t('profile.label_spec')}</Typography>
@@ -524,7 +524,7 @@ function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, 
              <TextField 
                 fullWidth 
                 {...register('title_html')} 
-                placeholder="<span class='text-blue-500'>The Chosen</span>" 
+                placeholder={t('profile.placeholder_title_html')} 
                 helperText={<span dangerouslySetInnerHTML={sanitizeHtml(titleHtml || t('profile.preview_title_placeholder'))} />}
              />
           </Box>

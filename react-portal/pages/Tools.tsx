@@ -166,8 +166,8 @@ export function Tools() {
            {selectedTool?.id !== 'style-builder' && (
               <Box sx={{ py: 10, textAlign: 'center', opacity: 0.5 }}>
                  <Wrench size={48} style={{ margin: '0 auto', marginBottom: 16 }} />
-                  <Typography variant="h6" fontWeight={800}>COMING SOON</Typography>
-                  <Typography variant="caption" textTransform="uppercase">This section is currently being developed.</Typography>
+                  <Typography variant="h6" fontWeight={800}>{t('tools.coming_soon')}</Typography>
+                  <Typography variant="caption" textTransform="uppercase">{t('tools.under_development')}</Typography>
               </Box>
            )}
         </DialogContent>

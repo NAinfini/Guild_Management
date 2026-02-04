@@ -19,12 +19,14 @@ import {
 import { useAuth } from '../hooks';
 import { useNavigate, Link, useSearch } from '@tanstack/react-router';
 import { Eye, EyeOff, AlertCircle, ArrowLeft, Lock, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function Login() {
   const { login, isLoading, error } = useAuth();
   const navigate = useNavigate();
   const search = useSearch({ from: '/login' });
   const theme = useTheme();
+  const { t } = useTranslation();
   
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -53,7 +55,7 @@ export function Login() {
       // Force a full page reload to ensure cookie is properly set
       window.location.href = returnTo || '/';
     } else {
-      setLocalError(result.error || 'Login failed');
+      setLocalError(result.error || t('login.error_fail'));
     }
   };
 
@@ -72,7 +74,7 @@ export function Login() {
                 startIcon={<ArrowLeft size={16} />} 
                 sx={{ mb: 2, color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
             >
-                Back to Dashboard
+                {t('login.back_dashboard')}
             </Button>
           </Link>
 
@@ -108,7 +110,7 @@ export function Login() {
                 }
                 subheader={
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontWeight: 500 }}>
-                        Restricted Access • Sign in to your account
+                        {t('login.title')}
                     </Typography>
                 }
             />
@@ -124,8 +126,8 @@ export function Login() {
                   <Stack spacing={3}>
                      <TextField
                         fullWidth
-                        label="USERNAME"
-                        placeholder="Your identity name"
+                        label={t('login.label_username')}
+                        placeholder={t('login.placeholder_username')}
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         disabled={isLoading}
@@ -145,18 +147,18 @@ export function Login() {
                      <Box>
                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                             <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.1em', color: 'text.secondary' }}>
-                                PASSWORD
+                                {t('login.label_password')}
                             </Typography>
                             {isCapsLockOn && (
                                 <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'warning.main', fontSize: '0.7rem', fontWeight: 800 }}>
-                                    <AlertCircle size={12} /> CAPS LOCK ON
+                                    <AlertCircle size={12} /> {t('login.caps_lock')}
                                 </Box>
                             )}
                          </Box>
                          <TextField
                             fullWidth
                             type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
+                            placeholder={t('login.placeholder_password')}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             disabled={isLoading}
@@ -189,7 +191,7 @@ export function Login() {
                                 sx={{ '& .MuiSvgIcon-root': { borderRadius: 1 } }}
                             />
                         }
-                        label={<Typography variant="body2" color="text.secondary">Stay logged in for 30 days</Typography>}
+                        label={<Typography variant="body2" color="text.secondary">{t('login.remember_me')}</Typography>}
                      />
 
                      <Button 
@@ -206,7 +208,7 @@ export function Login() {
                             letterSpacing: '0.1em' 
                         }}
                      >
-                        {isLoading ? "VALIDATING..." : "Log In"}
+                        {isLoading ? t('login.validating') : t('login.action_login')}
                      </Button>
                   </Stack>
                </form>
@@ -214,7 +216,7 @@ export function Login() {
           </Card>
 
           <Typography align="center" variant="caption" display="block" color="text.disabled" sx={{ mt: 3, maxWidth: 300, mx: 'auto', lineHeight: 1.4 }}>
-             By logging in, you agree to the guild's internal code of conduct and system policy.
+             {t('login.disclaimer')}
           </Typography>
        </Box>
     </Box>

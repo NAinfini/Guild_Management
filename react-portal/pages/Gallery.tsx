@@ -94,7 +94,7 @@ export function Gallery() {
     const files = event.target.files;
     if (files && files.length > 0) {
       // Upload each file
-      Array.from(files).forEach(file => {
+      (Array.from(files) as File[]).forEach(file => {
         uploadMutation.mutate(file);
       });
     }
@@ -209,7 +209,7 @@ export function Gallery() {
                       <Typography variant="caption" fontWeight={900} textTransform="uppercase" noWrap sx={{ maxWidth: '75%' }}>
                         {img.title || 'Untitled'}
                       </Typography>
-                      <Chip label="IMG" size="small" variant="outlined" sx={{ height: 16, fontSize: '0.55rem', fontWeight: 900 }} />
+                      <Chip label={t('common.label_img')} size="small" variant="outlined" sx={{ height: 16, fontSize: '0.55rem', fontWeight: 900 }} />
                     </Stack>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                       <Typography variant="caption" fontFamily="monospace" color="text.secondary" fontSize="0.6rem">

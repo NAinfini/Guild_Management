@@ -48,19 +48,18 @@ import {
   Plus,
   LogOut,
   Edit,
-  Swords
+  Swords,
+  CalendarDays
 } from 'lucide-react';
 import { formatDateTime, getClassColor, cn, formatPower } from '../lib/utils';
 import { useAuthStore, useGuildStore, useUIStore } from '../store';
 import { useTranslation } from 'react-i18next';
 import { User, Event } from '../types';
-import { useMobileOptimizations } from '../hooks';
+import { useMobileOptimizations, useOnline, usePush } from '../hooks';
 import { BottomSheetDialog } from '../components/BottomSheetDialog';
 import { DecorativeGlyph } from '../components/DecorativeGlyph';
 import { EnhancedButton } from '../components/EnhancedButton';
-import { usePush } from '../hooks/usePush';
 import { Skeleton } from '@mui/material';
-import { useOnline } from '../hooks/useOnline';
 
 type EventFilter = 'all' | 'weekly_mission' | 'guild_war' | 'other';
 
@@ -518,6 +517,7 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
   const { timezoneOffset } = useUIStore();
   const theme = useTheme();
   const mobile = useMobileOptimizations();
+  const online = useOnline();
   
   const isJoined = user && event.participants?.some((p: any) => p.id === user.id);
   const isFull = event.capacity && (event.participants?.length || 0) >= event.capacity;
@@ -569,7 +569,7 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                      {event.is_pinned && <Pin size={14} style={{ color: theme.palette.primary.main }} />}
                      {isUpdated && (
                         <Chip
-                            label="UPDATED"
+                            label={t('common.label_updated')}
                             size="small"
                             sx={{
                               height: 18,

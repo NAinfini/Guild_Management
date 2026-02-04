@@ -62,7 +62,7 @@ export function Wiki() {
     {
       id: 'launch',
       title: t('wiki.launch_title'),
-      category: 'System',
+      category: 'system',
       date: t('wiki.launch_date'),
       icon: Cpu,
       color: 'info.main',
@@ -104,12 +104,12 @@ export function Wiki() {
                            key={article.id}
                            onClick={() => !article.isDummy && setActiveArticle(article.id)}
                            sx={{ 
-                              p: 2, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 2, cursor: article.isDummy ? 'not-allowed' : 'pointer',
-                              border: `1px solid ${activeArticle === article.id ? theme.palette.primary.main : theme.palette.divider}`,
-                              bgcolor: activeArticle === article.id ? alpha(theme.palette.primary.main, 0.05) : 'background.paper',
-                              opacity: article.isDummy ? 0.6 : 1,
-                              transition: 'all 0.2s',
-                              '&:hover': { transform: !article.isDummy ? 'translateX(4px)' : 'none', boxShadow: !article.isDummy ? 2 : 0 }
+                               p: 2, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 2, cursor: article.isDummy ? 'not-allowed' : 'pointer',
+                               border: `1px solid ${activeArticle === article.id ? theme.palette.primary.main : theme.palette.divider}`,
+                               bgcolor: activeArticle === article.id ? alpha(theme.palette.primary.main, 0.05) : 'background.paper',
+                               opacity: article.isDummy ? 0.6 : 1,
+                               transition: 'all 0.2s',
+                               '&:hover': { transform: !article.isDummy ? 'translateX(4px)' : 'none', boxShadow: !article.isDummy ? 2 : 0 }
                            }}
                         >
                            <Avatar sx={{ bgcolor: alpha(theme.palette.getContrastText(theme.palette.background.paper), 0.05), color: article.color, borderRadius: 2 }}>
@@ -117,7 +117,7 @@ export function Wiki() {
                            </Avatar>
                            <Box flex={1}>
                               <Stack direction="row" justifyContent="space-between" mb={0.5}>
-                                 <Chip label={article.category} size="small" variant="outlined" sx={{ height: 16, fontSize: '0.55rem', fontWeight: 900, textTransform: 'uppercase' }} />
+                                 <Chip label={t(`wiki.category_${article.category}`)} size="small" variant="outlined" sx={{ height: 16, fontSize: '0.55rem', fontWeight: 900, textTransform: 'uppercase' }} />
                                  <Typography variant="caption" fontFamily="monospace" color="text.secondary" fontSize="0.6rem">{article.date}</Typography>
                               </Stack>
                               <Typography variant="subtitle2" fontWeight={800} noWrap>{article.title}</Typography>
@@ -136,7 +136,7 @@ export function Wiki() {
                <Card sx={{ borderRadius: 5, minHeight: 600, display: 'flex', flexDirection: 'column' }}>
                   <Box sx={{ p: 5, borderBottom: 1, borderColor: 'divider' }}>
                      <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-                        <Chip label="ARTICLE" size="small" color="primary" sx={{ borderRadius: 1, fontWeight: 900, fontSize: '0.6rem', height: 20 }} />
+                        <Chip label={t('wiki.label_article')} size="small" color="primary" sx={{ borderRadius: 1, fontWeight: 900, fontSize: '0.6rem', height: 20 }} />
                         <Stack direction="row" spacing={1} alignItems="center">
                             <Clock size={12} color={theme.palette.text.secondary} />
                             <Typography variant="caption" fontFamily="monospace" color="text.secondary">{t('wiki.launch_date')} 19:30</Typography>
@@ -152,7 +152,7 @@ export function Wiki() {
                         </Stack>
                         <Stack direction="row" spacing={1} alignItems="center">
                            <BookMarked size={14} color={theme.palette.text.secondary} />
-                           <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">Site Migration</Typography>
+                           <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">{t('wiki.tag_migration')}</Typography>
                         </Stack>
                      </Stack>
                   </Box>
@@ -160,7 +160,7 @@ export function Wiki() {
                   <CardContent sx={{ p: 6, flex: 1, display: 'flex', flexDirection: 'column' }}>
                      <Box sx={{ flex: 1 }}>
                         <Box sx={{ p: 4, bgcolor: alpha(theme.palette.primary.main, 0.05), borderLeft: `4px solid ${theme.palette.primary.main}`, borderRadius: '0 16px 16px 0', mb: 5 }}>
-                               <Info size={14} /> Latest Update
+                               <Info size={14} /> {t('wiki.latest_update')}
                            <Typography variant="h6" fontStyle="italic" fontWeight={500} color="text.primary">
                              {t('wiki.launch_content')}
                            </Typography>
@@ -170,21 +170,21 @@ export function Wiki() {
                            <Grid size={{ xs: 12, md: 6 }}>
                               <Card variant="outlined" sx={{ p: 3, height: '100%', borderRadius: 4, transition: 'all 0.2s', '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' } }}>
                                  <Layout size={32} color={theme.palette.info.main} style={{ marginBottom: 16 }} />
-                                 <Typography variant="subtitle2" fontWeight={900} textTransform="uppercase" gutterBottom>Hybrid Architecture</Typography>
-                                 <Typography variant="caption" color="text.secondary" lineHeight={1.6}>Integration of modern frameworks for better user experience.</Typography>
+                                 <Typography variant="subtitle2" fontWeight={900} textTransform="uppercase" gutterBottom>{t('wiki.card_hybrid_title')}</Typography>
+                                 <Typography variant="caption" color="text.secondary" lineHeight={1.6}>{t('wiki.card_hybrid_desc')}</Typography>
                               </Card>
                            </Grid>
                            <Grid size={{ xs: 12, md: 6 }}>
                               <Card variant="outlined" sx={{ p: 3, height: '100%', borderRadius: 4, transition: 'all 0.2s', '&:hover': { borderColor: 'success.main', bgcolor: 'action.hover' } }}>
                                  <ShieldCheck size={32} color={theme.palette.success.main} style={{ marginBottom: 16 }} />
-                                 <Typography variant="subtitle2" fontWeight={900} textTransform="uppercase" gutterBottom>Security Verified</Typography>
-                                 <Typography variant="caption" color="text.secondary" lineHeight={1.6}>Advanced security measures ensure your data is safe and protected.</Typography>
+                                 <Typography variant="subtitle2" fontWeight={900} textTransform="uppercase" gutterBottom>{t('wiki.card_security_title')}</Typography>
+                                 <Typography variant="caption" color="text.secondary" lineHeight={1.6}>{t('wiki.card_security_desc')}</Typography>
                               </Card>
                            </Grid>
                         </Grid>
 
                         <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
-                           Members are reminded that the Wiki is the official source for guild rules. All activity is logged for security purposes.
+                           {t('wiki.footer_disclaimer')}
                         </Typography>
                      </Box>
 
@@ -193,7 +193,7 @@ export function Wiki() {
                             {[1,2,3,4,5].map(i => <Avatar key={i} />)}
                          </AvatarGroup>
                          <Button size="small" endIcon={<ExternalLink size={14} />} sx={{ fontWeight: 900, letterSpacing: '0.1em' }}>
-                            Share Intel
+                            {t('wiki.share_intel')}
                          </Button>
                      </Box>
                   </CardContent>
@@ -201,7 +201,7 @@ export function Wiki() {
             ) : (
                <Box sx={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
                   <BookOpen size={64} style={{ marginBottom: 16 }} />
-                  <Typography variant="overline" fontWeight={900} letterSpacing="0.2em">Select Intelligence...</Typography>
+                  <Typography variant="overline" fontWeight={900} letterSpacing="0.2em">{t('wiki.select_intel')}</Typography>
                </Box>
             )}
          </Grid>

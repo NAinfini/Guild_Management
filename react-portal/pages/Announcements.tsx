@@ -113,19 +113,21 @@ export function Announcements() {
     );
   }
 
-  const renderSkeletons = () => (
-    <Stack spacing={2} sx={{ mt: 2 }}>
-      {[1,2,3].map(i => (
-        <Card key={i}>
-          <CardContent>
-            <Skeleton variant="text" width="50%" />
-            <Skeleton variant="text" width="30%" />
-            <Skeleton variant="rectangular" height={60} sx={{ mt: 2, borderRadius: 2 }} />
-          </CardContent>
-        </Card>
-      ))}
-    </Stack>
-  );
+  function renderSkeletons() {
+    return (
+      <Stack spacing={2} sx={{ mt: 2 }}>
+        {[1,2,3].map(i => (
+          <Card key={i}>
+            <CardContent>
+              <Skeleton variant="text" width="50%" />
+              <Skeleton variant="text" width="30%" />
+              <Skeleton variant="rectangular" height={60} sx={{ mt: 2, borderRadius: 2 }} />
+            </CardContent>
+          </Card>
+        ))}
+      </Stack>
+    );
+  }
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 10, px: { xs: 2, sm: 4 } }}>
@@ -248,7 +250,7 @@ export function Announcements() {
                           <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                   <Typography variant="h6" fontWeight={800}>{ann.title}</Typography>
-                                  {isNew && <Chip label="NEW" size="small" color="error" sx={{ height: 16, fontSize: '0.6rem' }} />}
+                                  {isNew && <Chip label={t('common.label_new')} size="small" color="error" sx={{ height: 16, fontSize: '0.6rem' }} />}
                               </Box>
                               <Typography variant="caption" color="text.secondary">
                                   {formatDateTime(ann.created_at, 0, true)}

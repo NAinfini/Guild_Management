@@ -65,7 +65,10 @@
     "view": "View",
     "credits": "Credits",
     "damage": "Damage",
-    "healing": "Healing"
+    "healing": "Healing",
+    "label_new": "NEW",
+    "label_updated": "UPDATED",
+    "label_img": "IMG"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -85,11 +88,29 @@
     "interface_theme": "Interface Theme",
     "sever_connection": "Sever Connection"
   },
+  "login": {
+    "back_dashboard": "Back to Dashboard",
+    "title": "Restricted Access • Sign in to your account",
+    "label_username": "USERNAME",
+    "placeholder_username": "Your identity name",
+    "label_password": "PASSWORD",
+    "placeholder_password": "••••••••",
+    "caps_lock": "CAPS LOCK ON",
+    "validating": "VALIDATING...",
+    "action_login": "Log In",
+    "remember_me": "Stay logged in for 30 days",
+    "disclaimer": "By logging in, you agree to the guild's internal code of conduct and system policy.",
+    "error_fail": "Login failed"
+  },
   "tools": {
     "title": "Guild Tools",
     "subtitle": "Helpful utilities for guild members.",
-    "builder_title": "Title Maker",
-    "builder_subtitle": "Create custom styled titles for your profile.",
+    "builder_title": "Style Builder",
+    "builder_subtitle": "Create custom styles for your profile.",
+    "coming_soon": "COMING SOON",
+    "under_development": "This section is currently being developed.",
+    "open_tool": "Open Tool",
+    "go_to_page": "Go To Page",
     "input_label": "Title Text",
     "input_placeholder": "Enter title name...",
     "preview_label": "Preview",
@@ -101,9 +122,7 @@
     "glow": "Glow Effect",
     "shadow": "Shadow Effect",
     "gradient": "Gradient Color",
-    "copy_cipher": "Copy Code",
-    "open_tool": "Open Tool",
-    "go_to_page": "Go to Page"
+    "copy_cipher": "Copy Code"
   },
   "wiki": {
     "title": "Guild Guides",
@@ -113,7 +132,18 @@
     "launch_date": "2026-02-02",
     "launch_content": "The new Guild Management Portal is now live. Please update your profile and check out the new event system.",
     "search_guides": "Search guides...",
-    "search_placeholder": "Search guides..."
+    "search_placeholder": "Search guides...",
+    "category_system": "System",
+    "label_article": "ARTICLE",
+    "tag_migration": "Site Migration",
+    "latest_update": "Latest Update",
+    "card_hybrid_title": "Hybrid Architecture",
+    "card_hybrid_desc": "Integration of modern frameworks for better user experience.",
+    "card_security_title": "Security Verified",
+    "card_security_desc": "Advanced security measures ensure your data is safe and protected.",
+    "footer_disclaimer": "Members are reminded that the Wiki is the official source for guild rules. All activity is logged for security purposes.",
+    "share_intel": "Share Intel",
+    "select_intel": "Select Intelligence..."
   },
   "gallery": {
     "title": "Gallery",
@@ -169,7 +199,9 @@
     "healing": "HEL",
     "no_war_data": "No war data available",
     "no_stats_available": "No stats available",
-    "overlap": "Overlap detected"
+    "overlap": "Overlap detected",
+    "copy_roster": "Copy Roster",
+    "notification_update": "Update: {{title}}"
   },
   "events": {
     "title": "Events",
@@ -293,7 +325,10 @@
     "archive_title": "Archive",
     "placeholder_bio": "No biography provided yet.",
     "save_assets": "Save Assets",
-    "save_intel": "Save Info"
+    "save_intel": "Save Info",
+    "placeholder_audio_url": "https://... (MP3 URL)",
+    "placeholder_wechat": "@wechat_id",
+    "placeholder_title_html": "<span class='text-blue-500'>The Chosen</span>"
   },
   "availability": {
     "title": "Availability",
@@ -345,6 +380,11 @@
     "active": "Active",
     "apply": "Apply",
     "audio_settings": "Audio Settings"
+  },
+  "media": {
+    "upload_label": "Upload",
+    "upload_formats": "PNG, WebP, or audio",
+    "choose_file": "Choose File"
   },
   "admin": {
     "title": "Admin Dashboard",

@@ -129,7 +129,7 @@ export function Dashboard() {
       .forEach(e => {
           list.push({ 
               id: e.id, 
-              title: `Update: ${e.title}`, 
+              title: t('dashboard.notification_update', { title: e.title }), 
               type: 'event', 
               time: e.updated_at, 
               path: '/events',
@@ -138,7 +138,7 @@ export function Dashboard() {
     });
 
     return list.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 3);
-  }, [announcements, events, lastSeen]);
+  }, [announcements, events, lastSeen, t]);
 
   const myJoinedEvents = useMemo(() => 
     events.filter(e => user && e.participants?.some(p => p.id === user.id)), 
@@ -336,7 +336,7 @@ export function Dashboard() {
                         <Stack direction="row" spacing={0.75} alignItems="center">
                           <CalendarDays size={14} />
                           <Typography variant="caption" fontWeight={700}>
-                            {formatDateTime(event.start_time, { withTime: true })}
+                            {formatDateTime(event.start_time)}
                           </Typography>
                         </Stack>
                         <Stack direction="row" spacing={0.75} alignItems="center">
@@ -704,7 +704,7 @@ function EventCard({ event, user, onCopy, isConflicted }: any) {
                           {isSmallMobile ? t('common.view') : t('common.details')}
                       </Button>
                    </Link>
-                   <Tooltip title="Copy Roster">
+                   <Tooltip title={t('dashboard.copy_roster')}>
                       <IconButton
                         size="small"
                         onClick={onCopy}

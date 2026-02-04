@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Box, Button, Stack, Typography, useTheme } from '@mui/material';
 import { UploadCloud } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 type MediaUploadProps = {
   label?: string;
@@ -10,9 +11,12 @@ type MediaUploadProps = {
 
 import { convertToWebP } from '../lib/media-conversion';
 
-export function MediaUpload({ label = 'Upload', accept = 'image/*,audio/*', onSelect }: MediaUploadProps) {
+export function MediaUpload({ label, accept = 'image/*,audio/*', onSelect }: MediaUploadProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const theme = useTheme();
+  const { t } = useTranslation();
+
+  const displayLabel = label || t('media.upload_label');
 
   const handleClick = () => {
     inputRef.current?.click();
@@ -33,9 +37,9 @@ export function MediaUpload({ label = 'Upload', accept = 'image/*,audio/*', onSe
     >
       <Stack spacing={1.5} alignItems="center" justifyContent="center">
         <UploadCloud size={28} />
-        <Typography variant="body2" fontWeight={800}>{label}</Typography>
-        <Typography variant="caption" color="text.secondary">PNG, WebP, or audio</Typography>
-        <Button variant="contained" size="small" onClick={handleClick}>Choose File</Button>
+        <Typography variant="body2" fontWeight={800}>{displayLabel}</Typography>
+        <Typography variant="caption" color="text.secondary">{t('media.upload_formats')}</Typography>
+        <Button variant="contained" size="small" onClick={handleClick}>{t('media.choose_file')}</Button>
       </Stack>
       <input
         ref={inputRef}
