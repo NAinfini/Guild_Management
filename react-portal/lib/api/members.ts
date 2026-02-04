@@ -102,9 +102,10 @@ const mapToDomain = (dto: MemberDTO): User => {
 export const membersAPI = {
   list: async (params?: { includeInactive?: boolean; role?: string }): Promise<User[]> => {
     const queryParams: any = {};
-    if (params?.includeInactive) queryParams.include_inactive = 'true';
+    if (params?.includeInactive) queryParams.includeInactive = 'true';
     if (params?.role) queryParams.role = params.role;
 
+    // API client now unwraps { success, data } envelope automatically
     const response = await api.get<{ members: MemberDTO[] }>('/members', queryParams);
     if (!response || !response.members) return [];
     return response.members.map(mapToDomain);

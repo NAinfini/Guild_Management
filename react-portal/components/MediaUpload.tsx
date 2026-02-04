@@ -8,6 +8,8 @@ type MediaUploadProps = {
   onSelect: (file: File) => void;
 };
 
+import { convertToWebP } from '../lib/media-conversion';
+
 export function MediaUpload({ label = 'Upload', accept = 'image/*,audio/*', onSelect }: MediaUploadProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const theme = useTheme();
@@ -40,9 +42,25 @@ export function MediaUpload({ label = 'Upload', accept = 'image/*,audio/*', onSe
         type="file"
         accept={accept}
         hidden
-        onChange={(e) => {
+        onChange={async (e) => {
           const file = e.target.files?.[0];
-          if (file) onSelect(file);
+          if (file) {
+            try {
+              // Convert media
+              let processedFile = file;
+              if (file.type.startsWith('image/')) {
+                processedFile = await convertToWebP(file);
+              } else if (file.type.startsWith('audio/')) {
+                const { convertToOpus } = await import('../lib/media-conversion');
+                processedFile = await convertToOpus(file);
+              }
+              
+              onSelect(processedFile);
+            } catch (error) {
+              console.error('File processing error:', error);
+              onSelect(file); // Fallback to original
+            }
+          }
         }}
       />
     </Box>

@@ -60,7 +60,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           mp.vacation_end_at_utc
         FROM users u
         LEFT JOIN member_profiles mp ON mp.user_id = u.user_id
-        WHERE u.user_id IN (${placeholders}) AND u.deleted_at IS NULL
+        WHERE u.user_id IN (${placeholders}) AND u.deleted_at_utc IS NULL
       `;
       
       const result = await env.DB.prepare(query).bind(...ids).all();
@@ -76,19 +76,19 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       }, {});
 
       const members = result.results?.map((m: any) => ({
-        id: m.user_id,
+        user_id: m.user_id,
         username: m.username,
         wechat_name: m.wechat_name,
         role: m.role,
         power: m.power,
         classes: classMap[m.user_id] || [],
-        active_status: m.is_active ? 'active' : 'inactive',
+        is_active: m.is_active,
         title_html: m.title_html,
-        bio: m.bio_text,
-        vacation_start: m.vacation_start_at_utc || undefined,
-        vacation_end: m.vacation_end_at_utc || undefined,
-        created_at: m.created_at_utc,
-        updated_at: m.updated_at_utc,
+        bio_text: m.bio_text,
+        vacation_start_at_utc: m.vacation_start_at_utc || undefined,
+        vacation_end_at_utc: m.vacation_end_at_utc || undefined,
+        created_at_utc: m.created_at_utc,
+        updated_at_utc: m.updated_at_utc,
       })) || [];
 
       return successResponse({

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { convertToWebP } from '../lib/media-conversion';
 import { 
   Card, 
   CardContent, 
@@ -515,7 +516,20 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                                  sx={{ position: 'absolute', bottom: -8, right: -8, bgcolor: 'primary.main', color: 'primary.contrastText', '&:hover': { bgcolor: 'primary.dark' } }}
                               >
                                  <Upload size={14} />
-                                 <input type="file" hidden accept="image/*" onChange={handleFileUpload} />
+
+
+// ... inside component ...
+                                 <input type="file" hidden accept="image/*" onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                       try {
+                                          const processed = await convertToWebP(file);
+                                          handleFileUpload(processed);
+                                       } catch (err) {
+                                          handleFileUpload(file);
+                                       }
+                                    }
+                                 }} />
                               </IconButton>
                            </Box>
                            <Box flex={1}>

@@ -101,9 +101,10 @@ export const eventsAPI = {
     if (params?.type) queryParams.type = params.type;
     if (params?.includeArchived) queryParams.includeArchived = 'true';
 
+    // API client now unwraps { success, data } envelope automatically
     const response = await api.get<{ events: EventListItemDTO[] }>('/events/list', queryParams);
     if (!response || !response.events) return [];
-    
+
     return response.events.map(mapToDomain);
   },
 

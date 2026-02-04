@@ -29,7 +29,9 @@
         "./react-portal/*"
       ]
     },
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": ["react-portal"]
 }

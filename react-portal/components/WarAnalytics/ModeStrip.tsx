@@ -56,7 +56,7 @@ const MODES: ModeConfig[] = [
 // ============================================================================
 
 export function ModeStrip() {
-  const { filters, updateFilters, playerMode, compareMode } = useAnalytics();
+  const { filters, updateFilters, playerMode, compareMode, teamsMode } = useAnalytics();
 
   const handleModeChange = (_event: React.SyntheticEvent, newMode: AnalyticsMode) => {
     updateFilters({ mode: newMode });
@@ -72,7 +72,7 @@ export function ModeStrip() {
       case 'rankings':
         return undefined; // No badge for rankings
       case 'teams':
-        return undefined; // TODO: Add when teams mode is implemented
+        return teamsMode.selectedTeamIds.length || undefined;
       default:
         return undefined;
     }

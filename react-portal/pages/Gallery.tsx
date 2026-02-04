@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { convertToWebP } from '../lib/media-conversion';
 import { 
   Card, 
   CardContent, 
@@ -305,7 +306,25 @@ export function Gallery() {
             accept="image/*"
             multiple
             style={{ display: 'none' }}
-            onChange={handleFileSelect}
+
+
+// ... inside component ...
+            onChange={async (e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                 const newFiles: File[] = [];
+                 for (let i = 0; i < e.target.files.length; i++) {
+                    const file = e.target.files[i];
+                    try {
+                       const processed = file.type.startsWith('image/') ? await convertToWebP(file) : file;
+                       newFiles.push(processed);
+                    } catch (err) {
+                       console.error(err);
+                       newFiles.push(file);
+                    }
+                 }
+                 handleFileSelect(newFiles); 
+              }
+            }}
           />
         </DialogContent>
       </Dialog>

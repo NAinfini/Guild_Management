@@ -1,49 +1,40 @@
-// Local type definitions for Cloudflare Pages environment
-interface D1Database {
-  prepare(query: string): any;
-}
-
-interface EventContext<Env, P extends string, Data> {
-  request: Request;
-  functionPath: string;
-  waitUntil(promise: Promise<any>): void;
-  passThroughOnException(): void;
-  next(input?: Request | string, init?: RequestInit): Promise<Response>;
-  env: Env;
-  params: Record<string, string>;
-  data: Data;
-}
-
-type PagesFunction<
-  Env = unknown,
-  Params extends string = any,
-  Data extends Record<string, unknown> = Record<string, unknown>
-> = (context: EventContext<Env, Params, Data>) => Response | Promise<Response>;
-
-interface Env {
-  DB: D1Database;
-}
+import type { PagesFunction, Env } from '../../_types';
+import { errorResponse, successResponse, unauthorizedResponse } from '../../_utils';
+import { withAuth } from '../../_middleware';
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const eventId = context.params.id;
-  
-  try {
-    const { userId } = await context.request.json() as { userId: string };
+  return withAuth(context, async (authContext) => {
+    const { env, params } = authContext;
+    const { user } = authContext.data;
 
-    if (!userId) {
-      return new Response("Unauthorized", { status: 401 });
+    if (!user) {
+      return unauthorizedResponse();
     }
 
-    await context.env.DB.prepare(
-      "DELETE FROM event_participants WHERE event_id = ? AND user_id = ?"
-    ).bind(eventId, userId).run();
+    const eventId = params.id;
 
-    return new Response(JSON.stringify({ success: true }), { 
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    try {
+      // Logic: User leaves the event. 
+      // Admin/Mod kicking capability could be here, but "leave" usually means self.
+      // If the body provided a userId, an Admin *could* arguably kick them.
+      // But let's restrict to self-leave for safety first.
+      
+      const targetUserId = user.user_id;
 
-  } catch (err) {
-    return new Response((err as Error).message, { status: 500 });
-  }
-}
+      await env.DB.prepare(
+        "DELETE FROM event_participants WHERE event_id = ? AND user_id = ?"
+      ).bind(eventId, targetUserId).run();
+
+      // Update event timestamp for cache invalidation
+      await env.DB.prepare(
+        "UPDATE events SET updated_at_utc = datetime('now') WHERE event_id = ?"
+      ).bind(eventId).run();
+
+      return successResponse({ message: 'Left event successfully' });
+
+    } catch (err) {
+      console.error('Leave event error:', err);
+      return errorResponse('INTERNAL_ERROR', 'An error occurred while leaving event', 500);
+    }
+  });
+};

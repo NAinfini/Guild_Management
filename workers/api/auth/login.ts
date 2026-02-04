@@ -48,7 +48,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
     // Get user by username
     const user = await env.DB
-      .prepare('SELECT * FROM users WHERE username = ? AND deleted_at IS NULL')
+      .prepare('SELECT * FROM users WHERE username = ? AND deleted_at_utc IS NULL')
       .bind(username)
       .first<User>();
 
@@ -103,11 +103,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     // Return user data (without sensitive fields)
     const userData = {
-      userId: user.user_id,
+      user_id: user.user_id,
       username: user.username,
-      wechatName: user.wechat_name,
+      wechat_name: user.wechat_name,
       role: user.role,
       power: user.power,
+      is_active: user.is_active,
     };
 
     const response = successResponse({ user: userData, sessionId });

@@ -23,7 +23,7 @@ import {
   etagFromTimestamp,
   assertIfMatch,
 } from '../../_utils';
-import { withAuth, withAdminAuth } from '../../_middleware';
+import { withAuth, withAdminAuth, withOptionalAuth } from '../../_middleware';
 import { validateBody, updateProfileSchema, updateRoleSchema, updateUsernameSchema } from '../../_validation';
 
 // ============================================================
@@ -31,14 +31,14 @@ import { validateBody, updateProfileSchema, updateRoleSchema, updateUsernameSche
 // ============================================================
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
+  return withOptionalAuth(context, async (authContext) => {
     const { env, params } = authContext;
     const userId = params.id;
 
     try {
       // Get user
       const user = await env.DB
-        .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at IS NULL')
+        .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at_utc IS NULL')
         .bind(userId)
         .first<User>();
 
@@ -71,15 +71,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         .all();
 
       const memberData = {
-        userId: user.user_id,
+        user_id: user.user_id,
         username: user.username,
-        wechatName: user.wechat_name,
+        wechat_name: user.wechat_name,
         role: user.role,
         power: user.power,
-        isActive: user.is_active === 1,
+        is_active: user.is_active,
         profile: profile || null,
         classes: classes.results?.map(c => c.class_code) || [],
         media: media.results || [],
+        created_at_utc: user.created_at_utc,
+        updated_at_utc: user.updated_at_utc,
       };
 
       const resp = successResponse({ member: memberData });
@@ -109,7 +111,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
     }
 
     const current = await env.DB
-      .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at IS NULL')
+      .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at_utc IS NULL')
       .bind(userId)
       .first<User>();
 

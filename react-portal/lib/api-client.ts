@@ -169,6 +169,24 @@ async function request<T>(
       console.log(`[API] ${method} ${requestUrl} - Response:`, data);
     }
     
+    // Unwrap worker response envelope: { success, data, error?, meta? }
+    // If success: true, return data; if success: false, throw error
+    if (typeof data === 'object' && data !== null && 'success' in data) {
+      const envelope = data as { success: boolean; data?: T; error?: { message: string } };
+      if (envelope.success && envelope.data !== undefined) {
+        return envelope.data;
+      }
+      if (!envelope.success && envelope.error) {
+        throw new APIError(
+          envelope.error.message || 'Request failed',
+          resp.status,
+          requestUrl
+        );
+      }
+      // Fallback: if success is true but no data, return empty object
+      return {} as T;
+    }
+    
     return data;
   } catch (error) {
     if (error instanceof APIError) {

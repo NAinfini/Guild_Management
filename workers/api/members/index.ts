@@ -16,7 +16,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       const includeInactive = url.searchParams.get('includeInactive') === 'true';
       const role = url.searchParams.get('role');
 
-      let query = 'SELECT * FROM users WHERE deleted_at IS NULL';
+      let query = 'SELECT * FROM users WHERE deleted_at_utc IS NULL';
       const params: any[] = [];
 
       if (!includeInactive) {
@@ -54,16 +54,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
             .first<{ count: number }>();
 
           return {
-            userId: user.user_id,
+            user_id: user.user_id,
             username: user.username,
-            wechatName: user.wechat_name,
+            wechat_name: user.wechat_name,
             role: user.role,
             power: user.power,
-            isActive: user.is_active === 1,
-            titleHtml: profile?.title_html || null,
+            is_active: user.is_active, // Keep raw 0/1 or boolean? Client DTO says number.
+            title_html: profile?.title_html || null,
             classes: classes.results?.map(c => c.class_code) || [],
-            mediaCount: mediaCount?.count || 0,
-            createdAt: user.created_at_utc,
+            media_count: mediaCount?.count || 0,
+            created_at_utc: user.created_at_utc,
+            updated_at_utc: user.updated_at_utc,
           };
         })
       );

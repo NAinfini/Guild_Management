@@ -12,18 +12,22 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const { user, session, isAuthenticated } = authContext.data;
 
     if (!isAuthenticated || !user) {
-      return unauthorizedResponse('No valid session');
+      // Guest session - return null user but success (allows portal access)
+      return successResponse({ 
+        user: null, 
+        csrfToken: session?.csrf_token || null 
+      });
     }
 
     // Return user data and CSRF token
     const userData = {
-      userId: user.user_id,
+      user_id: user.user_id,
       username: user.username,
-      wechatName: user.wechat_name,
+      wechat_name: user.wechat_name,
       role: user.role,
       power: user.power,
-      isActive: user.is_active === 1,
-      sessionExpiresAt: session?.expires_at_utc,
+      is_active: user.is_active,
+      session_expires_at_utc: session?.expires_at_utc,
     };
 
     return successResponse({ 

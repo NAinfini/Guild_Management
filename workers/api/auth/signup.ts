@@ -105,9 +105,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .run();
 
     const userData = {
-      userId,
+      user_id: userId,
       username,
-      wechatName,
+      wechat_name: wechatName,
       role: 'member',
       power: 0,
     };

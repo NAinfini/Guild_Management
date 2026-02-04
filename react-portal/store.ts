@@ -107,7 +107,7 @@ interface GuildState {
   fetchData: () => Promise<void>;
   // Polling methods
   pollData: () => Promise<boolean>;
-  startPolling: (interval?: number) => void;
+  startPolling: (interval?: number, initialErrorCount?: number) => void;
   stopPolling: () => void;
   updateMember: (id: string, updates: Partial<User>) => Promise<void>;
   addAuditLog: (entry: Omit<AuditLogEntry, 'id' | 'timestamp'>) => void;
@@ -137,6 +137,7 @@ export const useGuildStore = create<GuildState>((set, get) => ({
   isLoading: false,
   // Polling state
   lastPolled: null,
+  lastPollTimestamp: null,
   isPolling: false,
   pollingIntervalId: null,
 
@@ -185,7 +186,7 @@ export const useGuildStore = create<GuildState>((set, get) => ({
       if (lastPollTimestamp) {
         // Incremental poll - fetch only changes
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/api/poll?since=${encodeURIComponent(lastPollTimestamp)}`,
+          `${(import.meta as any).env.VITE_API_BASE_URL}/api/poll?since=${encodeURIComponent(lastPollTimestamp)}`,
           { credentials: 'include' }
         );
         
@@ -272,11 +273,11 @@ export const useGuildStore = create<GuildState>((set, get) => ({
     }
   },
 
-  startPolling: (interval = 30000) => {
+  startPolling: (interval = 30000, initialErrorCount = 0) => {
     const { pollingIntervalId, pollData, stopPolling } = get();
     if (pollingIntervalId) clearInterval(pollingIntervalId);
     
-    let errorCount = 0;
+    let errorCount = initialErrorCount;
     const maxErrors = 5;
     const backoffMultiplier = 2;
     const maxInterval = 120000; // 2 minutes max
@@ -298,16 +299,19 @@ export const useGuildStore = create<GuildState>((set, get) => ({
           maxInterval
         );
         
-        console.warn(`[Polling] Backing off to ${newInterval / 1000}s due to error`);
+        console.warn(`[Polling] Backing off to ${newInterval / 1000}s due to error (Count: ${errorCount})`);
         
-        // Restart with new interval
+        // Restart with new interval and preserved error count
         stopPolling();
-        setTimeout(() => get().startPolling(newInterval), newInterval);
+        setTimeout(() => get().startPolling(interval, errorCount), newInterval);
       } else {
-        // Success - reset error count
+        // Success - reset error count if needed
         if (errorCount > 0) {
           console.info('[Polling] Recovered from errors, resetting interval');
           errorCount = 0;
+          // Restart with original interval to clear any backoff state
+          stopPolling();
+          get().startPolling(interval, 0);
         }
       }
     };

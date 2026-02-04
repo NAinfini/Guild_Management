@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Card, 
@@ -445,7 +445,7 @@ function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, 
              <Controller
                 name="classes"
                 control={control}
-                render={({ field }) => {
+                render={({ field }: { field: any }) => {
                   const selectedClasses = field.value || [];
                   return (
                     <Stack spacing={2}>
@@ -487,11 +487,13 @@ function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, 
                                               key={opt.id}
                                               size="small"
                                               variant="outlined"
-                                              disabled={isSelected}
-                                               onClick={() => {
-                                                  if (selectedClasses.length < 2) field.onChange([...selectedClasses, opt.id as ClassType]);
-                                                  else field.onChange([...selectedClasses, opt.id as ClassType]); // Just dummy logic, ideally validation prevents >2
-                                               }}
+                                              onClick={() => {
+                                                  if (isSelected) {
+                                                    field.onChange(selectedClasses.filter((c: string) => c !== opt.id));
+                                                  } else {
+                                                    field.onChange([...selectedClasses, opt.id as ClassType]);
+                                                  }
+                                              }}
                                               sx={{ 
                                                   justifyContent: 'flex-start', 
                                                   fontSize: '0.7rem', 

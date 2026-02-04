@@ -25,6 +25,18 @@ interface ChangePasswordData {
   newPassword: string;
 }
 
+// Helper to map API DTO to Domain User
+const mapUserDTO = (dto: any) => ({
+  id: dto.user_id,
+  username: dto.username,
+  wechat_name: dto.wechat_name,
+  role: dto.role,
+  power: dto.power,
+  active_status: dto.is_active ? 'active' : 'inactive',
+  // Map other fields as needed if API sends them
+  session_expires_at: dto.session_expires_at_utc,
+});
+
 export function useAuth() {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
@@ -38,12 +50,12 @@ export function useAuth() {
     setError(null);
 
     try {
-      const response = await api.post<{ data: LoginResponse }>('/auth/login', credentials);
-      const data = response.data;
-      setUser(data.user as any); // Type conversion needed due to different User types
+      // API client now unwraps { success, data } envelope automatically
+      const response = await api.post<LoginResponse>('/auth/login', credentials);
+      setUser(mapUserDTO(response.user) as any); 
       // Store CSRF token from response
-      if (data.csrfToken) {
-        setCsrfToken(data.csrfToken);
+      if (response.csrfToken) {
+        setCsrfToken(response.csrfToken);
       }
       setLoading(false);
       return { success: true };
@@ -70,9 +82,9 @@ export function useAuth() {
     setError(null);
     
     try {
-      const response = await api.post<{ data: LoginResponse }>('/auth/signup', data);
-      const result = response.data;
-      setUser(result.user as any);
+      // API client now unwraps { success, data } envelope automatically
+      const response = await api.post<LoginResponse>('/auth/signup', data);
+      setUser(mapUserDTO(response.user) as any);
       setLoading(false);
       return { success: true };
     } catch (error) {
@@ -95,12 +107,12 @@ export function useAuth() {
 
   const validateSession = useCallback(async () => {
     try {
-      const response = await apiDirect.get<{ data: SessionResponse }>('/auth/session');
-      const data = response.data;
-      setUser(data.user as any);
+      // API client now unwraps { success, data } envelope automatically
+      const response = await apiDirect.get<SessionResponse>('/auth/session');
+      setUser(mapUserDTO(response.user) as any);
       // Store CSRF token from session
-      if (data.csrfToken) {
-        setCsrfToken(data.csrfToken);
+      if (response.csrfToken) {
+        setCsrfToken(response.csrfToken);
       }
       return true;
     } catch (error) {

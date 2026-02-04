@@ -1,7 +1,56 @@
+
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
+
+let ffmpeg: FFmpeg | null = null;
+
+async function loadFFmpeg() {
+  if (ffmpeg) return ffmpeg;
+
+  const instance = new FFmpeg();
+  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+  
+  // Load ffmpeg.wasm from a CDN (unpkg) to avoid complex local asset handling in this environment
+  await instance.load({
+    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+  });
+
+  ffmpeg = instance;
+  return ffmpeg;
+}
+
 /**
- * Media Conversion Utilities
- * Client-side conversion for images and audio
+ * Convert audio to Opus format using ffmpeg.wasm
+ * @param file - Original audio file
+ * @returns Promise<File> - Converted Opus file
  */
+export async function convertToOpus(file: File): Promise<File> {
+  // Use a singleton instance or load if not loaded
+  const ffmpegInstance = await loadFFmpeg();
+
+  const inputName = 'input.' + file.name.split('.').pop();
+  const outputName = 'output.opus';
+
+  // Write file to in-memory filesystem
+  await ffmpegInstance.writeFile(inputName, await fetchFile(file));
+
+  // Run conversion: -i input -c:a libopus -b:a 64k output.opus
+  // Using 64k bitrate for decent voice quality
+  await ffmpegInstance.exec(['-i', inputName, '-c:a', 'libopus', '-b:a', '64k', outputName]);
+
+  // Read the result
+  const data = await ffmpegInstance.readFile(outputName);
+  
+  // Cleanup
+  await ffmpegInstance.deleteFile(inputName);
+  await ffmpegInstance.deleteFile(outputName);
+
+  // Convert to File
+  return new File([data as any], file.name.replace(/\.[^/.]+$/, '.opus'), {
+    type: 'audio/ogg; codecs=opus'
+  });
+}
 
 /**
  * Convert image to WebP format
@@ -12,78 +61,47 @@
 export async function convertToWebP(file: File, quality: number = 0.9): Promise<File> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) {
-      reject(new Error('Canvas context not available'));
-      return;
-    }
-
+    // Create an object URL for the image
+    const objectUrl = URL.createObjectURL(file);
+    
     img.onload = () => {
-      // Set canvas size to image size
+      // Clean up the object URL primarily to avoid memory leaks
+      URL.revokeObjectURL(objectUrl);
+      
+      const canvas = document.createElement('canvas');
       canvas.width = img.width;
       canvas.height = img.height;
-
-      // Draw image on canvas
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas context not available'));
+        return;
+      }
       ctx.drawImage(img, 0, 0);
-
-      // Convert to WebP
       canvas.toBlob(
         (blob) => {
           if (!blob) {
             reject(new Error('Conversion failed'));
             return;
           }
-
-          // Create new File from blob
-          const webpFile = new File(
-            [blob],
-            file.name.replace(/\.[^/.]+$/, '.webp'),
-            { type: 'image/webp' }
-          );
-
-          resolve(webpFile);
+          resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.webp'), { type: 'image/webp' }));
         },
         'image/webp',
         quality
       );
     };
 
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
+    img.onerror = (e) => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Failed to load image'));
+    };
+    
+    img.src = objectUrl;
   });
 }
 
 /**
- * Convert audio to Opus format using Web Audio API
- * Note: This is a placeholder - actual Opus encoding requires a library like opus-recorder
- * For now, we'll just validate and pass through
- * 
- * TODO: Implement actual Opus encoding with opus-recorder or similar library
- */
-export async function convertToOpus(file: File): Promise<File> {
-  // For now, just validate it's an audio file
-  if (!file.type.startsWith('audio/')) {
-    throw new Error('File is not an audio file');
-  }
-
-  // TODO: Implement actual Opus conversion
-  // This would require:
-  // 1. Decode audio using Web Audio API
-  // 2. Encode to Opus using opus-recorder or similar
-  // 3. Return new File with opus data
-
-  console.warn('Opus conversion not yet implemented, returning original file');
-  return file;
-}
-
-/**
  * Resize image if it exceeds max dimensions
- * @param file - Original image file
- * @param maxWidth - Maximum width
- * @param maxHeight - Maximum height
- * @returns Promise<File> - Resized image
+ * ... existing resizeImage code ...
  */
 export async function resizeImage(
   file: File,
@@ -92,68 +110,46 @@ export async function resizeImage(
 ): Promise<File> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) {
-      reject(new Error('Canvas context not available'));
-      return;
-    }
+    const objectUrl = URL.createObjectURL(file);
 
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
       let { width, height } = img;
-
-      // Calculate new dimensions
       if (width > maxWidth || height > maxHeight) {
         const ratio = Math.min(maxWidth / width, maxHeight / height);
         width = Math.floor(width * ratio);
         height = Math.floor(height * ratio);
       }
-
+      const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
-
-      // Draw resized image
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas context not available'));
+        return;
+      }
       ctx.drawImage(img, 0, 0, width, height);
-
-      // Convert to blob
-      canvas.toBlob(
-        (blob) => {
+      canvas.toBlob((blob) => {
           if (!blob) {
             reject(new Error('Resize failed'));
             return;
           }
-
-          const resizedFile = new File([blob], file.name, { type: file.type });
-          resolve(resizedFile);
-        },
-        file.type,
-        0.9
-      );
+          resolve(new File([blob], file.name, { type: file.type }));
+        }, file.type, 0.9);
     };
-
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Failed to load image'));
+    };
+    img.src = objectUrl;
   });
 }
 
-/**
- * Validate file size
- * @param file - File to validate
- * @param maxSizeMB - Maximum size in MB
- * @returns boolean
- */
 export function validateFileSize(file: File, maxSizeMB: number): boolean {
   const maxBytes = maxSizeMB * 1024 * 1024;
   return file.size <= maxBytes;
 }
 
-/**
- * Validate file type
- * @param file - File to validate
- * @param allowedTypes - Array of allowed MIME types
- * @returns boolean
- */
 export function validateFileType(file: File, allowedTypes: string[]): boolean {
   return allowedTypes.some((type) => {
     if (type.endsWith('/*')) {

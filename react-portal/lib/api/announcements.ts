@@ -19,7 +19,7 @@ interface AnnouncementDTO {
   is_archived: number;
   created_at_utc: string;
   updated_at_utc: string;
-  media_urls: string[]; // Mocked or joined
+  media_urls: string[]; // JSON string or array from backend join
   author_username?: string; // Sometimes joined
 }
 
@@ -55,6 +55,7 @@ const mapToDomain = (dto: AnnouncementDTO): Announcement => {
 
 export const announcementsAPI = {
   list: async (): Promise<Announcement[]> => {
+    // API client now unwraps { success, data } envelope automatically
     const response = await api.get<{ announcements: AnnouncementDTO[] }>('/announcements');
     if (!response || !response.announcements) return [];
     return response.announcements.map(mapToDomain);

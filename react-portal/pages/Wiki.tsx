@@ -47,7 +47,18 @@ export function Wiki() {
     setPageTitle(t('nav.wiki'));
   }, [setPageTitle, t]);
 
-  const articles = [
+  interface Article {
+    id: string;
+    title: string;
+    category: string;
+    date: string;
+    icon: React.ElementType;
+    color: string;
+    bgColor: string;
+    isDummy?: boolean;
+  }
+
+  const articles: Article[] = [
     {
       id: 'launch',
       title: t('wiki.launch_title'),
@@ -57,26 +68,7 @@ export function Wiki() {
       color: 'info.main',
       bgColor: 'info.lighter'
     },
-    {
-       id: 'coming-soon-1',
-       title: 'Guild Event Guide',
-       category: 'Strategy',
-       date: 'Upcoming',
-       icon: Zap,
-       color: 'warning.main',
-       bgColor: 'warning.lighter',
-       isDummy: true
-    },
-    {
-       id: 'coming-soon-2',
-       title: 'Guild Code of Conduct',
-       category: 'Policy',
-       date: 'Upcoming',
-       icon: ShieldCheck,
-       color: 'success.main',
-       bgColor: 'success.lighter',
-       isDummy: true
-    }
+    /* Coming Soon articles removed for production release */
   ];
 
   const filteredArticles = articles.filter(a => 

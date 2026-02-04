@@ -50,18 +50,53 @@ import { RosterFilterPanel } from '../components/RosterFilterPanel';
 import type { RosterFilterState } from '../hooks/useFilterPresets';
 
 // Helper to determine active status based on availability
+// Helper to determine active status based on availability
 function getAvailabilityStatus(member: User): 'active' | 'inactive' | 'unknown' {
-  if (!member.availability || member.availability.length === 0) return 'unknown';
-  
-  // Real implementation would check:
-  // 1. Current day of week
-  // 2. Current time match against blocks
-  // For demo/prototype, we'll randomize or just check if any availability exists (User filled it out)
-  // Let's assume if availability exists, they are "Inactive" unless time matches (which we can't easily check without full logic)
-  // For now, let's just return 'active' if they have availability to show the Green pill as per "saw active or inactive" request context.
-  // Ideally this connects to real time.
-  
-  return 'active'; 
+  // 1. Check vacation status
+  if (member.vacation_start && member.vacation_end) {
+    const now = new Date();
+    try {
+      const start = new Date(member.vacation_start);
+      const end = new Date(member.vacation_end);
+      if (isWithinInterval(now, { start, end })) {
+        return 'inactive'; // Or 'vacation' if we supported that status explicitly
+      }
+    } catch (e) {
+      console.warn('Invalid vacation dates for member', member.id);
+    }
+  }
+
+  // 2. Check scheduled availability if present
+  if (member.availability && member.availability.length > 0) {
+    const now = new Date();
+    const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }); // e.g., 'Monday'
+    const currentTime = now.getHours() * 60 + now.getMinutes(); // Minutes from midnight
+
+    const todaySchedule = member.availability.find(d => d.day === currentDay);
+    if (todaySchedule?.blocks) {
+      const isAvailable = todaySchedule.blocks.some(block => {
+        try {
+          const [startH, startM] = block.start.split(':').map(Number);
+          const [endH, endM] = block.end.split(':').map(Number);
+          const startTotal = startH * 60 + startM;
+          const endTotal = endH * 60 + endM;
+          
+          // Handle overflow (e.g. 23:00 to 02:00) - complex, assuming same day for simple MVP
+          // For cross-midnight, simple check:
+          if (endTotal < startTotal) {
+             return currentTime >= startTotal || currentTime <= endTotal;
+          }
+          return currentTime >= startTotal && currentTime <= endTotal;
+        } catch { return false; }
+      });
+      return isAvailable ? 'active' : 'inactive';
+    }
+    // If availability is defined but not for today, they are likely inactive right now
+    return 'inactive';
+  }
+
+  // 3. Fallback to global active status if no specific availability data
+  return member.active_status === 'active' ? 'unknown' : 'inactive';
 }
 
 function useGlobalAudio() {
