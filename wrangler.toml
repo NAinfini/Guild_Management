@@ -15,20 +15,21 @@ html_handling = "auto-trailing-slash"
 [[d1_databases]]
 binding = "DB"
 database_name = "testdatabase"
-database_id = "7a0c5db4-ad84-45cc-a35b-5b900e8018f1"
+database_id = "02a599d0-1b61-4e19-9ace-7d337b96155b"
 
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "testbucket"
 
-[[durable_objects.bindings]]
-name = "CONNECTIONS"
-class_name = "ConnectionManager"
-script_name = "guild-management"
+# Temporarily disabled - fix build errors first
+# [[durable_objects.bindings]]
+# name = "CONNECTIONS"
+# class_name = "ConnectionManager"
+# script_name = "guild-management"
 
-[[migrations]]
-tag = "v1"
-new_classes = ["ConnectionManager"]
+# [[migrations]]
+# tag = "v1"
+# new_sqlite_classes = ["ConnectionManager"]
 
 [observability]
 enabled = true

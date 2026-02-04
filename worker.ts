@@ -48,6 +48,8 @@ import * as uploadImage from './workers/api/upload/image';
 import * as uploadAudio from './workers/api/upload/audio';
 
 // Media endpoints
+// WebSocket Durable Object
+export { ConnectionManager } from './workers/websocket/ConnectionManager';
 import * as mediaReorder from './workers/api/media/reorder';
 
 // Admin endpoints

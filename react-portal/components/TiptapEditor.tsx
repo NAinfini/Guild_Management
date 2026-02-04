@@ -45,6 +45,43 @@ interface TiptapEditorProps {
   minHeight?: number;
 }
 
+// Toolbar button component (moved outside render to fix lint error)
+const ToolbarButton = ({
+  onClick,
+  isActive = false,
+  disabled = false,
+  icon: Icon,
+  tooltip,
+  theme,
+}: {
+  onClick: () => void;
+  isActive?: boolean;
+  disabled?: boolean;
+  icon: any;
+  tooltip: string;
+  theme: any;
+}) => (
+  <Tooltip title={tooltip}>
+    <IconButton
+      onClick={onClick}
+      disabled={disabled}
+      size="small"
+      sx={{
+        borderRadius: 1,
+        bgcolor: isActive ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+        color: isActive ? 'primary.main' : 'text.secondary',
+        '&:hover': {
+          bgcolor: isActive
+            ? alpha(theme.palette.primary.main, 0.2)
+            : alpha(theme.palette.action.hover, 0.5),
+        },
+      }}
+    >
+      <Icon size={18} />
+    </IconButton>
+  </Tooltip>
+);
+
 export function TiptapEditor({
   content,
   onChange,
@@ -125,40 +162,6 @@ export function TiptapEditor({
     return null;
   }
 
-  const ToolbarButton = ({
-    onClick,
-    isActive = false,
-    disabled = false,
-    icon: Icon,
-    tooltip,
-  }: {
-    onClick: () => void;
-    isActive?: boolean;
-    disabled?: boolean;
-    icon: any;
-    tooltip: string;
-  }) => (
-    <Tooltip title={tooltip}>
-      <IconButton
-        onClick={onClick}
-        disabled={disabled}
-        size="small"
-        sx={{
-          borderRadius: 1,
-          bgcolor: isActive ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-          color: isActive ? 'primary.main' : 'text.secondary',
-          '&:hover': {
-            bgcolor: isActive
-              ? alpha(theme.palette.primary.main, 0.2)
-              : alpha(theme.palette.action.hover, 0.5),
-          },
-        }}
-      >
-        <Icon size={18} />
-      </IconButton>
-    </Tooltip>
-  );
-
   const charCount = editor.storage.characterCount?.characters() || 0;
 
   return (
@@ -220,18 +223,21 @@ export function TiptapEditor({
             isActive={editor.isActive('bold')}
             icon={Bold}
             tooltip="Bold (Ctrl+B)"
+            theme={theme}
           />
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleItalic().run()}
             isActive={editor.isActive('italic')}
             icon={Italic}
             tooltip="Italic (Ctrl+I)"
+            theme={theme}
           />
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             isActive={editor.isActive('underline')}
             icon={UnderlineIcon}
             tooltip="Underline (Ctrl+U)"
+            theme={theme}
           />
 
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
@@ -242,18 +248,21 @@ export function TiptapEditor({
             isActive={editor.isActive('heading', { level: 1 })}
             icon={Heading1}
             tooltip="Heading 1"
+            theme={theme}
           />
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
             isActive={editor.isActive('heading', { level: 2 })}
             icon={Heading2}
             tooltip="Heading 2"
+            theme={theme}
           />
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
             isActive={editor.isActive('heading', { level: 3 })}
             icon={Heading3}
             tooltip="Heading 3"
+            theme={theme}
           />
 
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
@@ -264,12 +273,14 @@ export function TiptapEditor({
             isActive={editor.isActive('bulletList')}
             icon={List}
             tooltip="Bullet List"
+            theme={theme}
           />
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             isActive={editor.isActive('orderedList')}
             icon={ListOrdered}
             tooltip="Numbered List"
+            theme={theme}
           />
 
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
@@ -280,11 +291,13 @@ export function TiptapEditor({
             isActive={editor.isActive('link')}
             icon={Link2}
             tooltip="Insert Link"
+            theme={theme}
           />
           <ToolbarButton
             onClick={handleImageClick}
             icon={ImageIcon}
             tooltip="Insert Image"
+            theme={theme}
           />
 
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
@@ -295,12 +308,14 @@ export function TiptapEditor({
             disabled={!editor.can().undo()}
             icon={Undo2}
             tooltip="Undo (Ctrl+Z)"
+            theme={theme}
           />
           <ToolbarButton
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo()}
             icon={Redo2}
             tooltip="Redo (Ctrl+Y)"
+            theme={theme}
           />
         </Stack>
       </Box>

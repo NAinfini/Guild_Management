@@ -44,7 +44,6 @@ export class ConnectionManager {
     (server as any).accept();
 
     // Extract user ID from query params or session
-    const url = new URL(request.url);
     const userId = url.searchParams.get('userId') || 'anonymous';
 
     // Store the connection

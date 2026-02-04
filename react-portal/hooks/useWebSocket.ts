@@ -18,52 +18,6 @@ export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const connect = useCallback(() => {
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8787/api/ws';
-    
-    try {
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        console.info('[WebSocket] Connected');
-        setIsConnected(true);
-        setReconnectAttempts(0);
-        toast.success('Real-time updates connected', 3000);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const message: WebSocketMessage = JSON.parse(event.data);
-          handleMessage(message);
-        } catch (error) {
-          console.error('[WebSocket] Failed to parse message:', error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('[WebSocket] Error:', error);
-      };
-
-      ws.onclose = () => {
-        console.info('[WebSocket] Disconnected');
-        setIsConnected(false);
-        wsRef.current = null;
-
-        // Attempt reconnect with exponential backoff
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-        console.info(`[WebSocket] Reconnecting in ${delay}ms...`);
-        
-        reconnectTimeoutRef.current = setTimeout(() => {
-          setReconnectAttempts((prev) => prev + 1);
-          connect();
-        }, delay);
-      };
-    } catch (error) {
-      console.error('[WebSocket] Connection error:', error);
-    }
-  }, [reconnectAttempts]);
-
   const handleMessage = useCallback((message: WebSocketMessage) => {
     const store = useGuildStore.getState();
 
@@ -128,6 +82,54 @@ export function useWebSocket() {
     }
   }, []);
 
+  const connectRef = useRef<(() => void) | undefined>();
+
+  const connect = useCallback(() => {
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8787/api/ws';
+    
+    try {
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.info('[WebSocket] Connected');
+        setIsConnected(true);
+        setReconnectAttempts(0);
+        toast.success('Real-time updates connected', 3000);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message: WebSocketMessage = JSON.parse(event.data);
+          handleMessage(message);
+        } catch (error) {
+          console.error('[WebSocket] Failed to parse message:', error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('[WebSocket] Error:', error);
+      };
+
+      ws.onclose = () => {
+        console.info('[WebSocket] Disconnected');
+        setIsConnected(false);
+        wsRef.current = null;
+
+        // Attempt reconnect with exponential backoff
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+        console.info(`[WebSocket] Reconnecting in ${delay}ms...`);
+        
+        reconnectTimeoutRef.current = setTimeout(() => {
+          setReconnectAttempts((prev) => prev + 1);
+          connectRef.current?.();
+        }, delay);
+      };
+    } catch (error) {
+      console.error('[WebSocket] Connection error:', error);
+    }
+  }, [reconnectAttempts, handleMessage]);
+
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
@@ -139,8 +141,9 @@ export function useWebSocket() {
     setIsConnected(false);
   }, []);
 
-  // Connect on mount, disconnect on unmount
+  // Update connect ref and connect on mount, disconnect on unmount
   useEffect(() => {
+    connectRef.current = connect;
     connect();
     return () => disconnect();
   }, [connect, disconnect]);

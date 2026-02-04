@@ -7,6 +7,7 @@ const IS_DEV = (import.meta as any).env?.DEV;
 
 // Import toast for error notifications
 import { toast } from './toast';
+import { useAuthStore } from '../store';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -27,9 +28,7 @@ const etagCache = new Map<string, string>();
 // Get CSRF token from auth store
 function getCSRFToken(): string | null {
   try {
-    // Dynamically import to avoid circular dependencies
-    const storeModule = require('./store');
-    return storeModule.useAuthStore.getState().csrfToken;
+    return useAuthStore.getState().csrfToken;
   } catch {
     return null;
   }
