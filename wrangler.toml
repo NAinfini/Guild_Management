@@ -1,0 +1,34 @@
+name = "guild-management"
+main = "worker.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+html_handling = "auto-trailing-slash"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "testdatabase"
+database_id = "7a0c5db4-ad84-45cc-a35b-5b900e8018f1"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "testbucket"
+
+[[durable_objects.bindings]]
+name = "CONNECTIONS"
+class_name = "ConnectionManager"
+script_name = "guild-management"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["ConnectionManager"]
+
+[observability]
+enabled = true
