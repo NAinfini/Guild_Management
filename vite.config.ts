@@ -1,4 +1,5 @@
-import { defineConfig } from 'vite'
+/// <reference types="vitest" />
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import path from 'path'
@@ -16,6 +17,15 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./react-portal"),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://guild-management.na-infini.workers.dev',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   test: {

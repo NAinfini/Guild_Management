@@ -1,3 +1,5 @@
+/// <reference types="@cloudflare/workers-types" />
+
 /**
  * WebSocket Connection Manager - Cloudflare Durable Object
  * Manages persistent WebSocket connections for real-time updates
@@ -20,7 +22,7 @@ export class ConnectionManager {
     // Handle internal broadcast requests
     if (url.pathname === '/broadcast' && request.method === 'POST') {
       try {
-        const body = await request.json();
+        const body = await request.json() as { excludeUserId?: string };
         const sent = this.broadcast(body, body.excludeUserId);
         return new Response(JSON.stringify({ sent }), {
           headers: { 'Content-Type': 'application/json' },

@@ -1,4 +1,7 @@
+# D1 Schema Optimization Guide
+
 -- D1-Compatible Schema (Triggers Removed for Compatibility)
+This guide provides strategies for optimizing your Cloudflare D1 database schema for performance and scalability.
 -- All trigger-based validation moved to application layer
 
 -- Comment out all triggers - D1 has limited trigger support

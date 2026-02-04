@@ -5,7 +5,7 @@
 
 import { useCallback } from 'react';
 import { useAuthStore } from '../store';
-import { api, APIError } from '../lib/api-client';
+import { api, apiDirect, APIError } from '../lib/api-client';
 import type { LoginResponse, SessionResponse } from '../lib/api-types';
 
 interface LoginCredentials {
@@ -95,7 +95,7 @@ export function useAuth() {
 
   const validateSession = useCallback(async () => {
     try {
-      const response = await api.get<{ data: SessionResponse }>('/auth/session');
+      const response = await apiDirect.get<{ data: SessionResponse }>('/auth/session');
       const data = response.data;
       setUser(data.user as any);
       // Store CSRF token from session
