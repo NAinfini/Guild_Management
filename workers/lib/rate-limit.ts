@@ -207,8 +207,10 @@ export function cleanupRateLimits(): void {
   }
 }
 
-// Auto-cleanup every 5 minutes
-if (typeof setInterval !== 'undefined') {
-  setInterval(cleanupRateLimits, 5 * 60 * 1000);
-}
+// Auto-cleanup disabled for Cloudflare Workers
+// Workers are stateless and the in-memory store gets reset on each instance
+// If persistent rate limiting is needed, use Durable Objects or KV
+// if (typeof setInterval !== 'undefined') {
+//   setInterval(cleanupRateLimits, 5 * 60 * 1000);
+// }
 
