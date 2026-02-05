@@ -758,18 +758,18 @@ function DraggableMemberCard({ member, selected, onClick, onDoubleClick, onKick,
           borderRadius: 2,
           borderColor: (() => {
              if (selected) return theme.palette.primary.main;
-             const c = member.classes?.[0] || '';
-             if (c.includes('qiansilin')) return alpha(theme.palette.success.main, 0.2);
-             if (c.includes('lieshiwei')) return alpha(theme.palette.warning.main, 0.2);
-             if (c.includes('tianwei')) return alpha(theme.palette.warning.dark, 0.2);
+             const c = member.classes?.[0];
+             if (c && c.includes('qiansilin')) return alpha(theme.palette.success.main, 0.2);
+             if (c && c.includes('lieshiwei')) return alpha(theme.palette.warning.main, 0.2);
+             if (c && c.includes('tianwei')) return alpha(theme.palette.warning.dark, 0.2);
              return alpha(theme.palette.info.main, 0.2);
           })(),
           bgcolor: (() => {
              if (selected) return alpha(theme.palette.primary.main, 0.1);
-             const c = member.classes?.[0] || '';
-             if (c.includes('qiansilin')) return alpha(theme.palette.success.main, 0.05);
-             if (c.includes('lieshiwei')) return alpha(theme.palette.warning.main, 0.05);
-             if (c.includes('tianwei')) return alpha(theme.palette.warning.dark, 0.05);
+             const c = member.classes?.[0];
+             if (c && c.includes('qiansilin')) return alpha(theme.palette.success.main, 0.05);
+             if (c && c.includes('lieshiwei')) return alpha(theme.palette.warning.main, 0.05);
+             if (c && c.includes('tianwei')) return alpha(theme.palette.warning.dark, 0.05);
              return alpha(theme.palette.info.main, 0.05);
           })(),
           transition: 'all 0.2s',
@@ -790,8 +790,8 @@ function DraggableMemberCard({ member, selected, onClick, onDoubleClick, onKick,
                      fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase',
                      bgcolor: (() => {
                          const c = member.classes[0];
-                         if (c.includes('qiansilin')) return 'success.main';
-                         if (c.includes('lieshiwei')) return 'warning.main';
+                         if (c && c.includes('qiansilin')) return 'success.main';
+                         if (c && c.includes('lieshiwei')) return 'warning.main';
                          return 'info.main';
                      })(),
                      color: '#fff'
