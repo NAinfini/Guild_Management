@@ -42,7 +42,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
     try {
       // Get target user
       const targetUser = await env.DB
-        .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at IS NULL')
+        .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at_utc IS NULL')
         .bind(userId)
         .first<User>();
 
@@ -124,7 +124,7 @@ async function handleDeactivate(context: any): Promise<Response> {
     try {
       // Get target user
       const targetUser = await env.DB
-        .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at IS NULL')
+        .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at_utc IS NULL')
         .bind(userId)
         .first<User>();
 
@@ -198,7 +198,7 @@ async function handleResetPassword(context: any): Promise<Response> {
     try {
       // Get target user
       const targetUser = await env.DB
-        .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at IS NULL')
+        .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at_utc IS NULL')
         .bind(userId)
         .first<User>();
 

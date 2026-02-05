@@ -17,7 +17,8 @@
       "Bash(npx wrangler deployments:*)",
       "mcp__cloudflare-docs__search_cloudflare_documentation",
       "Bash(timeout 30 npx wrangler tail:*)",
-      "Bash(npx wrangler:*)"
+      "Bash(npx wrangler:*)",
+      "Bash(git push:*)"
     ]
   }
 }

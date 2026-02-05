@@ -42,7 +42,7 @@ export async function fetchMembers(env: Env, since?: string): Promise<any[]> {
       mp.vacation_end_at_utc
     FROM users u
     LEFT JOIN member_profiles mp ON mp.user_id = u.user_id
-    WHERE u.deleted_at IS NULL
+    WHERE u.deleted_at_utc IS NULL
     ${since ? 'AND u.updated_at_utc > ?' : ''}
     ORDER BY (u.role = 'admin') DESC, (u.role = 'moderator') DESC, u.power DESC
   `;

@@ -184,7 +184,7 @@ export interface User {
   power: number;
   is_active: 0 | 1;
   last_username_change_at_utc: string | null;
-  deleted_at: string | null;
+  deleted_at_utc: string | null;
   created_at_utc: string;
   updated_at_utc: string;
 }

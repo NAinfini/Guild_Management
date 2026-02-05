@@ -64,7 +64,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           // Events updates
           if (entities.includes('events')) {
             const res = await env.DB.prepare(
-              'SELECT event_id, updated_at_utc FROM events WHERE updated_at_utc > ? AND deleted_at IS NULL ORDER BY updated_at_utc DESC LIMIT 50'
+              'SELECT event_id, updated_at_utc FROM events WHERE updated_at_utc > ? AND deleted_at_utc IS NULL ORDER BY updated_at_utc DESC LIMIT 50'
             ).bind(lastEvents || '1970-01-01T00:00:00Z').all();
             
             if (res.results && res.results.length > 0) {
@@ -82,7 +82,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           // Announcements updates
           if (entities.includes('announcements')) {
             const res = await env.DB.prepare(
-              'SELECT announcement_id, updated_at_utc FROM announcements WHERE updated_at_utc > ? AND deleted_at IS NULL ORDER BY updated_at_utc DESC LIMIT 50'
+              'SELECT announcement_id, updated_at_utc FROM announcements WHERE updated_at_utc > ? AND deleted_at_utc IS NULL ORDER BY updated_at_utc DESC LIMIT 50'
             ).bind(lastAnnouncements || '1970-01-01T00:00:00Z').all();
             
             if (res.results && res.results.length > 0) {
@@ -100,7 +100,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           // Members updates
           if (entities.includes('members')) {
             const res = await env.DB.prepare(
-              'SELECT user_id, updated_at_utc FROM users WHERE updated_at_utc > ? AND deleted_at IS NULL ORDER BY updated_at_utc DESC LIMIT 50'
+              'SELECT user_id, updated_at_utc FROM users WHERE updated_at_utc > ? AND deleted_at_utc IS NULL ORDER BY updated_at_utc DESC LIMIT 50'
             ).bind(lastMembers || '1970-01-01T00:00:00Z').all();
             
             if (res.results && res.results.length > 0) {

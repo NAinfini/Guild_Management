@@ -125,7 +125,7 @@ export function utcNow(): string {
 
 export async function getUser(db: D1Database, userId: string): Promise<User | null> {
   const result = await db
-    .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at IS NULL')
+    .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at_utc IS NULL')
     .bind(userId)
     .first<User>();
   return result;
