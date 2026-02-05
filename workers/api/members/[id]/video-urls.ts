@@ -7,10 +7,10 @@
  * Must be external_url storage type (enforced by DB trigger)
  */
 
-import { createEndpoint } from '../../../../lib/endpoint-factory';
-import { generateId } from '../../../../../shared/utils/id';
-import { utcNow } from '../../../../../shared/utils/date';
-import { createAuditLog } from '../../../../lib/utils';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { generateId } from '../../../lib/utils';
+import { utcNow } from '../../../lib/utils';
+import { createAuditLog } from '../../../lib/utils';
 
 interface VideoUrlCreateRequest {
   url: string;

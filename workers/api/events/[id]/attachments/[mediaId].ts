@@ -4,7 +4,7 @@
  */
 
 import { createEndpoint } from '../../../../lib/endpoint-factory';
-import { utcNow } from '../../../../../shared/utils/date';
+import { utcNow } from '../../../../lib/utils';
 
 /**
  * DELETE /events/:id/attachments/:mediaId

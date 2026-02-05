@@ -8,8 +8,8 @@
 
 import type { Env, AuditLog } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
-import { generateId } from '../../../shared/utils/id';
-import { utcNow } from '../../../shared/utils/date';
+import { generateId } from '../../lib/utils';
+import { utcNow } from '../../lib/utils';
 
 interface AuditLogEntry {
   audit_id: string;

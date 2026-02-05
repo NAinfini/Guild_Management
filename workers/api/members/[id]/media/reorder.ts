@@ -3,8 +3,8 @@
  * PUT /members/:id/media/reorder - Reorder member's media
  */
 
-import { createEndpoint } from '../../../../../lib/endpoint-factory';
-import { utcNow, createAuditLog } from '../../../../../lib/utils';
+import { createEndpoint } from '../../../../lib/endpoint-factory';
+import { utcNow, createAuditLog } from '../../../../lib/utils';
 
 interface ReorderMediaRequest {
   media_ids: string[]; // Full ordered list of media IDs

@@ -5,7 +5,7 @@
  * Convenience endpoint - can be done via existing GET /admin/audit-logs with filters
  */
 
-import { createEndpoint } from '../../../../../lib/endpoint-factory';
+import { createEndpoint } from '../../../../lib/endpoint-factory';
 
 interface EntityHistoryQuery {
   limit?: number;

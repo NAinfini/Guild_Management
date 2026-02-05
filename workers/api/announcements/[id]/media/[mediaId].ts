@@ -5,9 +5,9 @@
  * Automatically reorders remaining media to fill gaps
  */
 
-import type { Env } from '../../../../../lib/types';
-import { createEndpoint } from '../../../../../lib/endpoint-factory';
-import { utcNow, createAuditLog } from '../../../../../lib/utils';
+import type { Env } from '../../../../lib/types';
+import { createEndpoint } from '../../../../lib/endpoint-factory';
+import { utcNow, createAuditLog } from '../../../../lib/utils';
 
 /**
  * DELETE /api/announcements/:id/media/:mediaId - Remove media attachment

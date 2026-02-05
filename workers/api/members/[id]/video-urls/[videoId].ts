@@ -4,9 +4,9 @@
  * DELETE /members/:id/video-urls/:videoId - Delete video URL
  */
 
-import { createEndpoint } from '../../../../../lib/endpoint-factory';
-import { utcNow } from '../../../../../../shared/utils/date';
-import { createAuditLog } from '../../../../../lib/utils';
+import { createEndpoint } from '../../../../lib/endpoint-factory';
+import { utcNow } from '../../../../lib/utils';
+import { createAuditLog } from '../../../../lib/utils';
 
 interface VideoUrlUpdateRequest {
   url?: string;

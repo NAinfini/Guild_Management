@@ -116,26 +116,26 @@ export const onRequestPut = createEndpoint<GalleryImage>({
 
     // Build update query
     const updates: string[] = [];
-    const params: any[] = [];
+    const sqlParams: any[] = [];
 
     if (body.title !== undefined) {
       updates.push('title = ?');
-      params.push(body.title);
+      sqlParams.push(body.title);
     }
 
     if (body.description !== undefined) {
       updates.push('description = ?');
-      params.push(body.description);
+      sqlParams.push(body.description);
     }
 
     if (body.category !== undefined) {
       updates.push('category = ?');
-      params.push(body.category);
+      sqlParams.push(body.category);
     }
 
     if (body.is_featured !== undefined) {
       updates.push('is_featured = ?');
-      params.push(body.is_featured ? 1 : 0);
+      sqlParams.push(body.is_featured ? 1 : 0);
     }
 
     if (updates.length === 0) {
@@ -144,14 +144,14 @@ export const onRequestPut = createEndpoint<GalleryImage>({
 
     const now = utcNow();
     updates.push('updated_at_utc = ?');
-    params.push(now);
+    sqlParams.push(now);
 
-    params.push(galleryId);
+    sqlParams.push(galleryId);
 
     await env.DB.prepare(
       `UPDATE gallery_images SET ${updates.join(', ')} WHERE gallery_id = ?`
     )
-      .bind(...params)
+      .bind(...sqlParams)
       .run();
 
     // Create audit log

@@ -363,7 +363,7 @@ export const onRequestPatch = createEndpoint<BatchUpdateResponse, BatchUpdateQue
         user!.user_id,
         'batch',
         `Batch changed role to ${role} for ${successCount} members`,
-        JSON.stringify { userIds: ids, role }
+        JSON.stringify({ userIds: ids, role })
       );
     } else if (action === 'activate') {
       const placeholders = ids.map(() => '?').join(',');

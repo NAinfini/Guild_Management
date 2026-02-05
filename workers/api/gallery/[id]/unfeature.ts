@@ -5,8 +5,8 @@
  * Convenience endpoint - same functionality as PUT /gallery/:id with is_featured=false
  */
 
-import { createEndpoint } from '../../../../lib/endpoint-factory';
-import { utcNow, createAuditLog } from '../../../../lib/utils';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { utcNow, createAuditLog } from '../../../lib/utils';
 
 interface UnfeatureResponse {
   message: string;

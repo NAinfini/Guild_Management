@@ -6,8 +6,8 @@
  * Unsets any previously set avatar for this member
  */
 
-import { createEndpoint } from '../../../../../../lib/endpoint-factory';
-import { utcNow, createAuditLog } from '../../../../../../lib/utils';
+import { createEndpoint } from '../../../../../lib/endpoint-factory';
+import { utcNow, createAuditLog } from '../../../../../lib/utils';
 
 interface SetAvatarResponse {
   message: string;

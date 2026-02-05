@@ -4,8 +4,8 @@
  * POST /media/:id/conversions/retry - Retry failed conversion
  */
 
-import { createEndpoint } from '../../../../lib/endpoint-factory';
-import { utcNow } from '../../../../../shared/utils/date';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { utcNow } from '../../../lib/utils';
 
 interface ConversionStatus {
   conversion_id: string;

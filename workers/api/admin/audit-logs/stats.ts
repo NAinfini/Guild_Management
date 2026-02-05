@@ -3,7 +3,7 @@
  * GET /admin/audit-logs/stats - Get aggregated audit log statistics
  */
 
-import { createEndpoint } from '../../../../lib/endpoint-factory';
+import { createEndpoint } from '../../../lib/endpoint-factory';
 
 interface AuditStatsQuery {
   date_range_start?: string;

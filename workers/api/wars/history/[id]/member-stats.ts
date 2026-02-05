@@ -4,7 +4,7 @@
  * PUT /api/wars/history/[id]/member-stats
  */
 
-import type { PagesFunction, Env } from '../../../_types';
+import type { PagesFunction, Env } from '../../../../lib/types';
 import {
   successResponse,
   badRequestResponse,
@@ -14,9 +14,9 @@ import {
   createAuditLog,
   etagFromTimestamp,
   assertIfMatch,
-} from '../../../_utils';
-import { withOptionalAuth, withModeratorAuth } from '../../../_middleware';
-import { validateBody, memberStatsSchema } from '../../../_validation';
+} from '../../../../lib/utils';
+import { withOptionalAuth, withModeratorAuth } from '../../../../lib/middleware';
+import { validateBody, memberStatsSchema } from '../../../../lib/validation';
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   return withOptionalAuth(context, async (authContext) => {

@@ -7,9 +7,9 @@
  * Only R2 storage allowed (enforced by DB trigger)
  */
 
-import type { Env } from '../../../../lib/types';
-import { createEndpoint } from '../../../../lib/endpoint-factory';
-import { utcNow, createAuditLog, generateId } from '../../../../lib/utils';
+import type { Env } from '../../../lib/types';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { utcNow, createAuditLog, generateId } from '../../../lib/utils';
 
 interface AttachMediaRequest {
   media_ids: string[];
