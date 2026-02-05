@@ -135,6 +135,7 @@ export default {
           path: pathname,
           method,
           error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
         });
         const origin = request.headers.get('Origin');
         return new Response(
