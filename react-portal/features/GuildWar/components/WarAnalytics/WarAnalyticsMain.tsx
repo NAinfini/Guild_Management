@@ -21,7 +21,7 @@ import { RankingsFilters } from './RankingsFilters';
 import { RankingsBarChart } from './RankingsBarChart';
 import { MetricsPanel } from './MetricsPanel';
 import { FullPageLoading } from './LoadingStates';
-import { useWarsList, useAnalyticsData } from '../../../hooks/useWars';
+import { useWarsList, useAnalyticsData } from '../../../../hooks';
 
 // ============================================================================
 // Main Wrapper (with Provider)

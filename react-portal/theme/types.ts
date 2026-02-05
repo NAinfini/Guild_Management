@@ -14,6 +14,8 @@ declare module '@mui/material/styles' {
       customShadow: string;
       gradient: string;
       shimmer: string;
+      mutedText: string;
+      roleColors: Record<string, string>;
 
       // Status colors
       status: {
