@@ -56,9 +56,20 @@ const mapToDomain = (dto: AnnouncementDTO): Announcement => {
 export const announcementsAPI = {
   list: async (): Promise<Announcement[]> => {
     // API client now unwraps { success, data } envelope automatically
-    const response = await typedAPI.announcements.list<AnnouncementDTO[]>();
-    if (!response || !Array.isArray(response)) return [];
-    return response.map(mapToDomain);
+    const response = await typedAPI.announcements.list<AnnouncementDTO[] | { items: AnnouncementDTO[], pagination: any }>();
+
+    // Handle both paginated and non-paginated responses
+    let items: AnnouncementDTO[];
+    if (!response) return [];
+    if (Array.isArray(response)) {
+      items = response;
+    } else if (response && 'items' in response) {
+      items = response.items;
+    } else {
+      return [];
+    }
+
+    return items.map(mapToDomain);
   },
 
   create: async (data: CreateAnnouncementData): Promise<Announcement> => {

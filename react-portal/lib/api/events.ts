@@ -102,10 +102,20 @@ export const eventsAPI = {
     if (params?.includeArchived) queryParams.includeArchived = 'true';
 
     // API client now unwraps { success, data } envelope automatically
-    const response = await typedAPI.events.list<EventListItemDTO[]>({ query: queryParams });
-    if (!response || !Array.isArray(response)) return [];
+    const response = await typedAPI.events.list<EventListItemDTO[] | { items: EventListItemDTO[], pagination: any }>({ query: queryParams });
 
-    return response.map(mapToDomain);
+    // Handle both paginated and non-paginated responses
+    let items: EventListItemDTO[];
+    if (!response) return [];
+    if (Array.isArray(response)) {
+      items = response;
+    } else if (response && 'items' in response) {
+      items = response.items;
+    } else {
+      return [];
+    }
+
+    return items.map(mapToDomain);
   },
 
   /**
