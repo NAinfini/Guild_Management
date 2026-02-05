@@ -1,15 +1,11 @@
 /**
  * Gallery API - List, Create, and Batch Delete
- * GET /api/gallery - List gallery items
+ * GET /api/gallery - List gallery items (with filtering)
  * GET /api/gallery?ids=id1,id2,id3 - Batch fetch gallery items by IDs
- * POST /api/gallery - Create gallery item (upload handled separately via /api/upload -> creates media, this links it?)
+ * POST /api/gallery - Create gallery item
  * DELETE /api/gallery?mediaIds=id1,id2,id3 - Batch delete gallery items
  *
- * Note: Gallery usually displays media items.
- * If 'gallery' table exists, it links to media.
- * Based on snippets, gallery items might be just media items with 'gallery' type or specific table.
- * Assuming 'gallery_items' table based on typical pattern, or just querying media.
- * Let's assume 'gallery_items' or 'media' with is_public/gallery tag.
+ * Schema: gallery_images table (gallery_id, media_id, title, description, category, is_featured, uploaded_by)
  *
  * Migrated to use createEndpoint pattern.
  */
@@ -20,16 +16,37 @@ import { utcNow, createAuditLog, generateId, canEditEntity } from '../../../lib/
 
 interface CreateGalleryItemBody {
   mediaId: string;
-  caption?: string;
-  isPublic?: boolean;
+  title?: string;
+  description?: string;
+  category?: 'screenshot' | 'meme' | 'event' | 'achievement' | 'other';
 }
 
 interface GalleryListQuery {
   ids?: string; // Comma-separated IDs for batch fetch
+  category?: string; // Filter by category
+  featured?: string; // Filter by is_featured (boolean)
+  uploader?: string; // Filter by uploaded_by (user_id)
+  limit?: number; // Pagination limit
+  offset?: number; // Pagination offset
+}
+
+interface GalleryImage {
+  gallery_id: string;
+  media_id: string;
+  title: string | null;
+  description: string | null;
+  category: string | null;
+  is_featured: boolean;
+  uploaded_by: string | null;
+  created_at_utc: string;
+  url: string;
 }
 
 interface GalleryListResponse {
-  items: any[];
+  images: GalleryImage[];
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 interface BatchDeleteQuery {
@@ -42,6 +59,9 @@ interface BatchDeleteResponse {
   failed?: Array<{ mediaId: string; error: string }>;
 }
 
+/**
+ * GET /api/gallery - List gallery items with filtering
+ */
 export const onRequestGet = createEndpoint<GalleryListResponse, never, GalleryListQuery>({
   auth: 'optional',
   etag: true,
@@ -49,6 +69,11 @@ export const onRequestGet = createEndpoint<GalleryListResponse, never, GalleryLi
 
   parseQuery: (searchParams) => ({
     ids: searchParams.get('ids') || undefined,
+    category: searchParams.get('category') || undefined,
+    featured: searchParams.get('featured') || undefined,
+    uploader: searchParams.get('uploader') || undefined,
+    limit: parseInt(searchParams.get('limit') || '50'),
+    offset: parseInt(searchParams.get('offset') || '0'),
   }),
 
   handler: async ({ env, query }) => {
@@ -61,35 +86,103 @@ export const onRequestGet = createEndpoint<GalleryListResponse, never, GalleryLi
 
       const items = await env.DB
         .prepare(`
-          SELECT * FROM media
-          WHERE entity_type = 'gallery' AND media_id IN (${placeholders})
-          ORDER BY created_at_utc DESC
+          SELECT gi.*, mo.r2_key
+          FROM gallery_images gi
+          JOIN media_objects mo ON gi.media_id = mo.media_id
+          WHERE gi.gallery_id IN (${placeholders})
+          ORDER BY gi.created_at_utc DESC
         `)
         .bind(...ids)
         .all();
 
-      const foundIds = new Set(items.results?.map((item: any) => item.media_id) || []);
+      const foundIds = new Set(items.results?.map((item: any) => item.gallery_id) || []);
       const notFound = ids.filter(id => !foundIds.has(id));
 
       return {
-        items: items.results || [],
+        images: (items.results || []).map((row: any) => ({
+          gallery_id: row.gallery_id,
+          media_id: row.media_id,
+          title: row.title,
+          description: row.description,
+          category: row.category,
+          is_featured: row.is_featured === 1,
+          uploaded_by: row.uploaded_by,
+          created_at_utc: row.created_at_utc,
+          url: row.r2_key ? `https://your-r2-domain.com/${row.r2_key}` : '',
+        })),
         notFound: notFound.length > 0 ? notFound : undefined,
       };
     }
 
     // ============================================================
-    // LIST MODE: Fetch all gallery items
+    // LIST MODE: Fetch gallery items with filtering
     // ============================================================
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    // Category filter
+    if (query.category) {
+      const validCategories = ['screenshot', 'meme', 'event', 'achievement', 'other'];
+      if (!validCategories.includes(query.category)) {
+        throw new Error(`Invalid category. Must be one of: ${validCategories.join(', ')}`);
+      }
+      conditions.push('gi.category = ?');
+      params.push(query.category);
+    }
+
+    // Featured filter
+    if (query.featured !== undefined) {
+      const isFeatured = query.featured === 'true' || query.featured === '1';
+      conditions.push('gi.is_featured = ?');
+      params.push(isFeatured ? 1 : 0);
+    }
+
+    // Uploader filter
+    if (query.uploader) {
+      conditions.push('gi.uploaded_by = ?');
+      params.push(query.uploader);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // Get total count
+    const countQuery = `SELECT COUNT(*) as total FROM gallery_images gi ${whereClause}`;
+    const countResult = await env.DB.prepare(countQuery).bind(...params).first<{ total: number }>();
+    const total = countResult?.total || 0;
+
+    // Get paginated results
+    const limit = Math.min(query.limit || 50, 100); // Max 100 per page
+    const offset = query.offset || 0;
+
+    const itemsQuery = `
+      SELECT gi.*, mo.r2_key
+      FROM gallery_images gi
+      JOIN media_objects mo ON gi.media_id = mo.media_id
+      ${whereClause}
+      ORDER BY gi.created_at_utc DESC
+      LIMIT ? OFFSET ?
+    `;
+
     const items = await env.DB
-      .prepare(`
-        SELECT * FROM media
-        WHERE entity_type = 'gallery'
-        ORDER BY created_at_utc DESC
-      `)
+      .prepare(itemsQuery)
+      .bind(...params, limit, offset)
       .all();
 
     return {
-      items: items.results || [],
+      images: (items.results || []).map((row: any) => ({
+        gallery_id: row.gallery_id,
+        media_id: row.media_id,
+        title: row.title,
+        description: row.description,
+        category: row.category,
+        is_featured: row.is_featured === 1,
+        uploaded_by: row.uploaded_by,
+        created_at_utc: row.created_at_utc,
+        url: row.r2_key ? `https://your-r2-domain.com/${row.r2_key}` : '',
+      })),
+      total,
+      limit,
+      offset,
     };
   },
 });

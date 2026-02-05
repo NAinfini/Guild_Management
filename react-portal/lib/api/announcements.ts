@@ -96,46 +96,14 @@ export const announcementsAPI = {
     return mapToDomain(response.announcement);
   },
 
-  archive: async (id: string, isArchived: boolean): Promise<Announcement> => {
-     const response = await typedAPI.announcements.archive<{ announcement: AnnouncementDTO }>({ params: { id }, body: {} });
-     return mapToDomain(response.announcement);
+  toggleArchive: async (id: string): Promise<Announcement> => {
+     await typedAPI.announcements.toggleArchive<{ isArchived: boolean; message: string }>({ params: { id }, body: {} });
+     // Re-fetch to get full object
+     const list = await announcementsAPI.list();
+     const found = list.find(a => a.id === id);
+     if (!found) throw new Error('Announcement not found after toggle');
+     return found;
   },
 
-  // ============================================================================
-  // Batch Operations
-  // ============================================================================
 
-  batchDelete: async (ids: string[]): Promise<{ affectedCount: number }> => {
-    return typedAPI.announcements.batch({ body: {
-      action: 'delete',
-      announcementIds: ids,
-    }});
-  },
-
-  batchArchive: async (ids: string[], archived: boolean): Promise<{ affectedCount: number }> => {
-    return typedAPI.announcements.batch({ body: {
-      action: archived ? 'archive' : 'unarchive',
-      announcementIds: ids,
-    }});
-  },
-
-  batchPin: async (ids: string[], pinned: boolean): Promise<{ affectedCount: number }> => {
-    return typedAPI.announcements.batch({ body: {
-      action: pinned ? 'pin' : 'unpin',
-      announcementIds: ids,
-    }});
-  },
-
-  batchGet: async (ids: string[]): Promise<Announcement[]> => {
-    const res = await typedAPI.announcements.batch<{ announcements: AnnouncementDTO[] }>({
-      query: { ids: ids.join(',') }
-    });
-    return res.announcements.map(mapToDomain);
-  },
-
-  restore: async (ids: string[]): Promise<{ affectedCount: number }> => {
-    return typedAPI.announcements.restoreBatch({ body: {
-      announcementIds: ids,
-    }});
-  },
 };

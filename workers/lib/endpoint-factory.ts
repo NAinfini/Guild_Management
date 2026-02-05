@@ -75,7 +75,7 @@ export interface EndpointConfig<TData = any, TQuery = any, TBody = any> {
   /**
    * Handler function that processes the request
    */
-  handler: (context: EndpointContext<TQuery, TBody>) => Promise<TData> | TData;
+  handler: (context: EndpointContext<TQuery, TBody>) => Promise<TData | Response> | TData | Response;
 
   /**
    * Optional query parameter parser/validator

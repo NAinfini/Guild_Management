@@ -482,17 +482,10 @@ CREATE INDEX IF NOT EXISTS idx_events_pinned ON events(is_pinned, start_at_utc);
 CREATE INDEX IF NOT EXISTS idx_events_updated_at ON events(updated_at_utc DESC);
 CREATE INDEX IF NOT EXISTS idx_events_deleted ON events(deleted_at_utc) WHERE deleted_at_utc IS NOT NULL;
 
-CREATE TABLE IF NOT EXISTS event_participants (
-  event_id    TEXT NOT NULL REFERENCES events(event_id) ON DELETE CASCADE,
-  user_id     TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-  joined_at_utc   TEXT NOT NULL,
-  joined_by   TEXT REFERENCES users(user_id),
-  created_at_utc  TEXT NOT NULL,
-  updated_at_utc  TEXT NOT NULL,
-  PRIMARY KEY (event_id, user_id)
-);
+CREATE INDEX IF NOT EXISTS idx_events_deleted ON events(deleted_at_utc) WHERE deleted_at_utc IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS idx_event_participants_user ON event_participants(user_id, joined_at_utc DESC);
+-- event_participants replaced by team_members + event_teams assignment
+-- (Legacy table removed)
 
 CREATE TABLE IF NOT EXISTS event_attachments (
   attachment_id TEXT PRIMARY KEY,
@@ -528,6 +521,51 @@ END;
 -- GUILD WAR: Active + History + Results + Stats
 -- ------------------------------------------------------------
 
+-- ------------------------------------------------------------
+-- UNIVERSAL TEAMS (Persistent Squads/Groups)
+-- ------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS teams (
+  team_id       TEXT PRIMARY KEY,
+  name          TEXT NOT NULL,
+  description   TEXT,
+  is_locked     INTEGER NOT NULL DEFAULT 0 CHECK (is_locked IN (0, 1)),
+  created_by    TEXT, 
+  created_at_utc    TEXT NOT NULL,
+  updated_at_utc    TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS team_members (
+  team_id       TEXT NOT NULL REFERENCES teams(team_id) ON DELETE CASCADE,
+  user_id       TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  sort_order    INTEGER NOT NULL DEFAULT 0,
+  role_tag      TEXT,
+  joined_at_utc     TEXT NOT NULL,
+  PRIMARY KEY (team_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(user_id);
+
+-- ------------------------------------------------------------
+-- EVENT ASSIGNMENTS (Teams Assigned to Events)
+-- Replaces old event_participants and war_teams concept
+-- ------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS event_teams (
+  event_id      TEXT NOT NULL REFERENCES events(event_id) ON DELETE CASCADE,
+  team_id       TEXT NOT NULL REFERENCES teams(team_id) ON DELETE CASCADE,
+  assigned_at_utc   TEXT NOT NULL,
+  PRIMARY KEY (event_id, team_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_event_teams_event ON event_teams(event_id);
+CREATE INDEX IF NOT EXISTS idx_event_teams_team ON event_teams(team_id);
+
+-- ------------------------------------------------------------
+-- GUILD WAR: Active + History + Results + Stats
+-- ------------------------------------------------------------
+-- Note: War Teams are now handled via event_teams linking to the war's event_id
+
 CREATE TABLE IF NOT EXISTS war_history (
   war_id         TEXT PRIMARY KEY,
   event_id       TEXT UNIQUE REFERENCES events(event_id) ON DELETE SET NULL,
@@ -554,80 +592,7 @@ CREATE TABLE IF NOT EXISTS war_history (
 CREATE INDEX IF NOT EXISTS idx_war_history_date ON war_history(war_date DESC);
 CREATE INDEX IF NOT EXISTS idx_war_history_updated ON war_history(updated_at_utc DESC);
 
-CREATE TABLE IF NOT EXISTS war_teams (
-  war_team_id  TEXT PRIMARY KEY,
-  war_id       TEXT NOT NULL REFERENCES war_history(war_id) ON DELETE CASCADE,
-  name         TEXT NOT NULL,
-  note         TEXT,
-  is_locked    INTEGER NOT NULL DEFAULT 0 CHECK (is_locked IN (0, 1)),
-  sort_order   INTEGER NOT NULL DEFAULT 0,
-  created_at_utc   TEXT NOT NULL,
-  updated_at_utc   TEXT NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_war_teams_order ON war_teams(war_id, sort_order);
-
--- Team members: store role_tag per docs; enforce "member appears exactly once across Pool + Teams"
-CREATE TABLE IF NOT EXISTS war_team_members (
-  war_id       TEXT NOT NULL REFERENCES war_history(war_id) ON DELETE CASCADE,
-  war_team_id  TEXT NOT NULL REFERENCES war_teams(war_team_id) ON DELETE CASCADE,
-  user_id      TEXT NOT NULL REFERENCES users(user_id),
-  role_tag     TEXT,
-  sort_order   INTEGER NOT NULL DEFAULT 0,
-  created_at_utc   TEXT NOT NULL,
-  updated_at_utc   TEXT NOT NULL,
-  PRIMARY KEY (war_team_id, user_id),
-  UNIQUE (war_id, user_id),
-  CHECK (role_tag IS NULL OR length(role_tag) <= 32)
-);
-
-CREATE INDEX IF NOT EXISTS idx_war_team_members_user ON war_team_members(user_id);
-CREATE INDEX IF NOT EXISTS idx_war_team_members_war ON war_team_members(war_id, sort_order);
-
--- Pool members (unassigned)
-CREATE TABLE IF NOT EXISTS war_pool_members (
-  war_id       TEXT NOT NULL REFERENCES war_history(war_id) ON DELETE CASCADE,
-  user_id      TEXT NOT NULL REFERENCES users(user_id),
-  created_at_utc   TEXT NOT NULL,
-  updated_at_utc   TEXT NOT NULL,
-  PRIMARY KEY (war_id, user_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_war_pool_members_user ON war_pool_members(user_id);
-
--- Enforce war_id consistency between war_team_members.war_id and war_teams.war_id
-CREATE TRIGGER IF NOT EXISTS trg_war_team_member_war_id_match_ins
-BEFORE INSERT ON war_team_members
-FOR EACH ROW
-WHEN (SELECT war_id FROM war_teams WHERE war_team_id = NEW.war_team_id) != NEW.war_id
-BEGIN
-  SELECT RAISE(ABORT, 'war_id does not match war_team');
-END;
-
-CREATE TRIGGER IF NOT EXISTS trg_war_team_member_war_id_match_upd
-BEFORE UPDATE OF war_id, war_team_id ON war_team_members
-FOR EACH ROW
-WHEN (SELECT war_id FROM war_teams WHERE war_team_id = NEW.war_team_id) != NEW.war_id
-BEGIN
-  SELECT RAISE(ABORT, 'war_id does not match war_team');
-END;
-
--- Enforce "member appears exactly once across Pool + Teams"
-CREATE TRIGGER IF NOT EXISTS trg_war_pool_no_team
-BEFORE INSERT ON war_pool_members
-FOR EACH ROW
-WHEN EXISTS (SELECT 1 FROM war_team_members WHERE war_id = NEW.war_id AND user_id = NEW.user_id)
-BEGIN
-  SELECT RAISE(ABORT, 'member already assigned to a team');
-END;
-
-CREATE TRIGGER IF NOT EXISTS trg_war_team_no_pool
-BEFORE INSERT ON war_team_members
-FOR EACH ROW
-WHEN EXISTS (SELECT 1 FROM war_pool_members WHERE war_id = NEW.war_id AND user_id = NEW.user_id)
-BEGIN
-  SELECT RAISE(ABORT, 'member already in pool');
-END;
+-- (Legacy war_teams, war_team_members, war_pool_members tables REMOVED)
 
 -- Per-member stats per war (History + Analytics)
 CREATE TABLE IF NOT EXISTS war_member_stats (

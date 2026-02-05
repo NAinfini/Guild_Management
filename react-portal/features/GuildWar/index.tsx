@@ -61,7 +61,7 @@ import { useGuildStore, useAuthStore, useUIStore } from '../../store';
 import { User, WarTeam } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
-import { useWarHistory, useWarTeams, useAssignMember, useUnassignMember } from './hooks/useWars';
+import { useWarHistory, useWarTeams, useMovePoolToTeam, useMoveTeamToPool, useMoveTeamToTeam, useKickFromTeam, useKickFromPool } from './hooks/useWars';
 import { usePush } from '../../hooks/usePush';
 import { CircularProgress, Skeleton, useMediaQuery } from '@mui/material';
 import { useOnline } from '../../hooks/useOnline';
@@ -84,7 +84,7 @@ export function GuildWar() {
   const renderSkeletons = () => (
     <Grid container spacing={2} sx={{ mt: 2 }}>
       {[1,2,3].map(i => (
-        <Grid key={i} item xs={12} sm={6} md={4}>
+        <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
           <Card>
             <CardContent>
               <Skeleton variant="text" width="50%" />
@@ -211,8 +211,11 @@ function ActiveWarManagement({ warId }: { warId: string }) {
   const activeWar = useMemo(() => events.find(e => e.id === warId), [events, warId]);
   
   const { data: warData, refetch: refetchWar } = useWarTeams(warId);
-  const assignMutation = useAssignMember();
-  const unassignMutation = useUnassignMember();
+  const movePoolToTeam = useMovePoolToTeam();
+  const moveTeamToPool = useMoveTeamToPool();
+  const moveTeamToTeam = useMoveTeamToTeam();
+  const kickFromTeam = useKickFromTeam();
+  const kickFromPool = useKickFromPool();
   const [teams, setTeams] = useState<WarTeam[]>([]);
   const [pool, setPool] = useState<User[]>([]);
   const [etag, setEtag] = useState<string | undefined>(undefined);
@@ -321,19 +324,26 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     const { active, over } = event;
     setActiveDragId(null);
     if (!over) return;
-    const targetId = over.id as string;
+    
+    // Target Identification
+    const droppingToPool = over.id === 'pool_droppable';
+    const targetTeamId = over.id as string; // if not pool_droppable, it's team ID
     
     const previousTeams = JSON.parse(JSON.stringify(teams));
+    // Collect moved IDs
     const idsToMove = selectedIds.has(active.id as string) ? Array.from(selectedIds) : [active.id as string];
     let hasChanged = false;
 
     setTeams(prev => {
         let nextState = prev.map(t => ({...t, members: [...t.members]}));
+        
+        // Remove from source teams
         nextState = nextState.map(t => ({ ...t, members: t.members.filter(m => !idsToMove.includes(m.user_id)) }));
 
-        if (targetId.startsWith('team_')) {
+        // Add to target if it's a team
+        if (!droppingToPool) {
              nextState = nextState.map(t => {
-                if (t.id === targetId) {
+                if (t.id === targetTeamId) {
                    const existing = new Set(t.members.map(m => m.user_id));
                    const newMembers = idsToMove.filter(id => !existing.has(id)).map(id => ({ user_id: id }));
                    return { ...t, members: [...t.members, ...newMembers] };
@@ -341,6 +351,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
                 return t;
              });
         }
+        
         if (JSON.stringify(prev) !== JSON.stringify(nextState)) {
              hasChanged = true;
              return nextState;
@@ -351,14 +362,50 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     if (hasChanged) {
       setLastAction({ desc: `Moved ${idsToMove.length} operative(s)`, undo: () => setTeams(previousTeams), expiry: Date.now() + 5000 });
 
-      // persist batch
+      // Determine precise mutations
+      const movesPoolToTeam: { userId: string, teamId: string }[] = [];
+      const movesTeamToTeam: { userId: string, sourceTeamId: string, targetTeamId: string }[] = [];
+      const movesTeamToPool: string[] = [];
+
+      // Find source for each ID
+      // Helper to find team ID for a user in 'previousTeams'
+      const findSourceTeamId = (uid: string): string | null => {
+          for (const t of previousTeams) {
+              if (t.members.find((m: any) => m.user_id === uid)) return t.id;
+          }
+          return null; // implies pool
+      };
+
+      idsToMove.forEach(uid => {
+          const sourceId = findSourceTeamId(uid);
+          
+          if (droppingToPool) {
+              if (sourceId) {
+                  // Team -> Pool
+                  movesTeamToPool.push(uid);
+              } 
+              // else Pool -> Pool (no-op)
+          } else {
+              if (sourceId && sourceId !== targetTeamId) {
+                  // Team -> Team
+                  movesTeamToTeam.push({ userId: uid, sourceTeamId: sourceId, targetTeamId });
+              } else if (!sourceId) {
+                  // Pool -> Team
+                  movesPoolToTeam.push({ userId: uid, teamId: targetTeamId });
+              }
+              // else Team -> Same Team (no-op)
+          }
+      });
+
       try {
-        if (targetId === 'pool') {
-          const newEtag = await unassignMutation.mutateAsync({ warId, userIds: idsToMove, ifMatch: etag });
-          if (newEtag) setEtag(newEtag);
-        } else {
-          const newEtag = await assignMutation.mutateAsync({ warId, operations: idsToMove.map(id => ({ userId: id, teamId: targetId.replace('team_', '') })), ifMatch: etag });
-          if (newEtag) setEtag(newEtag);
+        if (movesPoolToTeam.length > 0) {
+            await movePoolToTeam.mutateAsync({ warId, moves: movesPoolToTeam } as any);
+        }
+        if (movesTeamToTeam.length > 0) {
+            await moveTeamToTeam.mutateAsync({ warId, moves: movesTeamToTeam } as any);
+        }
+        if (movesTeamToPool.length > 0) {
+            await moveTeamToPool.mutateAsync({ warId, userIds: movesTeamToPool } as any);
         }
       } catch (err: any) {
         handleConflict(err);
@@ -367,14 +414,31 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     setSelectedIds(new Set());
   };
 
-  const handleKickFromPool = (userId: string) => {
+  const handleKickFromPool = async (userId: string) => {
       if (!online) return;
-      if(confirm(t('guild_war.remove_confirm'))) leaveEvent(warId, userId);
+      if(confirm(t('guild_war.remove_confirm'))) {
+          try {
+            await kickFromPool.mutateAsync({ warId, userId });
+          } catch(e) { console.error(e); }
+      }
   };
 
-  const handleKickFromTeam = (userId: string) => {
+  const handleKickFromTeam = async (userId: string) => {
       if (!online) return;
+      // Optimistic
+      const prevTeams = teams;
+      const targetTeam = teams.find(t => t.members.find(m => m.user_id === userId));
+      
       setTeams(prev => prev.map(t => ({...t, members: t.members.filter(m => m.user_id !== userId)})));
+      
+      try {
+        if (targetTeam) {
+          await kickFromTeam.mutateAsync({ warId, userId, teamId: targetTeam.id });
+        }
+      } catch (e: any) {
+          setTeams(prevTeams);
+          handleConflict(e);
+      }
   };
 
   const handleAssignRole = (teamId: string, role: string) => {
@@ -386,17 +450,54 @@ function ActiveWarManagement({ warId }: { warId: string }) {
      setSelectedIds(new Set());
   };
 
-  const handleLegacyAssign = (userId: string, teamId?: string) => {
-     setTeams(prev => {
-        const next = prev.map(t => ({ ...t, members: t.members.filter(m => m.user_id !== userId) }));
-        if (teamId) {
-           const target = next.find(t => t.id === teamId);
-           if (target && !target.members.find(m => m.user_id === userId)) {
-              target.members.push({ user_id: userId });
-           }
-        }
-        return next;
-     });
+  const handleLegacyAssign = async (userId: string, teamId?: string) => {
+      // Optimistic Update
+      setTeams(prev => {
+         const next = prev.map(t => ({ ...t, members: t.members.filter(m => m.user_id !== userId) }));
+         if (teamId) {
+            const target = next.find(t => t.id === teamId);
+            if (target && !target.members.find(m => m.user_id === userId)) {
+               target.members.push({ user_id: userId } as any);
+            }
+         }
+         return next;
+      });
+
+      try {
+          if (teamId) {
+             // Treat as Move Pool->Team or Team->Team
+             // Simplification: Assume Pool->Team if not in team map?
+             // Since this is "Legacy Assign", it might be safer to use specific endpoint if we know source.
+             // But UI doesn't give source easily here.
+             // Let's Find source from PREVIOUS state (which we just mutated? no, we mutated via setTeams callback)
+             // We need current teams state before mutation.
+             
+             // Actually, for simplicity on mobile/legacy:
+             // If we just use movePoolToTeam, it might fail if user is already in team.
+             // We should find user's current team first.
+             const sourceTeam = teams.find(t => t.members.find(m => m.user_id === userId));
+             if (sourceTeam) {
+                 if (sourceTeam.id !== teamId) {
+                     await moveTeamToTeam.mutateAsync({ warId, userId, sourceTeamId: sourceTeam.id, targetTeamId: teamId });
+                 }
+             } else {
+                 await movePoolToTeam.mutateAsync({ warId, userId, teamId });
+             }
+          } else {
+             // Unassign -> Move to Pool
+             const sourceTeam = teams.find(t => t.members.find(m => m.user_id === userId));
+             if (sourceTeam) {
+                 await moveTeamToPool.mutateAsync({ warId, userId });
+             } else {
+                 // Already in pool?
+                 // maybe kickFromPool if we want to remove? 
+                 // But 'unassign' usually implies 'back to pool'.
+             }
+          }
+      } catch (e: any) {
+          handleConflict(e);
+          refetchWar();
+      }
   };
 
   const handleUndo = () => {
@@ -430,9 +531,17 @@ function ActiveWarManagement({ warId }: { warId: string }) {
             if (!online) return;
             try {
               if (teamId) {
-                await assignMutation.mutateAsync({ warId, operations: [{ userId, teamId }], ifMatch: etag });
+                // Determine source
+                const sourceTeam = teams.find(t => t.members.find(m => m.user_id === userId));
+                if (sourceTeam) return; // Legacy simple mode doesn't support move? Or treat as move?
+                
+                await movePoolToTeam.mutateAsync({ warId, userId, teamId });
               } else {
-                await unassignMutation.mutateAsync({ warId, userIds: [userId], ifMatch: etag });
+                // Unassign = move to pool
+                const sourceTeam = teams.find(t => t.members.find(m => m.user_id === userId));
+                if (sourceTeam) {
+                    await moveTeamToPool.mutateAsync({ warId, userId });
+                }
               }
               refetchWar();
             } catch (err: any) {

@@ -118,10 +118,10 @@ const mapStatsToDomain = (dto: MemberStatsDTO): WarMemberStat => ({
 // ============================================================================
 
 export const warsAPI = {
-  // Active Wars
-  getActive: async (): Promise<any[]> => {
-    // Return raw for now as structure of "Active War" is complex
-    return api.get<any[]>('/wars/active');
+  // Latest Wars
+  getLatest: async (): Promise<any[]> => {
+    // Return raw for now as structure of "War" is complex
+    return api.get<any[]>('/wars/latest');
   },
   
   getActiveTeams: async (warId: string): Promise<{ teams: WarTeam[]; pool: any[]; etag?: string }> => {
@@ -151,20 +151,31 @@ export const warsAPI = {
     await api.delete(`/wars/${warId}/teams/${teamId}`);
   },
 
-  assignMemberBatch: async (warId: string, operations: Array<{ userId: string; teamId?: string; roleTag?: string }>, ifMatch?: string): Promise<string | undefined> => {
-    const response = await api.post(`/wars/${warId}/assign`, {
-      operations: operations.map(op => ({
-        userId: op.userId,
-        teamId: op.teamId,
-        roleTag: op.roleTag,
-      })),
-    }, { headers: ifMatch ? { 'If-Match': ifMatch } : undefined } as any);
-    return (response as any)._responseHeaders?.['etag'];
+  // Assignments
+  movePoolToTeam: async (warId: string, moves: { userId: string, teamId: string, roleTag?: string }[] | { userId: string, teamId: string, roleTag?: string }): Promise<void> => {
+    // Standardize to batch structure
+    const payload = Array.isArray(moves) ? { moves } : moves;
+    await api.post(`/wars/${warId}/pool-to-team`, payload);
   },
 
-  unassignMemberBatch: async (warId: string, userIds: string[], ifMatch?: string): Promise<string | undefined> => {
-    const response = await api.post(`/wars/${warId}/unassign`, { operations: userIds.map(id => ({ userId: id })) }, { headers: ifMatch ? { 'If-Match': ifMatch } : undefined } as any);
-    return (response as any)._responseHeaders?.['etag'];
+  moveTeamToPool: async (warId: string, userIds: string[] | string): Promise<void> => {
+    const payload = Array.isArray(userIds) ? { userIds } : { userId: userIds };
+    await api.post(`/wars/${warId}/team-to-pool`, payload);
+  },
+
+  moveTeamToTeam: async (warId: string, moves: { userId: string, sourceTeamId: string, targetTeamId: string }[] | { userId: string, sourceTeamId: string, targetTeamId: string }): Promise<void> => {
+    const payload = Array.isArray(moves) ? { moves } : moves;
+    await api.post(`/wars/${warId}/team-to-team`, payload);
+  },
+
+  kickFromTeam: async (warId: string, kicks: { userId: string, teamId: string }[] | { userId: string, teamId: string }): Promise<void> => {
+    const payload = Array.isArray(kicks) ? { kicks } : kicks;
+    await api.post(`/wars/${warId}/kick-from-team`, payload);
+  },
+
+  kickFromPool: async (warId: string, userIds: string[] | string): Promise<void> => {
+    const payload = Array.isArray(userIds) ? { userIds } : { userId: userIds };
+    await api.post(`/wars/${warId}/kick-from-pool`, payload);
   },
 
   // War History

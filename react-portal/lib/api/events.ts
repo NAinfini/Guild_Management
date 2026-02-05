@@ -173,48 +173,34 @@ export const eventsAPI = {
    * Toggle Pin
    */
   togglePin: async (id: string): Promise<Event> => {
-      // In a real app, this might be a PATCH endpoint or a toggle action
-      // For now, assume it returns the updated event
-      const response = await typedAPI.events.pin<{ event: EventListItemDTO }>({ params: { id }, body: {} });
-      return mapToDomain(response.event);
+      const response = await typedAPI.events.togglePin<{ isPinned: boolean; message: string }>({ params: { id }, body: {} });
+      return eventsAPI.get(id);
+  },
+
+  addMember: async (id: string, userId: string): Promise<void> => {
+     await typedAPI.events.addMember({ params: { id }, body: { userId } });
   },
 
   /**
    * Toggle Lock
    */
     toggleLock: async (id: string): Promise<Event> => {
-        const response = await typedAPI.events.lock<{ event: EventListItemDTO }>({ params: { id }, body: {} });
-        return mapToDomain(response.event);
+        const response = await typedAPI.events.toggleLock<{ isLocked: boolean; message: string }>({ params: { id }, body: {} });
+        // Since toggleLock returns { isLocked, message }, but we want Event, 
+        // we might need to re-fetch OR the backend should return the event?
+        // Wait, backend toggle-lock returns { message, isLocked }.
+        // The frontend expects Event? 
+        // My previous code in events.ts (lines 185-188) expected EventListItemDTO from typedAPI.events.lock
+        // But my NEW endpoint returns ToggleLockResponse.
+        // So I must fetch the event again OR update local state.
+        // For now, let's fetch the updated event to satisfy the Return Type Promise<Event>
+        return eventsAPI.get(id);
     },
 
-  // ============================================================================
-  // Batch Operations
-  // ============================================================================
+    toggleArchive: async (id: string): Promise<Event> => {
+        await typedAPI.events.toggleArchive<{ isArchived: boolean; message: string }>({ params: { id }, body: {} });
+        return eventsAPI.get(id);
+    },
 
-  batchDelete: async (ids: string[]): Promise<{ affectedCount: number }> => {
-    return typedAPI.events.batch({ body: {
-      action: 'delete',
-      eventIds: ids,
-    }});
-  },
 
-  batchArchive: async (ids: string[], archived: boolean): Promise<{ affectedCount: number }> => {
-    return typedAPI.events.batch({ body: {
-      action: archived ? 'archive' : 'unarchive',
-      eventIds: ids,
-    }});
-  },
-
-  batchGet: async (ids: string[]): Promise<Event[]> => {
-    const res = await typedAPI.events.batch<{ events: EventListItemDTO[] }>({
-      query: { ids: ids.join(',') }
-    });
-    return res.events.map(mapToDomain);
-  },
-
-  restore: async (ids: string[]): Promise<{ affectedCount: number }> => {
-    return typedAPI.events.restoreBatch({ body: {
-      eventIds: ids,
-    }});
-  },
 };

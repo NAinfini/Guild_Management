@@ -35,10 +35,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return handleJoin(context);
     case 'leave':
       return handleLeave(context);
-    case 'pin':
-      return handlePin(context);
-    case 'lock':
-      return handleLock(context);
+
     case 'duplicate':
       return handleDuplicate(context);
     default:
@@ -65,9 +62,16 @@ async function handleJoin(context: any): Promise<Response> {
       return forbiddenResponse('Event signup is locked');
     }
 
-    // Check if already joined
+    if (!user) return forbiddenResponse('User not authenticated');
+
+    // Check if already joined ANY team linked to this event
     const existing = await env.DB
-      .prepare('SELECT * FROM event_participants WHERE event_id = ? AND user_id = ?')
+      .prepare(`
+        SELECT tm.team_id 
+        FROM team_members tm
+        JOIN event_teams et ON tm.team_id = et.team_id
+        WHERE et.event_id = ? AND tm.user_id = ?
+      `)
       .bind(eventId, user.user_id)
       .first();
 
@@ -75,10 +79,15 @@ async function handleJoin(context: any): Promise<Response> {
       return conflictResponse('Already joined this event');
     }
 
-    // Check capacity
+    // Check capacity (total count in all teams linked to event)
     if (event.capacity) {
       const count = await env.DB
-        .prepare('SELECT COUNT(*) as count FROM event_participants WHERE event_id = ?')
+        .prepare(`
+          SELECT COUNT(*) as count 
+          FROM team_members tm
+          JOIN event_teams et ON tm.team_id = et.team_id
+          WHERE et.event_id = ?
+        `)
         .bind(eventId)
         .first<{ count: number }>();
 
@@ -88,12 +97,48 @@ async function handleJoin(context: any): Promise<Response> {
     }
 
     const now = utcNow();
+    
+    // Determine Default Team Name based on Event Type
+    const defaultTeamName = event.type === 'guild_war' ? 'Pool' : 'Participants';
+
+    // Find or Create the Default Team
+    let team = await env.DB
+      .prepare(`
+        SELECT t.* 
+        FROM teams t
+        JOIN event_teams et ON t.team_id = et.team_id
+        WHERE et.event_id = ? AND t.name = ?
+      `)
+      .bind(eventId, defaultTeamName)
+      .first<{ team_id: string }>();
+
+    if (!team) {
+      // Create new team
+      const newTeamId = generateId('team');
+      
+      // Batch create team and link to event
+      await env.DB.batch([
+        env.DB.prepare(`
+          INSERT INTO teams (team_id, name, description, is_locked, created_by, created_at_utc, updated_at_utc)
+          VALUES (?, ?, ?, 0, ?, ?, ?)
+        `).bind(newTeamId, defaultTeamName, `Default pool for ${event.title}`, 'system', now, now),
+        
+        env.DB.prepare(`
+            INSERT INTO event_teams (event_id, team_id, assigned_at_utc)
+            VALUES (?, ?, ?)
+        `).bind(eventId, newTeamId, now)
+      ]);
+      
+      team = { team_id: newTeamId };
+    }
+
+    // Add user to the team
     await env.DB
       .prepare(`
-        INSERT INTO event_participants (event_id, user_id, joined_at_utc, joined_by, created_at_utc, updated_at_utc)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO team_members (team_id, user_id, sort_order, joined_at_utc)
+        VALUES (?, ?, 0, ?)
       `)
-      .bind(eventId, user.user_id, now, user.user_id, now, now)
+      .bind(team.team_id, user.user_id, now)
       .run();
 
     const etag = etagFromTimestamp(event.updated_at_utc);
@@ -109,9 +154,17 @@ async function handleLeave(context: any): Promise<Response> {
     const { user } = authContext.data;
     const eventId = params.id;
 
+    if (!user) return forbiddenResponse('User not authenticated');
+
+    // Remove user from ANY team linked to this event
     const result = await env.DB
-      .prepare('DELETE FROM event_participants WHERE event_id = ? AND user_id = ?')
-      .bind(eventId, user.user_id)
+      .prepare(`
+        DELETE FROM team_members 
+        WHERE user_id = ? AND team_id IN (
+            SELECT team_id FROM event_teams WHERE event_id = ?
+        )
+      `)
+      .bind(user.user_id, eventId)
       .run();
 
     if (result.meta.changes === 0) {
@@ -122,103 +175,7 @@ async function handleLeave(context: any): Promise<Response> {
   });
 }
 
-async function handlePin(context: any): Promise<Response> {
-  return withModeratorAuth(context, async (authContext) => {
-    const { env, params } = authContext;
-    const { user } = authContext.data;
-    const eventId = params.id;
 
-    const event = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
-      .bind(eventId)
-      .first<Event>();
-
-    if (!event) {
-      return notFoundResponse('Event');
-    }
-
-    const currentEtag = etagFromTimestamp(event.updated_at_utc);
-    const pre = assertIfMatch(authContext.request, currentEtag);
-    if (pre) return pre;
-
-    const newPinState = event.is_pinned === 1 ? 0 : 1;
-    const now = utcNow();
-
-    await env.DB
-      .prepare('UPDATE events SET is_pinned = ?, updated_at_utc = ? WHERE event_id = ?')
-      .bind(newPinState, now, eventId)
-      .run();
-
-    await createAuditLog(
-      env.DB,
-      'event',
-      newPinState ? 'pin' : 'unpin',
-      user.user_id,
-      eventId,
-      `${newPinState ? 'Pinned' : 'Unpinned'} event: ${event.title}`,
-      null
-    );
-
-    const updated = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
-      .bind(eventId)
-      .first<Event>();
-
-    const etag = etagFromTimestamp(updated?.updated_at_utc);
-    const resp = successResponse({ message: `Event ${newPinState ? 'pinned' : 'unpinned'} successfully`, isPinned: newPinState === 1 });
-    if (etag) resp.headers.set('ETag', etag);
-    return resp;
-  });
-}
-
-async function handleLock(context: any): Promise<Response> {
-  return withModeratorAuth(context, async (authContext) => {
-    const { env, params } = authContext;
-    const { user } = authContext.data;
-    const eventId = params.id;
-
-    const event = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
-      .bind(eventId)
-      .first<Event>();
-
-    if (!event) {
-      return notFoundResponse('Event');
-    }
-
-    const currentEtag = etagFromTimestamp(event.updated_at_utc);
-    const pre = assertIfMatch(authContext.request, currentEtag);
-    if (pre) return pre;
-
-    const newLockState = event.signup_locked === 1 ? 0 : 1;
-    const now = utcNow();
-
-    await env.DB
-      .prepare('UPDATE events SET signup_locked = ?, updated_at_utc = ? WHERE event_id = ?')
-      .bind(newLockState, now, eventId)
-      .run();
-
-    await createAuditLog(
-      env.DB,
-      'event',
-      newLockState ? 'lock' : 'unlock',
-      user.user_id,
-      eventId,
-      `${newLockState ? 'Locked' : 'Unlocked'} event signup: ${event.title}`,
-      null
-    );
-
-    const updated = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
-      .bind(eventId)
-      .first<Event>();
-
-    const etag = etagFromTimestamp(updated?.updated_at_utc);
-    const resp = successResponse({ message: `Event signup ${newLockState ? 'locked' : 'unlocked'} successfully`, signupLocked: newLockState === 1 });
-    if (etag) resp.headers.set('ETag', etag);
-    return resp;
-  });
-}
 
 async function handleDuplicate(context: any): Promise<Response> {
   return withAuth(context, async (authContext) => {
@@ -234,6 +191,8 @@ async function handleDuplicate(context: any): Promise<Response> {
     if (!event) {
       return notFoundResponse('Event');
     }
+
+    if (!user) return forbiddenResponse('User not authenticated');
 
     if (!canEditEntity(user, event.created_by)) {
       return forbiddenResponse('You do not have permission to duplicate this event');

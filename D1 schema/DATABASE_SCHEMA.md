@@ -19,9 +19,7 @@ erDiagram
   users ||--o{ member_media : has_media
   users ||--o{ announcements : creates
   users ||--o{ events : creates
-  users ||--o{ event_participants : joins
-  users ||--o{ war_team_members : assigned
-  users ||--o{ war_pool_members : in_pool
+  users ||--o{ team_members : belongs_to
   users ||--o{ war_member_stats : has_stats
   users ||--o{ audit_log : acts
 
@@ -32,15 +30,14 @@ erDiagram
 
   announcements ||--o{ announcement_media : has_media
 
-  events ||--o{ event_participants : has_participants
   events ||--o{ event_attachments : has_attachments
+  events ||--o{ event_teams : has_assigned_teams
   events ||--o| war_history : war_record
 
-  war_history ||--o{ war_teams : has_teams
-  war_history ||--o{ war_pool_members : has_pool
-  war_history ||--o{ war_team_members : has_team_members
+  teams ||--o{ team_members : has_members
+  teams ||--o{ event_teams : assigned_to
+
   war_history ||--o{ war_member_stats : has_member_stats
-  war_teams ||--o{ war_team_members : contains_members
 
   users {
     TEXT user_id PK
@@ -349,6 +346,29 @@ erDiagram
     TEXT updated_at_utc
   }
 
+  teams {
+    TEXT team_id PK
+    TEXT name
+    TEXT description
+    INTEGER is_locked
+    TEXT created_at_utc
+    TEXT updated_at_utc
+  }
+
+  team_members {
+    TEXT team_id PK
+    TEXT user_id PK
+    INTEGER sort_order
+    TEXT role_tag
+    TEXT joined_at_utc
+  }
+
+  event_teams {
+    TEXT event_id PK
+    TEXT team_id PK
+    TEXT assigned_at_utc
+  }
+
   war_history {
     TEXT war_id PK
     TEXT event_id
@@ -372,37 +392,10 @@ erDiagram
     TEXT updated_at_utc
   }
 
-  war_teams {
-    TEXT war_team_id PK
-    TEXT war_id
-    TEXT name
-    TEXT note
-    INTEGER is_locked
-    INTEGER sort_order
-    TEXT created_at_utc
-    TEXT updated_at_utc
-  }
-
-  war_team_members {
-    TEXT war_id
-    TEXT war_team_id PK
-    TEXT user_id PK
-    TEXT role_tag
-    INTEGER sort_order
-    TEXT created_at_utc
-    TEXT updated_at_utc
-  }
-
-  war_pool_members {
-    TEXT war_id PK
-    TEXT user_id PK
-    TEXT created_at_utc
-    TEXT updated_at_utc
-  }
-
   war_member_stats {
     TEXT war_id PK
     TEXT user_id PK
+    TEXT role_tag
     INTEGER kills
     INTEGER deaths
     INTEGER assists
@@ -471,14 +464,15 @@ erDiagram
 
 ### 📅 Events (3 tables)
 - `events` - With soft delete & indexes
-- `event_participants` - Signups
+- `event_teams` - Team assignments
 - `event_attachments` - Media
 
-### ⚔️ Guild War (5 tables)
+### 🛡️ Teams (2 tables)
+- `teams` - Universal team definitions
+- `team_members` - Team rosters
+
+### ⚔️ Guild War (2 tables)
 - `war_history` - War records
-- `war_teams` - Team compositions
-- `war_team_members` - Team rosters
-- `war_pool_members` - Unassigned pool
 - `war_member_stats` - Individual stats
 
 ### 📋 Audit (1 table)

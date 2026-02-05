@@ -9,7 +9,7 @@ import { warsAPI, type WarHistory } from '../../../lib/api';
 export function useActiveWars() {
   return useQuery({
     queryKey: ['wars', 'active'],
-    queryFn: () => warsAPI.getActive(),
+    queryFn: () => warsAPI.getLatest(),
   });
 }
 
@@ -60,29 +60,62 @@ export function useDeleteWarTeam() {
   });
 }
 
-export function useAssignMember() {
+export function useMovePoolToTeam() {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: ({ warId, operations, ifMatch }: { 
-      warId: string; 
-      operations: Array<{ userId: string; teamId?: string; roleTag?: string }>;
-      ifMatch?: string;
-    }) => warsAPI.assignMemberBatch(warId, operations, ifMatch),
+    mutationFn: ({ warId, userId, teamId, roleTag }: { warId: string; userId: string; teamId: string; roleTag?: string }) =>
+      warsAPI.movePoolToTeam(warId, { userId, teamId, roleTag }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wars', 'active'] });
+      queryClient.invalidateQueries({ queryKey: ['war'] });
     },
   });
 }
 
-export function useUnassignMember() {
+export function useMoveTeamToPool() {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: ({ warId, userIds, ifMatch }: { warId: string; userIds: string[]; ifMatch?: string }) =>
-      warsAPI.unassignMemberBatch(warId, userIds, ifMatch),
+    mutationFn: ({ warId, userId }: { warId: string; userId: string }) =>
+      warsAPI.moveTeamToPool(warId, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wars', 'active'] });
+      queryClient.invalidateQueries({ queryKey: ['war'] });
+    },
+  });
+}
+
+export function useMoveTeamToTeam() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ warId, userId, sourceTeamId, targetTeamId }: { warId: string; userId: string; sourceTeamId: string; targetTeamId: string }) =>
+      warsAPI.moveTeamToTeam(warId, { userId, sourceTeamId, targetTeamId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wars', 'active'] });
+      queryClient.invalidateQueries({ queryKey: ['war'] });
+    },
+  });
+}
+
+export function useKickFromTeam() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ warId, userId, teamId }: { warId: string; userId: string; teamId: string }) =>
+      warsAPI.kickFromTeam(warId, { userId, teamId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wars', 'active'] });
+      queryClient.invalidateQueries({ queryKey: ['war'] });
+    },
+  });
+}
+
+export function useKickFromPool() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ warId, userId }: { warId: string; userId: string }) =>
+      warsAPI.kickFromPool(warId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wars', 'active'] });
+      queryClient.invalidateQueries({ queryKey: ['war'] });
     },
   });
 }

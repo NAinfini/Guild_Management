@@ -159,50 +159,16 @@ export const membersAPI = {
     await typedAPI.members.updateNote({ params: { id }, body: { slot, noteText } });
   },
 
-  deactivate: async (id: string): Promise<void> => {
-    await typedAPI.members.deactivate({ params: { id }, body: {} });
-  },
-
-  activate: async (id: string): Promise<void> => {
-    await typedAPI.members.activate({ params: { id }, body: {} });
+  toggleActive: async (id: string): Promise<User> => {
+    await typedAPI.members.toggleActive<{ isActive: boolean; message: string }>({ params: { id }, body: {} });
+    return membersAPI.get(id);
   },
 
   resetPassword: async (id: string): Promise<{ tempPassword: string }> => {
     return typedAPI.members.resetPassword<{ tempPassword: string }>({ params: { id }, body: {} });
   },
 
-  // ============================================================================
-  // Batch Operations
-  // ============================================================================
 
-  batchSetRole: async (userIds: string[], role: string): Promise<{ affectedCount: number }> => {
-    return typedAPI.members.batch({ body: {
-      action: 'set_role',
-      userIds,
-      role,
-    }});
-  },
-
-  batchDeactivate: async (userIds: string[]): Promise<{ affectedCount: number }> => {
-    return typedAPI.members.batch({ body: {
-      action: 'deactivate',
-      userIds,
-    }});
-  },
-
-  batchReactivate: async (userIds: string[]): Promise<{ affectedCount: number }> => {
-    return typedAPI.members.batch({ body: {
-      action: 'reactivate',
-      userIds,
-    }});
-  },
-
-  batchGet: async (ids: string[]): Promise<User[]> => {
-    const res = await typedAPI.members.batch<{ members: MemberDTO[] }>({
-      query: { ids: ids.join(',') }
-    });
-    return res.members.map(mapToDomain);
-  },
 
   get: async (id: string): Promise<User> => {
     return membersAPI.getProfile(id);

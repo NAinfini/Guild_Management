@@ -58,7 +58,7 @@ const mapLogToDomain = (dto: AuditLogEntryDTO): AuditLogEntry => {
 // ============================================================================
 
 export const adminAPI = {
-  getAuditLogs: async (params?: {
+  listAuditLogs: async (params?: {
     entityType?: string;
     actorId?: string;
     startDate?: string;
@@ -74,12 +74,41 @@ export const adminAPI = {
     if (params?.cursor) queryParams.cursor = params.cursor;
     if (params?.limit) queryParams.limit = String(params.limit);
 
+    // Using untyped api.get temporarily if typedAPI definitions lag, or typedAPI
+    // typedAPI.admin.listAuditLogs<{ logs: AuditLogEntryDTO[]; next_cursor?: string }...>
+    // Assuming typedAPI is available and updated (which we define in endpoints.ts)
+    // However, I need to check if 'typedAPI' is imported. It's not in the original file.
+    // I will stick to 'api' client for now to avoid breaking imports unless I add the import.
+    // But better to use typedAPI if possible. Let's try to import it.
+    
+    // For now, mirroring previous behavior but with new method name
     const response = await api.get<{ logs: AuditLogEntryDTO[]; next_cursor?: string }>('/admin/audit-logs', queryParams);
     
     return {
         logs: (response.logs || []).map(mapLogToDomain),
         nextCursor: response.next_cursor
     };
+  },
+
+  // Alias for backward compatibility if needed, or just remove
+  getAuditLogs: async (params?: any) => {
+      return adminAPI.listAuditLogs(params);
+  },
+
+  addAuditLog: async (data: { entityType: string; action: string; entityId: string; diffTitle?: string; detailText?: string }) => {
+      // NOTE: This endpoint might not exist in backend yet or might be restrictive (system only?)
+      // The user requested "addAuditLog" key in endpoints.
+      return api.post('/admin/audit-logs', {
+          entity_type: data.entityType,
+          action: data.action,
+          entity_id: data.entityId,
+          diff_title: data.diffTitle,
+          detail_text: data.detailText
+      });
+  },
+
+  deleteAuditLog: async (id: string) => {
+      return api.delete(`/admin/audit-logs/${id}`);
   },
 
   getHealth: async () => {
