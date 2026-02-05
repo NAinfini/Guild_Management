@@ -1,102 +1,189 @@
 /**
- * Join Event Endpoint
- * POST /api/events/:id/join
+ * Event Actions - Join
+ * POST /api/events/[id]/join - Join event (self or batch for moderators)
+ *
+ * Features:
+ * - Self join: No body required (uses authenticated user)
+ * - Moderator batch join: { userIds: string[] }
+ * - Backward compatible with existing self-join
  */
 
-import type { PagesFunction, Env, Event } from '../../_types';
-import {
-  successResponse,
-  notFoundResponse,
-  forbiddenResponse,
-  conflictResponse,
-  errorResponse,
-  utcNow,
-} from '../../_utils';
-import { withAuth } from '../../_middleware';
+import type { Env, Event } from '../../../lib/types';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { utcNow, createAuditLog } from '../../../lib/utils';
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
-    const { env, params } = authContext;
-    const { user } = authContext.data;
+// ============================================================
+// Types
+// ============================================================
+
+interface BatchJoinBody {
+  userIds: string[];
+}
+
+interface JoinEventResponse {
+  message: string;
+  participant?: any;
+  joinedCount?: number;
+  failed?: Array<{ userId: string; error: string }>;
+}
+
+// ============================================================
+// POST /api/events/[id]/join
+// ============================================================
+
+export const onRequestPost = createEndpoint<JoinEventResponse, BatchJoinBody | Record<string, never>>({
+  auth: 'required',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => {
+    // Check if it's a batch join (has 'userIds' array)
+    if ('userIds' in body && Array.isArray(body.userIds)) {
+      if (body.userIds.length === 0) {
+        throw new Error('UserIds array cannot be empty');
+      }
+      if (body.userIds.length > 100) {
+        throw new Error('Maximum 100 users per batch join');
+      }
+      return body as BatchJoinBody;
+    }
+    return body as Record<string, never>;
+  },
+
+  handler: async ({ env, user, params, body }) => {
     const eventId = params.id;
+    const now = utcNow();
+    const isBatch = 'userIds' in body;
 
-    try {
-      // Check event exists and not archived
-      const event = await env.DB
-        .prepare('SELECT * FROM events WHERE event_id = ? AND is_archived = 0')
-        .bind(eventId)
-        .first<Event>();
+    // Get event
+    const event = await env.DB
+      .prepare('SELECT * FROM events WHERE event_id = ? AND is_archived = 0 AND deleted_at_utc IS NULL')
+      .bind(eventId)
+      .first<Event>();
 
-      if (!event) {
-        return notFoundResponse('Event');
-      }
+    if (!event) {
+      throw new Error('Event not found');
+    }
 
-      // Check if signup is locked (Admin/Mod can bypass)
-      if (event.signup_locked && user.role !== 'admin' && user.role !== 'moderator') {
-        return forbiddenResponse('Event signup is locked');
-      }
+    if (event.signup_locked) {
+      throw new Error('Event signup is locked');
+    }
+
+    // ============================================================
+    // BATCH JOIN MODE: Moderator joining multiple users
+    // ============================================================
+    if (isBatch) {
+      const { userIds } = body as BatchJoinBody;
+      let successCount = 0;
+      const failed: Array<{ userId: string; error: string }> = [];
 
       // Check capacity
-      if (event.capacity) {
-        const countResult = await env.DB
-          .prepare('SELECT COUNT(*) as count FROM event_participants WHERE event_id = ?')
+      let currentCount = 0;
+      if (event.max_participants > 0) {
+        const count = await env.DB
+          .prepare('SELECT COUNT(*) as count FROM event_attendees WHERE event_id = ?')
           .bind(eventId)
           .first<{ count: number }>();
+        currentCount = count?.count || 0;
+      }
 
-        if (countResult && countResult.count >= event.capacity) {
-          return conflictResponse('Event is at full capacity');
+      // Check existing attendees
+      const placeholders = userIds.map(() => '?').join(',');
+      const existing = await env.DB
+        .prepare(`SELECT user_id FROM event_attendees WHERE event_id = ? AND user_id IN (${placeholders})`)
+        .bind(eventId, ...userIds)
+        .all();
+      const existingUserIds = new Set(existing.results?.map((e: any) => e.user_id) || []);
+
+      for (const userId of userIds) {
+        try {
+          // Check if already joined
+          if (existingUserIds.has(userId)) {
+            failed.push({ userId, error: 'Already joined' });
+            continue;
+          }
+
+          // Check capacity
+          if (event.max_participants > 0 && currentCount >= event.max_participants) {
+            failed.push({ userId, error: 'Event is full' });
+            continue;
+          }
+
+          // Join
+          await env.DB
+            .prepare(`
+              INSERT INTO event_attendees (
+                event_id, user_id, created_at_utc
+              ) VALUES (?, ?, ?)
+            `)
+            .bind(eventId, userId, now)
+            .run();
+
+          currentCount++;
+          successCount++;
+        } catch (error: any) {
+          failed.push({ userId, error: error.message || 'Unknown error' });
         }
       }
 
-      // Check for conflicts (soft warning, not blocking)
-      const conflicts = await env.DB
-        .prepare(`
-          SELECT e.event_id, e.title, e.start_at_utc, e.end_at_utc
-          FROM events e
-          JOIN event_participants ep ON e.event_id = ep.event_id
-          WHERE ep.user_id = ?
-            AND e.event_id != ?
-            AND e.is_archived = 0
-            AND (
-              (e.start_at_utc <= ? AND (e.end_at_utc IS NULL OR e.end_at_utc >= ?))
-              OR
-              (e.start_at_utc >= ? AND e.start_at_utc <= ?)
-            )
-        `)
-        .bind(
-          user.user_id,
-          eventId,
-          event.start_at_utc,
-          event.start_at_utc,
-          event.start_at_utc,
-          event.end_at_utc || event.start_at_utc
-        )
-        .all<{ event_id: string; title: string }>();
+      await createAuditLog(
+        env.DB,
+        'event',
+        'batch_join',
+        user!.user_id,
+        eventId,
+        `Batch joined ${successCount} users to event`,
+        JSON.stringify({ total: userIds.length, success: successCount, failed: failed.length })
+      );
 
-      // Insert participant (ignore if already exists)
-      const now = utcNow();
-      await env.DB
-        .prepare(`
-          INSERT INTO event_participants (event_id, user_id, joined_at_utc, joined_by, created_at_utc, updated_at_utc)
-          VALUES (?, ?, ?, ?, ?, ?)
-          ON CONFLICT(event_id, user_id) DO NOTHING
-        `)
-        .bind(eventId, user.user_id, now, user.user_id, now, now)
-        .run();
-
-      // Update event updated_at for cache invalidation
-      await env.DB
-        .prepare('UPDATE events SET updated_at_utc = ? WHERE event_id = ?')
-        .bind(now, eventId)
-        .run();
-
-      return successResponse({
-        message: 'Joined event successfully',
-        conflicts: conflicts.results || [],
-      });
-    } catch (error) {
-      console.error('Join event error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while joining event', 500);
+      return {
+        message: `Batch join complete: ${successCount} joined, ${failed.length} failed`,
+        joinedCount: successCount,
+        failed: failed.length > 0 ? failed : undefined,
+      };
     }
-  });
-};
+
+    // ============================================================
+    // SELF JOIN MODE: User joins themselves
+    // ============================================================
+    // Check capacity
+    if (event.max_participants > 0) {
+      const count = await env.DB
+        .prepare('SELECT COUNT(*) as count FROM event_attendees WHERE event_id = ?')
+        .bind(eventId)
+        .first<{ count: number }>();
+
+      if ((count?.count || 0) >= event.max_participants) {
+        throw new Error('Event is full');
+      }
+    }
+
+    // Check if already joined
+    const existing = await env.DB
+      .prepare('SELECT * FROM event_attendees WHERE event_id = ? AND user_id = ?')
+      .bind(eventId, user!.user_id)
+      .first();
+
+    if (existing) {
+      throw new Error('You have already joined this event');
+    }
+
+    // Join
+    await env.DB
+      .prepare(`
+        INSERT INTO event_attendees (
+          event_id, user_id, created_at_utc
+        ) VALUES (?, ?, ?)
+      `)
+      .bind(eventId, user!.user_id, now)
+      .run();
+
+    return {
+      message: 'Joined event successfully',
+      participant: {
+        event_id: eventId,
+        user_id: user!.user_id,
+        created_at_utc: now,
+      },
+    };
+  },
+});

@@ -3,7 +3,7 @@
  * Typed methods for member operations with Domain Mapping
  */
 
-import { api } from '../api-client';
+import { typedAPI } from './api-builder';
 import type { User, ClassType } from '../../types';
 
 // ============================================================================
@@ -106,13 +106,13 @@ export const membersAPI = {
     if (params?.role) queryParams.role = params.role;
 
     // API client now unwraps { success, data } envelope automatically
-    const response = await api.get<{ members: MemberDTO[] }>('/members', queryParams);
-    if (!response || !response.members) return [];
-    return response.members.map(mapToDomain);
+    const response = await typedAPI.members.list<MemberDTO[]>({ query: queryParams });
+    if (!response || !Array.isArray(response)) return [];
+    return response.map(mapToDomain);
   },
 
   getProfile: async (id: string): Promise<User> => {
-    const response = await api.get<{ member: MemberDTO }>(`/members/${id}`);
+    const response = await typedAPI.members.get<{ member: MemberDTO }>({ params: { id } });
     return mapToDomain(response.member);
   },
 
@@ -125,50 +125,50 @@ export const membersAPI = {
     if (data.vacationEnd !== undefined) payload.vacation_end = data.vacationEnd;
     if (data.wechatName !== undefined) payload.wechat_name = data.wechatName;
 
-    const response = await api.put<{ member: MemberDTO }>(`/members/${id}`, payload);
+    const response = await typedAPI.members.update<{ member: MemberDTO }>({ params: { id }, body: payload });
     return mapToDomain(response.member);
   },
 
   updateRole: async (id: string, role: 'member' | 'moderator' | 'admin'): Promise<void> => {
-    await api.put(`/members/${id}/role`, { role });
+    await typedAPI.members.updateRole({ params: { id }, body: { role } });
   },
 
   updateClasses: async (id: string, classes: string[]): Promise<void> => {
-    await api.put(`/members/${id}/classes`, { classes });
+    await typedAPI.members.updateClasses({ params: { id }, body: { classes } });
   },
 
   updateAvailability: async (id: string, blocks: AvailabilityBlock[]): Promise<void> => {
-    await api.put(`/members/${id}/availability`, { blocks });
+    await typedAPI.members.updateAvailability({ params: { id }, body: { blocks } });
   },
 
   updateProgression: async (id: string, category: 'qishu' | 'xinfa' | 'wuxue', itemId: string, level: number): Promise<void> => {
-    await api.put(`/members/${id}/progression`, { category, itemId, level });
+    await typedAPI.members.updateProgression({ params: { id }, body: { category, itemId, level } });
   },
 
   getProgression: async (id: string): Promise<Record<string, ProgressionItem[]>> => {
-    const response = await api.get<{ progression: Record<string, ProgressionItem[]> }>(`/members/${id}/progression`);
+    const response = await typedAPI.members.getProgression<{ progression: Record<string, ProgressionItem[]> }>({ params: { id } });
     return response.progression;
   },
 
   getNotes: async (id: string): Promise<any[]> => {
-    const response = await api.get<{ notes: any[] }>(`/members/${id}/notes`);
+    const response = await typedAPI.members.getNotes<{ notes: any[] }>({ params: { id } });
     return response.notes;
   },
 
   updateNote: async (id: string, slot: number, noteText: string): Promise<void> => {
-    await api.put(`/members/${id}/notes`, { slot, noteText });
+    await typedAPI.members.updateNote({ params: { id }, body: { slot, noteText } });
   },
 
   deactivate: async (id: string): Promise<void> => {
-    await api.post(`/members/${id}/deactivate`);
+    await typedAPI.members.deactivate({ params: { id }, body: {} });
   },
-  
+
   activate: async (id: string): Promise<void> => {
-    await api.post(`/members/${id}/activate`); // Assuming endpoint exists
+    await typedAPI.members.activate({ params: { id }, body: {} });
   },
 
   resetPassword: async (id: string): Promise<{ tempPassword: string }> => {
-    return api.post<{ tempPassword: string }>(`/members/${id}/reset-password`);
+    return typedAPI.members.resetPassword<{ tempPassword: string }>({ params: { id }, body: {} });
   },
 
   // ============================================================================
@@ -176,31 +176,31 @@ export const membersAPI = {
   // ============================================================================
 
   batchSetRole: async (userIds: string[], role: string): Promise<{ affectedCount: number }> => {
-    return api.post('/members/batch', {
+    return typedAPI.members.batch({ body: {
       action: 'set_role',
       userIds,
       role,
-    });
+    }});
   },
 
   batchDeactivate: async (userIds: string[]): Promise<{ affectedCount: number }> => {
-    return api.post('/members/batch', {
+    return typedAPI.members.batch({ body: {
       action: 'deactivate',
       userIds,
-    });
+    }});
   },
 
   batchReactivate: async (userIds: string[]): Promise<{ affectedCount: number }> => {
-    return api.post('/members/batch', {
+    return typedAPI.members.batch({ body: {
       action: 'reactivate',
       userIds,
-    });
+    }});
   },
 
   batchGet: async (ids: string[]): Promise<User[]> => {
-    const res = await api.get<{ members: MemberDTO[] }>(
-      `/members/batch?ids=${ids.join(',')}`
-    );
+    const res = await typedAPI.members.batch<{ members: MemberDTO[] }>({
+      query: { ids: ids.join(',') }
+    });
     return res.members.map(mapToDomain);
   },
 

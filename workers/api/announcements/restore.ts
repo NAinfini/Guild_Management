@@ -1,38 +1,70 @@
 /**
  * Restore Announcements Endpoint
  * POST /api/announcements/restore
- * Restores soft-deleted announcements within undo window
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import { withModeratorAuth } from '../_middleware';
-import { successResponse, errorResponse } from '../_utils';
-import type { PagesFunction, Env } from '../_types';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { utcNow, createAuditLog } from '../../lib/utils';
 
-export const onRequestPost: PagesFunction<Env> = withModeratorAuth(async (context) => {
-  const { request, env } = context;
-  
-  const body = await request.json() as {
-    announcementIds: string[];
-  };
-  
-  if (!body.announcementIds || !Array.isArray(body.announcementIds)) {
-    return errorResponse('INVALID_INPUT', 'announcementIds array required');
-  }
-  
-  if (body.announcementIds.length === 0 || body.announcementIds.length > 100) {
-    return errorResponse('INVALID_INPUT', 'Provide 1-100 announcement IDs');
-  }
-  
-  // Restore announcements (set deleted_at_utc to NULL)
-  const placeholders = body.announcementIds.map(() => '?').join(',');
-  const result = await env.DB.prepare(
-    `UPDATE announcements 
-     SET deleted_at_utc = NULL, updated_at_utc = ?
-     WHERE announcement_id IN (${placeholders})
-     AND deleted_at_utc IS NOT NULL`
-  ).bind(new Date().toISOString(), ...body.announcementIds).run();
-  
-  return successResponse({
-    affectedCount: result.meta.changes || 0,
-  });
+// ============================================================
+// Types
+// ============================================================
+
+interface RestoreAnnouncementsBody {
+  announcementIds: string[];
+}
+
+interface RestoreResponse {
+  affectedCount: number;
+}
+
+// ============================================================
+// POST /api/announcements/restore
+// ============================================================
+
+export const onRequestPost = createEndpoint<RestoreResponse, RestoreAnnouncementsBody>({
+  auth: 'moderator',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => {
+    if (!body.announcementIds || !Array.isArray(body.announcementIds)) {
+      throw new Error('announcementIds array required');
+    }
+    return body as RestoreAnnouncementsBody;
+  },
+
+  handler: async ({ env, user, body }) => {
+    const { announcementIds } = body;
+    const now = utcNow();
+
+    const placeholders = announcementIds.map(() => '?').join(',');
+    const result = await env.DB
+      .prepare(`
+        UPDATE announcements 
+        SET deleted_at_utc = NULL, updated_at_utc = ?
+        WHERE announcement_id IN (${placeholders})
+        AND deleted_at_utc IS NOT NULL
+      `)
+      .bind(now, ...announcementIds)
+      .run();
+
+    if (announcementIds.length > 0) {
+      await createAuditLog(
+        env.DB,
+        'announcement',
+        'batch_restore',
+        user!.user_id,
+        'batch',
+        `Restored ${announcementIds.length} announcements`,
+        JSON.stringify({ announcementIds })
+      );
+    }
+
+    return {
+      affectedCount: result.meta.changes || 0,
+    };
+  },
 });

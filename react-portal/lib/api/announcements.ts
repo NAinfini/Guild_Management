@@ -3,7 +3,7 @@
  * Typed methods for announcement operations with Domain Mapping
  */
 
-import { api } from '../api-client';
+import { typedAPI } from './api-builder';
 import type { Announcement } from '../../types';
 
 // ============================================================================
@@ -56,9 +56,9 @@ const mapToDomain = (dto: AnnouncementDTO): Announcement => {
 export const announcementsAPI = {
   list: async (): Promise<Announcement[]> => {
     // API client now unwraps { success, data } envelope automatically
-    const response = await api.get<{ announcements: AnnouncementDTO[] }>('/announcements');
-    if (!response || !response.announcements) return [];
-    return response.announcements.map(mapToDomain);
+    const response = await typedAPI.announcements.list<AnnouncementDTO[]>();
+    if (!response || !Array.isArray(response)) return [];
+    return response.map(mapToDomain);
   },
 
   create: async (data: CreateAnnouncementData): Promise<Announcement> => {
@@ -66,9 +66,9 @@ export const announcementsAPI = {
       title: data.title,
       bodyHtml: data.bodyHtml,
       isPinned: data.isPinned ?? false,
-      mediaUrls: data.mediaUrls,
+      mediaIds: data.mediaUrls,
     };
-    const response = await api.post<{ announcement: AnnouncementDTO }>('/announcements', payload);
+    const response = await typedAPI.announcements.create<{ announcement: AnnouncementDTO }>({ body: payload });
     return mapToDomain(response.announcement);
   },
 
@@ -77,28 +77,27 @@ export const announcementsAPI = {
     if (data.title !== undefined) payload.title = data.title;
     if (data.bodyHtml !== undefined) payload.bodyHtml = data.bodyHtml;
     if (data.isPinned !== undefined) payload.isPinned = data.isPinned;
-    if (data.mediaUrls !== undefined) payload.mediaUrls = data.mediaUrls;
-    const response = await api.put<{ announcement: AnnouncementDTO }>(`/announcements/${id}`, payload);
+    if (data.mediaUrls !== undefined) payload.mediaIds = data.mediaUrls;
+    const response = await typedAPI.announcements.update<{ announcement: AnnouncementDTO }>({ params: { id }, body: payload });
     return mapToDomain(response.announcement);
   },
 
   delete: async (id: string): Promise<void> => {
-    await api.delete(`/announcements/${id}`);
+    await typedAPI.announcements.delete({ params: { id } });
   },
 
   pin: async (id: string): Promise<Announcement> => {
-    const response = await api.post<{ announcement: AnnouncementDTO }>(`/announcements/${id}/pin`);
+    const response = await typedAPI.announcements.togglePin<{ announcement: AnnouncementDTO }>({ params: { id }, body: {} });
     return mapToDomain(response.announcement);
   },
 
   duplicate: async (id: string): Promise<Announcement> => {
-    const response = await api.post<{ announcement: AnnouncementDTO }>(`/announcements/${id}/duplicate`);
+    const response = await typedAPI.announcements.create<{ announcement: AnnouncementDTO }>({ body: { duplicateFrom: id } });
     return mapToDomain(response.announcement);
   },
-  
+
   archive: async (id: string, isArchived: boolean): Promise<Announcement> => {
-     const action = isArchived ? 'archive' : 'unarchive';
-     const response = await api.post<{ announcement: AnnouncementDTO }>(`/announcements/${id}/${action}`);
+     const response = await typedAPI.announcements.archive<{ announcement: AnnouncementDTO }>({ params: { id }, body: {} });
      return mapToDomain(response.announcement);
   },
 
@@ -107,36 +106,36 @@ export const announcementsAPI = {
   // ============================================================================
 
   batchDelete: async (ids: string[]): Promise<{ affectedCount: number }> => {
-    return api.post('/announcements/batch', {
+    return typedAPI.announcements.batch({ body: {
       action: 'delete',
       announcementIds: ids,
-    });
+    }});
   },
 
   batchArchive: async (ids: string[], archived: boolean): Promise<{ affectedCount: number }> => {
-    return api.post('/announcements/batch', {
+    return typedAPI.announcements.batch({ body: {
       action: archived ? 'archive' : 'unarchive',
       announcementIds: ids,
-    });
+    }});
   },
 
   batchPin: async (ids: string[], pinned: boolean): Promise<{ affectedCount: number }> => {
-    return api.post('/announcements/batch', {
+    return typedAPI.announcements.batch({ body: {
       action: pinned ? 'pin' : 'unpin',
       announcementIds: ids,
-    });
+    }});
   },
 
   batchGet: async (ids: string[]): Promise<Announcement[]> => {
-    const res = await api.get<{ announcements: AnnouncementDTO[] }>(
-      `/announcements/batch?ids=${ids.join(',')}`
-    );
+    const res = await typedAPI.announcements.batch<{ announcements: AnnouncementDTO[] }>({
+      query: { ids: ids.join(',') }
+    });
     return res.announcements.map(mapToDomain);
   },
 
   restore: async (ids: string[]): Promise<{ affectedCount: number }> => {
-    return api.post('/announcements/restore', {
+    return typedAPI.announcements.restoreBatch({ body: {
       announcementIds: ids,
-    });
+    }});
   },
 };

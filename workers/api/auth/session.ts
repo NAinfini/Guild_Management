@@ -1,22 +1,44 @@
 /**
  * Session validation endpoint
  * GET /api/auth/session
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env } from '../_types';
-import { successResponse, unauthorizedResponse } from '../_utils';
-import { withOptionalAuth } from '../_middleware';
+import type { Env, User, Session } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
 
-export const onRequestGet: PagesFunction<Env> = async (context) => {
-  return withOptionalAuth(context, async (authContext) => {
-    const { user, session, isAuthenticated } = authContext.data;
+// ============================================================
+// Types
+// ============================================================
 
+interface SessionResponse {
+  user: {
+    user_id: string;
+    username: string;
+    wechat_name: string | null;
+    role: string;
+    power: number;
+    is_active: number;
+  } | null;
+  csrfToken: string | null;
+}
+
+// ============================================================
+// GET /api/auth/session
+// ============================================================
+
+export const onRequestGet = createEndpoint<SessionResponse>({
+  auth: 'optional',
+  cacheControl: 'no-store', // Never cache session data
+
+  handler: async ({ user, session, isAuthenticated }) => {
     if (!isAuthenticated || !user) {
       // Guest session - return null user but success (allows portal access)
-      return successResponse({ 
-        user: null, 
-        csrfToken: session?.csrf_token || null 
-      });
+      return {
+        user: null,
+        csrfToken: session?.csrf_token || null,
+      };
     }
 
     // Return user data and CSRF token
@@ -27,12 +49,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       role: user.role,
       power: user.power,
       is_active: user.is_active,
-      session_expires_at_utc: session?.expires_at_utc,
     };
 
-    return successResponse({ 
+    return {
       user: userData,
-      csrfToken: session?.csrf_token || null 
-    });
-  });
-};
+      csrfToken: session?.csrf_token || null,
+    };
+  },
+});

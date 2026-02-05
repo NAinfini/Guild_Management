@@ -1,26 +1,48 @@
 /**
- * War History - Detail Update
- * GET /api/wars/history/[id]  (optional)
- * PUT /api/wars/history/[id]  (update stats/notes with ETag)
+ * Guild War - War History Detail
+ * GET /api/wars/history/[id] - Get war history detail
+ * PUT /api/wars/history/[id] - Update war history
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env } from '../../_types';
-import {
-  successResponse,
-  badRequestResponse,
-  errorResponse,
-  notFoundResponse,
-  utcNow,
-  createAuditLog,
-  etagFromTimestamp,
-  assertIfMatch,
-} from '../../_utils';
-import { withOptionalAuth, withModeratorAuth } from '../../_middleware';
-import { validateBody, updateWarStatsSchema } from '../../_validation';
+import type { Env } from '../../../lib/types';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
 
-export const onRequestGet: PagesFunction<Env> = async (context) => {
-  return withOptionalAuth(context, async (authContext) => {
-    const { env, params } = authContext;
+// ============================================================
+// Types
+// ============================================================
+
+interface UpdateWarStatsBody {
+  ourKills?: number;
+  enemyKills?: number;
+  ourTowers?: number;
+  enemyTowers?: number;
+  ourBaseHp?: number;
+  enemyBaseHp?: number;
+  ourDistance?: number;
+  enemyDistance?: number;
+  ourCredits?: number;
+  enemyCredits?: number;
+  result?: 'win' | 'loss' | 'draw' | 'unknown';
+  notes?: string;
+}
+
+interface WarHistoryResponse {
+  war: any;
+}
+
+// ============================================================
+// GET /api/wars/history/[id]
+// ============================================================
+
+export const onRequestGet = createEndpoint<WarHistoryResponse>({
+  auth: 'optional',
+  etag: true,
+  cacheControl: 'public, max-age=60',
+
+  handler: async ({ env, params }) => {
     const warId = params.id;
 
     const war = await env.DB
@@ -28,41 +50,45 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       .bind(warId)
       .first();
 
-    if (!war) return notFoundResponse('War history');
+    if (!war) {
+      throw new Error('War history not found');
+    }
 
-    const etag = etagFromTimestamp((war as any).updated_at_utc);
-    const pre = assertIfMatch(authContext.request, etag);
-    if (pre) return pre;
+    return { war };
+  },
+});
 
-    const response = successResponse({ war });
-    if (etag) response.headers.set('ETag', etag);
-    return response;
-  });
-};
+// ============================================================
+// PUT /api/wars/history/[id]
+// ============================================================
 
-export const onRequestPut: PagesFunction<Env> = async (context) => {
-  return withModeratorAuth(context, async (authContext) => {
-    const { request, env, params } = authContext;
-    const { user } = authContext.data;
+export const onRequestPut = createEndpoint<WarHistoryResponse, UpdateWarStatsBody>({
+  auth: 'moderator',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => body as UpdateWarStatsBody,
+
+  handler: async ({ env, user, params, body, request }) => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
     const warId = params.id;
 
     const war = await env.DB
       .prepare('SELECT * FROM war_history WHERE war_id = ?')
       .bind(warId)
-      .first<any>();
+      .first<{ updated_at_utc: string }>();
 
-    if (!war) return notFoundResponse('War history');
+    if (!war) {
+      throw new Error('War history not found');
+    }
 
+    // ETag validation
     const currentEtag = etagFromTimestamp(war.updated_at_utc);
     const pre = assertIfMatch(request, currentEtag);
     if (pre) return pre;
 
-    const validation = await validateBody(request, updateWarStatsSchema);
-    if (!validation.success) {
-      return badRequestResponse('Invalid request body', validation.error.errors);
-    }
-
-    const updates = validation.data;
     const updateFields: string[] = [];
     const updateValues: any[] = [];
 
@@ -82,7 +108,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
     };
 
     for (const [key, column] of Object.entries(fieldMap)) {
-      const val = (updates as any)[key];
+      const val = (body as any)[key];
       if (val !== undefined) {
         updateFields.push(`${column} = ?`);
         updateValues.push(val);
@@ -90,7 +116,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
     }
 
     if (updateFields.length === 0) {
-      return badRequestResponse('No fields to update');
+      throw new Error('No fields to update');
     }
 
     const now = utcNow();
@@ -107,7 +133,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
       user.user_id,
       warId,
       'Updated war history stats',
-      JSON.stringify(updates)
+      JSON.stringify(body)
     );
 
     const updated = await env.DB
@@ -115,9 +141,6 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
       .bind(warId)
       .first<any>();
 
-    const etag = etagFromTimestamp(updated?.updated_at_utc);
-    const response = successResponse({ war: updated });
-    if (etag) response.headers.set('ETag', etag);
-    return response;
-  });
-};
+    return { war: updated };
+  },
+});

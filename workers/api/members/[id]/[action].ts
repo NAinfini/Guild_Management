@@ -5,7 +5,7 @@
  * POST /api/members/[id]/reset-password - Admin password reset
  */
 
-import type { PagesFunction, Env, User } from '../../_types';
+import type { PagesFunction, Env, User } from '../../../lib/types';
 import {
   successResponse,
   badRequestResponse,
@@ -18,9 +18,9 @@ import {
   createAuditLog,
   etagFromTimestamp,
   assertIfMatch,
-} from '../../_utils';
-import { withAuth, withAdminAuth } from '../../_middleware';
-import { validateBody, updateRoleSchema } from '../../_validation';
+} from '../../../lib/utils';
+import { withAuth, withAdminAuth } from '../../../lib/middleware';
+import { validateBody, updateRoleSchema } from '../../../lib/validation';
 
 // ============================================================
 // PUT /api/members/[id]/role - Change Role (Admin Only)

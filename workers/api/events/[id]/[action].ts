@@ -7,7 +7,7 @@
  * POST /api/events/[id]/duplicate
  */
 
-import type { PagesFunction, Env, Event } from '../../_types';
+import type { PagesFunction, Env, Event } from '../../../lib/types';
 import {
   successResponse,
   errorResponse,
@@ -20,8 +20,8 @@ import {
   canEditEntity,
   etagFromTimestamp,
   assertIfMatch,
-} from '../../_utils';
-import { withAuth, withModeratorAuth } from '../../_middleware';
+} from '../../../lib/utils';
+import { withAuth, withModeratorAuth } from '../../../lib/middleware';
 
 // ============================================================
 // POST /api/events/[id]/join - Join Event

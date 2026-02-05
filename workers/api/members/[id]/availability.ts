@@ -1,75 +1,89 @@
 /**
  * Member Availability Management
- * PUT /api/members/[id]/availability - Update availability blocks
+ * PUT /api/members/[id]/availability - Update member availability
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env } from '../../../_types';
-import {
-  successResponse,
-  badRequestResponse,
-  errorResponse,
-  forbiddenResponse,
-  utcNow,
-  etagFromTimestamp,
-  assertIfMatch,
-} from '../../../_utils';
-import { withAuth } from '../../../_middleware';
-import { validateBody, updateAvailabilitySchema } from '../../../_validation';
+import type { Env } from '../../../lib/types';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { utcNow, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
 
-export const onRequestPut: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
-    const { request, env, params } = authContext;
-    const { user } = authContext.data;
+// ============================================================
+// Types
+// ============================================================
+
+interface AvailabilityBlock {
+  weekday: number;
+  startMin: number;
+  endMin: number;
+}
+
+interface UpdateAvailabilityBody {
+  blocks: AvailabilityBlock[];
+}
+
+interface UpdateAvailabilityResponse {
+  message: string;
+  blocks: AvailabilityBlock[];
+}
+
+// ============================================================
+// PUT /api/members/[id]/availability
+// ============================================================
+
+export const onRequestPut = createEndpoint<UpdateAvailabilityResponse, UpdateAvailabilityBody>({
+  auth: 'required',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => {
+    if (!body.blocks || !Array.isArray(body.blocks)) {
+      throw new Error('blocks array is required');
+    }
+    return body as UpdateAvailabilityBody;
+  },
+
+  handler: async ({ env, user, params, body, request }) => {
     const userId = params.id;
 
     // Only self can update availability
-    if (userId !== user.user_id) {
-      return forbiddenResponse('You can only update your own availability');
+    if (userId !== user!.user_id) {
+      throw new Error('You can only update your own availability');
     }
 
     const current = await env.DB
       .prepare('SELECT updated_at_utc, created_at_utc FROM users WHERE user_id = ?')
       .bind(userId)
       .first<{ updated_at_utc: string; created_at_utc: string }>();
+
     const currentEtag = etagFromTimestamp(current?.updated_at_utc || current?.created_at_utc);
     const pre = assertIfMatch(request, currentEtag);
     if (pre) return pre;
 
-    const validation = await validateBody(request, updateAvailabilitySchema);
-    if (!validation.success) {
-      return badRequestResponse('Invalid request body', validation.error.errors);
-    }
+    const { blocks } = body;
+    const now = utcNow();
 
-    const { blocks } = validation.data;
+    // Delete existing availability
+    await env.DB
+      .prepare('DELETE FROM member_availability WHERE user_id = ?')
+      .bind(userId)
+      .run();
 
-    try {
-      const now = utcNow();
-
-      // Delete existing availability
+    // Insert new blocks
+    for (const block of blocks) {
       await env.DB
-        .prepare('DELETE FROM member_availability WHERE user_id = ?')
-        .bind(userId)
+        .prepare(`
+          INSERT INTO member_availability (
+            user_id, weekday, start_min, end_min, created_at_utc, updated_at_utc
+          ) VALUES (?, ?, ?, ?, ?, ?)
+        `)
+        .bind(userId, block.weekday, block.startMin, block.endMin, now, now)
         .run();
-
-      // Insert new blocks
-      for (const block of blocks) {
-        await env.DB
-          .prepare(`
-            INSERT INTO member_availability (
-              user_id, weekday, start_min, end_min, created_at_utc, updated_at_utc
-            ) VALUES (?, ?, ?, ?, ?, ?)
-          `)
-          .bind(userId, block.weekday, block.startMin, block.endMin, now, now)
-          .run();
-      }
-
-      return successResponse({
-        message: 'Availability updated successfully',
-        blocks,
-      });
-    } catch (error) {
-      console.error('Update availability error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while updating availability', 500);
     }
-  });
-};
+
+    return {
+      message: 'Availability updated successfully',
+      blocks,
+    };
+  },
+});

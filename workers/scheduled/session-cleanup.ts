@@ -1,5 +1,5 @@
 
-import type { Env } from '../_types';
+import type { Env } from '../lib/types';
 
 export default {
   async scheduled(

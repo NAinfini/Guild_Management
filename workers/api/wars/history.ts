@@ -1,176 +1,165 @@
 /**
- * Guild War API - War History
- * GET /api/wars/history - Get war history list
- * POST /api/wars/history - Create history entry
- * PUT /api/wars/history/[id] - Update war stats
+ * Guild War History API
+ * GET /api/wars/history - List war history
+ * POST /api/wars/history - Create war history record
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env } from '../../_types';
-import {
-  successResponse,
-  badRequestResponse,
-  errorResponse,
-  notFoundResponse,
-  generateId,
-  utcNow,
-  createAuditLog,
-} from '../../_utils';
-import { withOptionalAuth, withModeratorAuth } from '../../_middleware';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { generateId, utcNow, createAuditLog } from '../../lib/utils';
 
 // ============================================================
-// GET /api/wars/history - Get War History
+// Types
 // ============================================================
 
-export const onRequestGet: PagesFunction<Env> = async (context) => {
-  return withOptionalAuth(context, async (authContext) => {
-    const { env, request } = authContext;
+interface WarHistoryQuery {
+  limit?: number;
+  offset?: number;
+}
 
-    try {
-      const url = new URL(request.url);
-      const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 500); // Max 500
-      const offset = parseInt(url.searchParams.get('offset') || '0');
-      const startDate = url.searchParams.get('startDate');
-      const endDate = url.searchParams.get('endDate');
+interface CreateWarHistoryBody {
+  eventId?: string;
+  warDate: string;
+  title: string;
+  notes?: string;
+  ourKills?: number;
+  enemyKills?: number;
+  ourTowers?: number;
+  enemyTowers?: number;
+  ourBaseHp?: number;
+  enemyBaseHp?: number;
+  ourDistance?: number;
+  enemyDistance?: number;
+  ourCredits?: number;
+  enemyCredits?: number;
+  result?: 'win' | 'loss' | 'draw' | 'unknown';
+}
 
-      // Build query with date filtering
-      let query = 'SELECT * FROM war_history WHERE 1=1';
-      const params: any[] = [];
+interface CreateWarHistoryResponse {
+  war: any;
+}
 
-      if (startDate) {
-        query += ' AND war_date >= ?';
-        params.push(startDate);
-      }
-      if (endDate) {
-        query += ' AND war_date <= ?';
-        params.push(endDate);
-      }
+// ============================================================
+// GET /api/wars/history - List War History
+// ============================================================
 
-      query += ' ORDER BY war_date DESC LIMIT ? OFFSET ?';
-      params.push(limit, offset);
+export const onRequestGet = createEndpoint<any[], WarHistoryQuery>({
+  auth: 'optional',
+  etag: true,
+  cacheControl: 'public, max-age=60',
 
-      const wars = await env.DB.prepare(query).bind(...params).all();
+  parseQuery: (searchParams) => ({
+    limit: parseInt(searchParams.get('limit') || '50'),
+    offset: parseInt(searchParams.get('offset') || '0'),
+  }),
 
-      // Get total count with same filters
-      let countQuery = 'SELECT COUNT(*) as count FROM war_history WHERE 1=1';
-      const countParams: any[] = [];
+  handler: async ({ env, query }) => {
+    const wars = await env.DB
+      .prepare(`
+        SELECT * FROM war_history 
+        ORDER BY war_date DESC 
+        LIMIT ? OFFSET ?
+      `)
+      .bind(query.limit, query.offset)
+      .all();
 
-      if (startDate) {
-        countQuery += ' AND war_date >= ?';
-        countParams.push(startDate);
-      }
-      if (endDate) {
-        countQuery += ' AND war_date <= ?';
-        countParams.push(endDate);
-      }
+    return wars.results || [];
+  },
+});
 
-      const countResult = await env.DB
-        .prepare(countQuery)
-        .bind(...countParams)
-        .first<{ count: number }>();
+// ============================================================
+// POST /api/wars/history - Create War History
+// ============================================================
 
-      return successResponse({
-        wars: wars.results || [],
-        total: countResult?.count || 0,
-        limit,
-        offset,
-      });
-    } catch (error) {
-      console.error('Get war history error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while fetching war history', 500);
+export const onRequestPost = createEndpoint<CreateWarHistoryResponse, CreateWarHistoryBody>({
+  auth: 'moderator',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => {
+    if (!body.warDate || !body.title) {
+      throw new Error('warDate and title are required');
     }
-  });
-};
+    return body as CreateWarHistoryBody;
+  },
 
-// ============================================================
-// POST /api/wars/history - Create History Entry
-// ============================================================
+  handler: async ({ env, user, body }) => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  return withModeratorAuth(context, async (authContext) => {
-    const { request, env } = authContext;
-    const { user } = authContext.data;
+    const {
+      eventId,
+      warDate,
+      title,
+      notes,
+      ourKills,
+      enemyKills,
+      ourTowers,
+      enemyTowers,
+      ourBaseHp,
+      enemyBaseHp,
+      ourDistance,
+      enemyDistance,
+      ourCredits,
+      enemyCredits,
+      result,
+    } = body;
 
-    try {
-      const body = await request.json();
-      const {
-        eventId,
-        warDate,
-        title,
-        notes,
-        ourKills,
-        enemyKills,
-        ourTowers,
-        enemyTowers,
-        ourBaseHp,
-        enemyBaseHp,
-        ourDistance,
-        enemyDistance,
-        ourCredits,
-        enemyCredits,
-        result,
-      } = body;
+    const warId = generateId('war');
+    const now = utcNow();
+    const warDateUtc = new Date(warDate).toISOString().replace('T', ' ').substring(0, 19);
 
-      if (!warDate || !title) {
-        return badRequestResponse('warDate and title are required');
-      }
-
-      const warId = generateId('war');
-      const now = utcNow();
-      const warDateUtc = new Date(warDate).toISOString().replace('T', ' ').substring(0, 19);
-
-      await env.DB
-        .prepare(`
-          INSERT INTO war_history (
-            war_id, event_id, war_date, title, notes,
-            our_kills, enemy_kills, our_towers, enemy_towers,
-            our_base_hp, enemy_base_hp, our_distance, enemy_distance,
-            our_credits, enemy_credits, result,
-            created_by, updated_by, created_at_utc, updated_at_utc
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `)
-        .bind(
-          warId,
-          eventId || null,
-          warDateUtc,
-          title,
-          notes || null,
-          ourKills || null,
-          enemyKills || null,
-          ourTowers || null,
-          enemyTowers || null,
-          ourBaseHp || null,
-          enemyBaseHp || null,
-          ourDistance || null,
-          enemyDistance || null,
-          ourCredits || null,
-          enemyCredits || null,
-          result || 'unknown',
-          user.user_id,
-          user.user_id,
-          now,
-          now
-        )
-        .run();
-
-      await createAuditLog(
-        env.DB,
-        'war',
-        'create_history',
-        user.user_id,
+    await env.DB
+      .prepare(`
+        INSERT INTO war_history (
+          war_id, event_id, war_date, title, notes,
+          our_kills, enemy_kills, our_towers, enemy_towers,
+          our_base_hp, enemy_base_hp, our_distance, enemy_distance,
+          our_credits, enemy_credits, result,
+          created_by, updated_by, created_at_utc, updated_at_utc
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .bind(
         warId,
-        `Created war history: ${title}`,
-        JSON.stringify({ warDate, result })
-      );
+        eventId || null,
+        warDateUtc,
+        title,
+        notes || null,
+        ourKills || null,
+        enemyKills || null,
+        ourTowers || null,
+        enemyTowers || null,
+        ourBaseHp || null,
+        enemyBaseHp || null,
+        ourDistance || null,
+        enemyDistance || null,
+        ourCredits || null,
+        enemyCredits || null,
+        result || 'unknown',
+        user.user_id,
+        user.user_id,
+        now,
+        now
+      )
+      .run();
 
-      const war = await env.DB
-        .prepare('SELECT * FROM war_history WHERE war_id = ?')
-        .bind(warId)
-        .first();
+    await createAuditLog(
+      env.DB,
+      'war',
+      'create_history',
+      user.user_id,
+      warId,
+      `Created war history: ${title}`,
+      JSON.stringify({ warDate, result })
+    );
 
-      return successResponse({ war }, 201);
-    } catch (error) {
-      console.error('Create war history error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while creating war history', 500);
-    }
-  });
-};
+    const war = await env.DB
+      .prepare('SELECT * FROM war_history WHERE war_id = ?')
+      .bind(warId)
+      .first();
+
+    return { war };
+  },
+});

@@ -2,137 +2,133 @@
  * Member Progression Tracking
  * PUT /api/members/[id]/progression - Update progression item
  * GET /api/members/[id]/progression - Get all progression
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env } from '../../_types';
-import {
-  successResponse,
-  badRequestResponse,
-  errorResponse,
-  forbiddenResponse,
-  utcNow,
-  etagFromTimestamp,
-  assertIfMatch,
-} from '../../_utils';
-import { withAuth } from '../../_middleware';
-import { validateBody, progressionUpdateSchema } from '../../_validation';
+import type { Env } from '../../../lib/types';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { utcNow, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
 
 // ============================================================
-// PUT /api/members/[id]/progression - Update Progression
+// Types
 // ============================================================
 
-export const onRequestPut: PagesFunction<Env> = async (context: any) => {
-  return withAuth(context, async (authContext: any) => {
-    const { request, env, params } = authContext;
-    const { user } = authContext.data;
+interface UpdateProgressionBody {
+  category: string;
+  itemId: string;
+  level: number;
+}
+
+interface ProgressionResponse {
+  message: string;
+  progression: any;
+}
+
+interface GetProgressionResponse {
+  progression: any[];
+}
+
+// ============================================================
+// PUT /api/members/[id]/progression
+// ============================================================
+
+export const onRequestPut = createEndpoint<ProgressionResponse, UpdateProgressionBody>({
+  auth: 'required',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => {
+    if (!body.category || !body.itemId || typeof body.level !== 'number') {
+      throw new Error('category, itemId, and level are required');
+    }
+    return body as UpdateProgressionBody;
+  },
+
+  handler: async ({ env, user, params, body, request }) => {
     const userId = params.id;
 
     // Only self can update progression
-    if (userId !== user.user_id) {
-      return forbiddenResponse('You can only update your own progression');
+    if (userId !== user!.user_id) {
+      throw new Error('You can only update your own progression');
     }
 
     const currentUserRow = await env.DB
       .prepare('SELECT updated_at_utc, created_at_utc FROM users WHERE user_id = ?')
       .bind(userId)
       .first<{ updated_at_utc: string; created_at_utc: string }>();
+
     const currentEtag = etagFromTimestamp(currentUserRow?.updated_at_utc || currentUserRow?.created_at_utc);
     const pre = assertIfMatch(request, currentEtag);
     if (pre) return pre;
 
-    const validation = await validateBody(request, progressionUpdateSchema);
-    if (!validation.success) {
-      return badRequestResponse('Invalid request body', validation.error.errors);
+    const { category, itemId, level } = body;
+    const now = utcNow();
+
+    // Check if progression exists
+    const existing = await env.DB
+      .prepare('SELECT * FROM member_progression WHERE user_id = ? AND category = ? AND item_id = ?')
+      .bind(userId, category, itemId)
+      .first();
+
+    if (existing) {
+      // Update
+      await env.DB
+        .prepare(`
+          UPDATE member_progression 
+          SET level = ?, updated_at_utc = ? 
+          WHERE user_id = ? AND category = ? AND item_id = ?
+        `)
+        .bind(level, now, userId, category, itemId)
+        .run();
+    } else {
+      // Insert
+      await env.DB
+        .prepare(`
+          INSERT INTO member_progression (
+            user_id, category, item_id, level, created_at_utc, updated_at_utc
+          ) VALUES (?, ?, ?, ?, ?, ?)
+        `)
+        .bind(userId, category, itemId, level, now, now)
+        .run();
     }
 
-    const { category, itemId, level } = validation.data;
+    // Update user timestamp (to invalidate etag)
+    await env.DB
+      .prepare('UPDATE users SET updated_at_utc = ? WHERE user_id = ?')
+      .bind(now, userId)
+      .run();
 
-    try {
-      const now = utcNow();
+    const updated = await env.DB
+      .prepare('SELECT * FROM member_progression WHERE user_id = ? AND category = ? AND item_id = ?')
+      .bind(userId, category, itemId)
+      .first();
 
-      // Check if progression exists
-      const existing = await env.DB
-        .prepare('SELECT * FROM member_progression WHERE user_id = ? AND category = ? AND item_id = ?')
-        .bind(userId, category, itemId)
-        .first();
-
-      if (existing) {
-        // Update existing
-        await env.DB
-          .prepare('UPDATE member_progression SET level = ?, updated_at_utc = ? WHERE user_id = ? AND category = ? AND item_id = ?')
-          .bind(level, now, userId, category, itemId)
-          .run();
-      } else {
-        // Insert new
-        await env.DB
-          .prepare(`
-            INSERT INTO member_progression (user_id, category, item_id, level, created_at_utc, updated_at_utc)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `)
-          .bind(userId, category, itemId, level, now, now)
-          .run();
-      }
-
-    const updatedUser = await env.DB
-      .prepare('SELECT updated_at_utc FROM users WHERE user_id = ?')
-      .bind(userId)
-      .first<{ updated_at_utc: string }>();
-    const etag = etagFromTimestamp(updatedUser?.updated_at_utc || currentUserRow?.updated_at_utc);
-
-    const resp = successResponse({
-      message: 'Progression updated successfully',
-      category,
-      itemId,
-      level,
-    });
-    if (etag) resp.headers.set('ETag', etag);
-    return resp;
-    } catch (error) {
-      console.error('Update progression error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while updating progression', 500);
-    }
-  });
-};
+    return {
+      message: 'Progression updated',
+      progression: updated,
+    };
+  },
+});
 
 // ============================================================
-// GET /api/members/[id]/progression - Get Progression
+// GET /api/members/[id]/progression
 // ============================================================
 
-export const onRequestGet: PagesFunction<Env> = async (context: any) => {
-  return withAuth(context, async (authContext: any) => {
-    const { env, params } = authContext;
+export const onRequestGet = createEndpoint<GetProgressionResponse>({
+  auth: 'optional',
+  etag: true,
+  cacheControl: 'public, max-age=60',
+
+  handler: async ({ env, params }) => {
     const userId = params.id;
 
-    try {
-      const result = await env.DB
-        .prepare('SELECT * FROM member_progression WHERE user_id = ? ORDER BY category, item_id')
-        .bind(userId)
-        .all();
+    const progression = await env.DB
+      .prepare('SELECT * FROM member_progression WHERE user_id = ?')
+      .bind(userId)
+      .all();
 
-      // Group by category
-      const grouped = (result.results || []).reduce((acc: any, item: any) => {
-        if (!acc[item.category]) {
-          acc[item.category] = [];
-        }
-        acc[item.category].push({
-          itemId: item.item_id,
-          level: item.level,
-        });
-        return acc;
-      }, {});
-
-      const userRow = await env.DB
-        .prepare('SELECT updated_at_utc, created_at_utc FROM users WHERE user_id = ?')
-        .bind(userId)
-        .first<{ updated_at_utc: string; created_at_utc: string }>();
-      const etag = etagFromTimestamp(userRow?.updated_at_utc || userRow?.created_at_utc);
-
-      const resp = successResponse({ progression: grouped });
-      if (etag) resp.headers.set('ETag', etag);
-      return resp;
-    } catch (error) {
-      console.error('Get progression error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while fetching progression', 500);
-    }
-  });
-};
+    return {
+      progression: progression.results || [],
+    };
+  },
+});

@@ -1,162 +1,155 @@
 /**
- * War Analytics API
- * GET /api/wars/analytics - Get aggregated war analytics
+ * Guild War Analytics
+ * GET /api/wars/analytics - Get war statistics and analytics
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env } from '../../_types';
-import { successResponse, errorResponse, etagFromTimestamp } from '../../_utils';
-import { withAuth } from '../../_middleware';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { etagFromTimestamp } from '../../lib/utils';
 
-export const onRequestGet: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
-    const { env, request } = authContext;
+// ============================================================
+// Types
+// ============================================================
 
-    try {
-      const url = new URL(request.url);
-      const userId = url.searchParams.get('userId');
-      const startDate = url.searchParams.get('startDate');
-      const endDate = url.searchParams.get('endDate');
-      const warIds = url.searchParams.get('warIds')?.split(',').map(Number).filter(n => !isNaN(n));
+interface AnalyticsQuery {
+  userId?: string;
+  startDate?: string;
+  endDate?: string;
+}
 
-      // Build WHERE conditions
-      const buildWhereClause = (alias: string = 'wh') => {
-        const conditions: string[] = ['1=1'];
-        const params: any[] = [];
+interface AnalyticsResponse {
+  memberStats: any[];
+  perWarStats: any[];
+  rankings: {
+    byKills: any[];
+    byDamage: any[];
+    byHealing: any[];
+    byCredits: any[];
+  };
+  warResults: any[];
+}
 
-        if (startDate) {
-          conditions.push(`${alias}.war_date >= ?`);
-          params.push(startDate);
-        }
-        if (endDate) {
-          conditions.push(`${alias}.war_date <= ?`);
-          params.push(endDate);
-        }
-        if (warIds && warIds.length > 0) {
-          conditions.push(`${alias}.war_id IN (${warIds.map(() => '?').join(',')})`);
-          params.push(...warIds);
-        }
+// ============================================================
+// GET /api/wars/analytics
+// ============================================================
 
-        return { whereClause: conditions.join(' AND '), params };
-      };
+export const onRequestGet = createEndpoint<AnalyticsResponse, AnalyticsQuery>({
+  auth: 'optional',
+  etag: true,
+  cacheControl: 'public, max-age=300', // 5 minutes
 
-      // Get member stats aggregated across selected wars
-      const { whereClause: memberWhereClause, params: memberParams } = buildWhereClause('wh');
+  parseQuery: (searchParams) => ({
+    userId: searchParams.get('userId') || undefined,
+    startDate: searchParams.get('startDate') || undefined,
+    endDate: searchParams.get('endDate') || undefined,
+  }),
 
-      const memberQuery = `
-        SELECT
-          wms.user_id,
-          u.username,
-          u.class_code as class,
-          u.avatar_url,
-          COUNT(DISTINCT wms.war_id) as wars_participated,
-          SUM(wms.kills) as total_kills,
-          SUM(wms.deaths) as total_deaths,
-          SUM(wms.assists) as total_assists,
-          SUM(wms.damage) as total_damage,
-          SUM(wms.healing) as total_healing,
-          SUM(wms.building_damage) as total_building_damage,
-          SUM(wms.damage_taken) as total_damage_taken,
-          SUM(wms.credits) as total_credits,
-          AVG(wms.kills) as avg_kills,
-          AVG(wms.deaths) as avg_deaths,
-          AVG(wms.assists) as avg_assists,
-          AVG(wms.damage) as avg_damage,
-          AVG(wms.healing) as avg_healing,
-          AVG(wms.building_damage) as avg_building_damage,
-          AVG(wms.credits) as avg_credits,
-          AVG(wms.damage_taken) as avg_damage_taken,
-          MAX(wms.damage) as best_war_value
-        FROM war_member_stats wms
-        JOIN users u ON wms.user_id = u.user_id
-        JOIN war_history wh ON wms.war_id = wh.war_id
-        WHERE ${memberWhereClause}
-        ${userId ? 'AND wms.user_id = ?' : ''}
-        GROUP BY wms.user_id, u.username, u.class_code, u.avatar_url
-        ORDER BY total_damage DESC
-      `;
+  handler: async ({ env, query }) => {
+    const buildWhereClause = () => {
+      const clauses: string[] = ['1=1'];
+      const params: any[] = [];
 
-      const finalMemberParams = userId ? [...memberParams, userId] : memberParams;
-      const memberResult = await env.DB.prepare(memberQuery).bind(...finalMemberParams).all();
+      if (query.startDate) {
+        clauses.push('wh.war_date >= ?');
+        params.push(query.startDate);
+      }
 
-      // Calculate KDA ratio for each member
-      const memberStats = (memberResult.results || []).map((row: any) => ({
-        ...row,
-        kda_ratio: row.total_deaths === 0 || row.total_deaths === null
-          ? (row.total_kills || 0) + (row.total_assists || 0)
-          : ((row.total_kills || 0) + (row.total_assists || 0)) / row.total_deaths,
-      }));
+      if (query.endDate) {
+        clauses.push('wh.war_date <= ?');
+        params.push(query.endDate);
+      }
 
-      // Get per-war stats for selected wars
-      const { whereClause: perWarWhereClause, params: perWarParams } = buildWhereClause('wh');
+      return { whereClause: clauses.join(' AND '), params };
+    };
 
-      const perWarQuery = `
-        SELECT
-          wms.war_id,
-          wh.war_date,
-          wh.title as war_title,
-          wms.user_id,
-          u.username,
-          u.class_code as class,
-          wms.kills,
-          wms.deaths,
-          wms.assists,
-          wms.damage,
-          wms.healing,
-          wms.building_damage,
-          wms.credits,
-          wms.damage_taken,
-          CASE
-            WHEN wms.deaths IS NULL OR wms.deaths = 0
-            THEN wms.kills + wms.assists
-            ELSE (wms.kills + wms.assists) * 1.0 / wms.deaths
-          END as kda
-        FROM war_member_stats wms
-        JOIN war_history wh ON wms.war_id = wh.war_id
-        JOIN users u ON wms.user_id = u.user_id
-        WHERE ${perWarWhereClause}
-        ${userId ? 'AND wms.user_id = ?' : ''}
-        ORDER BY wh.war_date DESC, u.username
-      `;
+    const { userId, startDate, endDate } = query;
 
-      const finalPerWarParams = userId ? [...perWarParams, userId] : perWarParams;
-      const perWarResult = await env.DB.prepare(perWarQuery).bind(...finalPerWarParams).all();
+    // Get member stats
+    const { whereClause: memberWhereClause, params: memberParams } = buildWhereClause();
 
-      // Get war results summary
-      const { whereClause: resultsWhereClause, params: resultsParams } = buildWhereClause();
+    const memberStatsQuery = `
+      SELECT
+        u.user_id,
+        u.username,
+        u.wechat_name,
+        COUNT(DISTINCT wms.war_id) as wars_participated,
+        SUM(wms.kills) as total_kills,
+        SUM(wms.damage) as total_damage,
+        SUM(wms.healing) as total_healing,
+        SUM(wms.credits) as total_credits,
+        AVG(wms.kills) as avg_kills,
+        AVG(wms.damage) as avg_damage,
+        AVG(wms.healing) as avg_healing,
+        AVG(wms.credits) as avg_credits
+      FROM users u
+      LEFT JOIN war_member_stats wms ON u.user_id = wms.user_id
+      LEFT JOIN war_history wh ON wms.war_id = wh.war_id
+      WHERE ${memberWhereClause}
+      ${userId ? 'AND u.user_id = ?' : ''}
+      GROUP BY u.user_id
+      HAVING wars_participated > 0
+      ORDER BY total_kills DESC
+    `;
 
-      const warResultsQuery = `
-        SELECT
-          result,
-          COUNT(*) as count
-        FROM war_history wh
-        WHERE ${resultsWhereClause}
-        GROUP BY result
-      `;
+    const finalMemberParams = userId ? [...memberParams, userId] : memberParams;
+    const memberStatsResult = await env.DB.prepare(memberStatsQuery).bind(...finalMemberParams).all();
+    const memberStats = memberStatsResult.results || [];
 
-      const warResults = await env.DB.prepare(warResultsQuery).bind(...resultsParams).all();
+    // Get per-war stats
+    const { whereClause: perWarWhereClause, params: perWarParams } = buildWhereClause();
 
-      // Calculate rankings (for backward compatibility)
-      const rankings = {
-        byKills: [...memberStats].sort((a: any, b: any) => (b.total_kills || 0) - (a.total_kills || 0)).slice(0, 10),
-        byDamage: [...memberStats].sort((a: any, b: any) => (b.total_damage || 0) - (a.total_damage || 0)).slice(0, 10),
-        byHealing: [...memberStats].sort((a: any, b: any) => (b.total_healing || 0) - (a.total_healing || 0)).slice(0, 10),
-        byCredits: [...memberStats].sort((a: any, b: any) => (b.total_credits || 0) - (a.total_credits || 0)).slice(0, 10),
-      };
+    const perWarQuery = `
+      SELECT
+        wh.war_id,
+        wh.war_date,
+        wh.title,
+        wh.result,
+        wms.user_id,
+        u.username,
+        wms.kills,
+        wms.damage,
+        wms.healing,
+        wms.credits
+      FROM war_history wh
+      JOIN war_member_stats wms ON wms.war_id = wh.war_id
+      JOIN users u ON wms.user_id = u.user_id
+      WHERE ${perWarWhereClause}
+      ${userId ? 'AND wms.user_id = ?' : ''}
+      ORDER BY wh.war_date DESC, u.username
+    `;
 
-      const maxUpdatedRow = await env.DB.prepare('SELECT MAX(updated_at_utc) as ts FROM war_history').first<{ ts: string }>();
-      const etag = etagFromTimestamp(maxUpdatedRow?.ts || null);
+    const finalPerWarParams = userId ? [...perWarParams, userId] : perWarParams;
+    const perWarResult = await env.DB.prepare(perWarQuery).bind(...finalPerWarParams).all();
 
-      const resp = successResponse({
-        memberStats,
-        perWarStats: perWarResult.results || [],
-        rankings,
-        warResults: warResults.results || [],
-      });
-      if (etag) resp.headers.set('ETag', etag);
-      return resp;
-    } catch (error) {
-      console.error('Get analytics error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while fetching analytics', 500);
-    }
-  });
-};
+    // Get war results summary
+    const { whereClause: resultsWhereClause, params: resultsParams } = buildWhereClause();
+
+    const warResultsQuery = `
+      SELECT
+        result,
+        COUNT(*) as count
+      FROM war_history wh
+      WHERE ${resultsWhereClause}
+      GROUP BY result
+    `;
+
+    const warResults = await env.DB.prepare(warResultsQuery).bind(...resultsParams).all();
+
+    // Calculate rankings
+    const rankings = {
+      byKills: [...memberStats].sort((a: any, b: any) => (b.total_kills || 0) - (a.total_kills || 0)).slice(0, 10),
+      byDamage: [...memberStats].sort((a: any, b: any) => (b.total_damage || 0) - (a.total_damage || 0)).slice(0, 10),
+      byHealing: [...memberStats].sort((a: any, b: any) => (b.total_healing || 0) - (a.total_healing || 0)).slice(0, 10),
+      byCredits: [...memberStats].sort((a: any, b: any) => (b.total_credits || 0) - (a.total_credits || 0)).slice(0, 10),
+    };
+
+    return {
+      memberStats,
+      perWarStats: perWarResult.results || [],
+      rankings,
+      warResults: warResults.results || [],
+    };
+  },
+});

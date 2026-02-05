@@ -3,7 +3,7 @@
  * Typed methods for event operations with Domain Mapping
  */
 
-import { api } from '../api-client';
+import { typedAPI } from './api-builder';
 import type { Event, User } from '../../types';
 
 // ============================================================================
@@ -102,17 +102,17 @@ export const eventsAPI = {
     if (params?.includeArchived) queryParams.includeArchived = 'true';
 
     // API client now unwraps { success, data } envelope automatically
-    const response = await api.get<{ events: EventListItemDTO[] }>('/events/list', queryParams);
-    if (!response || !response.events) return [];
+    const response = await typedAPI.events.list<EventListItemDTO[]>({ query: queryParams });
+    if (!response || !Array.isArray(response)) return [];
 
-    return response.events.map(mapToDomain);
+    return response.map(mapToDomain);
   },
 
   /**
    * Get single event details
    */
   get: async (id: string): Promise<Event> => {
-    const response = await api.get<{ event: EventDetailDTO }>(`/events/${id}`);
+    const response = await typedAPI.events.get<{ event: EventDetailDTO }>({ params: { id } });
     return mapToDomain(response.event);
   },
 
@@ -120,7 +120,7 @@ export const eventsAPI = {
    * Create new event (Admin/Mod only)
    */
   create: async (data: CreateEventData) => {
-    const response = await api.post<{ event: EventListItemDTO }>('/events', data);
+    const response = await typedAPI.events.create<{ event: EventListItemDTO }>({ body: data });
     return mapToDomain(response.event);
   },
 
@@ -128,7 +128,7 @@ export const eventsAPI = {
    * Update event (Admin/Mod only)
    */
   update: async (id: string, data: Partial<CreateEventData>) => {
-    const response = await api.put<{ event: EventListItemDTO }>(`/events/${id}`, data);
+    const response = await typedAPI.events.update<{ event: EventListItemDTO }>({ params: { id }, body: data });
     return mapToDomain(response.event);
   },
 
@@ -136,23 +136,23 @@ export const eventsAPI = {
    * Delete/Archive event (Admin/Mod only)
    */
   delete: async (id: string): Promise<void> => {
-    await api.delete<{ message: string }>(`/events/${id}`);
+    await typedAPI.events.delete({ params: { id } });
   },
 
   /**
    * Join event
    */
   join: async (id: string): Promise<JoinEventResponse> => {
-    return api.post<JoinEventResponse>(`/events/${id}/join`);
+    return typedAPI.events.join<JoinEventResponse>({ params: { id }, body: {} });
   },
 
   /**
    * Leave event
    */
   leave: async (id: string): Promise<{ message: string }> => {
-    return api.post<{ message: string }>(`/events/${id}/leave`);
+    return typedAPI.events.leave<{ message: string }>({ params: { id }, body: {} });
   },
-  
+
   /**
    * Duplicate event (Admin/Mod only)
    */
@@ -168,14 +168,14 @@ export const eventsAPI = {
     };
     return eventsAPI.create(newData);
   },
-  
+
   /**
    * Toggle Pin
    */
   togglePin: async (id: string): Promise<Event> => {
       // In a real app, this might be a PATCH endpoint or a toggle action
       // For now, assume it returns the updated event
-      const response = await api.post<{ event: EventListItemDTO }>(`/events/${id}/pin`);
+      const response = await typedAPI.events.pin<{ event: EventListItemDTO }>({ params: { id }, body: {} });
       return mapToDomain(response.event);
   },
 
@@ -183,7 +183,7 @@ export const eventsAPI = {
    * Toggle Lock
    */
     toggleLock: async (id: string): Promise<Event> => {
-        const response = await api.post<{ event: EventListItemDTO }>(`/events/${id}/lock`);
+        const response = await typedAPI.events.lock<{ event: EventListItemDTO }>({ params: { id }, body: {} });
         return mapToDomain(response.event);
     },
 
@@ -192,29 +192,29 @@ export const eventsAPI = {
   // ============================================================================
 
   batchDelete: async (ids: string[]): Promise<{ affectedCount: number }> => {
-    return api.post('/events/batch', {
+    return typedAPI.events.batch({ body: {
       action: 'delete',
       eventIds: ids,
-    });
+    }});
   },
 
   batchArchive: async (ids: string[], archived: boolean): Promise<{ affectedCount: number }> => {
-    return api.post('/events/batch', {
+    return typedAPI.events.batch({ body: {
       action: archived ? 'archive' : 'unarchive',
       eventIds: ids,
-    });
+    }});
   },
 
   batchGet: async (ids: string[]): Promise<Event[]> => {
-    const res = await api.get<{ events: EventListItemDTO[] }>(
-      `/events/batch?ids=${ids.join(',')}`
-    );
+    const res = await typedAPI.events.batch<{ events: EventListItemDTO[] }>({
+      query: { ids: ids.join(',') }
+    });
     return res.events.map(mapToDomain);
   },
 
   restore: async (ids: string[]): Promise<{ affectedCount: number }> => {
-    return api.post('/events/restore', {
+    return typedAPI.events.restoreBatch({ body: {
       eventIds: ids,
-    });
+    }});
   },
 };

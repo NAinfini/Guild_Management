@@ -31,7 +31,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     const stats = await env.DB
       .prepare(`
-        SELECT wms.*, u.username, u.class_code
+        SELECT wms.*, u.username,
+          (SELECT class_code FROM member_classes mc WHERE mc.user_id = u.user_id ORDER BY sort_order LIMIT 1) as class_code
         FROM war_member_stats wms
         JOIN users u ON wms.user_id = u.user_id
         WHERE wms.war_id = ?

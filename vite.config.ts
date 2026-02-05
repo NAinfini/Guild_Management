@@ -17,6 +17,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./react-portal"),
+      "@shared": path.resolve(__dirname, "./shared"),
     },
   },
   server: {

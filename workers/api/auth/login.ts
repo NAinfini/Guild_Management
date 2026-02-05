@@ -1,82 +1,121 @@
 /**
- * Authentication API endpoints
- * POST /api/auth/login - Login
- * POST /api/auth/logout - Logout
- * GET /api/auth/session - Get current session
- * POST /api/auth/change-password - Change password
+ * Authentication API - Login
+ * POST /api/auth/login
+ *
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction } from '../_types';
-import type { Env, User } from '../_types';
+import type { Env, User } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
 import {
-  successResponse,
-  errorResponse,
-  badRequestResponse,
-  unauthorizedResponse,
-  tooManyRequestsResponse,
   generateId,
   utcNow,
   hashPassword,
-  verifyPassword,
   setSessionCookie,
-  clearSessionCookie,
-} from '../_utils';
-import { withAuth, checkRateLimit, getRateLimitKey } from '../_middleware';
-import { validateBody, loginSchema, changePasswordSchema } from '../_validation';
+  successResponse,
+} from '../../lib/utils';
+import { checkRateLimit, getRateLimitKey } from '../../lib/middleware';
+import { validateBody, loginSchema } from '../../lib/validation';
+
+// ============================================================
+// Types
+// ============================================================
+
+interface LoginBody {
+  username: string;
+  password: string;
+  rememberMe?: boolean;
+}
+
+interface LoginResponse {
+  user: {
+    user_id: string;
+    username: string;
+    wechat_name: string | null;
+    role: string;
+    power: number;
+    is_active: number;
+  };
+  sessionId: string;
+}
 
 // ============================================================
 // POST /api/auth/login
 // ============================================================
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
+export const onRequestPost = createEndpoint<LoginResponse | Response, LoginBody>({
+  auth: 'none',
+  cacheControl: 'no-store',
+  rateLimit: {
+    maxRequests: 5,
+    windowMs: 15 * 60 * 1000, // 15 minutes
+  },
 
-  // Rate limiting: 5 attempts per 15 minutes
-  const rateLimitKey = getRateLimitKey(request, 'login');
-  if (!checkRateLimit(rateLimitKey, 5, 15 * 60 * 1000)) {
-    return tooManyRequestsResponse('Too many login attempts. Please try again later.');
-  }
+  parseBody: (body) => {
+    const validation = loginSchema.safeParse(body);
+    if (!validation.success) {
+      throw new Error(JSON.stringify({ errors: validation.error.issues }));
+    }
+    return validation.data;
+  },
 
-  // Validate request body
-  const validation = await validateBody(request, loginSchema);
-  if (!validation.success) {
-    return badRequestResponse('Validation failed', { errors: validation.error.format() });
-  }
+  handler: async ({ env, body, request }) => {
+    // Rate limiting: 5 attempts per 15 minutes
+    const rateLimitKey = getRateLimitKey(request, 'login');
+    if (!checkRateLimit(rateLimitKey, 5, 15 * 60 * 1000)) {
+      throw new Error('Too many login attempts. Please try again later.');
+    }
 
-  const { username, password, rememberMe } = validation.data;
-
-  try {
     // Get user by username
-    const user = await env.DB
-      .prepare('SELECT * FROM users WHERE username = ? AND deleted_at_utc IS NULL')
-      .bind(username)
-      .first<User>();
+    let user: User | null = null;
+    try {
+      user = await env.DB
+        .prepare('SELECT * FROM users WHERE username = ? AND deleted_at_utc IS NULL')
+        .bind(body.username)
+        .first<User>();
+    } catch (dbError: any) {
+      console.error('Login DB Error (User Fetch):', dbError.message, dbError.stack);
+      throw dbError;
+    }
 
     if (!user) {
-      return unauthorizedResponse('Incorrect credentials');
+      throw new Error('Incorrect credentials');
     }
 
     if (!user.is_active) {
-      return unauthorizedResponse('Account is inactive');
+      throw new Error('Account is inactive');
     }
 
     // Get password hash
-    const authRecord = await env.DB
-      .prepare('SELECT password_hash, salt FROM user_auth_password WHERE user_id = ?')
-      .bind(user.user_id)
-      .first<{ password_hash: string; salt: string }>();
+    let authRecord: { password_hash: string; salt: string } | null = null;
+    try {
+      authRecord = await env.DB
+        .prepare('SELECT password_hash, salt FROM user_auth_password WHERE user_id = ?')
+        .bind(user.user_id)
+        .first<{ password_hash: string; salt: string }>();
+    } catch (dbAuthError: any) {
+      console.error('Login DB Error (Auth Record Fetch):', dbAuthError.message, dbAuthError.stack);
+      throw dbAuthError;
+    }
 
     if (!authRecord) {
-      return unauthorizedResponse('Incorrect credentials');
+      throw new Error('Incorrect credentials');
     }
 
     // Verify password
-    const computed = authRecord.salt
-      ? await hashPassword(password, authRecord.salt)
-      : { hash: '', salt: '' };
-    const isValid = (computed.hash && computed.hash === authRecord.password_hash) || password === authRecord.password_hash;
+    let isValid = false;
+    try {
+      const computed = authRecord.salt
+        ? await hashPassword(body.password, authRecord.salt)
+        : { hash: '', salt: '' };
+      isValid = (computed.hash && computed.hash === authRecord.password_hash) || body.password === authRecord.password_hash;
+    } catch (cryptoError: any) {
+      console.error('Login Crypto Error:', cryptoError.message, cryptoError.stack);
+      throw cryptoError;
+    }
+
     if (!isValid) {
-      return unauthorizedResponse('Incorrect credentials');
+      throw new Error('Incorrect credentials');
     }
 
     // Create session
@@ -84,22 +123,35 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const now = utcNow();
     // If "Stay logged in" is checked (rememberMe = true), session lasts 30 days
     // Otherwise, session lasts 1 day
-    const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60; // 30 days or 1 day
+    const maxAge = body.rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60; // 30 days or 1 day
     const expiresAt = new Date(Date.now() + maxAge * 1000).toISOString().replace('T', ' ').substring(0, 19);
 
     const userAgent = request.headers.get('User-Agent') || null;
     const ip = request.headers.get('CF-Connecting-IP') || null;
-    const ipHash = ip ? await hashIp(ip) : null;
+    let ipHash: string | null = null;
+    if (ip) {
+      try {
+        ipHash = await hashIp(ip);
+      } catch (ipHashError: any) {
+        console.error('Login IP Hash Error:', ipHashError.message);
+        // Continue without IP hash if it fails
+      }
+    }
 
-    await env.DB
-      .prepare(`
-        INSERT INTO sessions (
-          session_id, user_id, created_at_utc, last_used_at_utc, 
-          expires_at_utc, user_agent, ip_hash, updated_at_utc
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `)
-      .bind(sessionId, user.user_id, now, now, expiresAt, userAgent, ipHash, now)
-      .run();
+    try {
+      await env.DB
+        .prepare(`
+          INSERT INTO sessions (
+            session_id, user_id, created_at_utc, last_used_at_utc,
+            expires_at_utc, user_agent, ip_hash, updated_at_utc
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `)
+        .bind(sessionId, user.user_id, now, now, expiresAt, userAgent, ipHash, now)
+        .run();
+    } catch (dbSessionError: any) {
+      console.error('Login DB Error (Session Insert):', dbSessionError.message, dbSessionError.stack);
+      throw dbSessionError;
+    }
 
     // Return user data (without sensitive fields)
     const userData = {
@@ -111,13 +163,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       is_active: user.is_active,
     };
 
+    // Return response with cookie
     const response = successResponse({ user: userData, sessionId });
     return setSessionCookie(response, sessionId, maxAge);
-  } catch (error) {
-    console.error('Login error:', error);
-    return errorResponse('INTERNAL_ERROR', 'An error occurred during login', 500);
-  }
-};
+  },
+});
 
 // ============================================================
 // Helper: Hash IP address for privacy

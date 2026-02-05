@@ -1,155 +1,87 @@
 /**
- * Announcements Batch Actions API
- * POST /api/announcements/batch - Batch process multiple announcements
+ * Announcement Batch Operations
+ * POST /api/announcements/batch
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env } from '../_types';
-import {
-  successResponse,
-  badRequestResponse,
-  errorResponse,
-  utcNow,
-  createAuditLog,
-  unauthorizedResponse,
-  etagFromTimestamp,
-} from '../_utils';
-import { withModeratorAuth } from '../_middleware';
-import { validateBody, batchAnnouncementActionSchema } from '../_validation';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { utcNow, createAuditLog } from '../../lib/utils';
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  return withModeratorAuth(context, async (authContext) => {
-    const { request, env } = authContext;
-    const { user: operator } = authContext.data;
+// ============================================================
+// Types
+// ============================================================
 
-    const validation = await validateBody(request, batchAnnouncementActionSchema);
-    if (!validation.success) {
-      return badRequestResponse('Invalid request body', validation.error.flatten());
+interface BatchAnnouncementBody {
+  action: 'delete' | 'archive';
+  announcementIds: string[];
+}
+
+interface BatchAnnouncementResponse {
+  message: string;
+  affectedCount: number;
+  action: string;
+}
+
+// ============================================================
+// POST /api/announcements/batch
+// ============================================================
+
+export const onRequestPost = createEndpoint<BatchAnnouncementResponse, BatchAnnouncementBody>({
+  auth: 'moderator',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => {
+    if (!body.action || !body.announcementIds || !Array.isArray(body.announcementIds)) {
+      throw new Error('Invalid batch request');
+    }
+    return body as BatchAnnouncementBody;
+  },
+
+  handler: async ({ env, user, body }) => {
+    const { action, announcementIds } = body;
+    const now = utcNow();
+    let affectedCount = 0;
+
+    if (action === 'delete') {
+      const placeholders = announcementIds.map(() => '?').join(',');
+      const result = await env.DB
+        .prepare(`
+          UPDATE announcements SET deleted_at_utc = ?, updated_at_utc = ?
+          WHERE announcement_id IN (${placeholders}) AND deleted_at_utc IS NULL
+        `)
+        .bind(now, now, ...announcementIds)
+        .run();
+      affectedCount = result.meta.changes;
+    } else if (action === 'archive') {
+      const placeholders = announcementIds.map(() => '?').join(',');
+      const result = await env.DB
+        .prepare(`
+          UPDATE announcements SET is_archived = 1, updated_at_utc = ?
+          WHERE announcement_id IN (${placeholders})
+        `)
+        .bind(now, ...announcementIds)
+        .run();
+      affectedCount = result.meta.changes;
     }
 
-    const { announcementIds, action } = validation.data;
-    
-    // Guaranteed by withModeratorAuth, but for TS:
-    if (!operator) return unauthorizedResponse();
-
-    try {
-      const now = utcNow();
-      const statements = [];
-
-      if (action === 'archive' || action === 'unarchive') {
-        const isArchived = action === 'archive' ? 1 : 0;
-        const placeholders = announcementIds.map(() => '?').join(',');
-        
-        statements.push(
-          env.DB.prepare(`UPDATE announcements SET is_archived = ?, updated_at_utc = ? WHERE announcement_id IN (${placeholders})`)
-            .bind(isArchived, now, ...announcementIds)
-        );
-
-        for (const id of announcementIds) {
-          await createAuditLog(
-            env.DB,
-            'announcement',
-            action,
-            operator.user_id,
-            id,
-            `Batch ${action}d announcement`
-          );
-        }
-      } else if (action === 'delete') {
-        const placeholders = announcementIds.map(() => '?').join(',');
-        
-        // Hard delete for announcements (or change to soft delete if preferred)
-        statements.push(
-          env.DB.prepare(`DELETE FROM announcements WHERE announcement_id IN (${placeholders})`)
-            .bind(...announcementIds)
-        );
-
-        for (const id of announcementIds) {
-          await createAuditLog(
-            env.DB,
-            'announcement',
-            'delete',
-            operator.user_id,
-            id,
-            'Batch deleted announcement'
-          );
-        }
-      } else if (action === 'pin' || action === 'unpin') {
-        const isPinned = action === 'pin' ? 1 : 0;
-        const placeholders = announcementIds.map(() => '?').join(',');
-        
-        statements.push(
-          env.DB.prepare(`UPDATE announcements SET is_pinned = ?, updated_at_utc = ? WHERE announcement_id IN (${placeholders})`)
-            .bind(isPinned, now, ...announcementIds)
-        );
-
-        for (const id of announcementIds) {
-          await createAuditLog(
-            env.DB,
-            'announcement',
-            action,
-            operator.user_id,
-            id,
-            `Batch ${action}ned announcement`
-          );
-        }
-      }
-
-      if (statements.length > 0) {
-        await env.DB.batch(statements);
-      }
-
-      const newEtag = etagFromTimestamp(now);
-      const resp = successResponse({
-        message: 'Batch action completed successfully',
-        affectedCount: announcementIds.length,
-        action,
-      });
-      if (newEtag) resp.headers.set('ETag', newEtag);
-      return resp;
-    } catch (error) {
-      console.error('Batch announcement action error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred during batch processing', 500);
+    if (announcementIds.length > 0) {
+      await createAuditLog(
+        env.DB,
+        'announcement',
+        `batch_${action}`,
+        user!.user_id,
+        'batch',
+        `Batch ${action} on ${announcementIds.length} announcements`,
+        JSON.stringify({ announcementIds, action })
+      );
     }
-  });
-};
 
-/**
- * GET /api/announcements/batch - Get multiple announcements by IDs
- */
-export const onRequestGet: PagesFunction<Env> = async (context) => {
-  return withModeratorAuth(context, async (authContext) => {
-    const { request, env } = authContext;
-
-    try {
-      const url = new URL(request.url);
-      const idsParam = url.searchParams.get('ids');
-      
-      if (!idsParam) {
-        return badRequestResponse('Missing ids parameter');
-      }
-
-      const ids = idsParam.split(',').map(id => id.trim()).filter(Boolean);
-      
-      if (ids.length === 0) {
-        return badRequestResponse('No valid IDs provided');
-      }
-
-      if (ids.length > 100) {
-        return badRequestResponse('Maximum 100 IDs allowed per request');
-      }
-
-      const placeholders = ids.map(() => '?').join(',');
-      const query = `SELECT * FROM announcements WHERE announcement_id IN (${placeholders})`;
-      
-      const result = await env.DB.prepare(query).bind(...ids).all();
-
-      return successResponse({
-        announcements: result.results || [],
-        count: result.results?.length || 0
-      });
-    } catch (error) {
-      console.error('Batch get announcements error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while fetching announcements', 500);
-    }
-  });
-};
+    return {
+      message: 'Batch action completed',
+      affectedCount,
+      action,
+    };
+  },
+});

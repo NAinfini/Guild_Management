@@ -1,200 +1,286 @@
 /**
- * Events API - Update/Delete Event
- * PUT /api/events/[id]
- * DELETE /api/events/[id]
+ * Events API - Event Detail Management
+ * GET /api/events/[id] - Get event details
+ * PUT /api/events/[id] - Update event
+ * DELETE /api/events/[id] - Delete event
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env, Event } from '../_types';
-import {
-  successResponse,
-  badRequestResponse,
-  errorResponse,
-  notFoundResponse,
-  forbiddenResponse,
-  utcNow,
-  createAuditLog,
-  canEditEntity,
-  etagFromTimestamp,
-  assertIfMatch,
-} from '../_utils';
-import { withAuth } from '../_middleware';
-import { validateBody, updateEventSchema } from '../_validation';
+import type { Env, Event } from '../../../lib/types';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { 
+  utcNow, 
+  createAuditLog, 
+  etagFromTimestamp, 
+  assertIfMatch, 
+  canEditEntity 
+} from '../../../lib/utils';
 
 // ============================================================
-// PUT /api/events/[id] - Update Event
+// Types
 // ============================================================
 
-export const onRequestPut: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
-    const { request, env, params } = authContext;
-    const { user } = authContext.data;
+interface UpdateEventBody {
+  title?: string;
+  description?: string;
+  eventDate?: string;
+  eventType?: string;
+  minLevel?: number;
+  maxParticipants?: number;
+  // Add other event fields
+}
+
+interface PatchEventBody {
+  isPinned?: boolean;
+  signupLocked?: boolean;
+}
+
+interface EventResponse {
+  event: Event;
+  attendees: any[];
+}
+
+// ============================================================
+// GET /api/events/[id]
+// ============================================================
+
+export const onRequestGet = createEndpoint<EventResponse>({
+  auth: 'optional',
+  etag: true,
+  cacheControl: 'public, max-age=60',
+
+  handler: async ({ env, params }) => {
     const eventId = params.id;
 
-    // Get existing event
-    const existingEvent = await env.DB
+    const event = await env.DB
       .prepare('SELECT * FROM events WHERE event_id = ? AND is_archived = 0')
       .bind(eventId)
       .first<Event>();
 
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    const attendees = await env.DB
+      .prepare(`
+        SELECT ea.*, u.username, u.avatar_url, u.class_code, u.power
+        FROM event_attendees ea
+        JOIN users u ON ea.user_id = u.user_id
+        WHERE ea.event_id = ?
+        ORDER BY ea.created_at_utc
+      `)
+      .bind(eventId)
+      .all();
+
+    return {
+      event,
+      attendees: attendees.results || [],
+    };
+  },
+});
+
+// ============================================================
+// PUT /api/events/[id]
+// ============================================================
+
+export const onRequestPut = createEndpoint<{ message: string; event: Event }, UpdateEventBody>({
+  auth: 'required',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => body as UpdateEventBody,
+
+  handler: async ({ env, user, params, body, request }) => {
+    const eventId = params.id;
+
+    // Get existing event
+    const existingEvent = await env.DB
+      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .bind(eventId)
+      .first<Event>();
+
     if (!existingEvent) {
-      return notFoundResponse('Event');
+      throw new Error('Event not found');
     }
 
     // Check permissions
-    if (!canEditEntity(user, existingEvent.created_by)) {
-      return forbiddenResponse('You do not have permission to edit this event');
+    if (!canEditEntity(user!, existingEvent.created_by)) {
+      throw new Error('You do not have permission to edit this event');
     }
 
     const currentEtag = etagFromTimestamp(existingEvent.updated_at_utc || existingEvent.created_at_utc);
     const pre = assertIfMatch(request, currentEtag);
     if (pre) return pre;
 
-    // Validate request body
-    const validation = await validateBody(request, updateEventSchema);
-    if (!validation.success) {
-      return badRequestResponse('Invalid request body', validation.error.errors);
+    // Dynamic update query construction
+    const updateFields: string[] = [];
+    const updateValues: any[] = [];
+    const now = utcNow();
+
+    const fieldMap: Record<string, string> = {
+      title: 'title',
+      description: 'description',
+      eventDate: 'event_date',
+      eventType: 'event_type',
+      minLevel: 'min_level',
+      maxParticipants: 'max_participants',
+    };
+
+    for (const [key, column] of Object.entries(fieldMap)) {
+      const val = (body as any)[key];
+      if (val !== undefined) {
+        updateFields.push(`${column} = ?`);
+        updateValues.push(val);
+      }
     }
 
-    const updates = validation.data;
+    if (updateFields.length > 0) {
+      updateFields.push('updated_at_utc = ?');
+      updateValues.push(now, eventId);
 
-    try {
-      const now = utcNow();
-      const updateFields: string[] = [];
-      const updateValues: any[] = [];
-
-      // Build dynamic UPDATE query
-      if (updates.type !== undefined) {
-        updateFields.push('type = ?');
-        updateValues.push(updates.type);
-      }
-      if (updates.title !== undefined) {
-        updateFields.push('title = ?');
-        updateValues.push(updates.title);
-      }
-      if (updates.description !== undefined) {
-        updateFields.push('description = ?');
-        updateValues.push(updates.description || null);
-      }
-      if (updates.startAt !== undefined) {
-        const startAtUtc = new Date(updates.startAt).toISOString().replace('T', ' ').substring(0, 19);
-        updateFields.push('start_at_utc = ?');
-        updateValues.push(startAtUtc);
-      }
-      if (updates.endAt !== undefined) {
-        const endAtUtc = updates.endAt
-          ? new Date(updates.endAt).toISOString().replace('T', ' ').substring(0, 19)
-          : null;
-        updateFields.push('end_at_utc = ?');
-        updateValues.push(endAtUtc);
-      }
-      if (updates.capacity !== undefined) {
-        updateFields.push('capacity = ?');
-        updateValues.push(updates.capacity || null);
-      }
-
-      if (updateFields.length === 0) {
-        return badRequestResponse('No fields to update');
-      }
-
-      // Add updated_by and updated_at
-      updateFields.push('updated_by = ?', 'updated_at_utc = ?');
-      updateValues.push(user.user_id, now);
-
-      // Add WHERE clause
-      updateValues.push(eventId);
-
-      const query = `UPDATE events SET ${updateFields.join(', ')} WHERE event_id = ?`;
-      await env.DB.prepare(query).bind(...updateValues).run();
-
-      // Create audit log
-      await createAuditLog(
-        env.DB,
-        'event',
-        'update',
-        user.user_id,
-        eventId,
-        `Updated event: ${updates.title || existingEvent.title}`,
-        JSON.stringify(updates)
-      );
-
-      // Fetch updated event
-      const event = await env.DB
-        .prepare('SELECT * FROM events WHERE event_id = ?')
-        .bind(eventId)
-        .first<Event>();
-
-      const etag = etagFromTimestamp(event?.updated_at_utc || event?.created_at_utc);
-      const resp = successResponse({ event });
-      if (etag) resp.headers.set('ETag', etag);
-      return resp;
-    } catch (error) {
-      console.error('Update event error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while updating event', 500);
+      await env.DB
+        .prepare(`UPDATE events SET ${updateFields.join(', ')} WHERE event_id = ?`)
+        .bind(...updateValues)
+        .run();
     }
-  });
-};
+
+    await createAuditLog(
+      env.DB,
+      'event',
+      'update',
+      user!.user_id,
+      eventId,
+      'Updated event details',
+      JSON.stringify(body)
+    );
+
+    const updatedEvent = await env.DB
+      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .bind(eventId)
+      .first<Event>();
+
+    return {
+      message: 'Event updated successfully',
+      event: updatedEvent!,
+    };
+  },
+});
 
 // ============================================================
-// DELETE /api/events/[id] - Archive Event
+// PATCH /api/events/[id] - Partial Updates (isPinned, signupLocked, etc)
 // ============================================================
 
-export const onRequestDelete: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
-    const { env, params } = authContext;
-    const { user } = authContext.data;
+export const onRequestPatch = createEndpoint<{ message: string; event: Event }, PatchEventBody>({
+  auth: 'moderator',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => body as PatchEventBody,
+
+  handler: async ({ env, user, params, body }) => {
+    const eventId = params.id;
+    const { isPinned, signupLocked } = body;
+
+    if (isPinned === undefined && signupLocked === undefined) {
+      throw new Error('No fields to update');
+    }
+
+    const existing = await env.DB
+      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .bind(eventId)
+      .first<Event>();
+
+    if (!existing) {
+      throw new Error('Event not found');
+    }
+
+    const now = utcNow();
+    const updates: string[] = ['updated_at_utc = ?'];
+    const values: any[] = [now];
+    const auditActions: string[] = [];
+
+    if (isPinned !== undefined) {
+      updates.push('is_pinned = ?');
+      values.push(isPinned ? 1 : 0);
+      auditActions.push(isPinned ? 'pinned' : 'unpinned');
+    }
+
+    if (signupLocked !== undefined) {
+      updates.push('signup_locked = ?');
+      values.push(signupLocked ? 1 : 0);
+      auditActions.push(signupLocked ? 'locked' : 'unlocked');
+    }
+
+    values.push(eventId);
+
+    await env.DB
+      .prepare(`UPDATE events SET ${updates.join(', ')} WHERE event_id = ?`)
+      .bind(...values)
+      .run();
+
+    await createAuditLog(
+      env.DB,
+      'event',
+      'update',
+      user!.user_id,
+      eventId,
+      `Event ${auditActions.join(' and ')}`,
+      JSON.stringify(body)
+    );
+
+    const updated = await env.DB
+      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .bind(eventId)
+      .first<Event>();
+
+    return {
+      message: `Event ${auditActions.join(' and ')} successfully`,
+      event: updated!,
+    };
+  },
+});
+
+// ============================================================
+// DELETE /api/events/[id]
+// ============================================================
+
+export const onRequestDelete = createEndpoint<{ message: string }>({
+  auth: 'required',
+  cacheControl: 'no-store',
+
+  handler: async ({ env, user, params }) => {
     const eventId = params.id;
 
-    // Get existing event
     const existingEvent = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ? AND is_archived = 0')
+      .prepare('SELECT * FROM events WHERE event_id = ?')
       .bind(eventId)
       .first<Event>();
 
     if (!existingEvent) {
-      return notFoundResponse('Event');
+      throw new Error('Event not found');
     }
 
-    // Check permissions
-    if (!canEditEntity(user, existingEvent.created_by)) {
-      return forbiddenResponse('You do not have permission to delete this event');
+    if (!canEditEntity(user!, existingEvent.created_by)) {
+      throw new Error('You do not have permission to delete this event');
     }
 
-    const currentEtag = etagFromTimestamp(existingEvent.updated_at_utc || existingEvent.created_at_utc);
-    const pre = assertIfMatch(authContext.request, currentEtag);
-    if (pre) return pre;
+    const now = utcNow();
 
-    try {
-      const now = utcNow();
+    // Soft delete
+    await env.DB
+      .prepare('UPDATE events SET deleted_at_utc = ?, updated_at_utc = ? WHERE event_id = ?')
+      .bind(now, now, eventId)
+      .run();
 
-      // Soft delete (archive)
-      await env.DB
-        .prepare('UPDATE events SET is_archived = 1, archived_at_utc = ?, updated_at_utc = ? WHERE event_id = ?')
-        .bind(now, now, eventId)
-        .run();
+    await createAuditLog(
+      env.DB,
+      'event',
+      'delete',
+      user!.user_id,
+      eventId,
+      'Deleted event',
+      null
+    );
 
-      // Create audit log
-      await createAuditLog(
-        env.DB,
-        'event',
-        'archive',
-        user.user_id,
-        eventId,
-        `Archived event: ${existingEvent.title}`,
-        null
-      );
-
-      const updated = await env.DB
-        .prepare('SELECT * FROM events WHERE event_id = ?')
-        .bind(eventId)
-        .first<Event>();
-
-      const etag = etagFromTimestamp(updated?.updated_at_utc || updated?.created_at_utc);
-      const resp = successResponse({ message: 'Event archived successfully' });
-      if (etag) resp.headers.set('ETag', etag);
-      return resp;
-    } catch (error) {
-      console.error('Delete event error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while deleting event', 500);
-    }
-  });
-};
+    return { message: 'Event deleted successfully' };
+  },
+});

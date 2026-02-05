@@ -3,9 +3,9 @@
  * GET /api/events - List all active events
  */
 
-import type { PagesFunction, Env, Event } from '../../_types';
-import { successResponse, errorResponse, etagFromTimestamp } from '../../_utils';
-import { withOptionalAuth } from '../../_middleware';
+import type { PagesFunction, Env, Event } from '../../../lib/types';
+import { successResponse, errorResponse, etagFromTimestamp } from '../../../lib/utils';
+import { withOptionalAuth } from '../../../lib/middleware';
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   return withOptionalAuth(context, async (authContext) => {
@@ -69,11 +69,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       }, null as string | null);
 
       const etag = etagFromTimestamp(maxUpdated);
-      return successResponse({ events: eventsWithData }, 200, {
-        etag: etag ?? undefined,
-        method: 'GET',
-        maxAge: 30 // Cache for 30 seconds - event data changes occasionally
-      });
+      return successResponse(eventsWithData, 200);
     } catch (error) {
       console.error('List events error:', error);
       return errorResponse('INTERNAL_ERROR', 'An error occurred while fetching events', 500);

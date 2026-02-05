@@ -1,38 +1,71 @@
 /**
  * Restore Members Endpoint
  * POST /api/members/restore
- * Restores soft-deleted members within undo window
+ * Restores soft-deleted members
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import { withAdminAuth } from '../_middleware';
-import { successResponse, errorResponse } from '../_utils';
-import type { PagesFunction, Env } from '../_types';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { utcNow, createAuditLog } from '../../lib/utils';
 
-export const onRequestPost: PagesFunction<Env> = withAdminAuth(async (context) => {
-  const { request, env } = context;
-  
-  const body = await request.json() as {
-    userIds: string[];
-  };
-  
-  if (!body.userIds || !Array.isArray(body.userIds)) {
-    return errorResponse('INVALID_INPUT', 'userIds array required');
-  }
-  
-  if (body. userIds.length === 0 || body.userIds.length > 100) {
-    return errorResponse('INVALID_INPUT', 'Provide 1-100 user IDs');
-  }
-  
-  // Restore users (set deleted_at_utc to NULL)
-  const placeholders = body.userIds.map(() => '?').join(',');
-  const result = await env.DB.prepare(
-    `UPDATE users 
-     SET deleted_at_utc = NULL, updated_at_utc = ?
-     WHERE user_id IN (${placeholders})
-     AND deleted_at_utc IS NOT NULL`
-  ).bind(new Date().toISOString(), ...body.userIds).run();
-  
-  return successResponse({
-    affectedCount: result.meta.changes || 0,
-  });
+// ============================================================
+// Types
+// ============================================================
+
+interface RestoreMembersBody {
+  userIds: string[];
+}
+
+interface RestoreResponse {
+  affectedCount: number;
+}
+
+// ============================================================
+// POST /api/members/restore
+// ============================================================
+
+export const onRequestPost = createEndpoint<RestoreResponse, RestoreMembersBody>({
+  auth: 'admin',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => {
+    if (!body.userIds || !Array.isArray(body.userIds)) {
+      throw new Error('userIds array required');
+    }
+    return body as RestoreMembersBody;
+  },
+
+  handler: async ({ env, user: admin, body }) => {
+    const { userIds } = body;
+    const now = utcNow();
+
+    const placeholders = userIds.map(() => '?').join(',');
+    const result = await env.DB
+      .prepare(`
+        UPDATE users 
+        SET deleted_at_utc = NULL, updated_at_utc = ?
+        WHERE user_id IN (${placeholders})
+        AND deleted_at_utc IS NOT NULL
+      `)
+      .bind(now, ...userIds)
+      .run();
+
+    if (userIds.length > 0) {
+      await createAuditLog(
+        env.DB,
+        'member',
+        'batch_restore',
+        admin!.user_id,
+        'batch',
+        `Restored ${userIds.length} users`,
+        JSON.stringify({ userIds })
+      );
+    }
+
+    return {
+      affectedCount: result.meta.changes || 0,
+    };
+  },
 });

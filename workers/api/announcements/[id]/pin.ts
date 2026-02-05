@@ -1,59 +1,64 @@
 /**
- * Announcements Pin Toggle
- * POST /api/announcements/[id]/pin - Pin/unpin announcement
+ * Announcement Actions - Pin/Unpin
+ * POST /api/announcements/[id]/pin
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env, Announcement } from '../../../_types';
-import {
-  successResponse,
-  errorResponse,
-  notFoundResponse,
-  utcNow,
-  createAuditLog,
-} from '../../../_utils';
-import { withModeratorAuth } from '../../../_middleware';
+import type { Env, Announcement } from '../../../lib/types';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { utcNow, createAuditLog } from '../../../lib/utils';
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  return withModeratorAuth(context, async (authContext) => {
-    const { env, params } = authContext;
-    const { user } = authContext.data;
+// ============================================================
+// Types
+// ============================================================
+
+interface PinAnnouncementBody {
+  isPinned: boolean;
+}
+
+interface PinAnnouncementResponse {
+  message: string;
+  isPinned: boolean;
+}
+
+// ============================================================
+// POST /api/announcements/[id]/pin
+// ============================================================
+
+export const onRequestPost = createEndpoint<PinAnnouncementResponse, PinAnnouncementBody>({
+  auth: 'moderator',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => body as PinAnnouncementBody,
+
+  handler: async ({ env, user, params, body }) => {
     const announcementId = params.id;
+    const { isPinned } = body;
+    const now = utcNow();
 
-    try {
-      const announcement = await env.DB
-        .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
-        .bind(announcementId)
-        .first<Announcement>();
+    const result = await env.DB
+      .prepare('UPDATE announcements SET is_pinned = ?, updated_at_utc = ? WHERE announcement_id = ?')
+      .bind(isPinned ? 1 : 0, now, announcementId)
+      .run();
 
-      if (!announcement) {
-        return notFoundResponse('Announcement');
-      }
-
-      const newPinState = announcement.is_pinned === 1 ? 0 : 1;
-      const now = utcNow();
-
-      await env.DB
-        .prepare('UPDATE announcements SET is_pinned = ?, updated_at_utc = ? WHERE announcement_id = ?')
-        .bind(newPinState, now, announcementId)
-        .run();
-
-      await createAuditLog(
-        env.DB,
-        'announcement',
-        newPinState ? 'pin' : 'unpin',
-        user.user_id,
-        announcementId,
-        `${newPinState ? 'Pinned' : 'Unpinned'} announcement: ${announcement.title}`,
-        null
-      );
-
-      return successResponse({
-        message: `Announcement ${newPinState ? 'pinned' : 'unpinned'} successfully`,
-        isPinned: newPinState === 1,
-      });
-    } catch (error) {
-      console.error('Pin announcement error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while pinning announcement', 500);
+    if (!result.meta.changes) {
+      throw new Error('Announcement not found');
     }
-  });
-};
+
+    await createAuditLog(
+      env.DB,
+      'announcement',
+      isPinned ? 'pin' : 'unpin',
+      user!.user_id,
+      announcementId,
+      `${isPinned ? 'Pinned' : 'Unpinned'} announcement`,
+      null
+    );
+
+    return {
+      message: `Announcement ${isPinned ? 'pinned' : 'unpinned'} successfully`,
+      isPinned,
+    };
+  },
+});

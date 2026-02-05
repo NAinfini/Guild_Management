@@ -1,74 +1,89 @@
 /**
  * Member Classes Management
  * PUT /api/members/[id]/classes - Update member classes
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env } from '../../../_types';
-import {
-  successResponse,
-  badRequestResponse,
-  errorResponse,
-  forbiddenResponse,
-  utcNow,
-  etagFromTimestamp,
-  assertIfMatch,
-} from '../../../_utils';
-import { withAuth } from '../../../_middleware';
-import { validateBody, memberClassesSchema } from '../../../_validation';
+import type { Env } from '../../../lib/types';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { utcNow, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
 
-export const onRequestPut: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
-    const { request, env, params } = authContext;
-    const { user, isAdmin, isModerator } = authContext.data;
+// ============================================================
+// Types
+// ============================================================
+
+interface UpdateClassesBody {
+  classes: string[];
+}
+
+interface UpdateClassesResponse {
+  message: string;
+  classes: string[];
+}
+
+// ============================================================
+// PUT /api/members/[id]/classes
+// ============================================================
+
+export const onRequestPut = createEndpoint<UpdateClassesResponse, UpdateClassesBody>({
+  auth: 'required',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => {
+    if (!body.classes || !Array.isArray(body.classes)) {
+      throw new Error('classes array is required');
+    }
+    return body as UpdateClassesBody;
+  },
+
+  handler: async ({ env, user, params, body, request, isAdmin, isModerator }) => {
     const userId = params.id;
 
     // Check permissions (self or admin/mod)
-    if (userId !== user.user_id && !isAdmin && !isModerator) {
-      return forbiddenResponse('You do not have permission to edit this member');
+    if (userId !== user!.user_id && !isAdmin && !isModerator) {
+      throw new Error('You do not have permission to edit this member');
     }
 
     const current = await env.DB
       .prepare('SELECT updated_at_utc, created_at_utc FROM users WHERE user_id = ?')
       .bind(userId)
       .first<{ updated_at_utc: string; created_at_utc: string }>();
+
     const currentEtag = etagFromTimestamp(current?.updated_at_utc || current?.created_at_utc);
     const pre = assertIfMatch(request, currentEtag);
     if (pre) return pre;
 
-    const validation = await validateBody(request, memberClassesSchema);
-    if (!validation.success) {
-      return badRequestResponse('Invalid request body', validation.error.errors);
-    }
+    const { classes } = body;
+    const now = utcNow();
 
-    const { classes } = validation.data;
+    // Delete existing classes
+    await env.DB
+      .prepare('DELETE FROM member_classes WHERE user_id = ?')
+      .bind(userId)
+      .run();
 
-    try {
-      const now = utcNow();
-
-      // Delete existing classes
+    // Insert new classes
+    for (let i = 0; i < classes.length; i++) {
       await env.DB
-        .prepare('DELETE FROM member_classes WHERE user_id = ?')
-        .bind(userId)
+        .prepare(`
+          INSERT INTO member_classes (
+            user_id, class_code, sort_order, created_at_utc, updated_at_utc
+          ) VALUES (?, ?, ?, ?, ?)
+        `)
+        .bind(userId, classes[i], i, now, now)
         .run();
-
-      // Insert new classes
-      for (let i = 0; i < classes.length; i++) {
-        await env.DB
-          .prepare(`
-            INSERT INTO member_classes (user_id, class_code, sort_order, created_at_utc, updated_at_utc)
-            VALUES (?, ?, ?, ?, ?)
-          `)
-          .bind(userId, classes[i], i, now, now)
-          .run();
-      }
-
-      return successResponse({
-        message: 'Classes updated successfully',
-        classes,
-      });
-    } catch (error) {
-      console.error('Update classes error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while updating classes', 500);
     }
-  });
-};
+
+    // Update user timestamp
+    await env.DB
+      .prepare('UPDATE users SET updated_at_utc = ? WHERE user_id = ?')
+      .bind(now, userId)
+      .run();
+
+    return {
+      message: 'Classes updated successfully',
+      classes,
+    };
+  },
+});

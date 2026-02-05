@@ -1,274 +1,281 @@
 /**
- * Announcements API - Update/Delete/Actions
- * PUT /api/announcements/[id]
- * DELETE /api/announcements/[id]
- * POST /api/announcements/[id]/[action]
+ * Announcements API - Announcement Detail
+ * GET /api/announcements/[id] - Get announcement
+ * PUT /api/announcements/[id] - Update announcement
+ * DELETE /api/announcements/[id] - Delete announcement
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env, Announcement } from '../../_types';
-import {
-  successResponse,
-  badRequestResponse,
-  errorResponse,
-  notFoundResponse,
-  forbiddenResponse,
-  utcNow,
-  createAuditLog,
+import type { Env, Announcement } from '../../../lib/types';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { 
+  utcNow, 
+  createAuditLog, 
+  etagFromTimestamp, 
+  assertIfMatch, 
   canEditEntity,
-  sanitizeHtml,
-  generateId,
-} from '../../_utils';
-import { withAuth, withModeratorAuth } from '../../_middleware';
-import { validateBody, updateAnnouncementSchema } from '../../_validation';
+  sanitizeHtml 
+} from '../../../lib/utils';
 
 // ============================================================
-// PUT /api/announcements/[id] - Update Announcement
+// Types
 // ============================================================
 
-export const onRequestPut: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
-    const { request, env, params } = authContext;
-    const { user } = authContext.data;
+interface UpdateAnnouncementBody {
+  title?: string;
+  bodyHtml?: string;
+  mediaIds?: string[]; // Array of media keys/IDs
+}
+
+interface PatchAnnouncementBody {
+  isPinned?: boolean;
+}
+
+interface AnnouncementResponse {
+  announcement: Announcement;
+  media: any[];
+}
+
+// ============================================================
+// GET /api/announcements/[id]
+// ============================================================
+
+export const onRequestGet = createEndpoint<AnnouncementResponse>({
+  auth: 'optional',
+  etag: true,
+  cacheControl: 'public, max-age=60',
+
+  handler: async ({ env, params }) => {
     const announcementId = params.id;
-
-    const existing = await env.DB
-      .prepare('SELECT * FROM announcements WHERE announcement_id = ? AND is_archived = 0')
-      .bind(announcementId)
-      .first<Announcement>();
-
-    if (!existing) {
-      return notFoundResponse('Announcement');
-    }
-
-    if (!canEditEntity(user, existing.created_by)) {
-      return forbiddenResponse('You do not have permission to edit this announcement');
-    }
-
-    const validation = await validateBody(request, updateAnnouncementSchema);
-    if (!validation.success) {
-      return badRequestResponse('Invalid request body', validation.error.errors);
-    }
-
-    const updates = validation.data;
-
-    try {
-      const now = utcNow();
-      const updateFields: string[] = [];
-      const updateValues: any[] = [];
-
-      if (updates.title !== undefined) {
-        updateFields.push('title = ?');
-        updateValues.push(updates.title);
-      }
-      if (updates.bodyHtml !== undefined) {
-        updateFields.push('body_html = ?');
-        updateValues.push(updates.bodyHtml ? sanitizeHtml(updates.bodyHtml) : null);
-      }
-      if (updates.isPinned !== undefined) {
-        updateFields.push('is_pinned = ?');
-        updateValues.push(updates.isPinned ? 1 : 0);
-      }
-      if ((updates as any).mediaUrls !== undefined) {
-        updateFields.push('media_urls = ?');
-        updateValues.push(JSON.stringify((updates as any).mediaUrls || []));
-      }
-
-      if (updateFields.length === 0) {
-        return badRequestResponse('No fields to update');
-      }
-
-      updateFields.push('updated_by = ?', 'updated_at_utc = ?');
-      updateValues.push(user.user_id, now, announcementId);
-
-      const query = `UPDATE announcements SET ${updateFields.join(', ')} WHERE announcement_id = ?`;
-      await env.DB.prepare(query).bind(...updateValues).run();
-
-      await createAuditLog(
-        env.DB,
-        'announcement',
-        'update',
-        user.user_id,
-        announcementId,
-        `Updated announcement: ${updates.title || existing.title}`,
-        JSON.stringify(updates)
-      );
-
-      const announcement = await env.DB
-        .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
-        .bind(announcementId)
-        .first<Announcement>();
-
-      return successResponse({ announcement });
-    } catch (error) {
-      console.error('Update announcement error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while updating announcement', 500);
-    }
-  });
-};
-
-// ============================================================
-// DELETE /api/announcements/[id] - Archive Announcement
-// ============================================================
-
-export const onRequestDelete: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
-    const { env, params } = authContext;
-    const { user } = authContext.data;
-    const announcementId = params.id;
-
-    const existing = await env.DB
-      .prepare('SELECT * FROM announcements WHERE announcement_id = ? AND is_archived = 0')
-      .bind(announcementId)
-      .first<Announcement>();
-
-    if (!existing) {
-      return notFoundResponse('Announcement');
-    }
-
-    if (!canEditEntity(user, existing.created_by)) {
-      return forbiddenResponse('You do not have permission to delete this announcement');
-    }
-
-    try {
-      const now = utcNow();
-
-      await env.DB
-        .prepare('UPDATE announcements SET is_archived = 1, archived_at_utc = ?, updated_at_utc = ? WHERE announcement_id = ?')
-        .bind(now, now, announcementId)
-        .run();
-
-      await createAuditLog(
-        env.DB,
-        'announcement',
-        'archive',
-        user.user_id,
-        announcementId,
-        `Archived announcement: ${existing.title}`,
-        null
-      );
-
-      return successResponse({ message: 'Announcement archived successfully' });
-    } catch (error) {
-      console.error('Delete announcement error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while deleting announcement', 500);
-    }
-  });
-};
-
-// ============================================================
-// POST /api/announcements/[id]/[action] - Actions (duplicate, pin, unpin, archive/unarchive)
-// ============================================================
-
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
-    const { env, params } = authContext;
-    const { user } = authContext.data;
-    const announcementId = params.id;
-    const action = params.action;
 
     const announcement = await env.DB
-      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .prepare('SELECT * FROM announcements WHERE announcement_id = ? AND is_archived = 0')
       .bind(announcementId)
       .first<Announcement>();
 
     if (!announcement) {
-      return notFoundResponse('Announcement');
+      throw new Error('Announcement not found');
     }
 
-    if (!canEditEntity(user, announcement.created_by)) {
-      return forbiddenResponse('You do not have permission to modify this announcement');
+    // Get media
+    const media = await env.DB
+      .prepare(`
+        SELECT m.* 
+        FROM announcement_media am
+        JOIN media m ON am.media_id = m.media_id
+        WHERE am.announcement_id = ?
+        ORDER BY am.sort_order
+      `)
+      .bind(announcementId)
+      .all();
+
+    return {
+      announcement,
+      media: media.results || [],
+    };
+  },
+});
+
+// ============================================================
+// PUT /api/announcements/[id]
+// ============================================================
+
+export const onRequestPut = createEndpoint<{ message: string; announcement: Announcement }, UpdateAnnouncementBody>({
+  auth: 'required',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => body as UpdateAnnouncementBody,
+
+  handler: async ({ env, user, params, body, request }) => {
+    const announcementId = params.id;
+
+    const existing = await env.DB
+      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .bind(announcementId)
+      .first<Announcement>();
+
+    if (!existing) {
+      throw new Error('Announcement not found');
+    }
+
+    if (!canEditEntity(user!, existing.created_by)) {
+      throw new Error('You do not have permission to edit this announcement');
+    }
+
+    const currentEtag = etagFromTimestamp(existing.updated_at_utc || existing.created_at_utc);
+    const pre = assertIfMatch(request, currentEtag);
+    if (pre) return pre;
+
+    const { title, bodyHtml, mediaIds } = body;
+    const now = utcNow();
+
+    if (title || bodyHtml) {
+      const updates: string[] = [];
+      const values: any[] = [];
+
+      if (title !== undefined) {
+        updates.push('title = ?');
+        values.push(title);
+      }
+      if (bodyHtml !== undefined) {
+        updates.push('body_html = ?');
+        values.push(sanitizeHtml(bodyHtml));
+      }
+
+      updates.push('updated_at_utc = ?');
+      values.push(now, announcementId);
+
+      await env.DB
+        .prepare(`UPDATE announcements SET ${updates.join(', ')} WHERE announcement_id = ?`)
+        .bind(...values)
+        .run();
+    }
+
+    // Update media associations if provided
+    if (mediaIds !== undefined) {
+      // Clear existing
+      await env.DB
+        .prepare('DELETE FROM announcement_media WHERE announcement_id = ?')
+        .bind(announcementId)
+        .run();
+
+      // Insert new
+      if (mediaIds.length > 0) {
+        const stmt = env.DB.prepare('INSERT INTO announcement_media (announcement_id, media_id, sort_order) VALUES (?, ?, ?)');
+        const batch = mediaIds.map((mediaId: string, index: number) => stmt.bind(announcementId, mediaId, index));
+        await env.DB.batch(batch);
+      }
+    }
+
+    await createAuditLog(
+      env.DB,
+      'announcement',
+      'update',
+      user!.user_id,
+      announcementId,
+      'Updated announcement',
+      JSON.stringify(body)
+    );
+
+    const updated = await env.DB
+      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .bind(announcementId)
+      .first<Announcement>();
+
+    return {
+      message: 'Announcement updated successfully',
+      announcement: updated!,
+    };
+  },
+});
+
+// ============================================================
+// PATCH /api/announcements/[id] - Partial Updates (isPinned, etc)
+// ============================================================
+
+export const onRequestPatch = createEndpoint<{ message: string; announcement: Announcement }, PatchAnnouncementBody>({
+  auth: 'moderator',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => body as PatchAnnouncementBody,
+
+  handler: async ({ env, user, params, body }) => {
+    const announcementId = params.id;
+    const { isPinned } = body;
+
+    if (isPinned === undefined) {
+      throw new Error('No fields to update');
+    }
+
+    const existing = await env.DB
+      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .bind(announcementId)
+      .first<Announcement>();
+
+    if (!existing) {
+      throw new Error('Announcement not found');
+    }
+
+    const now = utcNow();
+    const updates: string[] = ['updated_at_utc = ?'];
+    const values: any[] = [now];
+
+    if (isPinned !== undefined) {
+      updates.push('is_pinned = ?');
+      values.push(isPinned ? 1 : 0);
+    }
+
+    values.push(announcementId);
+
+    await env.DB
+      .prepare(`UPDATE announcements SET ${updates.join(', ')} WHERE announcement_id = ?`)
+      .bind(...values)
+      .run();
+
+    await createAuditLog(
+      env.DB,
+      'announcement',
+      isPinned ? 'pin' : 'unpin',
+      user!.user_id,
+      announcementId,
+      `${isPinned ? 'Pinned' : 'Unpinned'} announcement`,
+      null
+    );
+
+    const updated = await env.DB
+      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .bind(announcementId)
+      .first<Announcement>();
+
+    return {
+      message: `Announcement ${isPinned ? 'pinned' : 'unpinned'} successfully`,
+      announcement: updated!,
+    };
+  },
+});
+
+// ============================================================
+// DELETE /api/announcements/[id]
+// ============================================================
+
+export const onRequestDelete = createEndpoint<{ message: string }>({
+  auth: 'required',
+  cacheControl: 'no-store',
+
+  handler: async ({ env, user, params }) => {
+    const announcementId = params.id;
+
+    const existing = await env.DB
+      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .bind(announcementId)
+      .first<Announcement>();
+
+    if (!existing) {
+      throw new Error('Announcement not found');
+    }
+
+    if (!canEditEntity(user!, existing.created_by)) {
+      throw new Error('You do not have permission to delete this announcement');
     }
 
     const now = utcNow();
 
-    if (action === 'duplicate') {
-      const newAnnouncementId = generateId('ann');
-      await env.DB
-        .prepare(`
-          INSERT INTO announcements (
-            announcement_id, title, body_html, is_pinned, is_archived, media_urls,
-            created_by, updated_by, created_at_utc, updated_at_utc
-          ) VALUES (?, ?, ?, 0, 0, ?, ?, ?, ?, ?)
-        `)
-        .bind(
-          newAnnouncementId,
-          `${announcement.title} (Copy)`,
-          announcement.body_html,
-          announcement.media_urls || '[]',
-          user.user_id,
-          user.user_id,
-          now,
-          now
-        )
-        .run();
+    await env.DB
+      .prepare('UPDATE announcements SET deleted_at_utc = ?, updated_at_utc = ? WHERE announcement_id = ?')
+      .bind(now, now, announcementId)
+      .run();
 
-      await createAuditLog(
-        env.DB,
-        'announcement',
-        'duplicate',
-        user.user_id,
-        newAnnouncementId,
-        `Duplicated announcement: ${announcement.title}`,
-        JSON.stringify({ originalAnnouncementId: announcementId })
-      );
+    await createAuditLog(
+      env.DB,
+      'announcement',
+      'delete',
+      user!.user_id,
+      announcementId,
+      'Deleted announcement',
+      null
+    );
 
-      const newAnnouncement = await env.DB
-        .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
-        .bind(newAnnouncementId)
-        .first<Announcement>();
-
-      return successResponse({ announcement: newAnnouncement }, 201);
-    }
-
-    if (action === 'pin' || action === 'unpin') {
-      const isPinned = action === 'pin' ? 1 : 0;
-      await env.DB
-        .prepare('UPDATE announcements SET is_pinned = ?, updated_at_utc = ?, updated_by = ? WHERE announcement_id = ?')
-        .bind(isPinned, now, user.user_id, announcementId)
-        .run();
-
-      await createAuditLog(
-        env.DB,
-        'announcement',
-        action,
-        user.user_id,
-        announcementId,
-        `${action} announcement`,
-        null
-      );
-
-      const updated = await env.DB
-        .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
-        .bind(announcementId)
-        .first<Announcement>();
-
-      // Broadcast update via WebSocket
-      await broadcastUpdate(env, {
-        type: 'announcement:updated',
-        data: updated,
-        excludeUserId: user.user_id,
-      });
-
-      return successResponse({ announcement: updated });
-    }
-
-    if (action === 'archive' || action === 'unarchive') {
-      const isArchived = action === 'archive' ? 1 : 0;
-      await env.DB
-        .prepare('UPDATE announcements SET is_archived = ?, updated_at_utc = ?, updated_by = ? WHERE announcement_id = ?')
-        .bind(isArchived, now, user.user_id, announcementId)
-        .run();
-
-      await createAuditLog(env.DB, 'announcement', action, user.user_id, announcementId, `${action} announcement`, null);
-
-      const updated = await env.DB
-        .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
-        .bind(announcementId)
-        .first<Announcement>();
-
-      return successResponse({ announcement: updated });
-    }
-
-    return badRequestResponse('Unsupported action');
-  });
-};
+    return { message: 'Announcement deleted successfully' };
+  },
+});

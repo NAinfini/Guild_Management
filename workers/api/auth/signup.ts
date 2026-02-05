@@ -1,129 +1,124 @@
 /**
- * Member Signup API
- * POST /api/auth/signup - Create new member account
+ * Signup endpoint
+ * POST /api/auth/signup
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env } from '../_types';
-import {
-  successResponse,
-  badRequestResponse,
-  errorResponse,
-  conflictResponse,
-  generateId,
-  utcNow,
-  hashPassword,
-  validateUsername,
-  setSessionCookie,
-} from '../_utils';
-import { validateBody, signupSchema } from '../_validation';
-import { checkRateLimit, getRateLimitKey } from '../_middleware';
+import type { Env, User } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { generateId, utcNow, hashPassword, createAuditLog } from '../../lib/utils';
+import { checkRateLimit, getRateLimitKey } from '../../lib/middleware';
+import { validateBody, signupSchema } from '../../lib/validation';
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
+// ============================================================
+// Types
+// ============================================================
 
-  // Rate limiting: 3 signups per hour per IP
-  const rateLimitKey = getRateLimitKey(request, 'signup');
-  if (!checkRateLimit(rateLimitKey, 3, 60 * 60 * 1000)) {
-    return errorResponse('RATE_LIMIT', 'Too many signup attempts. Please try again later.', 429);
-  }
+interface SignupBody {
+  username: string;
+  password: string;
+  wechatName?: string;
+}
 
-  const validation = await validateBody(request, signupSchema);
-  if (!validation.success) {
-    return badRequestResponse('Invalid request body', validation.error.errors);
-  }
+interface SignupResponse {
+  user: {
+    user_id: string;
+    username: string;
+    wechat_name: string | null;
+    role: string;
+    power: number;
+    is_active: number;
+  };
+  message: string;
+}
 
-  const { username, password, wechatName } = validation.data;
+// ============================================================
+// POST /api/auth/signup
+// ============================================================
 
-  try {
-    // Validate username
-    if (!validateUsername(username)) {
-      return badRequestResponse('Invalid username. Must be 3-20 characters, alphanumeric and underscores only.');
+export const onRequestPost = createEndpoint<SignupResponse, SignupBody>({
+  auth: 'none',
+  cacheControl: 'no-store',
+  rateLimit: {
+    maxRequests: 3,
+    windowMs: 60 * 60 * 1000, // 3 attempts per hour
+  },
+
+  parseBody: (body) => {
+    const validation = signupSchema.safeParse(body);
+    if (!validation.success) {
+      throw new Error(JSON.stringify({ errors: validation.error.issues }));
+    }
+    return validation.data;
+  },
+
+  handler: async ({ env, body, request }) => {
+    // Rate limiting
+    const rateLimitKey = getRateLimitKey(request, 'signup');
+    if (!checkRateLimit(rateLimitKey, 3, 60 * 60 * 1000)) {
+      throw new Error('Too many signup attempts. Please try again later.');
     }
 
     // Check if username already exists
-    const existing = await env.DB
+    const existingUser = await env.DB
       .prepare('SELECT user_id FROM users WHERE username = ?')
-      .bind(username)
+      .bind(body.username)
       .first();
 
-    if (existing) {
-      return conflictResponse('Username already taken');
+    if (existingUser) {
+      throw new Error('Username already exists');
     }
 
+    // Create user
     const userId = generateId('usr');
     const now = utcNow();
+    const { hash, salt } = await hashPassword(body.password);
 
-    // Hash password
-    const { hash: passwordHash, salt } = await hashPassword(password);
+    await env.DB.batch([
+      env.DB
+        .prepare(`
+          INSERT INTO users (
+            user_id, username, wechat_name, role, power, is_active,
+            created_at_utc, updated_at_utc
+          ) VALUES (?, ?, ?, 'member', 0, 1, ?, ?)
+        `)
+        .bind(userId, body.username, body.wechatName || null, now, now),
+      env.DB
+        .prepare(`
+          INSERT INTO user_auth_password (
+            user_id, password_hash, salt, created_at_utc, updated_at_utc
+          ) VALUES (?, ?, ?, ?, ?)
+        `)
+        .bind(userId, hash, salt, now, now),
+    ]);
 
-    // Create user
-    await env.DB
-      .prepare(`
-        INSERT INTO users (
-          user_id, username, wechat_name, role, power, is_active,
-          created_at_utc, updated_at_utc
-        ) VALUES (?, ?, ?, 'member', 0, 1, ?, ?)
-      `)
-      .bind(userId, username, wechatName || null, now, now)
-      .run();
+    // Create audit log
+    await createAuditLog(
+      env.DB,
+      'user',
+      'signup',
+      null,
+      userId,
+      `User signed up: ${body.username}`,
+      JSON.stringify({ username: body.username })
+    );
 
-    // Create password record
-    await env.DB
-      .prepare(`
-        INSERT INTO user_auth_password (user_id, password_hash, salt, created_at_utc, updated_at_utc)
-        VALUES (?, ?, ?, ?, ?)
-      `)
-      .bind(userId, passwordHash, salt, now, now)
-      .run();
+    const user = await env.DB
+      .prepare('SELECT * FROM users WHERE user_id = ?')
+      .bind(userId)
+      .first<User>();
 
-    // Create default member profile
-    await env.DB
-      .prepare(`
-        INSERT INTO member_profiles (user_id, created_at_utc, updated_at_utc)
-        VALUES (?, ?, ?)
-      `)
-      .bind(userId, now, now)
-      .run();
-
-    // Create session
-    const sessionId = generateId('ses');
-    const maxAge = 24 * 60 * 60; // 1 day
-    const expiresAt = new Date(Date.now() + maxAge * 1000).toISOString().replace('T', ' ').substring(0, 19);
-
-    const userAgent = request.headers.get('User-Agent') || null;
-    const ip = request.headers.get('CF-Connecting-IP') || null;
-    const ipHash = ip ? await hashIp(ip) : null;
-
-    await env.DB
-      .prepare(`
-        INSERT INTO sessions (
-          session_id, user_id, created_at_utc, last_used_at_utc,
-          expires_at_utc, user_agent, ip_hash, updated_at_utc
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `)
-      .bind(sessionId, userId, now, now, expiresAt, userAgent, ipHash, now)
-      .run();
-
-    const userData = {
-      user_id: userId,
-      username,
-      wechat_name: wechatName,
-      role: 'member',
-      power: 0,
+    return {
+      user: {
+        user_id: user!.user_id,
+        username: user!.username,
+        wechat_name: user!.wechat_name,
+        role: user!.role,
+        power: user!.power,
+        is_active: user!.is_active,
+      },
+      message: 'Account created successfully. Please log in.',
     };
-
-    const response = successResponse({ user: userData, sessionId }, 201);
-    return setSessionCookie(response, sessionId, maxAge);
-  } catch (error) {
-    console.error('Signup error:', error);
-    return errorResponse('INTERNAL_ERROR', 'An error occurred during signup', 500);
-  }
-};
-
-async function hashIp(ip: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(ip);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+  },
+});

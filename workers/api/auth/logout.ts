@@ -1,15 +1,31 @@
 /**
  * Logout endpoint
  * POST /api/auth/logout
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env } from '../_types';
-import { successResponse, errorResponse, clearSessionCookie, getCookieValue, utcNow } from '../_utils';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { getCookieValue, utcNow, clearSessionCookie, successResponse } from '../../lib/utils';
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
+// ============================================================
+// Types
+// ============================================================
 
-  try {
+interface LogoutResponse {
+  message: string;
+}
+
+// ============================================================
+// POST /api/auth/logout
+// ============================================================
+
+export const onRequestPost = createEndpoint<LogoutResponse | Response>({
+  auth: 'none', // No auth required - we'll manually get session from cookie
+  cacheControl: 'no-store',
+
+  handler: async ({ env, request }) => {
     // Get session from cookie
     const sessionId = getCookieValue(request, 'session_id');
 
@@ -25,8 +41,5 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Clear cookie and return success
     const response = successResponse({ message: 'Logged out successfully' });
     return clearSessionCookie(response);
-  } catch (error) {
-    console.error('Logout error:', error);
-    return errorResponse('INTERNAL_ERROR', 'An error occurred during logout', 500);
-  }
-};
+  },
+});

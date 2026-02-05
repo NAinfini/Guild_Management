@@ -1,51 +1,41 @@
-// Local type definitions for Cloudflare Pages environment
-interface R2Object {
-  body: ReadableStream;
-  httpEtag: string;
-  writeHttpMetadata(headers: Headers): void;
-}
+/**
+ * Media Retrieval Endpoint
+ * GET /api/media/[key] - Get media object from R2
+ * 
+ * Migrated to use createEndpoint for consistency, even if it returns raw response
+ */
 
-interface R2Bucket {
-  get(key: string): Promise<R2Object | null>;
-}
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
 
-interface EventContext<Env, P extends string, Data> {
-  request: Request;
-  functionPath: string;
-  waitUntil(promise: Promise<any>): void;
-  passThroughOnException(): void;
-  next(input?: Request | string, init?: RequestInit): Promise<Response>;
-  env: Env;
-  params: Record<string, string>;
-  data: Data;
-}
+// ============================================================
+// GET /api/media/[key]
+// ============================================================
 
-type PagesFunction<
-  Env = unknown,
-  Params extends string = any,
-  Data extends Record<string, unknown> = Record<string, unknown>
-> = (context: EventContext<Env, Params, Data>) => Response | Promise<Response>;
+export const onRequestGet = createEndpoint<Response>({
+  auth: 'none', // Public access usually, or optional? Public for media.
+  
+  handler: async ({ env, params }) => {
+    const key = params.key;
 
-interface Env {
-  BUCKET: R2Bucket;
-}
+    const object = await env.BUCKET.get(key);
 
-export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const key = context.params.key;
-  if (!key) return new Response("Key required", { status: 400 });
+    if (!object) {
+      throw new Error('Object not found'); // Factory catches and returns 500? No, 404 should be specific.
+      // Wait, factory treats Error as 500 unless it has status?
+      // createEndpoint factory handles Errors. Basic Error is 500.
+      // I should throw specific error or return Response with 404.
+      // Factory allows returning Response.
+      return new Response('Object not found', { status: 404 });
+    }
 
-  const object = await context.env.BUCKET.get(key as string);
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    headers.set('etag', object.httpEtag);
+    headers.set('Cache-Control', 'public, max-age=31536000, immutable');
 
-  if (!object) {
-    return new Response("Object not found", { status: 404 });
-  }
-
-  const headers = new Headers();
-  object.writeHttpMetadata(headers);
-  headers.set('etag', object.httpEtag);
-  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-
-  return new Response(object.body, {
-    headers,
-  });
-};
+    return new Response(object.body, {
+      headers,
+    });
+  },
+});

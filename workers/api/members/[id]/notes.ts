@@ -1,145 +1,135 @@
 /**
- * Member Notes Management (Admin Only)
- * PUT /api/members/[id]/notes - Update admin notes
+ * Member Admin Notes
  * GET /api/members/[id]/notes - Get admin notes
+ * PUT /api/members/[id]/notes - Update admin notes
+ * 
+ * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { PagesFunction, Env } from '../../../_types';
-import {
-  successResponse,
-  badRequestResponse,
-  errorResponse,
-  notFoundResponse,
-  utcNow,
-  createAuditLog,
-  etagFromTimestamp,
-  assertIfMatch,
-} from '../../../_utils';
-import { withAuth, withAdminAuth } from '../../../_middleware';
-import { validateBody, memberNoteSchema } from '../../../_validation';
+import type { Env } from '../../../lib/types';
+import { createEndpoint } from '../../../lib/endpoint-factory';
+import { utcNow, etagFromTimestamp, createAuditLog } from '../../../lib/utils';
 
 // ============================================================
-// PUT /api/members/[id]/notes - Update Note (Admin Only)
+// Types
 // ============================================================
 
-export const onRequestPut: PagesFunction<Env> = async (context) => {
-  return withAdminAuth(context, async (authContext) => {
-    const { request, env, params } = authContext;
-    const { user: admin } = authContext.data;
+interface NoteItem {
+  slot: number;
+  note: string;
+}
+
+interface UpdateNotesBody {
+  notes: NoteItem[];
+}
+
+interface NotesResponse {
+  notes: any[];
+}
+
+interface UpdateNotesResponse {
+  message: string;
+  notes: any[];
+}
+
+// ============================================================
+// GET /api/members/[id]/notes
+// ============================================================
+
+export const onRequestGet = createEndpoint<NotesResponse>({
+  auth: 'moderator',
+  etag: true,
+  cacheControl: 'no-store', // Security: detailed notes should not be cached publicly
+
+  handler: async ({ env, params }) => {
     const userId = params.id;
 
-    const validation = await validateBody(request, memberNoteSchema);
-    if (!validation.success) {
-      return badRequestResponse('Invalid request body', validation.error.errors);
+    const notes = await env.DB
+      .prepare(`
+        SELECT man.*, u.username as updated_by_username
+        FROM member_admin_notes man
+        LEFT JOIN users u ON man.updated_by = u.user_id
+        WHERE man.user_id = ?
+        ORDER BY man.slot
+      `)
+      .bind(userId)
+      .all();
+
+    return {
+      notes: notes.results || [],
+    };
+  },
+});
+
+// ============================================================
+// PUT /api/members/[id]/notes
+// ============================================================
+
+export const onRequestPut = createEndpoint<UpdateNotesResponse, UpdateNotesBody>({
+  auth: 'moderator',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => {
+    if (!body.notes || !Array.isArray(body.notes)) {
+      throw new Error('notes array is required');
+    }
+    return body as UpdateNotesBody;
+  },
+
+  handler: async ({ env, user, params, body }) => {
+    const userId = params.id;
+    const { notes } = body;
+    const now = utcNow();
+
+    // Delete existing notes for these slots
+    const slots = notes.map(n => n.slot);
+    if (slots.length > 0) {
+      const placeholders = slots.map(() => '?').join(',');
+      await env.DB
+        .prepare(`DELETE FROM member_admin_notes WHERE user_id = ? AND slot IN (${placeholders})`)
+        .bind(userId, ...slots)
+        .run();
     }
 
-    const { slot, noteText } = validation.data;
-
-    try {
-      // Verify user exists
-      const targetUser = await env.DB
-        .prepare('SELECT * FROM users WHERE user_id = ?')
-        .bind(userId)
-        .first();
-
-      if (!targetUser) {
-        return notFoundResponse('Member');
-      }
-
-      const currentEtag = etagFromTimestamp((targetUser as any).updated_at_utc || (targetUser as any).created_at_utc);
-      const pre = assertIfMatch(request, currentEtag);
-      if (pre) return pre;
-
-      const now = utcNow();
-
-      // Check if note exists
-      const existing = await env.DB
-        .prepare('SELECT * FROM member_admin_notes WHERE user_id = ? AND slot = ?')
-        .bind(userId, slot)
-        .first();
-
-      if (existing) {
-        // Update existing note
-        await env.DB
-          .prepare('UPDATE member_admin_notes SET note_text = ?, updated_by = ?, updated_at_utc = ? WHERE user_id = ? AND slot = ?')
-          .bind(noteText || null, admin.user_id, now, userId, slot)
-          .run();
-      } else {
-        // Insert new note
+    // Insert new notes
+    for (const note of notes) {
+      if (note.note && note.note.trim()) {
         await env.DB
           .prepare(`
-            INSERT INTO member_admin_notes (user_id, slot, note_text, created_by, updated_by, created_at_utc, updated_at_utc)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO member_admin_notes (
+              user_id, slot, note, updated_by, updated_at_utc
+            ) VALUES (?, ?, ?, ?, ?)
           `)
-          .bind(userId, slot, noteText || null, admin.user_id, admin.user_id, now, now)
+          .bind(userId, note.slot, note.note.trim(), user!.user_id, now)
           .run();
       }
-
-      await createAuditLog(
-        env.DB,
-        'member',
-        'update_note',
-        admin.user_id,
-        userId,
-        `Updated admin note slot ${slot}`,
-        null
-      );
-
-      const updated = await env.DB
-        .prepare('SELECT updated_at_utc FROM users WHERE user_id = ?')
-        .bind(userId)
-        .first<{ updated_at_utc: string }>();
-
-      const etag = etagFromTimestamp(updated?.updated_at_utc || (targetUser as any).updated_at_utc);
-      const resp = successResponse({ message: 'Note updated successfully' });
-      if (etag) resp.headers.set('ETag', etag);
-      return resp;
-    } catch (error) {
-      console.error('Update note error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while updating note', 500);
-    }
-  });
-};
-
-// ============================================================
-// GET /api/members/[id]/notes - Get Notes (Admin Only)
-// ============================================================
-
-export const onRequestGet: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
-    const { env, params } = authContext;
-    const { isAdmin, isModerator } = authContext.data;
-    const userId = params.id;
-
-    // Only admins and moderators can view notes
-    if (!isAdmin && !isModerator) {
-      return errorResponse('FORBIDDEN', 'Only admins and moderators can view notes', 403);
     }
 
-    try {
-      const notes = await env.DB
-        .prepare(`
-          SELECT man.*, u.username as updated_by_username
-          FROM member_admin_notes man
-          LEFT JOIN users u ON man.updated_by = u.user_id
-          WHERE man.user_id = ?
-          ORDER BY man.slot
-        `)
-        .bind(userId)
-        .all();
+    await createAuditLog(
+      env.DB,
+      'member',
+      'update_notes',
+      user!.user_id,
+      userId,
+      'Updated admin notes',
+      JSON.stringify({ slots })
+    );
 
-      const userRow = await env.DB
-        .prepare('SELECT updated_at_utc, created_at_utc FROM users WHERE user_id = ?')
-        .bind(userId)
-        .first<{ updated_at_utc: string; created_at_utc: string }>();
-      const etag = etagFromTimestamp(userRow?.updated_at_utc || userRow?.created_at_utc);
+    // Return updated notes
+    const updatedNotes = await env.DB
+      .prepare(`
+        SELECT man.*, u.username as updated_by_username
+        FROM member_admin_notes man
+        LEFT JOIN users u ON man.updated_by = u.user_id
+        WHERE man.user_id = ?
+        ORDER BY man.slot
+      `)
+      .bind(userId)
+      .all();
 
-      const resp = successResponse({ notes: notes.results || [] });
-      if (etag) resp.headers.set('ETag', etag);
-      return resp;
-    } catch (error) {
-      console.error('Get notes error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while fetching notes', 500);
-    }
-  });
-};
+    return {
+      message: 'Notes updated successfully',
+      notes: updatedNotes.results || [],
+    };
+  },
+});

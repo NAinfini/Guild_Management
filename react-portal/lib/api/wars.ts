@@ -121,7 +121,7 @@ export const warsAPI = {
   // Active Wars
   getActive: async (): Promise<any[]> => {
     // Return raw for now as structure of "Active War" is complex
-    return api.get<{ wars: any[] }>('/wars/active').then(r => r.wars);
+    return api.get<any[]>('/wars/active');
   },
   
   getActiveTeams: async (warId: string): Promise<{ teams: WarTeam[]; pool: any[]; etag?: string }> => {

@@ -1,84 +1,68 @@
 /**
- * Admin API - Audit Log
- * GET /api/admin/audit-logs - Get audit logs with pagination
+ * Admin Audit Logs
+ * GET /api/admin/audit-logs
+ * 
+ * Migrated to use createEndpoint pattern
  */
 
-import type { PagesFunction, Env, AuditLog } from '../../_types';
-import {
-  successResponse,
-  errorResponse,
-} from '../../_utils';
-import { withAuth } from '../../_middleware';
+import type { Env, AuditLog } from '../../../lib/types';
+import { createEndpoint } from '../../../lib/endpoint-factory';
 
-export const onRequestGet: PagesFunction<Env> = async (context) => {
-  return withAuth(context, async (authContext) => {
-    const { env, request } = authContext;
-    const { isAdmin, isModerator } = authContext.data;
+interface AuditLogsResponse {
+  logs: AuditLog[];
+  total: number;
+}
 
-    // Only admins and moderators can view audit logs
-    if (!isAdmin && !isModerator) {
-      return errorResponse('FORBIDDEN', 'Only admins and moderators can view audit logs', 403);
+interface AuditLogQuery {
+  page?: number;
+  limit?: number;
+  action?: string;
+  userId?: string;
+}
+
+export const onRequestGet = createEndpoint<AuditLogsResponse, AuditLogQuery>({
+  auth: 'admin',
+  cacheControl: 'no-store',
+
+  handler: async ({ env, request }) => {
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '50');
+    const action = url.searchParams.get('action');
+    const userId = url.searchParams.get('userId');
+
+    let query = 'SELECT * FROM audit_logs';
+    const params: any[] = [];
+    const conditions: string[] = [];
+
+    if (action) {
+      conditions.push('action = ?');
+      params.push(action);
+    }
+    if (userId) {
+      conditions.push('user_id = ?');
+      params.push(userId);
     }
 
-    try {
-      const url = new URL(request.url);
-      const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 50);
-      const cursor = url.searchParams.get('cursor');
-      const entityType = url.searchParams.get('entityType');
-      const actorId = url.searchParams.get('actorId');
-      const startDate = url.searchParams.get('startDate');
-      const endDate = url.searchParams.get('endDate');
-
-      const now = new Date();
-      const defaultStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      const rangeStart = startDate ? new Date(startDate) : defaultStart;
-      const rangeEnd = endDate ? new Date(endDate) : now;
-
-      if (rangeEnd.getTime() - rangeStart.getTime() > 365 * 24 * 60 * 60 * 1000) {
-        return errorResponse('DATE_RANGE_TOO_LARGE', 400);
-      }
-
-      let query = 'SELECT * FROM audit_log WHERE created_at_utc BETWEEN ? AND ?';
-      const params: any[] = [
-        rangeStart.toISOString().replace('T', ' ').substring(0, 19),
-        rangeEnd.toISOString().replace('T', ' ').substring(0, 19),
-      ];
-
-      if (entityType) {
-        query += ' AND entity_type = ?';
-        params.push(entityType);
-      }
-
-      if (actorId) {
-        query += ' AND actor_id = ?';
-        params.push(actorId);
-      }
-
-      if (cursor) {
-        query += ' AND created_at_utc < ?';
-        params.push(cursor);
-      }
-
-      query += ' ORDER BY created_at_utc DESC LIMIT ?';
-      params.push(limit + 1); // Fetch one extra to determine if there are more
-
-      const result = await env.DB.prepare(query).bind(...params).all<AuditLog>();
-
-      const logs = result.results || [];
-      const hasMore = logs.length > limit;
-      const items = hasMore ? logs.slice(0, limit) : logs;
-      const nextCursor = hasMore ? items[items.length - 1].created_at_utc : null;
-
-      return successResponse({
-        logs: items,
-        cursor: nextCursor,
-        hasMore,
-        rangeStart: params[0],
-        rangeEnd: params[1],
-      });
-    } catch (error) {
-      console.error('Get audit logs error:', error);
-      return errorResponse('INTERNAL_ERROR', 'An error occurred while fetching audit logs', 500);
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
     }
-  });
-};
+
+    query += ' ORDER BY created_at_utc DESC LIMIT ? OFFSET ?';
+    params.push(limit, (page - 1) * limit);
+
+    const logs = await env.DB.prepare(query).bind(...params).all<AuditLog>();
+    
+    // Get total
+    let countQuery = 'SELECT COUNT(*) as total FROM audit_logs';
+    if (conditions.length > 0) {
+      countQuery += ' WHERE ' + conditions.join(' AND ');
+    }
+    const total = await env.DB.prepare(countQuery).bind(...params.slice(0, params.length - 2)).first<{ total: number }>();
+
+    return {
+      logs: logs.results || [],
+      total: total?.total || 0,
+    };
+  },
+});

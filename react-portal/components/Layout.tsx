@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, Outlet, useNavigate } from '@tanstack/react-router';
 import { useAuthStore, useUIStore } from '../store';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks';
 import { useThemeController } from '../theme/ThemeController';
 import { useTranslation } from 'react-i18next';
 import { 

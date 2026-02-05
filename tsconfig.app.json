@@ -27,11 +27,14 @@
     "paths": {
       "@/*": [
         "./react-portal/*"
+      ],
+      "@shared/*": [
+        "./shared/*"
       ]
     },
     "noUncheckedSideEffectImports": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["react-portal"]
+  "include": ["react-portal", "shared"]
 }
