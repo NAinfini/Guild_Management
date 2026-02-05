@@ -80,7 +80,7 @@ export const onRequestGet = createEndpoint<MemberResponse>({
       const notesResult = await env.DB
         .prepare(`
           SELECT man.*, u.username as updated_by_username
-          FROM member_admin_notes man
+          FROM member_notes man
           LEFT JOIN users u ON man.updated_by = u.user_id
           WHERE man.user_id = ?
           ORDER BY man.slot

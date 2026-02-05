@@ -47,14 +47,14 @@ export const onRequestPost = createEndpoint<DuplicateEventResponse>({
     const now = utcNow();
     
     // Duplicate event + 7 days
-    const startDate = new Date(event.event_date);
+    const startDate = new Date(event.start_at_utc);
     startDate.setDate(startDate.getDate() + 7);
     const newStartAt = startDate.toISOString(); // Assuming format
 
     await env.DB
       .prepare(`
         INSERT INTO events (
-          event_id, title, description, event_date, event_type, 
+          event_id, title, description, start_at_utc, type, 
           min_level, max_participants, created_by, created_at_utc, updated_at_utc
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
@@ -63,7 +63,7 @@ export const onRequestPost = createEndpoint<DuplicateEventResponse>({
         `${event.title} (Copy)`,
         event.description,
         newStartAt,
-        event.event_type,
+        event.type,
         event.min_level,
         event.max_participants,
         user!.user_id,

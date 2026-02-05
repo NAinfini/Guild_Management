@@ -245,7 +245,7 @@ export const onRequestPost = createEndpoint<
         await env.DB
           .prepare(`
             INSERT INTO events (
-              event_id, type, title, start_at_utc, event_date, notes,
+              event_id, type, title, start_at_utc, start_at_utc, notes,
               is_archived, created_by, updated_by, created_at_utc, updated_at_utc
             ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
           `)
@@ -353,7 +353,7 @@ export const onRequestPost = createEndpoint<
     await env.DB
       .prepare(`
         INSERT INTO events (
-          event_id, type, title, start_at_utc, event_date, notes,
+          event_id, type, title, start_at_utc, start_at_utc, notes,
           is_archived, created_by, updated_by, created_at_utc, updated_at_utc
         ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
       `)

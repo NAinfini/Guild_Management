@@ -107,7 +107,7 @@ export const onRequestGet = createEndpoint<
         FROM events
         WHERE event_id IN (${placeholders})
           AND deleted_at_utc IS NULL
-        ORDER BY event_date DESC, event_id DESC
+        ORDER BY start_at_utc DESC, event_id DESC
       `;
 
       const result = await env.DB.prepare(sqlQuery).bind(...ids).all();
@@ -132,21 +132,21 @@ export const onRequestGet = createEndpoint<
     const bindings: any[] = [];
 
     if (cursor) {
-      whereClauses.push('(event_date < ? OR (event_date = ? AND event_id < ?))');
+      whereClauses.push('(start_at_utc < ? OR (start_at_utc = ? AND event_id < ?))');
       bindings.push(cursor.timestamp, cursor.timestamp, cursor.id);
     }
 
     const sqlQuery = `
       SELECT * FROM events
       WHERE ${whereClauses.join(' AND ')}
-      ORDER BY event_date DESC, event_id DESC
+      ORDER BY start_at_utc DESC, event_id DESC
       ${usePagination ? `LIMIT ${limit + 1}` : ''}
     `;
 
     const events = await env.DB.prepare(sqlQuery).bind(...bindings).all<Event>();
 
     if (usePagination) {
-      return buildPaginatedResponse(events.results || [], limit, 'event_date', 'event_id');
+      return buildPaginatedResponse(events.results || [], limit, 'start_at_utc', 'event_id');
     }
 
     return {
@@ -208,7 +208,7 @@ export const onRequestPost = createEndpoint<
         await env.DB
           .prepare(`
             INSERT INTO events (
-              event_id, title, description, event_date, event_type,
+              event_id, title, description, start_at_utc, type,
               min_level, max_participants, created_by, created_at_utc, updated_at_utc
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `)
@@ -257,7 +257,7 @@ export const onRequestPost = createEndpoint<
     await env.DB
       .prepare(`
         INSERT INTO events (
-          event_id, title, description, event_date, event_type,
+          event_id, title, description, start_at_utc, type,
           min_level, max_participants, created_by, created_at_utc, updated_at_utc
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)

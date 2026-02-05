@@ -120,8 +120,8 @@ export const onRequestPut = createEndpoint<{ message: string; event: Event }, Up
     const fieldMap: Record<string, string> = {
       title: 'title',
       description: 'description',
-      eventDate: 'event_date',
-      eventType: 'event_type',
+      eventDate: 'start_at_utc',
+      eventType: 'type',
       minLevel: 'min_level',
       maxParticipants: 'max_participants',
     };

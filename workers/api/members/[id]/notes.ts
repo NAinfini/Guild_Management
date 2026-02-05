@@ -47,7 +47,7 @@ export const onRequestGet = createEndpoint<NotesResponse>({
     const notes = await env.DB
       .prepare(`
         SELECT man.*, u.username as updated_by_username
-        FROM member_admin_notes man
+        FROM member_notes man
         LEFT JOIN users u ON man.updated_by = u.user_id
         WHERE man.user_id = ?
         ORDER BY man.slot
@@ -86,7 +86,7 @@ export const onRequestPut = createEndpoint<UpdateNotesResponse, UpdateNotesBody>
     if (slots.length > 0) {
       const placeholders = slots.map(() => '?').join(',');
       await env.DB
-        .prepare(`DELETE FROM member_admin_notes WHERE user_id = ? AND slot IN (${placeholders})`)
+        .prepare(`DELETE FROM member_notes WHERE user_id = ? AND slot IN (${placeholders})`)
         .bind(userId, ...slots)
         .run();
     }
@@ -96,7 +96,7 @@ export const onRequestPut = createEndpoint<UpdateNotesResponse, UpdateNotesBody>
       if (note.note && note.note.trim()) {
         await env.DB
           .prepare(`
-            INSERT INTO member_admin_notes (
+            INSERT INTO member_notes (
               user_id, slot, note, updated_by, updated_at_utc
             ) VALUES (?, ?, ?, ?, ?)
           `)
@@ -119,7 +119,7 @@ export const onRequestPut = createEndpoint<UpdateNotesResponse, UpdateNotesBody>
     const updatedNotes = await env.DB
       .prepare(`
         SELECT man.*, u.username as updated_by_username
-        FROM member_admin_notes man
+        FROM member_notes man
         LEFT JOIN users u ON man.updated_by = u.user_id
         WHERE man.user_id = ?
         ORDER BY man.slot

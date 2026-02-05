@@ -15,7 +15,7 @@ html_handling = "auto-trailing-slash"
 [[d1_databases]]
 binding = "DB"
 database_name = "testdatabase"
-database_id = "02a599d0-1b61-4e19-9ace-7d337b96155b"
+database_id = "dc4363ba-3ec6-4909-85fd-72b838572ce2"
 
 [[r2_buckets]]
 binding = "BUCKET"
