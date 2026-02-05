@@ -23,18 +23,34 @@ export interface PaginationQuery {
 /**
  * Encode cursor from timestamp and ID
  * Format: base64(timestamp|id)
+ * Uses Web APIs (btoa) instead of Node.js Buffer for Cloudflare Workers compatibility
  */
 export function encodeCursor(timestamp: string, id: string): string {
-  return Buffer.from(`${timestamp}|${id}`).toString('base64');
+  // btoa expects ASCII string, so we encode to UTF-8 first if needed
+  const data = `${timestamp}|${id}`;
+  try {
+    return btoa(data);
+  } catch (e) {
+    // If btoa fails (non-ASCII chars), use encodeURIComponent
+    return btoa(encodeURIComponent(data));
+  }
 }
 
 /**
  * Decode cursor to timestamp and ID
  * Returns [timestamp, id]
+ * Uses Web APIs (atob) instead of Node.js Buffer for Cloudflare Workers compatibility
  */
 export function decodeCursor(cursor: string): [string, string] {
   try {
-    const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
+    let decoded: string;
+    try {
+      decoded = atob(cursor);
+    } catch (e) {
+      // Try decoding URI component if direct atob fails
+      decoded = decodeURIComponent(atob(cursor));
+    }
+
     const parts = decoded.split('|');
     if (parts.length !== 2) {
       throw new Error('Invalid cursor format');
