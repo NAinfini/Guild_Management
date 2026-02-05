@@ -105,21 +105,11 @@ export const membersAPI = {
     if (params?.includeInactive) queryParams.includeInactive = 'true';
     if (params?.role) queryParams.role = params.role;
 
-    // API client now unwraps { success, data } envelope automatically
-    const response = await typedAPI.members.list<MemberDTO[] | { items: MemberDTO[], pagination: any }>({ query: queryParams });
+    // API always returns paginated format: { items: [...], pagination: {...} }
+    const response = await typedAPI.members.list<{ items: MemberDTO[], pagination: any }>({ query: queryParams });
 
-    // Handle both paginated and non-paginated responses
-    let items: MemberDTO[];
-    if (!response) return [];
-    if (Array.isArray(response)) {
-      items = response;
-    } else if (response && 'items' in response) {
-      items = response.items;
-    } else {
-      return [];
-    }
-
-    return items.map(mapToDomain);
+    if (!response || !response.items) return [];
+    return response.items.map(mapToDomain);
   },
 
   getProfile: async (id: string): Promise<User> => {

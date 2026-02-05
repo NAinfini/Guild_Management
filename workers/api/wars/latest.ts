@@ -57,107 +57,79 @@ export const onRequestGet = createEndpoint<any[], ActiveWarQuery>({
       return wars.results.map((w: any) => ({ ...w, teams: [], pool: [] }));
     }
 
-    // Single query to get all teams with their members using JOINs
-    const teamsQuery = `
-      SELECT
-        wt.war_id,
-        wt.team_id,
-        wt.team_name,
-        wt.sort_order as team_sort_order,
-        wta.user_id,
-        wta.sort_order as member_sort_order,
-        u.username,
-        u.wechat_name,
-        u.power
-      FROM war_teams wt
-      LEFT JOIN war_team_assignments wta ON wt.team_id = wta.team_id
-      LEFT JOIN users u ON wta.user_id = u.user_id
-      WHERE wt.war_id IN (${warIds.map(() => '?').join(',')})
-      ORDER BY wt.war_id, wt.sort_order, wta.sort_order
-    `;
+    // For each war/event, get teams and members using correct schema
+    const warsWithData: any[] = [];
 
-    const teamsData = await env.DB.prepare(teamsQuery).bind(...warIds).all();
+    for (const war of wars.results as any[]) {
+      const eventId = war.event_id;
 
-    // Single query to get pool members for all wars
-    const poolQuery = `
-      SELECT
-        wh.war_id,
-        u.user_id,
-        u.username,
-        u.wechat_name,
-        u.power
-      FROM war_history wh
-      CROSS JOIN users u
-      WHERE wh.war_id IN (${warIds.map(() => '?').join(',')})
-        AND u.is_active = 1
-        AND NOT EXISTS (
-          SELECT 1 FROM war_team_assignments wta
-          JOIN war_teams wt ON wta.team_id = wt.team_id
-          WHERE wta.user_id = u.user_id AND wt.war_id = wh.war_id
-        )
-      ORDER BY wh.war_id, u.power DESC
-    `;
+      // Get teams assigned to this event via event_teams
+      const eventTeamsResult = await env.DB
+        .prepare(`
+          SELECT t.*, et.assigned_at_utc
+          FROM event_teams et
+          JOIN teams t ON et.team_id = t.team_id
+          WHERE et.event_id = ?
+          ORDER BY t.created_at_utc
+        `)
+        .bind(eventId)
+        .all<any>();
 
-    const poolData = await env.DB.prepare(poolQuery).bind(...warIds).all();
+      // Get members for each team
+      const teamsWithMembers = await Promise.all(
+        (eventTeamsResult.results || []).map(async (team: any) => {
+          const members = await env.DB
+            .prepare(`
+              SELECT tm.*, u.username, u.power, u.wechat_name
+              FROM team_members tm
+              JOIN users u ON tm.user_id = u.user_id
+              WHERE tm.team_id = ?
+              ORDER BY tm.sort_order
+            `)
+            .bind(team.team_id)
+            .all();
 
-    // Group teams and members by war_id
-    const teamsByWar = new Map<string, any[]>();
-    const currentTeam: any = {};
+          return {
+            team_id: team.team_id,
+            team_name: team.team_name,
+            sort_order: team.sort_order || 0,
+            is_locked: !!team.is_locked,
+            members: members.results || [],
+          };
+        })
+      );
 
-    (teamsData.results || []).forEach((row: any) => {
-      const warId = row.war_id;
+      // Pool = all active members NOT assigned to any team for this event
+      const assignedUserIds = teamsWithMembers
+        .flatMap(t => t.members)
+        .map((m: any) => m.user_id);
 
-      if (!teamsByWar.has(warId)) {
-        teamsByWar.set(warId, []);
-      }
+      const poolQuery = assignedUserIds.length > 0
+        ? `SELECT u.user_id, u.username, u.power, u.wechat_name
+           FROM users u
+           WHERE u.is_active = 1
+             AND u.user_id NOT IN (${assignedUserIds.map(() => '?').join(',')})
+           ORDER BY u.power DESC`
+        : `SELECT u.user_id, u.username, u.power, u.wechat_name
+           FROM users u
+           WHERE u.is_active = 1
+           ORDER BY u.power DESC`;
 
-      // Check if we need to start a new team
-      if (!currentTeam[warId] || currentTeam[warId].team_id !== row.team_id) {
-        currentTeam[warId] = {
-          team_id: row.team_id,
-          team_name: row.team_name,
-          sort_order: row.team_sort_order,
-          members: [],
-        };
-        teamsByWar.get(warId)!.push(currentTeam[warId]);
-      }
+      const pool = await env.DB
+        .prepare(poolQuery)
+        .bind(...assignedUserIds)
+        .all();
 
-      // Add member if present
-      if (row.user_id) {
-        currentTeam[warId].members.push({
-          user_id: row.user_id,
-          username: row.username,
-          wechat_name: row.wechat_name,
-          power: row.power,
-          sort_order: row.member_sort_order,
-        });
-      }
-    });
-
-    // Group pool by war_id
-    const poolByWar = new Map<string, any[]>();
-    (poolData.results || []).forEach((row: any) => {
-      const warId = row.war_id;
-      if (!poolByWar.has(warId)) {
-        poolByWar.set(warId, []);
-      }
-      poolByWar.get(warId)!.push({
-        user_id: row.user_id,
-        username: row.username,
-        wechat_name: row.wechat_name,
-        power: row.power,
+      warsWithData.push({
+        ...war,
+        warId: war.war_id,
+        teams: teamsWithMembers,
+        pool: pool.results || [],
+        warUpdatedAt: war.war_updated_at,
       });
-    });
-
-    // Combine everything
-    const warsWithData = wars.results.map((war: any) => ({
-      ...war,
-      warId: war.war_id,
-      teams: teamsByWar.get(war.war_id) || [],
-      pool: poolByWar.get(war.war_id) || [],
-      warUpdatedAt: war.war_updated_at,
-    }));
+    }
 
     return warsWithData;
+
   },
 });

@@ -65,61 +65,48 @@ export const onRequestGet = createEndpoint<WarResponse>({
       .bind(eventId)
       .first();
 
-    // Get teams for this war
-    const teams = await env.DB
+    // Get teams assigned to this event via event_teams
+    const eventTeamsResult = await env.DB
       .prepare(`
-        SELECT
-          wt.team_id,
-          wt.team_name,
-          wt.sort_order,
-          COUNT(wta.user_id) as member_count
-        FROM war_teams wt
-        LEFT JOIN war_team_assignments wta ON wt.team_id = wta.team_id
-        WHERE wt.war_id = COALESCE(
-          (SELECT war_id FROM war_history WHERE event_id = ?),
-          'temp_' || ?
-        )
-        GROUP BY wt.team_id, wt.team_name, wt.sort_order
-        ORDER BY wt.sort_order
+        SELECT t.*, et.assigned_at_utc
+        FROM event_teams et
+        JOIN teams t ON et.team_id = t.team_id
+        WHERE et.event_id = ?
+        ORDER BY t.created_at_utc
       `)
-      .bind(eventId, eventId)
-      .all();
+      .bind(eventId)
+      .all<any>();
 
-    // Get all team members
-    const members = await env.DB
-      .prepare(`
-        SELECT
-          wt.team_id,
-          wta.user_id,
-          u.username,
-          u.wechat_name,
-          u.power,
-          wta.sort_order
-        FROM war_teams wt
-        LEFT JOIN war_team_assignments wta ON wt.team_id = wta.team_id
-        LEFT JOIN users u ON wta.user_id = u.user_id
-        WHERE wt.war_id = COALESCE(
-          (SELECT war_id FROM war_history WHERE event_id = ?),
-          'temp_' || ?
-        )
-        ORDER BY wt.sort_order, wta.sort_order
-      `)
-      .bind(eventId, eventId)
-      .all();
+    // Get members for each team
+    const teamsWithMembers = await Promise.all(
+      (eventTeamsResult.results || []).map(async (team: any) => {
+        const members = await env.DB
+          .prepare(`
+            SELECT tm.*, u.username, u.power, u.wechat_name
+            FROM team_members tm
+            JOIN users u ON tm.user_id = u.user_id
+            WHERE tm.team_id = ?
+            ORDER BY tm.sort_order
+          `)
+          .bind(team.team_id)
+          .all();
 
-    // Group members by team
-    const teamsWithMembers = (teams.results || []).map((team: any) => ({
-      ...team,
-      members: (members.results || [])
-        .filter((m: any) => m.team_id === team.team_id)
-        .map((m: any) => ({
-          user_id: m.user_id,
-          username: m.username,
-          wechat_name: m.wechat_name,
-          power: m.power,
-          sort_order: m.sort_order,
-        })),
-    }));
+        return {
+          team_id: team.team_id,
+          team_name: team.team_name,
+          sort_order: team.sort_order || 0,
+          is_locked: !!team.is_locked,
+          member_count: members.results?.length || 0,
+          members: (members.results || []).map((m: any) => ({
+            user_id: m.user_id,
+            username: m.username,
+            wechat_name: m.wechat_name,
+            power: m.power,
+            sort_order: m.sort_order,
+          })),
+        };
+      })
+    );
 
     return {
       war: {

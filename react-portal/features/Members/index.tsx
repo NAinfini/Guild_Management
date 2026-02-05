@@ -589,13 +589,20 @@ function ProfileModal({ member, onClose, audio }: { member: User, onClose: () =>
 
    const handleNext = (e?: React.MouseEvent) => {
       e?.stopPropagation();
+      if (mediaList.length === 0) return;
       setActiveIndex((prev) => (prev + 1) % mediaList.length);
    };
 
    const handlePrev = (e?: React.MouseEvent) => {
       e?.stopPropagation();
+      if (mediaList.length === 0) return;
       setActiveIndex((prev) => (prev - 1 + mediaList.length) % mediaList.length);
    };
+
+   // Don't render if no media or activeItem is invalid
+   if (mediaList.length === 0 || !activeItem) {
+      return null;
+   }
 
    return (
       <Dialog 

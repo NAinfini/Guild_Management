@@ -110,10 +110,9 @@ export const onRequestGet = createEndpoint<
       }
 
       // ============================================================
-      // LIST MODE: List announcements with filters and pagination
+      // LIST MODE: List announcements with filters and pagination (ALWAYS paginated)
       // ============================================================
       const { limit, cursor } = parsePaginationQuery(query);
-      const usePagination = query.limit !== undefined || query.cursor !== undefined;
 
       const clauses: string[] = ['1=1'];
       const params: any[] = [];
@@ -141,16 +140,12 @@ export const onRequestGet = createEndpoint<
         SELECT * FROM announcements
         WHERE ${clauses.join(' AND ')}
         ORDER BY is_pinned DESC, created_at_utc DESC, announcement_id DESC
-        ${usePagination ? `LIMIT ${limit + 1}` : 'LIMIT 200'}
+        LIMIT ${limit + 1}
       `;
 
       const result = await env.DB.prepare(dbQuery).bind(...params).all<Announcement>();
 
-      if (usePagination) {
-        return buildPaginatedResponse(result.results || [], limit, 'created_at_utc', 'announcement_id');
-      }
-
-      return result.results || [];
+      return buildPaginatedResponse(result.results || [], limit, 'created_at_utc', 'announcement_id');
     } catch (error) {
       console.error('List announcements error:', error);
       throw error;

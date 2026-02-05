@@ -32,33 +32,35 @@ export const onRequestGet = createEndpoint<WarTeamsResponse>({
   handler: async ({ env, params }) => {
     const eventId = params.id;
 
+    // Get war history (if exists)
     const warHistory = await env.DB
       .prepare('SELECT * FROM war_history WHERE event_id = ?')
       .bind(eventId)
       .first<{ war_id: string; updated_at_utc: string }>();
 
-    if (!warHistory) {
-      throw new Error('War not found');
-    }
-
-    const warId = warHistory.war_id;
-
-    const teams = await env.DB
-      .prepare('SELECT * FROM war_teams WHERE war_id = ? ORDER BY sort_order')
-      .bind(warId)
+    // Get teams assigned to this event via event_teams
+    const eventTeamsResult = await env.DB
+      .prepare(`
+        SELECT t.*, et.assigned_at_utc
+        FROM event_teams et
+        JOIN teams t ON et.team_id = t.team_id
+        WHERE et.event_id = ?
+        ORDER BY t.created_at_utc
+      `)
+      .bind(eventId)
       .all<any>();
 
     const teamsWithMembers = await Promise.all(
-      (teams.results || []).map(async (team: any) => {
+      (eventTeamsResult.results || []).map(async (team: any) => {
         const members = await env.DB
           .prepare(`
-            SELECT wtm.*, u.username, u.power, u.class_code, u.wechat_name
-            FROM war_team_members wtm
-            JOIN users u ON wtm.user_id = u.user_id
-            WHERE wtm.war_team_id = ?
-            ORDER BY wtm.sort_order
+            SELECT tm.*, u.username, u.power, u.wechat_name
+            FROM team_members tm
+            JOIN users u ON tm.user_id = u.user_id
+            WHERE tm.team_id = ?
+            ORDER BY tm.sort_order
           `)
-          .bind(team.war_team_id)
+          .bind(team.team_id)
           .all();
 
         return {
@@ -69,21 +71,31 @@ export const onRequestGet = createEndpoint<WarTeamsResponse>({
       })
     );
 
+    // Pool = all active members NOT assigned to any team for this event
+    const assignedUserIds = teamsWithMembers
+      .flatMap(t => t.members)
+      .map((m: any) => m.user_id);
+
+    const poolQuery = assignedUserIds.length > 0
+      ? `SELECT u.user_id, u.username, u.power, u.wechat_name
+         FROM users u
+         WHERE u.is_active = 1
+           AND u.user_id NOT IN (${assignedUserIds.map(() => '?').join(',')})
+         ORDER BY u.power DESC`
+      : `SELECT u.user_id, u.username, u.power, u.wechat_name
+         FROM users u
+         WHERE u.is_active = 1
+         ORDER BY u.power DESC`;
+
     const pool = await env.DB
-      .prepare(`
-        SELECT wpm.*, u.username, u.power, u.class_code, u.wechat_name
-        FROM war_pool_members wpm
-        JOIN users u ON wpm.user_id = u.user_id
-        WHERE wpm.war_id = ?
-        ORDER BY u.power DESC
-      `)
-      .bind(warId)
+      .prepare(poolQuery)
+      .bind(...assignedUserIds)
       .all();
 
     return {
       teams: teamsWithMembers,
       pool: pool.results || [],
-      warUpdatedAt: warHistory.updated_at_utc,
+      warUpdatedAt: warHistory?.updated_at_utc || null,
     };
   },
 });

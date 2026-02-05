@@ -123,10 +123,9 @@ export const onRequestGet = createEndpoint<
     }
 
     // ============================================================
-    // LIST MODE: List events with pagination
+    // LIST MODE: List events with pagination (ALWAYS paginated)
     // ============================================================
     const { limit, cursor } = parsePaginationQuery(query);
-    const usePagination = query.limit !== undefined || query.cursor !== undefined;
 
     const whereClauses = ['is_archived = 0', 'deleted_at_utc IS NULL'];
     const bindings: any[] = [];
@@ -140,18 +139,12 @@ export const onRequestGet = createEndpoint<
       SELECT * FROM events
       WHERE ${whereClauses.join(' AND ')}
       ORDER BY start_at_utc DESC, event_id DESC
-      ${usePagination ? `LIMIT ${limit + 1}` : ''}
+      LIMIT ${limit + 1}
     `;
 
     const events = await env.DB.prepare(sqlQuery).bind(...bindings).all<Event>();
 
-    if (usePagination) {
-      return buildPaginatedResponse(events.results || [], limit, 'start_at_utc', 'event_id');
-    }
-
-    return {
-      events: events.results || [],
-    };
+    return buildPaginatedResponse(events.results || [], limit, 'start_at_utc', 'event_id');
   },
 });
 

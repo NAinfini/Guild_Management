@@ -19,7 +19,8 @@
       "Bash(timeout 30 npx wrangler tail:*)",
       "Bash(npx wrangler:*)",
       "Bash(git push:*)",
-      "Bash(node scripts/generate-admin-password.js:*)"
+      "Bash(node scripts/generate-admin-password.js:*)",
+      "Bash(grep:*)"
     ]
   }
 }

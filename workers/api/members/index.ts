@@ -197,7 +197,6 @@ export const onRequestGet = createEndpoint<
     // ============================================================
     try {
       const limit = query.limit ? Math.min(parseInt(query.limit), 100) : 50;
-      const usePagination = query.limit !== undefined || query.cursor !== undefined;
 
       let cursorTimestamp: string | null = null;
       let cursorId: string | null = null;
@@ -246,7 +245,7 @@ export const onRequestGet = createEndpoint<
         WHERE ${whereClauses.join(' AND ')}
         GROUP BY u.user_id
         ORDER BY u.created_at_utc DESC, u.user_id DESC
-        ${usePagination ? `LIMIT ${limit + 1}` : ''}
+        LIMIT ${limit + 1}
       `;
 
       const result = await env.DB.prepare(sqlQuery).bind(...bindings).all();
@@ -279,24 +278,21 @@ export const onRequestGet = createEndpoint<
         return member;
       });
 
-      if (usePagination) {
-        const items = members.slice(0, limit);
-        const hasMore = members.length > limit;
-        const nextCursor = hasMore && items.length > 0
-          ? encodeCursor(items[items.length - 1].created_at_utc, items[items.length - 1].user_id)
-          : null;
+      // ALWAYS return paginated format
+      const items = members.slice(0, limit);
+      const hasMore = members.length > limit;
+      const nextCursor = hasMore && items.length > 0
+        ? encodeCursor(items[items.length - 1].created_at_utc, items[items.length - 1].user_id)
+        : null;
 
-        return {
-          items,
-          pagination: {
-            nextCursor,
-            hasMore,
-            limit,
-          },
-        };
-      }
-
-      return members;
+      return {
+        items,
+        pagination: {
+          nextCursor,
+          hasMore,
+          limit,
+        },
+      };
     } catch (error: any) {
       console.error('List members error:', error.message, error.stack);
       throw error;

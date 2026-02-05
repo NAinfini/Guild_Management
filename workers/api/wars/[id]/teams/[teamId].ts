@@ -35,9 +35,20 @@ export const onRequestGet = createEndpoint<TeamResponse>({
 
   handler: async ({ env, params }) => {
     const teamId = params.teamId;
+    const eventId = params.id;
+
+    // Verify team is linked to this event
+    const eventTeam = await env.DB
+      .prepare('SELECT * FROM event_teams WHERE event_id = ? AND team_id = ?')
+      .bind(eventId, teamId)
+      .first();
+
+    if (!eventTeam) {
+      throw new Error('Team not found for this event');
+    }
 
     const team = await env.DB
-      .prepare('SELECT * FROM war_teams WHERE war_team_id = ?')
+      .prepare('SELECT * FROM teams WHERE team_id = ?')
       .bind(teamId)
       .first();
 
@@ -47,11 +58,11 @@ export const onRequestGet = createEndpoint<TeamResponse>({
 
     const members = await env.DB
       .prepare(`
-        SELECT wtm.*, u.username, u.power, u.class_code, u.wechat_name
-        FROM war_team_members wtm
-        JOIN users u ON wtm.user_id = u.user_id
-        WHERE wtm.war_team_id = ?
-        ORDER BY wtm.sort_order
+        SELECT tm.*, u.username, u.power, u.wechat_name
+        FROM team_members tm
+        JOIN users u ON tm.user_id = u.user_id
+        WHERE tm.team_id = ?
+        ORDER BY tm.sort_order
       `)
       .bind(teamId)
       .all();
@@ -81,11 +92,22 @@ export const onRequestPut = createEndpoint<TeamResponse, UpdateTeamBody>({
     }
 
     const teamId = params.teamId;
+    const eventId = params.id;
+
+    // Verify team is linked to this event
+    const eventTeam = await env.DB
+      .prepare('SELECT * FROM event_teams WHERE event_id = ? AND team_id = ?')
+      .bind(eventId, teamId)
+      .first();
+
+    if (!eventTeam) {
+      throw new Error('Team not found for this event');
+    }
 
     const team = await env.DB
-      .prepare('SELECT * FROM war_teams WHERE war_team_id = ?')
+      .prepare('SELECT * FROM teams WHERE team_id = ?')
       .bind(teamId)
-      .first<{ war_id: string }>();
+      .first();
 
     if (!team) {
       throw new Error('Team not found');
@@ -113,28 +135,35 @@ export const onRequestPut = createEndpoint<TeamResponse, UpdateTeamBody>({
     updateValues.push(now, teamId);
 
     await env.DB
-      .prepare(`UPDATE war_teams SET ${updateFields.join(', ')} WHERE war_team_id = ?`)
+      .prepare(`UPDATE teams SET ${updateFields.join(', ')} WHERE team_id = ?`)
       .bind(...updateValues)
       .run();
 
     // Update war timestamp
-    await env.DB
-      .prepare('UPDATE war_history SET updated_at_utc = ? WHERE war_id = ?')
-      .bind(now, team.war_id)
-      .run();
+    const warHistory = await env.DB
+      .prepare('SELECT war_id FROM war_history WHERE event_id = ?')
+      .bind(eventId)
+      .first<{ war_id: string }>();
 
-    await createAuditLog(
-      env.DB,
-      'war',
-      'update_team',
-      user.user_id,
-      team.war_id,
-      `Updated team ${teamId}`,
-      JSON.stringify(body)
-    );
+    if (warHistory) {
+      await env.DB
+        .prepare('UPDATE war_history SET updated_at_utc = ? WHERE war_id = ?')
+        .bind(now, warHistory.war_id)
+        .run();
+
+      await createAuditLog(
+        env.DB,
+        'war',
+        'update_team',
+        user.user_id,
+        warHistory.war_id,
+        `Updated team ${teamId}`,
+        JSON.stringify(body)
+      );
+    }
 
     const updated = await env.DB
-      .prepare('SELECT * FROM war_teams WHERE war_team_id = ?')
+      .prepare('SELECT * FROM teams WHERE team_id = ?')
       .bind(teamId)
       .first();
 
@@ -156,11 +185,22 @@ export const onRequestDelete = createEndpoint<{ message: string }>({
     }
 
     const teamId = params.teamId;
+    const eventId = params.id;
+
+    // Verify team is linked to this event
+    const eventTeam = await env.DB
+      .prepare('SELECT * FROM event_teams WHERE event_id = ? AND team_id = ?')
+      .bind(eventId, teamId)
+      .first();
+
+    if (!eventTeam) {
+      throw new Error('Team not found for this event');
+    }
 
     const team = await env.DB
-      .prepare('SELECT * FROM war_teams WHERE war_team_id = ?')
+      .prepare('SELECT * FROM teams WHERE team_id = ?')
       .bind(teamId)
-      .first<{ war_id: string }>();
+      .first();
 
     if (!team) {
       throw new Error('Team not found');
@@ -168,34 +208,59 @@ export const onRequestDelete = createEndpoint<{ message: string }>({
 
     const now = utcNow();
 
-    // Delete team members
-    await env.DB
-      .prepare('DELETE FROM war_team_members WHERE war_team_id = ?')
-      .bind(teamId)
-      .run();
+    // Move all team members back to pool before deleting team
+    const poolTeam = await env.DB
+      .prepare(`
+        SELECT t.team_id FROM teams t
+        JOIN event_teams et ON t.team_id = et.team_id
+        WHERE et.event_id = ? AND t.name = 'Pool'
+      `)
+      .bind(eventId)
+      .first<{ team_id: string }>();
 
-    // Delete team
+    if (poolTeam) {
+      // Move members to pool instead of deleting
+      await env.DB
+        .prepare('UPDATE team_members SET team_id = ?, role_tag = NULL WHERE team_id = ?')
+        .bind(poolTeam.team_id, teamId)
+        .run();
+    } else {
+      // No pool exists, just delete members
+      await env.DB
+        .prepare('DELETE FROM team_members WHERE team_id = ?')
+        .bind(teamId)
+        .run();
+    }
+
+    // Unlink team from event (don't delete the team itself, it might be used elsewhere)
     await env.DB
-      .prepare('DELETE FROM war_teams WHERE war_team_id = ?')
-      .bind(teamId)
+      .prepare('DELETE FROM event_teams WHERE event_id = ? AND team_id = ?')
+      .bind(eventId, teamId)
       .run();
 
     // Update war timestamp
-    await env.DB
-      .prepare('UPDATE war_history SET updated_at_utc = ? WHERE war_id = ?')
-      .bind(now, team.war_id)
-      .run();
+    const warHistory = await env.DB
+      .prepare('SELECT war_id FROM war_history WHERE event_id = ?')
+      .bind(eventId)
+      .first<{ war_id: string }>();
 
-    await createAuditLog(
-      env.DB,
-      'war',
-      'delete_team',
-      user.user_id,
-      team.war_id,
-      `Deleted team ${teamId}`,
-      null
-    );
+    if (warHistory) {
+      await env.DB
+        .prepare('UPDATE war_history SET updated_at_utc = ? WHERE war_id = ?')
+        .bind(now, warHistory.war_id)
+        .run();
 
-    return { message: 'Team deleted successfully' };
+      await createAuditLog(
+        env.DB,
+        'war',
+        'remove_team_from_event',
+        user.user_id,
+        warHistory.war_id,
+        `Removed team ${teamId} from event`,
+        null
+      );
+    }
+
+    return { message: 'Team removed from event successfully' };
   },
 });

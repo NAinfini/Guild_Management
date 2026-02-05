@@ -303,6 +303,49 @@ export function createEndpoint<TData = any, TQuery = any, TBody = any>(
 
         // Handle known error types
         if (error instanceof Error) {
+          const message = error.message.toLowerCase();
+
+          // Authentication/Authorization errors (401/403)
+          if (message.includes('incorrect credentials') ||
+              message.includes('invalid credentials') ||
+              message.includes('wrong password') ||
+              message.includes('wrong username')) {
+            return errorResponse(
+              'AUTHENTICATION_ERROR',
+              error.message,
+              401,
+              undefined,
+              origin
+            );
+          }
+
+          // Account status errors
+          if (message.includes('account is inactive') ||
+              message.includes('account disabled')) {
+            return errorResponse(
+              'FORBIDDEN',
+              error.message,
+              403,
+              undefined,
+              origin
+            );
+          }
+
+          // Validation errors (400)
+          if (message.includes('invalid') ||
+              message.includes('required') ||
+              message.includes('must be') ||
+              message.includes('too many')) {
+            return errorResponse(
+              'VALIDATION_ERROR',
+              error.message,
+              400,
+              undefined,
+              origin
+            );
+          }
+
+          // Default to internal error
           return errorResponse(
             'INTERNAL_ERROR',
             error.message,
