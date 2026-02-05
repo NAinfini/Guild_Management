@@ -10,9 +10,9 @@
  * - Backward compatible with existing API
  */
 
-import type { Env } from '../../../lib/types';
-import { createEndpoint } from '../../../lib/endpoint-factory';
-import { generateId, utcNow, createAuditLog } from '../../../lib/utils';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { generateId, utcNow, createAuditLog } from '../../lib/utils';
 
 // ============================================================
 // Types

@@ -6,9 +6,9 @@
  * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { Env, User, MemberProfile } from '../../../lib/types';
-import { createEndpoint } from '../../../lib/endpoint-factory';
-import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
+import type { Env, User, MemberProfile } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../lib/utils';
 
 // ============================================================
 // Types

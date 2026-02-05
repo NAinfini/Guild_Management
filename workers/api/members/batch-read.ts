@@ -6,8 +6,8 @@
  * Supports field filtering to reduce payload size.
  */
 
-import type { Env } from '../../../lib/types';
-import { createEndpoint } from '../../../lib/endpoint-factory';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
 
 // ============================================================
 // Types

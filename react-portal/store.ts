@@ -186,7 +186,7 @@ export const useGuildStore = create<GuildState>((set, get) => ({
       if (lastPollTimestamp) {
         // Incremental poll - fetch only changes
         const response = await fetch(
-          `${(import.meta as any).env.VITE_API_BASE_URL}/api/poll?since=${encodeURIComponent(lastPollTimestamp)}`,
+          `${import.meta.env.VITE_API_BASE_URL}/api/poll?since=${encodeURIComponent(lastPollTimestamp)}`,
           { credentials: 'include' }
         );
         

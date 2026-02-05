@@ -5,9 +5,9 @@
  * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { Env } from '../../../lib/types';
-import { createEndpoint } from '../../../lib/endpoint-factory';
-import { generateId, utcNow } from '../../../lib/utils';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { generateId, utcNow } from '../../lib/utils';
 
 // ============================================================
 // Types

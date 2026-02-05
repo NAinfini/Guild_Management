@@ -7,9 +7,9 @@
  * Enhanced with detailed service status and latency monitoring
  */
 
-import type { Env } from '../../../lib/types';
-import { createEndpoint } from '../../../lib/endpoint-factory';
-import { utcNow } from '../../../lib/utils';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { utcNow } from '../../lib/utils';
 
 interface ServiceHealth {
   status: 'ok' | 'degraded' | 'down';

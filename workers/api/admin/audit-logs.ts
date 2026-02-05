@@ -6,8 +6,8 @@
  * Enhanced with cursor-based pagination and mandatory date range filtering
  */
 
-import type { Env, AuditLog } from '../../../lib/types';
-import { createEndpoint } from '../../../lib/endpoint-factory';
+import type { Env, AuditLog } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
 import { generateId } from '../../../shared/utils/id';
 import { utcNow } from '../../../shared/utils/date';
 

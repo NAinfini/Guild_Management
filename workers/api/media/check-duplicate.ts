@@ -5,7 +5,7 @@
  * Useful for client-side deduplication before upload
  */
 
-import { createEndpoint } from '../../../lib/endpoint-factory';
+import { createEndpoint } from '../../lib/endpoint-factory';
 
 interface DuplicateCheckQuery {
   sha256: string;

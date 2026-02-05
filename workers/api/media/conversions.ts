@@ -3,7 +3,7 @@
  * GET /media/conversions - List all conversions (admin only)
  */
 
-import { createEndpoint } from '../../../lib/endpoint-factory';
+import { createEndpoint } from '../../lib/endpoint-factory';
 
 interface ConversionListQuery {
   status?: 'pending' | 'processing' | 'completed' | 'failed';

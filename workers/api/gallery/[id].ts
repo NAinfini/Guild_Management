@@ -7,9 +7,9 @@
  * Migrated to use createEndpoint pattern + proper gallery_images schema
  */
 
-import type { Env } from '../../../lib/types';
-import { createEndpoint } from '../../../lib/endpoint-factory';
-import { createAuditLog, canEditEntity, utcNow } from '../../../lib/utils';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { createAuditLog, canEditEntity, utcNow } from '../../lib/utils';
 
 interface GalleryImage {
   gallery_id: string;

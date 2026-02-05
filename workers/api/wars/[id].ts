@@ -7,9 +7,9 @@
  * These endpoints provide CRUD operations on wars using the event_id
  */
 
-import type { Env } from '../../../lib/types';
-import { createEndpoint } from '../../../lib/endpoint-factory';
-import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
+import type { Env } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../lib/utils';
 import { notFoundResponse, noContentResponse } from '../../../shared/utils/response';
 
 // ============================================================

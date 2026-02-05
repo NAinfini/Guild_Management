@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(for dir in workers/api/*/)",
+      "Bash(do)",
+      "Bash(if [ -f \"$dir[id].ts\" ])",
+      "Bash(then)",
+      "Bash(if grep -q \"from ''../../../lib/\" \"$dir[id].ts\")",
+      "Bash(echo:*)",
+      "Bash(fi)",
+      "Bash(find:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

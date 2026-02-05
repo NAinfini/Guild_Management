@@ -7,16 +7,16 @@
  * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
  */
 
-import type { Env, Announcement } from '../../../lib/types';
-import { createEndpoint } from '../../../lib/endpoint-factory';
-import { 
-  utcNow, 
-  createAuditLog, 
-  etagFromTimestamp, 
-  assertIfMatch, 
+import type { Env, Announcement } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import {
+  utcNow,
+  createAuditLog,
+  etagFromTimestamp,
+  assertIfMatch,
   canEditEntity,
-  sanitizeHtml 
-} from '../../../lib/utils';
+  sanitizeHtml
+} from '../../lib/utils';
 
 // ============================================================
 // Types

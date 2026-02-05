@@ -1,9 +1,9 @@
 // Use environment variable if set, otherwise default to /api
 // This works for both local development and production
-const API_BASE = (import.meta as any).env?.VITE_API_BASE || '/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Enable debug logging in development
-const IS_DEV = (import.meta as any).env?.DEV;
+const IS_DEV = import.meta.env.DEV;
 
 // Import toast for error notifications
 import { toast } from './toast';

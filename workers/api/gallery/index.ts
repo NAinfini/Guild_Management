@@ -10,9 +10,9 @@
  * Migrated to use createEndpoint pattern.
  */
 
-import type { Env, Media } from '../../../lib/types';
-import { createEndpoint } from '../../../lib/endpoint-factory';
-import { utcNow, createAuditLog, generateId, canEditEntity } from '../../../lib/utils';
+import type { Env, Media } from '../../lib/types';
+import { createEndpoint } from '../../lib/endpoint-factory';
+import { utcNow, createAuditLog, generateId, canEditEntity } from '../../lib/utils';
 
 interface CreateGalleryItemBody {
   mediaId: string;

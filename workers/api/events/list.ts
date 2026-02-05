@@ -3,9 +3,9 @@
  * GET /api/events - List all active events
  */
 
-import type { PagesFunction, Env, Event } from '../../../lib/types';
-import { successResponse, errorResponse, etagFromTimestamp } from '../../../lib/utils';
-import { withOptionalAuth } from '../../../lib/middleware';
+import type { PagesFunction, Env, Event } from '../../lib/types';
+import { successResponse, errorResponse, etagFromTimestamp } from '../../lib/utils';
+import { withOptionalAuth } from '../../lib/middleware';
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   return withOptionalAuth(context, async (authContext) => {
