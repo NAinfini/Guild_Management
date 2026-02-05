@@ -3,6 +3,7 @@
  * Handles API routes from workers/api/ and serves static assets
  *
  * Uses registry-based routing for automatic endpoint discovery
+ * Version: 2026-02-05-v2 (Force cache refresh)
  */
 
 import type { Env } from './workers/lib/types';
