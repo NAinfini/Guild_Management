@@ -99,7 +99,7 @@ export function GuildWar() {
     if (!selectedWarId && warEvents.length > 0) {
       setSelectedWarId(warEvents[0].id);
     }
-  }, [warEvents, selectedWarId]);
+  }, [warEvents.length, warEvents[0]?.id, selectedWarId]);  // Stable: length + first ID only
 
   if (isLoading && warEvents.length === 0) {
     return (

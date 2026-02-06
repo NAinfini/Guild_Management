@@ -192,19 +192,19 @@ export function Roster() {
   // Extract available roles and classes from members
   const { availableRoles, availableClasses } = useMemo(() => {
     if (!members) return { availableRoles: [], availableClasses: [] };
-    
+
     const roles = Array.from(new Set(members.map(m => m.role)));
     const classes = Array.from(new Set(members.flatMap(m => m.classes || [])));
-    
+
     return {
       availableRoles: roles,
       availableClasses: classes,
     };
-  }, [members]);
+  }, [members.length]); // Stable: only recompute when member count changes
 
   const filteredMembers = useMemo(() => {
     if (!members) return [];
-    const list = [...members].filter(m => 
+    const list = [...members].filter(m =>
       m.username.toLowerCase().includes(search.toLowerCase()) ||
       m.wechat_name?.toLowerCase().includes(search.toLowerCase())
     );
@@ -214,7 +214,7 @@ export function Roster() {
     if (sort === 'class') list.sort((a, b) => (a.classes?.[0] || '').localeCompare(b.classes?.[0] || ''));
 
     return list;
-  }, [members, search, sort]);
+  }, [members.length, members.map(m => m.user_id).join(','), search, sort]); // Stable: length + IDs + filters
   if (isLoading && (!members || members.length === 0)) {
     return (
       <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
