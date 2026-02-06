@@ -1,5 +1,5 @@
 // Hooks index for convenient imports
-export { usePolling } from './usePolling';
+
 export { useAuth } from '../features/Auth/hooks/useAuth';
 export { useMobileOptimizations } from './useMobileOptimizations';
 
