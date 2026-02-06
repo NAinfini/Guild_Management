@@ -277,6 +277,37 @@ export const api = {
     
   delete: <T = any>(path: string, query?: Record<string, any>) =>
     apiRequestWithRetry<T>(path, 'DELETE', undefined, query, { maxRetries: 2 }),
+
+  upload: async <T = any>(path: string, file: File, extraFields?: Record<string, string>): Promise<T> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (extraFields) {
+      Object.entries(extraFields).forEach(([k, v]) => formData.set(k, v));
+    }
+    
+    // We don't use apiRequestWithRetry here because fetch handles FormData Content-Type automatically
+    // and we don't want to JSON.stringify FormData.
+    const url = new URL(`${API_BASE}${path}`, window.location.origin);
+    const headers: Record<string, string> = {};
+    
+    const csrfToken = getCSRFToken();
+    if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+
+    const resp = await fetch(url.toString(), {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!resp.ok) {
+      const errorData = await resp.json().catch(() => ({ message: resp.statusText }));
+      throw new APIError(errorData.message || 'Upload failed', resp.status, url.toString());
+    }
+
+    const data = await resp.json();
+    return (data as any).success ? (data as any).data : data;
+  },
 };
 
 /**

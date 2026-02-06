@@ -16,6 +16,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { membersAPI, eventsAPI, announcementsAPI, adminAPI, warsAPI } from '../lib/api';
 import { queryKeys } from '../lib/queryKeys';
 import { User } from '../types';
+import { useAuthStore } from '../store';
 
 // ============================================================================
 // MEMBERS
@@ -151,8 +152,14 @@ export function useArchiveEvent() {
 export function useJoinEvent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) =>
-      eventsAPI.join(eventId, userId),
+    mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser?.id === userId) {
+        await eventsAPI.join(eventId);
+      } else {
+        await eventsAPI.addMember(eventId, userId);
+      }
+    },
     onMutate: async ({ eventId, userId }) => {
       // Fetch members list to get full user data for optimism
       const members = queryClient.getQueryData<User[]>(queryKeys.members.list()) || [];
@@ -190,8 +197,13 @@ export function useJoinEvent() {
 export function useLeaveEvent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) =>
-      eventsAPI.leave(eventId, userId),
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) => {
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser?.id === userId) {
+        return eventsAPI.leave(eventId);
+      }
+      return eventsAPI.kick(eventId, userId);
+    },
     onMutate: async ({ eventId, userId }) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.events.all });
       const previous = queryClient.getQueryData(queryKeys.events.all);

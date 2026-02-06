@@ -163,6 +163,7 @@ export interface MemberStats {
   // Best performance
   best_war_id?: number;
   best_war_value?: number; // Best value for primary metric
+  [key: string]: any;
 }
 
 export interface PerWarMemberStats {
@@ -205,12 +206,13 @@ export interface TeamStats {
   member_count: number;
 
   // Aggregate stats
+  total_kills: number;
+  total_deaths: number;
+  total_assists: number;
   total_damage: number;
   total_healing: number;
   total_building_damage: number;
   total_credits: number;
-  total_kills: number;
-  total_deaths: number;
 
   // Average stats
   avg_damage: number;
@@ -219,6 +221,8 @@ export interface TeamStats {
   avg_credits: number;
   avg_kills: number;
   avg_deaths: number;
+  avg_assists: number;
+  [key: string]: any;
 }
 
 // ============================================================================
@@ -253,7 +257,7 @@ export interface RankingDataPoint {
 export interface TeamDataPoint {
   war_id: number;
   war_date: string;
-  [key: `team_${number}`]: number; // Dynamic keys for each team
+  [key: string]: any; // Dynamic keys for each team (team_ID)
 }
 
 // ============================================================================

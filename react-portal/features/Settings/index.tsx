@@ -58,7 +58,7 @@ export function Settings() {
           {t('settings.title')}
         </Typography>
         <Grid container spacing={{ xs: 3, md: 4 }}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card variant="outlined" sx={{ borderRadius: 4, borderColor: alpha(theme.palette.primary.main, 0.2) }}>
               <CardHeader
                 avatar={<Palette size={20} color={theme.palette.primary.main} />}
@@ -130,7 +130,7 @@ export function Settings() {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card variant="outlined" sx={{ borderRadius: 4, borderColor: alpha(theme.palette.secondary.main, 0.2) }}>
               <CardHeader
                 avatar={<Languages size={20} color={theme.palette.secondary.main} />}

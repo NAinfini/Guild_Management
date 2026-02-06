@@ -29,10 +29,10 @@ export const BottomSheetDialog: React.FC<BottomSheetDialogProps> = ({
     'data-testid': 'bottom-sheet-paper',
     'data-fullscreen': mobile.isSmallMobile ? 'true' : 'false',
     sx: {
-      ...mobile.modalProps.PaperProps?.sx,
-      ...PaperProps?.sx,
+      ...(mobile.modalProps.PaperProps?.sx as any),
+      ...(PaperProps?.sx as any),
     },
-  };
+  } as DialogProps['PaperProps'];
 
   return (
     <Dialog

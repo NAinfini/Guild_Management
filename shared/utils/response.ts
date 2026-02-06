@@ -90,16 +90,12 @@ const ALLOWED_ORIGINS = [
 const ALLOWED_HEADERS = 'Content-Type, Authorization, If-None-Match, If-Match';
 
 /**
- * Generate CORS headers with origin validation
+ * CORS headers generation
  *
- * Implements origin-based access control:
- * - If origin is in allowlist → use origin
- * - Otherwise → use default production origin
- *
- * @param origin - Origin from request headers
+ * @param origin - Request origin
  * @returns CORS headers object
  */
-export function corsHeaders(origin?: string | null): HeadersInit {
+export function corsHeaders(origin?: string | null): Record<string, string> {
   // Normalize origin (handle null string and undefined)
   const normalizedOrigin = origin && origin !== 'null' ? origin : '';
 

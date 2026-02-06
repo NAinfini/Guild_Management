@@ -67,26 +67,40 @@ export function useDeleteWarTeam() {
 export function useMovePoolToTeam() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ warId, userId, teamId, roleTag }: { warId: string; userId: string; teamId: string; roleTag?: string }) =>
-      warsAPI.movePoolToTeam(warId, { userId, teamId, roleTag }),
-    onMutate: async ({ warId, userId, teamId, roleTag }) => {
+    mutationFn: (params: { warId: string; userId?: string; teamId?: string; roleTag?: string; moves?: any[] }) =>
+      warsAPI.movePoolToTeam(params.warId, params.moves || { userId: params.userId, teamId: params.teamId, roleTag: params.roleTag }),
+    onMutate: async ({ warId, userId, teamId, roleTag, moves }) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.war.teams(warId) });
       const previous = queryClient.getQueryData(queryKeys.war.teams(warId));
+      
+      if (!userId && !moves) return { previous };
 
       queryClient.setQueryData(queryKeys.war.teams(warId), (old: any) => {
         if (!old) return old;
-        const user = old.pool.find((p: any) => p.user_id === userId || p.id === userId);
-        if (!user) return old;
+        const nextPool = [...old.pool];
+        const nextTeams = [...old.teams];
+        
+        const movesToProcess = moves || [{ userId, teamId, roleTag }];
+        
+        movesToProcess.forEach((move: any) => {
+            const uId = move.userId || move.user_id;
+            const tId = move.teamId || move.team_id;
+            const rTag = move.roleTag || move.role_tag;
+            
+            const userIndex = nextPool.findIndex((p: any) => p.user_id === uId || p.id === uId);
+            if (userIndex !== -1) {
+                const user = nextPool.splice(userIndex, 1)[0];
+                const teamIndex = nextTeams.findIndex((t: any) => t.id === tId);
+                if (teamIndex !== -1) {
+                    nextTeams[teamIndex] = {
+                        ...nextTeams[teamIndex],
+                        members: [...nextTeams[teamIndex].members, { user_id: uId, role_tag: rTag, ...user }]
+                    };
+                }
+            }
+        });
 
-        return {
-          ...old,
-          pool: old.pool.filter((p: any) => p.user_id !== userId && p.id !== userId),
-          teams: old.teams.map((t: any) => 
-            t.id === teamId 
-              ? { ...t, members: [...t.members, { user_id: userId, role_tag: roleTag, ...user }] }
-              : t
-          )
-        };
+        return { ...old, pool: nextPool, teams: nextTeams };
       });
 
       return { previous };
@@ -104,31 +118,33 @@ export function useMovePoolToTeam() {
 export function useMoveTeamToPool() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ warId, userId }: { warId: string; userId: string }) =>
-      warsAPI.moveTeamToPool(warId, userId),
-    onMutate: async ({ warId, userId }) => {
+    mutationFn: (params: { warId: string; userId?: string; userIds?: string[] }) =>
+      warsAPI.moveTeamToPool(params.warId, params.userIds || params.userId!),
+    onMutate: async ({ warId, userId, userIds }) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.war.teams(warId) });
       const previous = queryClient.getQueryData(queryKeys.war.teams(warId));
+      
+      if (!userId && !userIds) return { previous };
 
       queryClient.setQueryData(queryKeys.war.teams(warId), (old: any) => {
         if (!old) return old;
-        let userData: any = null;
-        const nextTeams = old.teams.map((t: any) => {
-          const member = t.members.find((m: any) => m.user_id === userId);
-          if (member) {
-            userData = member;
-            return { ...t, members: t.members.filter((m: any) => m.user_id !== userId) };
-          }
-          return t;
+        const nextPool = [...old.pool];
+        let nextTeams = [...old.teams];
+        
+        const idsToProcess = userIds || [userId!];
+        
+        idsToProcess.forEach(uId => {
+            nextTeams = nextTeams.map((t: any) => {
+                const member = t.members.find((m: any) => m.user_id === uId);
+                if (member) {
+                    nextPool.push(member);
+                    return { ...t, members: t.members.filter((m: any) => m.user_id !== uId) };
+                }
+                return t;
+            });
         });
 
-        if (!userData) return old;
-
-        return {
-          ...old,
-          teams: nextTeams,
-          pool: [...old.pool, userData]
-        };
+        return { ...old, pool: nextPool, teams: nextTeams };
       });
 
       return { previous };
@@ -146,33 +162,44 @@ export function useMoveTeamToPool() {
 export function useMoveTeamToTeam() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ warId, userId, sourceTeamId, targetTeamId }: { warId: string; userId: string; sourceTeamId: string; targetTeamId: string }) =>
-      warsAPI.moveTeamToTeam(warId, { userId, sourceTeamId, targetTeamId }),
-    onMutate: async ({ warId, userId, sourceTeamId, targetTeamId }) => {
+    mutationFn: (params: { warId: string; userId?: string; sourceTeamId?: string; targetTeamId?: string; moves?: any[] }) =>
+      warsAPI.moveTeamToTeam(params.warId, params.moves || { userId: params.userId, sourceTeamId: params.sourceTeamId, targetTeamId: params.targetTeamId }),
+    onMutate: async ({ warId, userId, sourceTeamId, targetTeamId, moves }) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.war.teams(warId) });
       const previous = queryClient.getQueryData(queryKeys.war.teams(warId));
 
+      if (!userId && !moves) return { previous };
+
       queryClient.setQueryData(queryKeys.war.teams(warId), (old: any) => {
         if (!old) return old;
-        let userData: any = null;
+        let nextTeams = [...old.teams];
         
-        // Remove from source
-        const intermediateTeams = old.teams.map((t: any) => {
-          if (t.id === sourceTeamId) {
-            userData = t.members.find((m: any) => m.user_id === userId);
-            return { ...t, members: t.members.filter((m: any) => m.user_id !== userId) };
-          }
-          return t;
-        });
+        const movesToProcess = moves || [{ userId, sourceTeamId, targetTeamId }];
+        
+        movesToProcess.forEach((move: any) => {
+            const uId = move.userId || move.user_id;
+            const sId = move.sourceTeamId || move.source_team_id;
+            const tId = move.targetTeamId || move.target_team_id;
+            
+            let userData: any = null;
+            // Remove from source
+            nextTeams = nextTeams.map((t: any) => {
+                if (t.id === sId) {
+                    userData = t.members.find((m: any) => m.user_id === uId);
+                    return { ...t, members: t.members.filter((m: any) => m.user_id !== uId) };
+                }
+                return t;
+            });
 
-        if (!userData) return old;
-
-        // Add to target
-        const nextTeams = intermediateTeams.map((t: any) => {
-          if (t.id === targetTeamId) {
-            return { ...t, members: [...t.members, userData] };
-          }
-          return t;
+            if (userData) {
+                // Add to target
+                nextTeams = nextTeams.map((t: any) => {
+                    if (t.id === tId) {
+                        return { ...t, members: [...t.members, userData] };
+                    }
+                    return t;
+                });
+            }
         });
 
         return { ...old, teams: nextTeams };

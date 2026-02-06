@@ -224,7 +224,7 @@ function CompareSummaryCards({ userIds, data }: { userIds: number[]; data: any }
 
   // Calculate average across selected members
   const totalValues = members.map((m: MemberStats) => (m[metricKey] as number) || 0);
-  const average = totalValues.reduce((sum, v) => sum + v, 0) / totalValues.length;
+  const average = totalValues.reduce((sum: number, v: number) => sum + v, 0) / totalValues.length;
 
   return (
     <Stack spacing={2}>
@@ -277,7 +277,7 @@ function CompareSummaryCards({ userIds, data }: { userIds: number[]; data: any }
             </Typography>
           </Stack>
           <Typography variant="h6" fontWeight={700}>
-            {members.reduce((sum, m) => sum + m.wars_participated, 0)}
+            {members.reduce((sum: number, m: MemberStats) => sum + m.wars_participated, 0)}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             total war participations

@@ -121,7 +121,7 @@ export function TiptapEditor({
       attributes: {
         class: 'tiptap-editor',
       },
-      handlePaste: async (view, event) => {
+      handlePaste: (view, event) => {
         // Handle image paste
         const items = Array.from(event.clipboardData?.items || []);
         const imageItem = items.find((item) => item.type.startsWith('image/'));
@@ -130,12 +130,13 @@ export function TiptapEditor({
           event.preventDefault();
           const file = imageItem.getAsFile();
           if (file) {
-            try {
-              const url = await onImageUpload(file);
-              editor?.chain().focus().setImage({ src: url }).run();
-            } catch (error) {
-              console.error('Image upload failed:', error);
-            }
+            onImageUpload(file)
+              .then((url) => {
+                editor?.chain().focus().setImage({ src: url }).run();
+              })
+              .catch((error) => {
+                console.error('Image upload failed:', error);
+              });
           }
           return true;
         }

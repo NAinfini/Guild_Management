@@ -10,12 +10,18 @@ declare module '@mui/material/styles' {
       glowRed: string;
       glowGold: string;
       border: string;
+      borderStrong: string;
       cardBorder: string;
       customShadow: string;
       gradient: string;
       shimmer: string;
       mutedText: string;
       roleColors: Record<string, string>;
+      surface?: {
+        base: string;
+        raised: string;
+        overlay: string;
+      };
 
       // Status colors
       status: {
@@ -53,6 +59,7 @@ declare module '@mui/material/styles' {
         admin: { main: string; bg: string; text: string; };
         moderator: { main: string; bg: string; text: string; };
         member: { main: string; bg: string; text: string; };
+        external?: { main: string; bg: string; text: string; };
       };
 
       // War role colors (DPS, Heal, Tank, Lead)

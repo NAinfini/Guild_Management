@@ -140,17 +140,24 @@ export const eventsAPI = {
   },
 
   /**
-   * Join event
+   * Join event (for self)
    */
   join: async (id: string): Promise<JoinEventResponse> => {
     return typedAPI.events.join<JoinEventResponse>({ params: { id }, body: {} });
   },
 
   /**
-   * Leave event
+   * Leave event (for self)
    */
   leave: async (id: string): Promise<{ message: string }> => {
     return typedAPI.events.leave<{ message: string }>({ params: { id }, body: {} });
+  },
+
+  /**
+   * Kick member from event (Admin/Mod only)
+   */
+  kick: async (id: string, userId: string): Promise<{ message: string }> => {
+    return typedAPI.events.kick<{ message: string }>({ params: { id }, body: { userId } });
   },
 
   /**

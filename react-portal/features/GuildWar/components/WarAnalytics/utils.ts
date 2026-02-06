@@ -64,7 +64,7 @@ export function transformForTimeline(
           .filter(v => v !== null) as number[];
 
         if (values.length > 0) {
-          point.movingAvg = values.reduce((sum, v) => sum + v, 0) / values.length;
+          point.movingAvg = values.reduce((sum: number, v: number) => sum + v, 0) / values.length;
         }
       }
     });
@@ -215,7 +215,7 @@ export function calculateMovingAverage(
       .filter(v => v !== null) as number[];
 
     if (window.length === 0) return null;
-    return window.reduce((sum, v) => sum + v, 0) / window.length;
+    return window.reduce((sum: number, v: number) => sum + v, 0) / window.length;
   });
 }
 
@@ -240,9 +240,9 @@ export function calculateVariance(values: (number | null)[]): number | null {
   const nonNull = values.filter(v => v !== null) as number[];
   if (nonNull.length < 2) return null;
 
-  const mean = nonNull.reduce((sum, v) => sum + v, 0) / nonNull.length;
+  const mean = nonNull.reduce((sum: number, v: number) => sum + v, 0) / nonNull.length;
   const squaredDiffs = nonNull.map(v => Math.pow(v - mean, 2));
-  return squaredDiffs.reduce((sum, v) => sum + v, 0) / nonNull.length;
+  return squaredDiffs.reduce((sum: number, v: number) => sum + v, 0) / nonNull.length;
 }
 
 /**
