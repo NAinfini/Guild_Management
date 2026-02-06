@@ -63,13 +63,23 @@ export const onRequestGet = createEndpoint<EventResponse, any, any>({
       throw new Error('Event not found');
     }
 
+    // Load participants from team_members linked to this event
     const attendees = await env.DB
       .prepare(`
-        SELECT ea.*, u.username, u.avatar_url, u.class_code, u.power
-        FROM event_attendees ea
-        JOIN users u ON ea.user_id = u.user_id
-        WHERE ea.event_id = ?
-        ORDER BY ea.created_at_utc
+        SELECT DISTINCT
+          tm.user_id,
+          u.username,
+          u.avatar_url,
+          u.power,
+          tm.joined_at_utc as created_at_utc,
+          t.name as team_name,
+          t.team_id
+        FROM team_members tm
+        INNER JOIN event_teams et ON et.team_id = tm.team_id
+        INNER JOIN users u ON tm.user_id = u.user_id
+        LEFT JOIN teams t ON tm.team_id = t.team_id
+        WHERE et.event_id = ?
+        ORDER BY tm.joined_at_utc
       `)
       .bind(eventId)
       .all();

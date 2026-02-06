@@ -73,11 +73,17 @@ export const onRequestPost = createEndpoint<LeaveEventResponse, BatchLeaveBody |
       const { userIds } = body as BatchLeaveBody;
       const failed: Array<{ userId: string; error: string }> = [];
 
-      // Batch delete
+      // Batch delete from team_members linked to this event
       const placeholders = userIds.map(() => '?').join(',');
       const result = await env.DB
-        .prepare(`DELETE FROM event_attendees WHERE event_id = ? AND user_id IN (${placeholders})`)
-        .bind(eventId, ...userIds)
+        .prepare(`
+          DELETE FROM team_members
+          WHERE user_id IN (${placeholders})
+          AND team_id IN (
+            SELECT team_id FROM event_teams WHERE event_id = ?
+          )
+        `)
+        .bind(...userIds, eventId)
         .run();
 
       const deletedCount = result.meta.changes || 0;
@@ -86,9 +92,12 @@ export const onRequestPost = createEndpoint<LeaveEventResponse, BatchLeaveBody |
       // Track which users were not found
       if (deletedCount < userIds.length) {
         // Find which IDs were not actually in the event
-        // (those are "failed" because they weren't participants)
         const allExisting = await env.DB
-          .prepare(`SELECT user_id FROM event_attendees WHERE event_id = ?`)
+          .prepare(`
+            SELECT DISTINCT tm.user_id FROM team_members tm
+            INNER JOIN event_teams et ON et.team_id = tm.team_id
+            WHERE et.event_id = ?
+          `)
           .bind(eventId)
           .all();
         const existingSet = new Set(allExisting.results?.map((e: any) => e.user_id) || []);
@@ -124,8 +133,14 @@ export const onRequestPost = createEndpoint<LeaveEventResponse, BatchLeaveBody |
     // SELF LEAVE MODE: User leaves themselves
     // ============================================================
     const result = await env.DB
-      .prepare('DELETE FROM event_attendees WHERE event_id = ? AND user_id = ?')
-      .bind(eventId, user!.user_id)
+      .prepare(`
+        DELETE FROM team_members
+        WHERE user_id = ?
+        AND team_id IN (
+          SELECT team_id FROM event_teams WHERE event_id = ?
+        )
+      `)
+      .bind(user!.user_id, eventId)
       .run();
 
     if (!result.meta.changes) {

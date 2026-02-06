@@ -104,6 +104,7 @@ export function Dashboard() {
 
   // Upcoming Events: Next 7 days, limit 3
   const upcomingEvents = useMemo(() => {
+    if (!events || events.length === 0) return [];
     const now = new Date();
     const sevenDaysLater = addDays(now, 7);
     return events
@@ -113,56 +114,62 @@ export function Dashboard() {
       })
       .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
       .slice(0, 3);
-  }, [events]);
+  }, [events.length, events.map(e => `${e.id}:${e.start_time}:${e.is_archived}`).join('|')]);  // Stable: length + IDs + times + archived
 
   // Pinned / Featured strip
   const pinnedEvents = useMemo(() => {
+    if (!events || events.length === 0) return [];
     return events
       .filter(e => e.is_pinned && !e.is_archived)
       .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
       .slice(0, 4);
-  }, [events]);
+  }, [events.length, events.map(e => `${e.id}:${e.is_pinned}`).join('|')]);  // Stable: length + IDs + pinned
 
   const notifications = useMemo(() => {
     const list: { id: string; title: string; type: 'event' | 'announcement'; time: string; path: string; isNew: boolean }[] = [];
-    
+
     // Recent announcements
-    announcements
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 5)
-      .forEach(a => {
-        list.push({ 
-            id: a.id, 
-            title: a.title, 
-            type: 'announcement', 
-            time: a.created_at, 
-            path: '/announcements',
-            isNew: isAfter(new Date(a.created_at), new Date(lastSeen.announcements))
-        });
-    });
+    if (announcements && announcements.length > 0) {
+      announcements
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5)
+        .forEach(a => {
+          list.push({
+              id: a.id,
+              title: a.title,
+              type: 'announcement',
+              time: a.created_at,
+              path: '/announcements',
+              isNew: isAfter(new Date(a.created_at), new Date(lastSeen.announcements))
+          });
+      });
+    }
 
     // Recent event updates
-    events
-      .filter(e => e.updated_at)
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-      .slice(0, 5)
-      .forEach(e => {
-          list.push({ 
-              id: e.id, 
-              title: t('dashboard.notification_update', { title: e.title }), 
-              type: 'event', 
-              time: e.updated_at!, 
-              path: '/events',
-              isNew: isAfter(new Date(e.updated_at!), new Date(lastSeen.events))
-          });
-    });
+    if (events && events.length > 0) {
+      events
+        .filter(e => e.updated_at)
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+        .slice(0, 5)
+        .forEach(e => {
+            list.push({
+                id: e.id,
+                title: t('dashboard.notification_update', { title: e.title }),
+                type: 'event',
+                time: e.updated_at!,
+                path: '/events',
+                isNew: isAfter(new Date(e.updated_at!), new Date(lastSeen.events))
+            });
+      });
+    }
 
     return list.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 3);
-  }, [announcements, events, lastSeen, t]);
+  }, [announcements.length, events.length, lastSeen.announcements, lastSeen.events, t]);  // Stable: counts + lastSeen
 
-  const myJoinedEvents = useMemo(() => 
-    events.filter(e => user && e.participants?.some(p => p.id === user.id)), 
-  [events, user]);
+  const myJoinedEvents = useMemo(() => {
+    if (!events || events.length === 0 || !user) return [];
+    return events.filter(e => e.participants?.some(p => p.id === user.id));
+  }, [events.length, user?.id, events.map(e => `${e.id}:${e.participants?.length || 0}`).join('|')]);  // Stable: length + user + participant counts
 
   const hasConflict = useCallback((event: Event) => {
     const start = new Date(event.start_time);

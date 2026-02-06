@@ -76,20 +76,55 @@ export const onRequestPost = createEndpoint<JoinEventResponse, BatchJoinBody | R
       let successCount = 0;
       const failed: Array<{ userId: string; error: string }> = [];
 
+      // Get or create Pool team for this event
+      let poolTeam = await env.DB
+        .prepare(`
+          SELECT t.team_id FROM teams t
+          INNER JOIN event_teams et ON et.team_id = t.team_id
+          WHERE et.event_id = ? AND t.name = 'Pool'
+        `)
+        .bind(eventId)
+        .first<{ team_id: string }>();
+
+      if (!poolTeam) {
+        // Create Pool team if it doesn't exist
+        const poolTeamId = `team_${Date.now()}`;
+        await env.DB
+          .prepare(`INSERT INTO teams (team_id, name, description, created_at_utc, updated_at_utc) VALUES (?, 'Pool', 'Event participant pool', ?, ?)`)
+          .bind(poolTeamId, now, now)
+          .run();
+
+        await env.DB
+          .prepare(`INSERT INTO event_teams (event_id, team_id, assigned_at_utc) VALUES (?, ?, ?)`)
+          .bind(eventId, poolTeamId, now)
+          .run();
+
+        poolTeam = { team_id: poolTeamId };
+      }
+
       // Check capacity
       let currentCount = 0;
-      if (event.max_participants > 0) {
+      if (event.capacity && event.capacity > 0) {
         const count = await env.DB
-          .prepare('SELECT COUNT(*) as count FROM event_attendees WHERE event_id = ?')
+          .prepare(`
+            SELECT COUNT(DISTINCT tm.user_id) as count
+            FROM team_members tm
+            INNER JOIN event_teams et ON et.team_id = tm.team_id
+            WHERE et.event_id = ?
+          `)
           .bind(eventId)
           .first<{ count: number }>();
         currentCount = count?.count || 0;
       }
 
-      // Check existing attendees
+      // Check existing participants
       const placeholders = userIds.map(() => '?').join(',');
       const existing = await env.DB
-        .prepare(`SELECT user_id FROM event_attendees WHERE event_id = ? AND user_id IN (${placeholders})`)
+        .prepare(`
+          SELECT DISTINCT tm.user_id FROM team_members tm
+          INNER JOIN event_teams et ON et.team_id = tm.team_id
+          WHERE et.event_id = ? AND tm.user_id IN (${placeholders})
+        `)
         .bind(eventId, ...userIds)
         .all();
       const existingUserIds = new Set(existing.results?.map((e: any) => e.user_id) || []);
@@ -103,19 +138,19 @@ export const onRequestPost = createEndpoint<JoinEventResponse, BatchJoinBody | R
           }
 
           // Check capacity
-          if (event.max_participants > 0 && currentCount >= event.max_participants) {
+          if (event.capacity && event.capacity > 0 && currentCount >= event.capacity) {
             failed.push({ userId, error: 'Event is full' });
             continue;
           }
 
-          // Join
+          // Join by adding to Pool team
           await env.DB
             .prepare(`
-              INSERT INTO event_attendees (
-                event_id, user_id, created_at_utc
-              ) VALUES (?, ?, ?)
+              INSERT INTO team_members (
+                team_id, user_id, sort_order, joined_at_utc
+              ) VALUES (?, ?, 0, ?)
             `)
-            .bind(eventId, userId, now)
+            .bind(poolTeam.team_id, userId, now)
             .run();
 
           currentCount++;
@@ -145,21 +180,57 @@ export const onRequestPost = createEndpoint<JoinEventResponse, BatchJoinBody | R
     // ============================================================
     // SELF JOIN MODE: User joins themselves
     // ============================================================
+
+    // Get or create Pool team for this event
+    let poolTeam = await env.DB
+      .prepare(`
+        SELECT t.team_id FROM teams t
+        INNER JOIN event_teams et ON et.team_id = t.team_id
+        WHERE et.event_id = ? AND t.name = 'Pool'
+      `)
+      .bind(eventId)
+      .first<{ team_id: string }>();
+
+    if (!poolTeam) {
+      // Create Pool team if it doesn't exist
+      const poolTeamId = `team_${Date.now()}`;
+      await env.DB
+        .prepare(`INSERT INTO teams (team_id, name, description, created_at_utc, updated_at_utc) VALUES (?, 'Pool', 'Event participant pool', ?, ?)`)
+        .bind(poolTeamId, now, now)
+        .run();
+
+      await env.DB
+        .prepare(`INSERT INTO event_teams (event_id, team_id, assigned_at_utc) VALUES (?, ?, ?)`)
+        .bind(eventId, poolTeamId, now)
+        .run();
+
+      poolTeam = { team_id: poolTeamId };
+    }
+
     // Check capacity
-    if (event.max_participants > 0) {
+    if (event.capacity && event.capacity > 0) {
       const count = await env.DB
-        .prepare('SELECT COUNT(*) as count FROM event_attendees WHERE event_id = ?')
+        .prepare(`
+          SELECT COUNT(DISTINCT tm.user_id) as count
+          FROM team_members tm
+          INNER JOIN event_teams et ON et.team_id = tm.team_id
+          WHERE et.event_id = ?
+        `)
         .bind(eventId)
         .first<{ count: number }>();
 
-      if ((count?.count || 0) >= event.max_participants) {
+      if ((count?.count || 0) >= event.capacity) {
         throw new Error('Event is full');
       }
     }
 
     // Check if already joined
     const existing = await env.DB
-      .prepare('SELECT * FROM event_attendees WHERE event_id = ? AND user_id = ?')
+      .prepare(`
+        SELECT tm.* FROM team_members tm
+        INNER JOIN event_teams et ON et.team_id = tm.team_id
+        WHERE et.event_id = ? AND tm.user_id = ?
+      `)
       .bind(eventId, user!.user_id)
       .first();
 
@@ -167,14 +238,14 @@ export const onRequestPost = createEndpoint<JoinEventResponse, BatchJoinBody | R
       throw new Error('You have already joined this event');
     }
 
-    // Join
+    // Join by adding to Pool team
     await env.DB
       .prepare(`
-        INSERT INTO event_attendees (
-          event_id, user_id, created_at_utc
-        ) VALUES (?, ?, ?)
+        INSERT INTO team_members (
+          team_id, user_id, sort_order, joined_at_utc
+        ) VALUES (?, ?, 0, ?)
       `)
-      .bind(eventId, user!.user_id, now)
+      .bind(poolTeam.team_id, user!.user_id, now)
       .run();
 
     return {

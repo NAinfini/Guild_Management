@@ -87,10 +87,11 @@ export function GuildWar() {
   }, [setPageTitle, t]);
 
 
-  
-  const warEvents = useMemo(() => 
-    events.filter(e => e.type === 'guild_war').sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()),
-  [events]);
+
+  const warEvents = useMemo(() => {
+    if (!events || events.length === 0) return [];
+    return events.filter(e => e.type === 'guild_war').sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+  }, [events.length, events.map(e => e.id).join(',')]);  // Stable dependencies: length + IDs
 
   const [selectedWarId, setSelectedWarId] = useState<string>('');
 
@@ -283,7 +284,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     const set = new Set<string>();
     teams.forEach(t => t.members.forEach(m => set.add(m.user_id)));
     return set;
-  }, [teams]);
+  }, [teams.map(t => `${t.id}:${t.members.map(m => m.user_id).join(',')}`).join('|')]);  // Stable: team IDs + member IDs
 
   const legacyTeams = useMemo(() => {
     return teams.map(t => ({
@@ -293,7 +294,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
         .map(m => members.find(u => u.id === m.user_id))
         .filter(Boolean) as User[],
     }));
-  }, [teams, members]);
+  }, [teams.map(t => t.id).join(','), members.length]);  // Stable: team IDs + member count
 
   const poolMembers = useMemo(() => {
     const source = pool.length > 0 ? pool : activeWar?.participants || [];
@@ -301,7 +302,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     if (poolSort === 'power') list = list.sort((a, b) => b.power - a.power);
     else if (poolSort === 'class') list = list.sort((a, b) => (a.classes?.[0] || 'z').localeCompare(b.classes?.[0] || 'z'));
     return list;
-  }, [activeWar, assignedUserIds, poolSort, pool]);
+  }, [pool.length, activeWar?.id, assignedUserIds.size, poolSort]);  // Stable: counts + IDs + sort mode
 
   const toggleSelection = (id: string, multi: boolean) => {
     const newSet = new Set(multi ? selectedIds : []);
@@ -918,7 +919,7 @@ function DroppableTeam({
       if (sortMode === 'power') list = list.sort((a: any, b: any) => b.power - a.power);
       else if (sortMode === 'class') list = list.sort((a: any, b: any) => (a.classes?.[0] || 'z').localeCompare(b.classes?.[0] || 'z'));
       return list;
-  }, [team.members, members, sortMode]);
+  }, [team.members.map((m: any) => m.user_id).join(','), members.length, sortMode]);  // Stable: member IDs + count + sort
 
   return (
     <Box 
