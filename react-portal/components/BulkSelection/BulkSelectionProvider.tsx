@@ -36,6 +36,12 @@ export function BulkSelectionProvider({ children }: BulkSelectionProviderProps) 
   }, []);
 
   const toggleAll = useCallback((ids: string[]) => {
+    // Guard against undefined/null ids
+    if (!ids || ids.length === 0) {
+      setSelectedIds(new Set());
+      return;
+    }
+
     setSelectedIds(prev => {
       // If all are selected, deselect all
       const allSelected = ids.every(id => prev.has(id));

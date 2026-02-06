@@ -30,6 +30,18 @@ export default {
       });
     }
 
+    // Handle WebSocket upgrade requests
+    if (pathname === '/api/ws') {
+      const upgradeHeader = request.headers.get('Upgrade');
+      if (upgradeHeader === 'websocket') {
+        // Get Durable Object ID (use a fixed ID or shard by user)
+        const id = env.CONNECTIONS.idFromName('websocket-manager');
+        const stub = env.CONNECTIONS.get(id);
+        return stub.fetch(request);
+      }
+      return new Response('Expected WebSocket', { status: 426 });
+    }
+
     // Handle API routes
     if (pathname.startsWith('/api/')) {
       // Use registry-based route matching

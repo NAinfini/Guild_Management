@@ -220,6 +220,16 @@ function ActiveWarManagement({ warId }: { warId: string }) {
   const [teams, setTeams] = useState<WarTeam[]>([]);
   const [pool, setPool] = useState<User[]>([]);
   const [etag, setEtag] = useState<string | undefined>(undefined);
+  const [lastAction, setLastAction] = useState<LastAction | null>(null);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [toastOpen, setToastOpen] = useState(false);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [memberDetailId, setMemberDetailId] = useState<string | null>(null);
+  const [poolSort, setPoolSort] = useState<'power' | 'class'>('power');
+  const [teamSort, setTeamSort] = useState<'power' | 'class'>('power');
+  const [conflictOpen, setConflictOpen] = useState(false);
 
   useEffect(() => {
     if (warData?.teams) {
@@ -241,12 +251,6 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     if ((warData as any)?.etag) setEtag((warData as any).etag);
   }, [warData]);
 
-  if (isLoadingTeams) return <ActiveWarSkeleton />;
-  
-  const [lastAction, setLastAction] = useState<LastAction | null>(null);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [toastOpen, setToastOpen] = useState(false);
-
   useEffect(() => {
       if (!lastAction) return;
       const interval = setInterval(() => {
@@ -261,13 +265,19 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     if (lastAction) setToastOpen(true);
   }, [lastAction]);
 
-  const [activeDragId, setActiveDragId] = useState<string | null>(null);
-  const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [memberDetailId, setMemberDetailId] = useState<string | null>(null);
+  // Guard: Return early AFTER all hooks
+  if (!warId) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary">
+          {t('guild_war.no_active_wars')}
+        </Typography>
+      </Box>
+    );
+  }
 
-  const [poolSort, setPoolSort] = useState<'power' | 'class'>('power');
-  const [teamSort, setTeamSort] = useState<'power' | 'class'>('power');
+  if (isLoadingTeams) return <ActiveWarSkeleton />;
+
 
   const assignedUserIds = useMemo(() => {
     const set = new Set<string>();
@@ -309,7 +319,6 @@ function ActiveWarManagement({ warId }: { warId: string }) {
      setMemberDetailId(id);
   };
 
-  const [conflictOpen, setConflictOpen] = useState(false);
   const handleConflict = (err: any) => {
     if (err?.response?.error === 'ETAG_MISMATCH' || err?.status === 409) {
       setConflictOpen(true);
