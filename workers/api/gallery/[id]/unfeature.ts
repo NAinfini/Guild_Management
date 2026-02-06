@@ -17,7 +17,7 @@ interface UnfeatureResponse {
 /**
  * POST /gallery/:id/unfeature - Unfeature gallery item
  */
-export const onRequestPost = createEndpoint<UnfeatureResponse>({
+export const onRequestPost = createEndpoint<UnfeatureResponse, any, any>({
   auth: 'moderator', // Only moderators/admins can unfeature items
   cacheControl: 'no-store',
 
@@ -63,7 +63,7 @@ export const onRequestPost = createEndpoint<UnfeatureResponse>({
       user!.user_id,
       galleryId,
       'Unfeatured gallery item',
-      null,
+      undefined
     );
 
     return {

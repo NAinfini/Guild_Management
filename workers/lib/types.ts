@@ -98,6 +98,7 @@ export interface R2Object {
   customMetadata?: Record<string, string>;
   range?: R2Range;
   checksums?: R2Checksums;
+  writeHttpMetadata(headers: Headers): void;
 }
 
 export interface R2ObjectBody extends R2Object {
@@ -221,6 +222,8 @@ export interface Event {
   start_at_utc: string;
   end_at_utc: string | null;
   capacity: number | null;
+  min_level: number;
+  max_participants: number;
   is_pinned: 0 | 1;
   is_archived: 0 | 1;
   signup_locked: 0 | 1;
@@ -272,6 +275,20 @@ export interface AuditLog {
   updated_at_utc: string;
 }
 
+export interface ApiKey {
+  key_id: string;
+  user_id: string;
+  key_hash: string;
+  key_prefix: string;
+  name: string;
+  scopes: string;
+  is_active: 0 | 1;
+  expires_at_utc: string | null;
+  last_used_at_utc: string | null;
+  created_at_utc: string;
+  updated_at_utc: string;
+}
+
 // ============================================================
 // Request Context
 // ============================================================
@@ -288,13 +305,17 @@ export interface RequestContext {
 // Utility Types
 // ============================================================
 
-export type PagesFunction<T = unknown> = (context: EventContext<Env, any, T>) => Response | Promise<Response>;
+export type PagesFunction<
+  TEnv = Env,
+  TParams extends string = any,
+  TData extends Record<string, unknown> = any
+> = (context: EventContext<TEnv, TParams, TData>) => Response | Promise<Response>;
 
-export interface EventContext<Env = unknown, P extends string = any, Data = unknown> {
+export interface EventContext<TEnv = Env, TParams extends string = any, TData = any> {
   request: Request;
-  env: Env;
-  params: Record<P, string>;
-  data: Data;
+  env: TEnv;
+  params: Record<TParams, string>;
+  data: TData;
   next: (input?: Request | string, init?: RequestInit) => Promise<Response>;
   waitUntil: (promise: Promise<unknown>) => void;
 }

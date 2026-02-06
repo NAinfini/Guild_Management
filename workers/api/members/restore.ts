@@ -26,7 +26,7 @@ interface RestoreResponse {
 // POST /api/members/restore
 // ============================================================
 
-export const onRequestPost = createEndpoint<RestoreResponse, RestoreMembersBody>({
+export const onRequestPost = createEndpoint<RestoreResponse, RestoreMembersBody, any>({
   auth: 'admin',
   cacheControl: 'no-store',
 

@@ -27,7 +27,7 @@ interface ReorderResponse {
 // PUT /api/media/reorder
 // ============================================================
 
-export const onRequestPut = createEndpoint<ReorderResponse, ReorderMediaBody>({
+export const onRequestPut = createEndpoint<ReorderResponse, ReorderMediaBody, any>({
   auth: 'required',
   cacheControl: 'no-store',
 
@@ -61,7 +61,7 @@ export const onRequestPut = createEndpoint<ReorderResponse, ReorderMediaBody>({
     const stmt = env.DB.prepare(`UPDATE ${tableName} SET sort_order = ? WHERE media_id = ?`);
     
     // Batch update
-    const batch = mediaIds.map((mediaId, index) => stmt.bind(index, mediaId));
+    const batch = mediaIds.map((mediaId: string, index: number) => stmt.bind(index, mediaId));
     await env.DB.batch(batch);
 
     await createAuditLog(
@@ -71,7 +71,7 @@ export const onRequestPut = createEndpoint<ReorderResponse, ReorderMediaBody>({
       userId,
       entityId,
       'Reordered media',
-      null
+      undefined
     );
 
     return { message: 'Media reordered successfully' };

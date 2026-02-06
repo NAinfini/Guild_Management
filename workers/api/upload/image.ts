@@ -23,14 +23,14 @@ interface ImageUploadResponse {
 // POST /api/upload/image
 // ============================================================
 
-export const onRequestPost = createEndpoint<ImageUploadResponse>({
+export const onRequestPost = createEndpoint<ImageUploadResponse, any, any>({
   auth: 'required',
   cacheControl: 'no-store',
 
   handler: async ({ env, user, request }) => {
     // Parse multipart form data
     const formData = await request.formData();
-    const file = formData.get('file') as File;
+    const file = formData.get('file') as unknown as File;
     const kind = formData.get('kind') as string; // 'avatar' or 'gallery'
     const isAvatar = kind === 'avatar';
 

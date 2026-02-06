@@ -7,7 +7,7 @@
 
 import type { Env } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
-import { utcNow, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
+import { utcNow, etagFromTimestamp, assertIfMatch, createAuditLog } from '../../../lib/utils';
 
 // ============================================================
 // Types
@@ -26,7 +26,7 @@ interface UpdateClassesResponse {
 // PUT /api/members/[id]/classes
 // ============================================================
 
-export const onRequestPut = createEndpoint<UpdateClassesResponse, UpdateClassesBody>({
+export const onRequestPut = createEndpoint<UpdateClassesResponse, any, UpdateClassesBody>({
   auth: 'required',
   cacheControl: 'no-store',
 
@@ -54,6 +54,7 @@ export const onRequestPut = createEndpoint<UpdateClassesResponse, UpdateClassesB
     const pre = assertIfMatch(request, currentEtag);
     if (pre) return pre;
 
+    if (!body) throw new Error('Body required');
     const { classes } = body;
     const now = utcNow();
 
@@ -80,6 +81,17 @@ export const onRequestPut = createEndpoint<UpdateClassesResponse, UpdateClassesB
       .prepare('UPDATE users SET updated_at_utc = ? WHERE user_id = ?')
       .bind(now, userId)
       .run();
+
+    // Create audit log
+    await createAuditLog(
+      env.DB,
+      'member',
+      'update_classes',
+      user!.user_id,
+      userId,
+      'Updated classes',
+      JSON.stringify({ classes })
+    );
 
     return {
       message: 'Classes updated successfully',

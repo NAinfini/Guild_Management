@@ -5,7 +5,6 @@
 
 import type { PagesFunction, Env } from './types';
 import { unauthorizedResponse } from './utils';
-import crypto from 'crypto';
 
 const CSRF_HEADER = 'X-CSRF-Token';
 const STATE_CHANGING_METHODS = ['POST', 'PUT', 'DELETE', 'PATCH'];

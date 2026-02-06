@@ -26,7 +26,7 @@ interface RestoreEventsResponse {
 // POST /api/events/restore
 // ============================================================
 
-export const onRequestPost = createEndpoint<RestoreEventsResponse, RestoreEventsBody>({
+export const onRequestPost = createEndpoint<RestoreEventsResponse, RestoreEventsBody, any>({
   auth: 'moderator',
   cacheControl: 'no-store',
 

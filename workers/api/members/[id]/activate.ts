@@ -61,7 +61,7 @@ export const onRequestPost = createEndpoint<ActivateResponse>({
       admin!.user_id,
       userId,
       'Activated/Restored member',
-      null
+      undefined
     );
 
     return { message: 'Member activated successfully' };

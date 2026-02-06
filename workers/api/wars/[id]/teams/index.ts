@@ -95,7 +95,7 @@ export const onRequestGet = createEndpoint<WarTeamsResponse>({
     return {
       teams: teamsWithMembers,
       pool: pool.results || [],
-      warUpdatedAt: warHistory?.updated_at_utc || null,
+      warUpdatedAt: warHistory?.updated_at_utc || undefined,
     };
   },
 });

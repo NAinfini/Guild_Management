@@ -29,7 +29,7 @@ interface BatchResponse {
 // POST /api/members/batch
 // ============================================================
 
-export const onRequestPost = createEndpoint<BatchResponse, BatchActionBody>({
+export const onRequestPost = createEndpoint<BatchResponse, any, BatchActionBody>({
   auth: 'admin',
   cacheControl: 'no-store',
 
@@ -41,6 +41,7 @@ export const onRequestPost = createEndpoint<BatchResponse, BatchActionBody>({
   },
 
   handler: async ({ env, user: admin, body }) => {
+    if (!body) throw new Error('Request body is required');
     const { action, userIds, payload } = body;
     const now = utcNow();
     let affectCount = 0;
@@ -63,7 +64,7 @@ export const onRequestPost = createEndpoint<BatchResponse, BatchActionBody>({
         .bind(now, now, ...userIds)
         .run();
 
-      affectCount = result.meta.changes;
+      affectCount = result.meta.changes || 0;
     } else if (action === 'change_role') {
       const targetRole = payload?.role;
       if (!targetRole || !['admin', 'moderator', 'member'].includes(targetRole)) {
@@ -79,7 +80,7 @@ export const onRequestPost = createEndpoint<BatchResponse, BatchActionBody>({
         .bind(targetRole, now, ...userIds)
         .run();
       
-      affectCount = result.meta.changes;
+      affectCount = result.meta.changes || 0;
     }
 
     if (userIds.length > 0) {

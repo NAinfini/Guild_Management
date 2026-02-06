@@ -7,7 +7,7 @@
 
 import type { Env } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
-import { utcNow, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
+import { utcNow, etagFromTimestamp, assertIfMatch, createAuditLog } from '../../../lib/utils';
 
 // ============================================================
 // Types
@@ -32,7 +32,7 @@ interface UpdateAvailabilityResponse {
 // PUT /api/members/[id]/availability
 // ============================================================
 
-export const onRequestPut = createEndpoint<UpdateAvailabilityResponse, UpdateAvailabilityBody>({
+export const onRequestPut = createEndpoint<UpdateAvailabilityResponse, any, UpdateAvailabilityBody>({
   auth: 'required',
   cacheControl: 'no-store',
 
@@ -60,6 +60,7 @@ export const onRequestPut = createEndpoint<UpdateAvailabilityResponse, UpdateAva
     const pre = assertIfMatch(request, currentEtag);
     if (pre) return pre;
 
+    if (!body) throw new Error('Body required');
     const { blocks } = body;
     const now = utcNow();
 
@@ -80,6 +81,23 @@ export const onRequestPut = createEndpoint<UpdateAvailabilityResponse, UpdateAva
         .bind(userId, block.weekday, block.startMin, block.endMin, now, now)
         .run();
     }
+
+    // Update user timestamp
+    await env.DB
+      .prepare('UPDATE users SET updated_at_utc = ? WHERE user_id = ?')
+      .bind(now, userId)
+      .run();
+
+    // Create audit log
+    await createAuditLog(
+      env.DB,
+      'member',
+      'update_availability',
+      user!.user_id,
+      userId,
+      'Updated availability',
+      JSON.stringify({ blockCount: blocks.length })
+    );
 
     return {
       message: 'Availability updated successfully',

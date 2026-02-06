@@ -23,13 +23,13 @@ interface AudioUploadResponse {
 // POST /api/upload/audio
 // ============================================================
 
-export const onRequestPost = createEndpoint<AudioUploadResponse>({
+export const onRequestPost = createEndpoint<AudioUploadResponse, any, any>({
   auth: 'required',
   cacheControl: 'no-store',
 
   handler: async ({ env, user, request }) => {
     const formData = await request.formData();
-    const file = formData.get('file') as File;
+    const file = formData.get('file') as unknown as File;
 
     if (!file) {
       throw new Error('No file provided');

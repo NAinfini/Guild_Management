@@ -18,7 +18,7 @@ interface FeatureToggleResponse {
 /**
  * POST /gallery/:id/feature - Feature gallery item
  */
-export const onRequestPost = createEndpoint<FeatureToggleResponse>({
+export const onRequestPost = createEndpoint<FeatureToggleResponse, any, any>({
   auth: 'moderator', // Only moderators/admins can feature items
   cacheControl: 'no-store',
 
@@ -64,7 +64,7 @@ export const onRequestPost = createEndpoint<FeatureToggleResponse>({
       user!.user_id,
       galleryId,
       'Featured gallery item',
-      null,
+      undefined
     );
 
     return {

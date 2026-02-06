@@ -12,7 +12,7 @@ import { createEndpoint } from '../../lib/endpoint-factory';
 // GET /api/media/[key]
 // ============================================================
 
-export const onRequestGet = createEndpoint<Response>({
+export const onRequestGet = createEndpoint<Response, any, any>({
   auth: 'none', // Public access usually, or optional? Public for media.
   
   handler: async ({ env, params }) => {

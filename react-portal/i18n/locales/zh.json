@@ -130,7 +130,8 @@
     "distance": "距离",
     "no_war_data": "暂无战争数据",
     "no_stats_available": "暂无统计数据",
-    "overlap": "Overlap detected"
+    "overlap": "Overlap detected",
+    "no_operations": "暂无计划"
   },
   "settings": {
     "title": "设置",
@@ -459,6 +460,9 @@
     "login_failed": "登录失败",
     "invalid_credentials": "用户名或密码错误",
     "session_expired": "会话已过期，请重新登录。",
+    "session_expired_title": "会话已过期",
+    "session_expired_message": "您的安全许可已超时。请重新验证以继续操作。",
+    "login": "登录",
     "logout_success": "登出成功",
     "password_changed": "密码修改成功"
   },

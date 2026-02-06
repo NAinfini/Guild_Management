@@ -16,7 +16,19 @@ export const storage = {
   get: <T>(key: string, defaultValue: T): T => {
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : defaultValue;
+      if (item === null) return defaultValue;
+      
+      try {
+        return JSON.parse(item);
+      } catch {
+        // Fallback: If parsing fails, it might be a raw string. 
+        // If the expected type T seems to be a string (based on defaultValue), return the raw item.
+        if (typeof defaultValue === 'string') {
+            return item as unknown as T;
+        }
+        // console.warn(`Error reading localStorage key "${key}"`);
+        return defaultValue;
+      }
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error);
       return defaultValue;

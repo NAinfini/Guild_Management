@@ -25,7 +25,7 @@ interface VideoUrlResponse {
 /**
  * PUT /members/:id/video-urls/:videoId - Update video URL
  */
-export const onRequestPut = createEndpoint<VideoUrlResponse>({
+export const onRequestPut = createEndpoint<VideoUrlResponse, any, VideoUrlUpdateRequest>({
   auth: 'required',
   cacheControl: 'no-store',
 
@@ -33,6 +33,10 @@ export const onRequestPut = createEndpoint<VideoUrlResponse>({
     const memberId = params.id;
     const videoId = params.videoId;
     const body = (await request.json()) as VideoUrlUpdateRequest;
+
+    if (!body) {
+      throw new Error('Body is required');
+    }
 
     if (!body.url && !body.title) {
       throw new Error('URL or title is required');
@@ -200,7 +204,7 @@ export const onRequestDelete = createEndpoint<{ success: true; message: string }
       user!.user_id,
       memberId,
       `Deleted video URL ${videoId}`,
-      null,
+      undefined,
     );
 
     return {

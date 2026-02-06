@@ -11,11 +11,11 @@ import type { PagesFunction, Env } from './types';
 // ============================================================
 
 export interface RouteHandler {
-  onRequestGet?: PagesFunction<Env>;
-  onRequestPost?: PagesFunction<Env>;
-  onRequestPut?: PagesFunction<Env>;
-  onRequestPatch?: PagesFunction<Env>;
-  onRequestDelete?: PagesFunction<Env>;
+  onRequestGet?: PagesFunction<any>;
+  onRequestPost?: PagesFunction<any>;
+  onRequestPut?: PagesFunction<any>;
+  onRequestPatch?: PagesFunction<any>;
+  onRequestDelete?: PagesFunction<any>;
 }
 
 export interface RouteMatch {

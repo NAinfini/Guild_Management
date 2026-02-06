@@ -9,6 +9,7 @@
 import type { Env } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
 import { generateId, utcNow, createAuditLog } from '../../lib/utils';
+import type { WarHistoryDTO } from '../../../shared/api/contracts';
 
 // ============================================================
 // Types
@@ -38,14 +39,14 @@ interface CreateWarHistoryBody {
 }
 
 interface CreateWarHistoryResponse {
-  war: any;
+  war: WarHistoryDTO;
 }
 
 // ============================================================
 // GET /api/wars/history - List War History
 // ============================================================
 
-export const onRequestGet = createEndpoint<any[], WarHistoryQuery>({
+export const onRequestGet = createEndpoint<WarHistoryDTO[], WarHistoryQuery>({
   auth: 'optional',
   etag: true,
   cacheControl: 'public, max-age=60',
@@ -63,7 +64,7 @@ export const onRequestGet = createEndpoint<any[], WarHistoryQuery>({
         LIMIT ? OFFSET ?
       `)
       .bind(query.limit, query.offset)
-      .all();
+      .all<WarHistoryDTO>();
 
     return wars.results || [];
   },
@@ -158,7 +159,9 @@ export const onRequestPost = createEndpoint<CreateWarHistoryResponse, CreateWarH
     const war = await env.DB
       .prepare('SELECT * FROM war_history WHERE war_id = ?')
       .bind(warId)
-      .first();
+      .first<WarHistoryDTO>();
+
+    if (!war) throw new Error('Failed to create war history');
 
     return { war };
   },

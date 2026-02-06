@@ -101,9 +101,9 @@ export const onRequestPost = createEndpoint<MediaUploadResponse>({
        WHERE user_id = ? AND kind = ?`
     )
       .bind(memberId, kind)
-      .first();
-
-    const sortOrder = (maxSortResult?.max_sort as number) + 1;
+      .first<{ max_sort: number }>();
+  
+    const sortOrder = (maxSortResult?.max_sort ?? -1) + 1;
 
     // If this is an avatar, unset existing avatar
     if (isAvatar && kind === 'image') {
@@ -175,8 +175,8 @@ export const onRequestDelete = createEndpoint<{ success: true }>({
        WHERE mm.user_id = ? AND mm.media_id = ?`
     )
       .bind(memberId, mediaId)
-      .first();
-
+      .first<{ user_id: string; media_id: string; r2_key: string | null }>();
+  
     if (!memberMedia) {
       throw new Error('Media not found for this member');
     }

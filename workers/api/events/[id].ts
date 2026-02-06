@@ -46,7 +46,7 @@ interface EventResponse {
 // GET /api/events/[id]
 // ============================================================
 
-export const onRequestGet = createEndpoint<EventResponse>({
+export const onRequestGet = createEndpoint<EventResponse, any, any>({
   auth: 'optional',
   etag: true,
   cacheControl: 'public, max-age=60',
@@ -85,7 +85,7 @@ export const onRequestGet = createEndpoint<EventResponse>({
 // PUT /api/events/[id]
 // ============================================================
 
-export const onRequestPut = createEndpoint<{ message: string; event: Event }, UpdateEventBody>({
+export const onRequestPut = createEndpoint<{ message: string; event: Event }, UpdateEventBody, any>({
   auth: 'required',
   cacheControl: 'no-store',
 
@@ -160,6 +160,10 @@ export const onRequestPut = createEndpoint<{ message: string; event: Event }, Up
       .bind(eventId)
       .first<Event>();
 
+    if (!updatedEvent) {
+      throw new Error('Failed to retrieve updated event');
+    }
+
     // Broadcast update
     waitUntil(broadcastUpdate(env, {
       entity: 'events',
@@ -171,7 +175,7 @@ export const onRequestPut = createEndpoint<{ message: string; event: Event }, Up
 
     return {
       message: 'Event updated successfully',
-      event: updatedEvent!,
+      event: updatedEvent,
     };
   },
 });
@@ -180,7 +184,7 @@ export const onRequestPut = createEndpoint<{ message: string; event: Event }, Up
 // PATCH /api/events/[id] - Partial Updates (isPinned, signupLocked, etc)
 // ============================================================
 
-export const onRequestPatch = createEndpoint<{ message: string; event: Event }, PatchEventBody>({
+export const onRequestPatch = createEndpoint<{ message: string; event: Event }, PatchEventBody, any>({
   auth: 'moderator',
   cacheControl: 'no-store',
 
@@ -242,6 +246,10 @@ export const onRequestPatch = createEndpoint<{ message: string; event: Event }, 
       .bind(eventId)
       .first<Event>();
 
+    if (!updated) {
+      throw new Error('Failed to retrieve updated event');
+    }
+
     // Broadcast update
     waitUntil(broadcastUpdate(env, {
       entity: 'events',
@@ -253,7 +261,7 @@ export const onRequestPatch = createEndpoint<{ message: string; event: Event }, 
 
     return {
       message: `Event ${auditActions.join(' and ')} successfully`,
-      event: updated!,
+      event: updated,
     };
   },
 });
@@ -262,7 +270,7 @@ export const onRequestPatch = createEndpoint<{ message: string; event: Event }, 
 // DELETE /api/events/[id]
 // ============================================================
 
-export const onRequestDelete = createEndpoint<{ message: string }>({
+export const onRequestDelete = createEndpoint<{ message: string }, any, any>({
   auth: 'required',
   cacheControl: 'no-store',
 

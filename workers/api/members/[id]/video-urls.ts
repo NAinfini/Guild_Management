@@ -29,17 +29,21 @@ interface VideoUrlResponse {
 /**
  * POST /members/:id/video-urls - Add external video URL
  */
-export const onRequestPost = createEndpoint<VideoUrlResponse>({
+export const onRequestPost = createEndpoint<VideoUrlResponse, any, VideoUrlCreateRequest>({
   auth: 'required',
   cacheControl: 'no-store',
 
-  handler: async ({ env, user, params, request }) => {
-    const memberId = params.id;
-    const body = (await request.json()) as VideoUrlCreateRequest;
-
+  parseBody: (body) => {
     if (!body.url) {
       throw new Error('URL is required');
     }
+    return body as VideoUrlCreateRequest;
+  },
+
+  handler: async ({ env, user, params, body }) => {
+    if (!body) throw new Error('Body required');
+    const memberId = params.id;
+    const { url, title } = body;
 
     // Check permissions
     if (user!.user_id !== memberId && user!.role !== 'admin' && user!.role !== 'moderator') {
@@ -48,7 +52,7 @@ export const onRequestPost = createEndpoint<VideoUrlResponse>({
 
     // Validate URL format
     try {
-      const urlObj = new URL(body.url);
+      const urlObj = new URL(url);
       if (!['http:', 'https:'].includes(urlObj.protocol)) {
         throw new Error('URL must use HTTP or HTTPS protocol');
       }
@@ -60,7 +64,7 @@ export const onRequestPost = createEndpoint<VideoUrlResponse>({
     const member = await env.DB
       .prepare('SELECT * FROM users WHERE user_id = ?')
       .bind(memberId)
-      .first();
+      .first<{ user_id: string }>();
 
     if (!member) {
       throw new Error('Member not found');
@@ -77,7 +81,7 @@ export const onRequestPost = createEndpoint<VideoUrlResponse>({
           created_by, created_at_utc, updated_at_utc
         ) VALUES (?, 'external_url', ?, 'video/external', ?, ?, ?)`
       )
-      .bind(mediaId, body.url, memberId, now, now)
+      .bind(mediaId, url, memberId, now, now)
       .run();
 
     // Get next sort_order
@@ -90,7 +94,7 @@ export const onRequestPost = createEndpoint<VideoUrlResponse>({
       .bind(memberId)
       .first<{ max_sort: number }>();
 
-    const nextSortOrder = (maxSortResult?.max_sort || -1) + 1;
+    const nextSortOrder = (maxSortResult?.max_sort ?? -1) + 1;
 
     // Insert into member_media (trigger will enforce quota and storage type)
     await env.DB
@@ -110,15 +114,15 @@ export const onRequestPost = createEndpoint<VideoUrlResponse>({
       'add_video_url',
       user!.user_id,
       memberId,
-      `Added video URL: ${body.title || body.url}`,
-      JSON.stringify({ url: body.url, title: body.title }),
+      `Added video URL: ${title || url}`,
+      JSON.stringify({ url, title })
     );
 
     return {
       media_id: mediaId,
       user_id: memberId,
-      url: body.url,
-      title: body.title || null,
+      url: url,
+      title: title || null,
       sort_order: nextSortOrder,
       created_at_utc: now,
     };

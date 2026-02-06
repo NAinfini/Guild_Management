@@ -96,7 +96,7 @@ export const onRequestPost = createEndpoint<SetAvatarResponse>({
       user!.user_id,
       memberId,
       `Set avatar to media ${mediaId}`,
-      null,
+      undefined,
     );
 
     return {

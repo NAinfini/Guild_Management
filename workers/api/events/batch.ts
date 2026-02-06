@@ -28,7 +28,7 @@ interface BatchEventResponse {
 // POST /api/events/batch
 // ============================================================
 
-export const onRequestPost = createEndpoint<BatchEventResponse, BatchEventActionBody>({
+export const onRequestPost = createEndpoint<BatchEventResponse, BatchEventActionBody, any>({
   auth: 'moderator', // Or admin
   cacheControl: 'no-store',
 
@@ -53,7 +53,7 @@ export const onRequestPost = createEndpoint<BatchEventResponse, BatchEventAction
         `)
         .bind(now, now, ...eventIds)
         .run();
-      affectedCount = result.meta.changes;
+      affectedCount = result.meta.changes || 0;
     } else if (action === 'archive') {
       const placeholders = eventIds.map(() => '?').join(',');
       const result = await env.DB
@@ -63,7 +63,7 @@ export const onRequestPost = createEndpoint<BatchEventResponse, BatchEventAction
         `)
         .bind(now, ...eventIds)
         .run();
-      affectedCount = result.meta.changes;
+      affectedCount = result.meta.changes || 0;
     }
 
     if (eventIds.length > 0) {

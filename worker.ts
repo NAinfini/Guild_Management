@@ -119,7 +119,7 @@ export default {
         params,
         waitUntil: ctx.waitUntil.bind(ctx),
         passThroughOnException: () => {},
-        next: async () => new Response(null, { status: 404 }),
+        next: async (_input?: Request | string, _init?: RequestInit) => new Response(null, { status: 404 }),
         functionPath: path, // Use matched pattern path
         data: {},
       };
@@ -128,7 +128,7 @@ export default {
         const origin = request.headers.get('Origin');
         const rawResponse = await handlerFn(context);
         const response = new Response(rawResponse.body, rawResponse);
-        const cors = corsHeaders();
+        const cors = corsHeaders(origin);
         Object.entries(cors).forEach(([k, v]) => response.headers.set(k, v));
         return response;
       } catch (error) {
@@ -154,7 +154,7 @@ export default {
             status: 500,
             headers: {
               'Content-Type': 'application/json',
-              ...corsHeaders(),
+              ...corsHeaders(origin),
             },
           }
         );

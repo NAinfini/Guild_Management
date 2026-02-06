@@ -22,7 +22,7 @@ interface DuplicateEventResponse {
 // POST /api/events/[id]/duplicate
 // ============================================================
 
-export const onRequestPost = createEndpoint<DuplicateEventResponse>({
+export const onRequestPost = createEndpoint<DuplicateEventResponse, any, any>({
   auth: 'required',
   cacheControl: 'no-store',
 
@@ -43,7 +43,7 @@ export const onRequestPost = createEndpoint<DuplicateEventResponse>({
       throw new Error('You do not have permission to duplicate this event');
     }
 
-    const newEventId = generateId();
+    const newEventId = generateId('evt');
     const now = utcNow();
     
     // Duplicate event + 7 days

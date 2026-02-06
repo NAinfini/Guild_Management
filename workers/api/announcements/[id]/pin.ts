@@ -26,13 +26,14 @@ interface PinAnnouncementResponse {
 // POST /api/announcements/[id]/pin
 // ============================================================
 
-export const onRequestPost = createEndpoint<PinAnnouncementResponse, PinAnnouncementBody>({
+export const onRequestPost = createEndpoint<PinAnnouncementResponse, any, PinAnnouncementBody>({
   auth: 'moderator',
   cacheControl: 'no-store',
 
   parseBody: (body) => body as PinAnnouncementBody,
 
   handler: async ({ env, user, params, body }) => {
+    if (!body) throw new Error('Body required');
     const announcementId = params.id;
     const { isPinned } = body;
     const now = utcNow();
@@ -53,7 +54,7 @@ export const onRequestPost = createEndpoint<PinAnnouncementResponse, PinAnnounce
       user!.user_id,
       announcementId,
       `${isPinned ? 'Pinned' : 'Unpinned'} announcement`,
-      null
+      undefined
     );
 
     return {

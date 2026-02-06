@@ -138,7 +138,7 @@ export interface EndpointConfig<TData = any, TQuery = any, TBody = any> {
  */
 export function createEndpoint<TData = any, TQuery = any, TBody = any>(
   config: EndpointConfig<TData, TQuery, TBody>
-): PagesFunction<unknown> {
+): PagesFunction<any> {
   const {
     auth = 'none',
     handler,
@@ -255,7 +255,7 @@ export function createEndpoint<TData = any, TQuery = any, TBody = any>(
         // Check ETag for conditional requests (GET only)
         if (method === 'GET' && etag) {
           const etagValue = typeof etag === 'function'
-            ? etag(data)
+            ? etag(data as TData)
             : typeof etag === 'string'
             ? etag
             : generateWeakETag(data);

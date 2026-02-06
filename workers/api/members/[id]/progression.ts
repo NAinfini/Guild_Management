@@ -8,7 +8,7 @@
 
 import type { Env } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
-import { utcNow, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
+import { utcNow, etagFromTimestamp, assertIfMatch, createAuditLog } from '../../../lib/utils';
 
 // ============================================================
 // Types
@@ -33,7 +33,7 @@ interface GetProgressionResponse {
 // PUT /api/members/[id]/progression
 // ============================================================
 
-export const onRequestPut = createEndpoint<ProgressionResponse, UpdateProgressionBody>({
+export const onRequestPut = createEndpoint<ProgressionResponse, any, UpdateProgressionBody>({
   auth: 'required',
   cacheControl: 'no-store',
 
@@ -61,6 +61,7 @@ export const onRequestPut = createEndpoint<ProgressionResponse, UpdateProgressio
     const pre = assertIfMatch(request, currentEtag);
     if (pre) return pre;
 
+    if (!body) throw new Error('Body required');
     const { category, itemId, level } = body;
     const now = utcNow();
 
@@ -102,6 +103,17 @@ export const onRequestPut = createEndpoint<ProgressionResponse, UpdateProgressio
       .prepare('SELECT * FROM member_progression WHERE user_id = ? AND category = ? AND item_id = ?')
       .bind(userId, category, itemId)
       .first();
+
+    // Create audit log
+    await createAuditLog(
+      env.DB,
+      'member',
+      'update_progression',
+      user!.user_id,
+      userId,
+      `Updated ${category}: ${itemId}`,
+      JSON.stringify({ category, itemId, level })
+    );
 
     return {
       message: 'Progression updated',

@@ -46,7 +46,7 @@ interface AuditLogQuery {
  * Encode cursor for pagination
  */
 function encodeCursor(createdAt: string, auditId: string): string {
-  return Buffer.from(JSON.stringify({ created_at: createdAt, audit_id: auditId })).toString('base64');
+  return btoa(JSON.stringify({ created_at: createdAt, audit_id: auditId }));
 }
 
 /**
@@ -54,7 +54,7 @@ function encodeCursor(createdAt: string, auditId: string): string {
  */
 function decodeCursor(cursor: string): { created_at: string; audit_id: string } | null {
   try {
-    const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
+    const decoded = atob(cursor);
     return JSON.parse(decoded);
   } catch {
     return null;

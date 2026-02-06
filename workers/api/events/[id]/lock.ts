@@ -26,7 +26,7 @@ interface LockEventResponse {
 // POST /api/events/[id]/lock
 // ============================================================
 
-export const onRequestPost = createEndpoint<LockEventResponse, LockEventBody>({
+export const onRequestPost = createEndpoint<LockEventResponse, LockEventBody, any>({
   auth: 'moderator',
   cacheControl: 'no-store',
 
@@ -53,7 +53,7 @@ export const onRequestPost = createEndpoint<LockEventResponse, LockEventBody>({
       user!.user_id,
       eventId,
       `${isLocked ? 'Locked' : 'Unlocked'} event signup`,
-      null
+      undefined
     );
 
     return {

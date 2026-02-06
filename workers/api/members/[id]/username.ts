@@ -26,7 +26,7 @@ interface UpdateUsernameResponse {
 // PUT /api/members/[id]/username
 // ============================================================
 
-export const onRequestPut = createEndpoint<UpdateUsernameResponse, UpdateUsernameBody>({
+export const onRequestPut = createEndpoint<UpdateUsernameResponse, any, UpdateUsernameBody>({
   auth: 'required', // Self or admin? Usually admin/mod or limited self.
   cacheControl: 'no-store',
 
@@ -38,6 +38,9 @@ export const onRequestPut = createEndpoint<UpdateUsernameResponse, UpdateUsernam
   },
 
   handler: async ({ env, user, params, body, request, isAdmin, isModerator }) => {
+    if (!body) {
+      throw new Error('Request body is required');
+    }
     const userId = params.id;
     const { username } = body;
 
@@ -78,7 +81,7 @@ export const onRequestPut = createEndpoint<UpdateUsernameResponse, UpdateUsernam
       user!.user_id,
       userId,
       `Changed username to ${username}`,
-      null
+      undefined
     );
 
     return {

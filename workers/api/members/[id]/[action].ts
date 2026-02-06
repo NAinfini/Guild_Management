@@ -26,7 +26,7 @@ import { validateBody, updateRoleSchema } from '../../../lib/validation';
 // PUT /api/members/[id]/role - Change Role (Admin Only)
 // ============================================================
 
-export const onRequestPut: PagesFunction<Env> = async (context) => {
+export const onRequestPut: PagesFunction<Env, 'id' | 'action'> = async (context) => {
   return withAdminAuth(context, async (authContext) => {
     const { request, env, params } = authContext;
     const { user: admin } = authContext.data;
@@ -34,7 +34,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
 
     const validation = await validateBody(request, updateRoleSchema);
     if (!validation.success) {
-      return badRequestResponse('Invalid request body', validation.error.errors);
+      return badRequestResponse('Invalid request body', validation.error.issues);
     }
 
     const { role } = validation.data;
@@ -55,7 +55,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
       if (pre) return pre;
 
       // Prevent self-demotion from admin
-      if (userId === admin.user_id && role !== 'admin') {
+      if (userId === admin!.user_id && role !== 'admin') {
         return forbiddenResponse('Cannot demote yourself from admin role');
       }
 
@@ -72,7 +72,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
         env.DB,
         'user',
         'role_change',
-        admin.user_id,
+        admin!.user_id,
         userId,
         `Changed role from ${targetUser.role} to ${role}`,
         JSON.stringify({ oldRole: targetUser.role, newRole: role })
@@ -103,7 +103,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
 // POST /api/members/[id]/deactivate - Deactivate Member
 // ============================================================
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost: PagesFunction<Env, 'id' | 'action'> = async (context) => {
   const action = context.params.action;
 
   if (action === 'deactivate') {
@@ -133,7 +133,7 @@ async function handleDeactivate(context: any): Promise<Response> {
       }
 
       // Prevent self-deactivation
-      if (userId === admin.user_id) {
+      if (userId === admin!.user_id) {
         return forbiddenResponse('Cannot deactivate yourself');
       }
 
@@ -163,10 +163,10 @@ async function handleDeactivate(context: any): Promise<Response> {
         env.DB,
         'user',
         newActiveState === 0 ? 'deactivate' : 'reactivate',
-        admin.user_id,
+        admin!.user_id,
         userId,
         `${newActiveState === 0 ? 'Deactivated' : 'Reactivated'} user: ${targetUser.username}`,
-        null
+        undefined
       );
 
       const updated = await env.DB
@@ -232,10 +232,10 @@ async function handleResetPassword(context: any): Promise<Response> {
         env.DB,
         'user',
         'password_reset',
-        admin.user_id,
+        admin!.user_id,
         userId,
         `Admin reset password for user: ${targetUser.username}`,
-        null
+        undefined
       );
 
       const updated = await env.DB

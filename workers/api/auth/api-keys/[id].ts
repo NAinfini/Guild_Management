@@ -3,6 +3,7 @@
  * DELETE /auth/api-keys/:id - Revoke API key
  */
 
+import type { ApiKey } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 
 interface RevokeResponse {
@@ -13,7 +14,7 @@ interface RevokeResponse {
 /**
  * DELETE /auth/api-keys/:id - Revoke API key
  */
-export const onRequestDelete = createEndpoint<RevokeResponse>({
+export const onRequestDelete = createEndpoint<RevokeResponse, any, any>({
   auth: 'required',
   handler: async ({ env, user, params }) => {
     const keyId = params.id;
@@ -27,7 +28,7 @@ export const onRequestDelete = createEndpoint<RevokeResponse>({
       `SELECT key_id, user_id, is_active FROM api_keys WHERE key_id = ?`
     )
       .bind(keyId)
-      .first();
+      .first<ApiKey>();
 
     if (!existingKey) {
       throw new Error('API key not found');

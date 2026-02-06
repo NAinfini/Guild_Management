@@ -65,7 +65,7 @@ export const onRequestGet = createEndpoint<NotesResponse>({
 // PUT /api/members/[id]/notes
 // ============================================================
 
-export const onRequestPut = createEndpoint<UpdateNotesResponse, UpdateNotesBody>({
+export const onRequestPut = createEndpoint<UpdateNotesResponse, any, UpdateNotesBody>({
   auth: 'moderator',
   cacheControl: 'no-store',
 
@@ -77,6 +77,7 @@ export const onRequestPut = createEndpoint<UpdateNotesResponse, UpdateNotesBody>
   },
 
   handler: async ({ env, user, params, body }) => {
+    if (!body) throw new Error('Body required');
     const userId = params.id;
     const { notes } = body;
     const now = utcNow();

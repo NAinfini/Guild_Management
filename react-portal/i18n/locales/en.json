@@ -211,7 +211,8 @@
     "no_stats_available": "No stats available",
     "overlap": "Overlap detected",
     "copy_roster": "Copy Roster",
-    "notification_update": "Update: {{title}}"
+    "notification_update": "Update: {{title}}",
+    "no_operations": "No scheduled operations"
   },
   "events": {
     "title": "Events",
@@ -523,6 +524,9 @@
     "login_failed": "Login failed",
     "invalid_credentials": "Invalid username or password",
     "session_expired": "Session expired. Please login again.",
+    "session_expired_title": "Session Expired",
+    "session_expired_message": "Your security clearance has timed out. Please re-authenticate to continue operations.",
+    "login": "Login",
     "logout_success": "Logged out successfully",
     "password_changed": "Password changed successfully"
   },

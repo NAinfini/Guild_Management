@@ -73,7 +73,7 @@ export const onRequestPost = createEndpoint<ResetPasswordResponse>({
       admin!.user_id,
       userId,
       `Admin reset password for user: ${targetUser.username}`,
-      null
+      undefined
     );
 
     return {
@@ -86,9 +86,11 @@ export const onRequestPost = createEndpoint<ResetPasswordResponse>({
 
 function generateTempPassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const array = new Uint8Array(12);
+  crypto.getRandomValues(array);
   let password = '';
   for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
+    password += chars.charAt(array[i] % chars.length);
   }
   return password;
 }

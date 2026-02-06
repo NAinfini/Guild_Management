@@ -81,7 +81,7 @@ export const onRequestDelete = createEndpoint<{ success: true; message: string }
       user!.user_id,
       announcementId,
       `Removed media ${mediaId} from announcement`,
-      null,
+      undefined,
     );
 
     return {

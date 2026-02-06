@@ -34,7 +34,7 @@ interface UpdateGalleryRequest {
 /**
  * GET /api/gallery/:id - Get gallery item
  */
-export const onRequestGet = createEndpoint<GalleryImage>({
+export const onRequestGet = createEndpoint<GalleryImage, any, any>({
   auth: 'optional',
   etag: true,
   cacheControl: 'public, max-age=60',
@@ -74,7 +74,7 @@ export const onRequestGet = createEndpoint<GalleryImage>({
 /**
  * PUT /api/gallery/:id - Update gallery metadata
  */
-export const onRequestPut = createEndpoint<GalleryImage>({
+export const onRequestPut = createEndpoint<GalleryImage, any, any>({
   auth: 'required',
   handler: async ({ env, user, params, request }) => {
     const galleryId = params.id;
@@ -193,7 +193,7 @@ export const onRequestPut = createEndpoint<GalleryImage>({
 /**
  * DELETE /api/gallery/:id - Delete gallery item
  */
-export const onRequestDelete = createEndpoint<{ success: true; message: string }>({
+export const onRequestDelete = createEndpoint<{ success: true; message: string }, any, any>({
   auth: 'required',
   cacheControl: 'no-store',
 
@@ -240,7 +240,7 @@ export const onRequestDelete = createEndpoint<{ success: true; message: string }
       user!.user_id,
       galleryId,
       'Deleted gallery item',
-      null,
+      undefined,
     );
 
     return {

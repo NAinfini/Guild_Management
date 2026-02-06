@@ -26,7 +26,7 @@ interface PinEventResponse {
 // POST /api/events/[id]/pin
 // ============================================================
 
-export const onRequestPost = createEndpoint<PinEventResponse, PinEventBody>({
+export const onRequestPost = createEndpoint<PinEventResponse, PinEventBody, any>({
   auth: 'moderator',
   cacheControl: 'no-store',
 
@@ -53,7 +53,7 @@ export const onRequestPost = createEndpoint<PinEventResponse, PinEventBody>({
       user!.user_id,
       eventId,
       `${isPinned ? 'Pinned' : 'Unpinned'} event`,
-      null
+      undefined
     );
 
     return {

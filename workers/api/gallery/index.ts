@@ -62,7 +62,7 @@ interface BatchDeleteResponse {
 /**
  * GET /api/gallery - List gallery items with filtering
  */
-export const onRequestGet = createEndpoint<GalleryListResponse, GalleryListQuery>({
+export const onRequestGet = createEndpoint<GalleryListResponse, GalleryListQuery, any>({
   auth: 'optional',
   etag: true,
   cacheControl: 'public, max-age=60',
@@ -190,7 +190,7 @@ export const onRequestGet = createEndpoint<GalleryListResponse, GalleryListQuery
   },
 });
 
-export const onRequestPost = createEndpoint<{ message: string; item: any }, CreateGalleryItemBody>({
+export const onRequestPost = createEndpoint<{ message: string; item: MediaObject }, CreateGalleryItemBody, any>({
   auth: 'required',
   cacheControl: 'no-store',
 
@@ -200,7 +200,7 @@ export const onRequestPost = createEndpoint<{ message: string; item: any }, Crea
   },
 
   handler: async ({ env, user, body }) => {
-    const { mediaId, caption } = body;
+    const { mediaId, description } = body;
     const now = utcNow();
 
     // If we have a gallery_items table:
@@ -209,7 +209,7 @@ export const onRequestPost = createEndpoint<{ message: string; item: any }, Crea
     // If we are just updating media metadata:
     await env.DB
       .prepare('UPDATE media SET description = ?, updated_at_utc = ? WHERE media_id = ?')
-      .bind(caption || null, now, mediaId)
+      .bind(description || null, now, mediaId)
       .run();
 
     await createAuditLog(
@@ -222,7 +222,7 @@ export const onRequestPost = createEndpoint<{ message: string; item: any }, Crea
       JSON.stringify(body)
     );
 
-    const item = await env.DB.prepare('SELECT * FROM media WHERE media_id = ?').bind(mediaId).first();
+    const item = await env.DB.prepare('SELECT * FROM media WHERE media_id = ?').bind(mediaId).first<MediaObject>();
 
     return {
       message: 'Gallery item added',
@@ -235,7 +235,7 @@ export const onRequestPost = createEndpoint<{ message: string; item: any }, Crea
 // DELETE /api/gallery - Batch delete gallery items
 // ============================================================
 
-export const onRequestDelete = createEndpoint<BatchDeleteResponse, BatchDeleteQuery>({
+export const onRequestDelete = createEndpoint<BatchDeleteResponse, BatchDeleteQuery, any>({
   auth: 'required',
   cacheControl: 'no-store',
 
@@ -326,7 +326,7 @@ export const onRequestDelete = createEndpoint<BatchDeleteResponse, BatchDeleteQu
           user.user_id,
           id,
           'Deleted gallery item (batch)',
-          null
+          undefined
         );
       }
     }

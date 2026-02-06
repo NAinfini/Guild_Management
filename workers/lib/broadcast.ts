@@ -2,11 +2,9 @@
  * Broadcast Helper - Sends WebSocket messages via Durable Object
  */
 
-interface BroadcastOptions {
-  entity: 'wars' | 'events' | 'announcements' | 'members';
-  action: 'updated' | 'created' | 'deleted';
-  payload?: any[];
-  ids?: string[];
+import type { WebSocketMessage } from '../../shared/api/contracts';
+
+interface BroadcastOptions extends WebSocketMessage {
   excludeUserId?: string;
 }
 

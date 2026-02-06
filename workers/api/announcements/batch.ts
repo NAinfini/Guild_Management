@@ -28,18 +28,19 @@ interface BatchAnnouncementResponse {
 // POST /api/announcements/batch
 // ============================================================
 
-export const onRequestPost = createEndpoint<BatchAnnouncementResponse, BatchAnnouncementBody>({
+export const onRequestPost = createEndpoint<BatchAnnouncementResponse, any, BatchAnnouncementBody>({
   auth: 'moderator',
   cacheControl: 'no-store',
 
   parseBody: (body) => {
-    if (!body.action || !body.announcementIds || !Array.isArray(body.announcementIds)) {
+    if (!body || !body.action || !body.announcementIds || !Array.isArray(body.announcementIds)) {
       throw new Error('Invalid batch request');
     }
     return body as BatchAnnouncementBody;
   },
 
   handler: async ({ env, user, body }) => {
+    if (!body) throw new Error('Body required');
     const { action, announcementIds } = body;
     const now = utcNow();
     let affectedCount = 0;
@@ -53,7 +54,7 @@ export const onRequestPost = createEndpoint<BatchAnnouncementResponse, BatchAnno
         `)
         .bind(now, now, ...announcementIds)
         .run();
-      affectedCount = result.meta.changes;
+      affectedCount = result.meta.changes || 0;
     } else if (action === 'archive') {
       const placeholders = announcementIds.map(() => '?').join(',');
       const result = await env.DB
@@ -63,7 +64,7 @@ export const onRequestPost = createEndpoint<BatchAnnouncementResponse, BatchAnno
         `)
         .bind(now, ...announcementIds)
         .run();
-      affectedCount = result.meta.changes;
+      affectedCount = result.meta.changes || 0;
     }
 
     if (announcementIds.length > 0) {

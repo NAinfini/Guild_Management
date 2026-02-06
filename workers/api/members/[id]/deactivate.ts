@@ -71,7 +71,7 @@ export const onRequestPost = createEndpoint<DeactivateResponse>({
       admin!.user_id,
       userId,
       'Deactivated member',
-      null
+      undefined
     );
 
     return { message: 'Member deactivated successfully' };

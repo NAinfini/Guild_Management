@@ -5,10 +5,15 @@
 
 import type { Env } from './types';
 import { unauthorizedResponse, errorResponse } from './utils';
-import crypto from 'crypto';
 
 const API_KEY_PREFIX_LENGTH = 8;
 const API_KEY_SECRET_LENGTH = 32;
+
+function randomHex(length: number): string {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 /**
  * Generate new API key
@@ -22,7 +27,8 @@ export async function generateAPIKey(
   expiresInDays?: number
 ): Promise<{ keyId: string; key: string; prefix: string }> {
   const keyId = crypto.randomUUID();
-  const secret = crypto.randomBytes(API_KEY_SECRET_LENGTH).toString('hex');
+  // Generate random bytes for secret
+  const secret = randomHex(API_KEY_SECRET_LENGTH);
   const prefix = secret.substring(0, API_KEY_PREFIX_LENGTH);
   const fullKey = `gm_${prefix}_${secret}`;
   
@@ -63,6 +69,14 @@ async function hashAPIKey(secret: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+interface ApiKeyRecord {
+  key_id: string;
+  user_id: string;
+  scopes: string;
+  expires_at_utc: string | null;
+  is_active: number;
+}
+
 /**
  * Validate API key and return user
  */
@@ -84,7 +98,7 @@ export async function validateAPIKey(
     `SELECT key_id, user_id, scopes, expires_at_utc, is_active
      FROM api_keys
      WHERE key_prefix = ? AND key_hash = ?`
-  ).bind(prefix, keyHash).first();
+  ).bind(prefix, keyHash).first<ApiKeyRecord>();
   
   if (!result) return null;
   

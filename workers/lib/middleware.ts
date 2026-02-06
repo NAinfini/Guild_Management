@@ -116,7 +116,7 @@ export async function withAdminAuth(
   return withAuth(context, async (authContext) => {
     const { user } = authContext.data;
     
-    if (user.role !== 'admin') {
+    if (user?.role !== 'admin') {
       return new Response(JSON.stringify({ error: 'Admin access required' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -138,7 +138,7 @@ export async function withModeratorAuth(
   return withAuth(context, async (authContext) => {
     const { user } = authContext.data;
     
-    if (user.role !== 'admin' && user.role !== 'moderator') {
+    if (user?.role !== 'admin' && user?.role !== 'moderator') {
       return new Response(JSON.stringify({ error: 'Moderator access required' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },

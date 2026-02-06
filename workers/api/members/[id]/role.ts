@@ -26,7 +26,7 @@ interface UpdateRoleResponse {
 // PUT /api/members/[id]/role
 // ============================================================
 
-export const onRequestPut = createEndpoint<UpdateRoleResponse, UpdateRoleBody>({
+export const onRequestPut = createEndpoint<UpdateRoleResponse, any, UpdateRoleBody>({
   auth: 'admin',
   cacheControl: 'no-store',
 
@@ -39,6 +39,9 @@ export const onRequestPut = createEndpoint<UpdateRoleResponse, UpdateRoleBody>({
 
   handler: async ({ env, user: admin, params, body, request }) => {
     const userId = params.id;
+    if (!body) {
+      throw new Error('Request body is required');
+    }
     const { role } = body;
 
     // Prevent self-demotion/promotion if needed, though 'admin' auth implies powerful access.

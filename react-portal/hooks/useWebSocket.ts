@@ -13,16 +13,7 @@ import { mapToDomain as mapMember } from '../lib/api/members';
 import { mapToDomain as mapEvent } from '../lib/api/events';
 import { mapToDomain as mapAnnouncement } from '../lib/api/announcements';
 import { mapHistoryToDomain as mapWar } from '../lib/api/wars';
-
-interface WebSocketMessage {
-  entity: 'wars' | 'events' | 'announcements' | 'members';
-  action: 'updated' | 'created' | 'deleted';
-  payload?: any[];
-  ids?: string[];
-  timestamp?: string;
-  type?: string;
-  data?: any;
-}
+import type { WebSocketMessage } from '../../shared/api/contracts';
 
 export function useWebSocket() {
   const [isConnected, setIsConnected] = useState(false);
@@ -41,7 +32,7 @@ export function useWebSocket() {
     }
 
     const { entity, action, payload, ids } = message;
-    if (!entity) return;
+    if (!entity || !action) return;
 
     // console.info(`[WebSocket] Real-time ${action} on ${entity}`, { ids });
 
@@ -118,7 +109,12 @@ export function useWebSocket() {
   }, [queryClient]);
 
   const connect = useCallback(() => {
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8787/api/ws';
+    const getWsUrl = () => {
+        if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL;
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        return `${protocol}//${window.location.host}/api/ws`;
+    };
+    const wsUrl = getWsUrl();
 
     try {
       const ws = new WebSocket(wsUrl);

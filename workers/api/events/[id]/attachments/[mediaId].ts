@@ -6,10 +6,17 @@
 import { createEndpoint } from '../../../../lib/endpoint-factory';
 import { utcNow } from '../../../../lib/utils';
 
+interface AttachmentRecord {
+  attachment_id: string;
+  event_id: string;
+  media_id: string;
+  sort_order: number;
+}
+
 /**
  * DELETE /events/:id/attachments/:mediaId
  */
-export const onRequestDelete = createEndpoint<{ success: true }>({
+export const onRequestDelete = createEndpoint<{ success: true }, any, any>({
   auth: 'moderator',
   handler: async ({ env, params }) => {
     const eventId = params.id;
@@ -26,13 +33,13 @@ export const onRequestDelete = createEndpoint<{ success: true }>({
        WHERE event_id = ? AND media_id = ?`
     )
       .bind(eventId, mediaId)
-      .first();
+      .first<AttachmentRecord>();
 
     if (!attachment) {
       throw new Error('Attachment not found for this event');
     }
 
-    const removedSortOrder = attachment.sort_order as number;
+    const removedSortOrder = attachment.sort_order;
 
     // Delete the attachment
     await env.DB.prepare(

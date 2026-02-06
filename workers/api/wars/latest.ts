@@ -1,12 +1,6 @@
-/**
- * Guild War API - Active War Management
- * GET /api/wars/active - Get active war
- * 
- * Migrated to use createEndpoint pattern for consistency with shared endpoint contract
- */
-
 import type { Env } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
+import type { ActiveWarDTO, WarTeamDTO, WarPoolMemberDTO } from '../../../shared/api/contracts';
 
 // ============================================================
 // Types
@@ -20,7 +14,7 @@ interface ActiveWarQuery {
 // GET /api/wars/active - Get Active War
 // ============================================================
 
-export const onRequestGet = createEndpoint<any[], ActiveWarQuery>({
+export const onRequestGet = createEndpoint<ActiveWarDTO[], ActiveWarQuery>({
   auth: 'optional',
   pollable: true,
   pollEntity: 'wars',
@@ -35,7 +29,7 @@ export const onRequestGet = createEndpoint<any[], ActiveWarQuery>({
     // Get active guild war events
     const wars = await env.DB
       .prepare(`
-        SELECT e.*, wh.war_id, wh.updated_at_utc as war_updated_at
+        SELECT e.*, wh.*, wh.updated_at_utc as war_updated_at
         FROM events e
         LEFT JOIN war_history wh ON e.event_id = wh.event_id
         WHERE e.type = 'guild_war' AND e.is_archived = 0
@@ -53,12 +47,16 @@ export const onRequestGet = createEndpoint<any[], ActiveWarQuery>({
       .map((w: any) => w.war_id)
       .filter((id: any) => id !== null);
 
+    // If no war history, we can't fully map to ActiveWarDTO if it requires war_id
+    // But let's assume valid wars have history.
     if (warIds.length === 0) {
-      return wars.results.map((w: any) => ({ ...w, teams: [], pool: [] }));
+       // Return what we have, but it might not match strict DTO if war_id is missing.
+       // For now, let's filter out invalid wars or return empty if essential data missing.
+       return [];
     }
 
     // For each war/event, get teams and members using correct schema
-    const warsWithData: any[] = [];
+    const warsWithData: ActiveWarDTO[] = [];
 
     for (const war of wars.results as any[]) {
       const eventId = war.event_id;
@@ -76,7 +74,7 @@ export const onRequestGet = createEndpoint<any[], ActiveWarQuery>({
         .all<any>();
 
       // Get members for each team
-      const teamsWithMembers = await Promise.all(
+      const teamsWithMembers: WarTeamDTO[] = await Promise.all(
         (eventTeamsResult.results || []).map(async (team: any) => {
           const members = await env.DB
             .prepare(`
@@ -92,9 +90,18 @@ export const onRequestGet = createEndpoint<any[], ActiveWarQuery>({
           return {
             team_id: team.team_id,
             team_name: team.team_name,
+            note: team.note,
             sort_order: team.sort_order || 0,
-            is_locked: !!team.is_locked,
-            members: members.results || [],
+            is_locked: team.is_locked ? 1 : 0,
+            members: (members.results || []).map((m: any) => ({
+              user_id: m.user_id,
+              username: m.username,
+              wechat_name: m.wechat_name,
+              power: m.power,
+              role_tag: m.role_tag,
+              sort_order: m.sort_order
+            })),
+            member_count: members.results?.length || 0
           };
         })
       );
@@ -115,17 +122,38 @@ export const onRequestGet = createEndpoint<any[], ActiveWarQuery>({
            WHERE u.is_active = 1
            ORDER BY u.power DESC`;
 
-      const pool = await env.DB
+      const poolResult = await env.DB
         .prepare(poolQuery)
         .bind(...assignedUserIds)
         .all();
+      
+      const pool: WarPoolMemberDTO[] = (poolResult.results || []).map((p: any) => ({
+          user_id: p.user_id,
+          username: p.username,
+          power: p.power,
+          wechat_name: p.wechat_name
+      }));
 
       warsWithData.push({
-        ...war,
-        warId: war.war_id,
+        war_id: war.war_id,
+        event_id: war.event_id,
+        title: war.title,
+        war_date: war.war_date,
+        result: war.result,
+        our_kills: war.our_kills,
+        enemy_kills: war.enemy_kills,
+        our_towers: war.our_towers,
+        enemy_towers: war.enemy_towers,
+        our_base_hp: war.our_base_hp,
+        enemy_base_hp: war.enemy_base_hp,
+        our_distance: war.our_distance,
+        enemy_distance: war.enemy_distance,
+        our_credits: war.our_credits,
+        enemy_credits: war.enemy_credits,
+        notes: war.notes,
+        updated_at_utc: war.war_updated_at || war.updated_at_utc,
         teams: teamsWithMembers,
-        pool: pool.results || [],
-        warUpdatedAt: war.war_updated_at,
+        pool: pool
       });
     }
 

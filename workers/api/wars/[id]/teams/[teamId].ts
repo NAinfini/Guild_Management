@@ -80,7 +80,7 @@ export const onRequestGet = createEndpoint<TeamResponse>({
 // PUT /api/wars/[id]/teams/[teamId]
 // ============================================================
 
-export const onRequestPut = createEndpoint<TeamResponse, UpdateTeamBody>({
+export const onRequestPut = createEndpoint<TeamResponse, any, UpdateTeamBody>({
   auth: 'moderator',
   cacheControl: 'no-store',
 
@@ -90,6 +90,7 @@ export const onRequestPut = createEndpoint<TeamResponse, UpdateTeamBody>({
     if (!user) {
       throw new Error('User not authenticated');
     }
+    if (!body) throw new Error('Body required');
 
     const teamId = params.teamId;
     const eventId = params.id;
@@ -257,7 +258,7 @@ export const onRequestDelete = createEndpoint<{ message: string }>({
         user.user_id,
         warHistory.war_id,
         `Removed team ${teamId} from event`,
-        null
+        undefined
       );
     }
 
