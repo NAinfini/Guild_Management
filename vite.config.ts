@@ -7,11 +7,6 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    // Keep TanStack route generation inside react-portal (no stray src/routeTree.gen.ts)
-    TanStackRouterVite({
-      routesDirectory: 'react-portal/routes',
-      generatedRouteTree: 'react-portal/routeTree.gen.ts',
-    }),
     react(),
   ],
   resolve: {

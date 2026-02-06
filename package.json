@@ -1,8 +1,7 @@
 {
-  "name": "temp_app",
+  "name": "Guild_Management",
   "private": true,
   "version": "0.0.0",
-  "packageManager": "yarn@4.12.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
