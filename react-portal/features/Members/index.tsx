@@ -22,8 +22,7 @@ import {
   Paper,
   Badge
 } from '@mui/material';
-import * as ReactWindow from 'react-window';
-const List = (ReactWindow as any).FixedSizeList;
+import { List } from 'react-window';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
 const AnyAutoSizer = AutoSizer as any;
 import { 
