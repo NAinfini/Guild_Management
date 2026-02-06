@@ -9,6 +9,7 @@ export { membersAPI } from './members';
 export { mediaAPI } from './media';
 export { warsAPI } from './wars';
 export { adminAPI } from './admin';
+export { authAPI } from './auth';
 
 // Re-export specific API input types
 export type { CreateEventData } from './events';

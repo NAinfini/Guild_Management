@@ -37,7 +37,7 @@ import {
   Users,
   Filter
 } from 'lucide-react';
-import { useGuildStore, useUIStore, useAuthStore } from '../../store';
+import { useUIStore, useAuthStore } from '../../store';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
@@ -48,6 +48,7 @@ import { formatDistanceToNow, isWithinInterval, parse } from 'date-fns';
 import { Skeleton } from '@mui/material';
 import { RosterFilterPanel } from './components/RosterFilterPanel';
 import type { RosterFilterState } from '../../hooks/useFilterPresets';
+import { useMembers } from '../../hooks/useServerState';
 
 // Helper to determine active status based on availability
 // Helper to determine active status based on availability
@@ -144,7 +145,8 @@ function useGlobalAudio() {
 }
 
 export function Roster() {
-  const { members, isLoading } = useGuildStore();
+  // ✅ TanStack Query: Auto-fetches and caches members
+  const { data: members = [], isLoading } = useMembers();
   const { audioSettings, setAudioSettings, setPageTitle } = useUIStore();
   const { t } = useTranslation();
   const theme = useTheme();

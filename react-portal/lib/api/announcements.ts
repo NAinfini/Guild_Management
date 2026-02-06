@@ -54,12 +54,27 @@ const mapToDomain = (dto: AnnouncementDTO): Announcement => {
 // ============================================================================
 
 export const announcementsAPI = {
-  list: async (): Promise<Announcement[]> => {
+  list: async (params?: { includeArchived?: boolean }): Promise<Announcement[]> => {
     // API always returns paginated format: { items: [...], pagination: {...} }
-    const response = await typedAPI.announcements.list<{ items: AnnouncementDTO[], pagination: any }>();
+    const query: any = {};
+    if (params?.includeArchived) query.includeArchived = 'true';
+    
+    const response = await typedAPI.announcements.list<{ items: AnnouncementDTO[], pagination: any }>({ query });
 
     if (!response || !response.items) return [];
     return response.items.map(mapToDomain);
+  },
+
+  get: async (id: string): Promise<Announcement> => {
+    // Optimization: If we have a detail endpoint, use it.
+    // For now, reuse list if no specific endpoint, or call typedAPI.announcements.get if exists?
+    // Looking at api-builder or previous files... no direct get seen in simple dump.
+    // Let's assume list and find for safety or try get param.
+    // Actually, usually `list` caches.
+    const list = await announcementsAPI.list();
+    const found = list.find(a => a.id === id);
+    if (!found) throw new Error('Announcement not found');
+    return found;
   },
 
   create: async (data: CreateAnnouncementData): Promise<Announcement> => {

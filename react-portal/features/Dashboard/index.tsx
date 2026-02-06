@@ -36,7 +36,7 @@ import {
   TowerControl
 } from 'lucide-react';
 import { formatDateTime, cn, getClassColor, formatPower } from '../../lib/utils';
-import { useGuildStore, useAuthStore, useUIStore } from '../../store';
+import { useAuthStore, useUIStore } from '../../store';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useMobileOptimizations } from '../../hooks';
 import { useTranslation } from 'react-i18next';
@@ -47,10 +47,17 @@ import { useQuery } from '@tanstack/react-query';
 import { useWarHistory } from '../../features/GuildWar/hooks/useWars';
 import { warsAPI } from '../../lib/api';
 import { DecorativeGlyph } from '../../components/DecorativeGlyph';
+import { useMembers, useEvents, useAnnouncements } from '../../hooks/useServerState';
 
 export function Dashboard() {
   const { t } = useTranslation();
-  const { members, announcements, events, isLoading } = useGuildStore();
+
+  // ✅ TanStack Query: Auto-fetches and caches server state
+  const { data: members = [], isLoading: isLoadingMembers } = useMembers();
+  const { data: announcements = [], isLoading: isLoadingAnnouncements } = useAnnouncements();
+  const { data: events = [], isLoading: isLoadingEvents } = useEvents();
+  const isLoading = isLoadingMembers || isLoadingAnnouncements || isLoadingEvents;
+
   const { user } = useAuth();
   const { viewRole } = useAuthStore();
   const { setPageTitle } = useUIStore();

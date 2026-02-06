@@ -71,9 +71,10 @@ import {
   Plus,
   Minus
 } from 'lucide-react';
-import { useAuthStore, useUIStore, useGuildStore } from '../../store';
+import { useAuthStore, useUIStore } from '../../store';
 import { useAuth } from '../../hooks';
 import { Navigate } from '@tanstack/react-router';
+import { useMembers, useAuditLogs, useUpdateMember } from '../../hooks/useServerState';
 import { cn, formatDateTime, getClassColor, formatPower, sanitizeHtml, getOptimizedMediaUrl } from '../../lib/utils';
 import { PROGRESSION_CATEGORIES, clampLevel } from '../../lib/progression';
 import { User, AuditLogEntry, Role, ClassType, ProgressionData, Announcement, Event } from '../../types';
@@ -139,7 +140,12 @@ const getClassGroups = (theme: any) => [
 export function Admin() {
   const { user } = useAuth();
   const { viewRole } = useAuthStore();
-  const { auditLogs, members, isLoading } = useGuildStore();
+
+  // ✅ TanStack Query: Server state
+  const { data: members = [], isLoading: isLoadingMembers } = useMembers();
+  const { data: auditLogs = [], isLoading: isLoadingAudits } = useAuditLogs();
+  const isLoading = isLoadingMembers || isLoadingAudits;
+
   const { setPageTitle, timezoneOffset } = useUIStore();
   const { t } = useTranslation();
   const theme = useTheme();
@@ -241,7 +247,13 @@ export function AdminProtected() {
 }
 
 function MemberManagement() {
-   const { members, updateMember } = useGuildStore();
+   // ✅ TanStack Query: Server state and mutations
+   const { data: members = [] } = useMembers();
+   const updateMemberMutation = useUpdateMember();
+   const updateMember = async (id: string, data: any) => {
+     await updateMemberMutation.mutateAsync({ id, data });
+   };
+
    const { t } = useTranslation();
    const [search, setSearch] = useState('');
    const [selectedMember, setSelectedMember] = useState<User | null>(null);

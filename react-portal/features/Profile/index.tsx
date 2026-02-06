@@ -47,9 +47,11 @@ import {
 } from 'lucide-react';
 import { cn, getClassColor, formatPower, sanitizeHtml, getOptimizedMediaUrl } from '../../lib/utils';
 import { PROGRESSION_CATEGORIES, clampLevel } from '../../lib/progression';
-import { useAuthStore, useUIStore, useGuildStore } from '../../store';
+import { useAuthStore, useUIStore } from '../../store';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
+import { useUpdateMember } from '../../hooks/useServerState';
+import { authAPI } from '../../lib/api';
 import { User, DayAvailability, ProgressionData, ClassType } from '../../types';
 import { useForm, Controller } from 'react-hook-form';
 
@@ -123,7 +125,17 @@ const getClassMeta = (classId: string, t: any) => {
 
 export function Profile() {
   const { user, logout } = useAuth();
-  const { updateMember, changePassword } = useGuildStore();
+
+  // ✅ TanStack Query: Mutations for profile updates
+  const updateMemberMutation = useUpdateMember();
+  const updateMember = async (id: string, data: any) => {
+    await updateMemberMutation.mutateAsync({ id, data });
+  };
+  const changePassword = async (userId: string, current: string, next: string) => {
+    await authAPI.changePassword(userId, current, next);
+    return true;
+  };
+
   const { setPageTitle } = useUIStore();
   const { t } = useTranslation();
   const theme = useTheme();

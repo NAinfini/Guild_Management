@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { ThemeProvider, CssBaseline, StyledEngineProvider } from '@mui/material'
 import { QueryClientProvider } from '@tanstack/react-query' // Keep original import if possible or use this one
 import { ThemeControllerProvider } from './theme/ThemeController'
-import { queryClient } from './lib/query'
+import { queryClient } from './lib/queryClient'
 import App from './App'
 import './index.css'
 import { useUIStore } from './store'

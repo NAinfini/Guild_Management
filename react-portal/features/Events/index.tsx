@@ -52,7 +52,7 @@ import {
   CalendarDays
 } from 'lucide-react';
 import { formatDateTime, getClassColor, cn, formatPower } from '../../lib/utils';
-import { useAuthStore, useGuildStore, useUIStore } from '../../store';
+import { useAuthStore, useUIStore } from '../../store';
 import { useTranslation } from 'react-i18next';
 import { User, Event } from '../../types';
 import { useMobileOptimizations, useOnline, usePush } from '../../hooks';
@@ -60,22 +60,55 @@ import { BottomSheetDialog } from '../../components/BottomSheetDialog';
 import { DecorativeGlyph } from '../../components/DecorativeGlyph';
 import { EnhancedButton } from '../../components/EnhancedButton';
 import { Skeleton } from '@mui/material';
+import {
+  useEvents,
+  useMembers,
+  useJoinEvent,
+  useLeaveEvent,
+  useArchiveEvent,
+  useTogglePinEvent,
+  useToggleLockEvent,
+  useDeleteEvent
+} from '../../hooks/useServerState';
 
 type EventFilter = 'all' | 'weekly_mission' | 'guild_war' | 'other';
 
 export function Events() {
   const { user, viewRole } = useAuthStore();
-  const { 
-    events, 
-    isLoading,
-    joinEvent, 
-    leaveEvent, 
-    archiveEvent, 
-    togglePinEvent, 
-    toggleLockEvent,
-    deleteEvent,
-    members 
-  } = useGuildStore();
+
+  // ✅ TanStack Query: Server state with automatic caching and refetching
+  const { data: events = [], isLoading: isLoadingEvents } = useEvents();
+  const { data: members = [], isLoading: isLoadingMembers } = useMembers();
+  const isLoading = isLoadingEvents || isLoadingMembers;
+
+  // ✅ TanStack Query: Mutations with automatic cache invalidation
+  const joinEventMutation = useJoinEvent();
+  const leaveEventMutation = useLeaveEvent();
+  const archiveEventMutation = useArchiveEvent();
+  const togglePinMutation = useTogglePinEvent();
+  const toggleLockMutation = useToggleLockEvent();
+  const deleteEventMutation = useDeleteEvent();
+
+  // Wrapper functions to match existing API
+  const joinEvent = async (eventId: string, userId: string) => {
+    await joinEventMutation.mutateAsync({ eventId, userId });
+  };
+  const leaveEvent = async (eventId: string, userId: string) => {
+    await leaveEventMutation.mutateAsync({ eventId, userId });
+  };
+  const archiveEvent = async (id: string, isArchived: boolean) => {
+    await archiveEventMutation.mutateAsync({ id, isArchived });
+  };
+  const togglePinEvent = async (id: string) => {
+    await togglePinMutation.mutateAsync(id);
+  };
+  const toggleLockEvent = async (id: string) => {
+    await toggleLockMutation.mutateAsync(id);
+  };
+  const deleteEvent = async (id: string) => {
+    await deleteEventMutation.mutateAsync(id);
+  };
+
   const { timezoneOffset, setPageTitle } = useUIStore();
   const { t } = useTranslation();
   const theme = useTheme();

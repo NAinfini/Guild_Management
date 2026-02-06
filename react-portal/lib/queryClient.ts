@@ -3,9 +3,24 @@
  * Provides caching, refetching, and state management for API calls
  */
 
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
+import { toast } from './toast';
 
 export const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      // Don't show global error if query explicitly handles it or silenced
+      if (query.meta?.errorMessage === false) return;
+      toast.apiError(error);
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _context, mutation) => {
+      // Don't show global error if mutation explicitly handles it or silenced
+      if (mutation.meta?.errorMessage === false) return;
+      toast.apiError(error);
+    },
+  }),
   defaultOptions: {
     queries: {
       // Queries are considered fresh for 30 seconds

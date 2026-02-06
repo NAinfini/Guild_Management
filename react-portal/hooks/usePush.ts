@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../lib/queryKeys';
 
 /**
  * Subscribe to server push (SSE) for wars/events and invalidate caches on change.
@@ -15,11 +16,11 @@ export function usePush(entities: string[] = ['wars', 'events']) {
       try {
         const data = JSON.parse(event.data);
         if (data.entity === 'wars') {
-          queryClient.invalidateQueries({ queryKey: ['wars', 'active'] });
-          queryClient.invalidateQueries({ queryKey: ['wars', 'history'] });
+          queryClient.invalidateQueries({ queryKey: queryKeys.wars.active() });
+          queryClient.invalidateQueries({ queryKey: queryKeys.wars.history() });
         }
         if (data.entity === 'events') {
-          queryClient.invalidateQueries({ queryKey: ['events'] });
+          queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
         }
       } catch (e) {
         console.warn('Push parse error', e);

@@ -1,10 +1,14 @@
 /**
  * WebSocket Client Hook
  * Manages WebSocket connection and handles real-time updates
+ *
+ * ✅ Updated to work with TanStack Query:
+ * Instead of updating Zustand state directly, we invalidate TanStack Query caches
+ * This triggers automatic refetching of affected data
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useGuildStore } from '../store';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '../lib/toast';
 
 interface WebSocketMessage {
@@ -17,10 +21,9 @@ export function useWebSocket() {
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const queryClient = useQueryClient();
 
   const handleMessage = useCallback((message: WebSocketMessage) => {
-    const store = useGuildStore.getState();
-
     switch (message.type) {
       case 'ping':
         // Respond to ping
@@ -28,65 +31,38 @@ export function useWebSocket() {
         break;
 
       case 'member:updated':
-        // Update member in store
-        const updatedMember = message.data;
-        const memberIndex = store.members.findIndex(m => m.id === updatedMember.id);
-        
-        if (memberIndex >= 0) {
-          const newMembers = [...store.members];
-          newMembers[memberIndex] = updatedMember;
-          useGuildStore.setState({ members: newMembers });
-        } else {
-          useGuildStore.setState({ members: [...store.members, updatedMember] });
-        }
+        // ✅ Invalidate members cache → auto-refetch
+        queryClient.invalidateQueries({ queryKey: ['members'] });
         break;
 
       case 'event:updated':
-        // Update event in store
-        const updatedEvent = message.data;
-        const eventIndex = store.events.findIndex(e => e.id === updatedEvent.id);
-        
-        if (eventIndex >= 0) {
-          const newEvents = [...store.events];
-          newEvents[eventIndex] = updatedEvent;
-          useGuildStore.setState({ events: newEvents });
-        } else {
-          useGuildStore.setState({ events: [...store.events, updatedEvent] });
-        }
+        // ✅ Invalidate events cache → auto-refetch
+        queryClient.invalidateQueries({ queryKey: ['events'] });
         toast.info('Event updated', 3000);
         break;
 
       case 'announcement:created':
-        // Add new announcement
+        // ✅ Invalidate announcements cache → auto-refetch
+        queryClient.invalidateQueries({ queryKey: ['announcements'] });
         const newAnnouncement = message.data;
-        useGuildStore.setState({ 
-          announcements: [newAnnouncement, ...store.announcements] 
-        });
         toast.info(`New announcement: ${newAnnouncement.title}`, 5000);
         break;
 
       case 'announcement:updated':
-        // Update announcement
-        const updatedAnnouncement = message.data;
-        const announcementIndex = store.announcements.findIndex(a => a.id === updatedAnnouncement.id);
-        
-        if (announcementIndex >= 0) {
-          const newAnnouncements = [...store.announcements];
-          newAnnouncements[announcementIndex] = updatedAnnouncement;
-          useGuildStore.setState({ announcements: newAnnouncements });
-        }
+        // ✅ Invalidate announcements cache → auto-refetch
+        queryClient.invalidateQueries({ queryKey: ['announcements'] });
         break;
 
       default:
         console.warn('[WebSocket] Unknown message type:', message.type);
     }
-  }, []);
+  }, [queryClient]);
 
   const connectRef = useRef<(() => void) | undefined>();
 
   const connect = useCallback(() => {
     const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8787/api/ws';
-    
+
     try {
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
@@ -119,7 +95,7 @@ export function useWebSocket() {
         // Attempt reconnect with exponential backoff
         const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
         console.info(`[WebSocket] Reconnecting in ${delay}ms...`);
-        
+
         reconnectTimeoutRef.current = setTimeout(() => {
           setReconnectAttempts((prev) => prev + 1);
           connectRef.current?.();

@@ -57,9 +57,10 @@ import {
   Trophy
 } from 'lucide-react';
 import { cn, getClassColor, formatPower, formatDateTime, getOptimizedMediaUrl, sanitizeHtml } from '../../lib/utils';
-import { useGuildStore, useAuthStore, useUIStore } from '../../store';
+import { useAuthStore, useUIStore } from '../../store';
 import { User, WarTeam } from '../../types';
 import { useTranslation } from 'react-i18next';
+import { useEvents, useMembers, useJoinEvent, useLeaveEvent } from '../../hooks/useServerState';
 import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { useWarHistory, useWarTeams, useMovePoolToTeam, useMoveTeamToPool, useMoveTeamToTeam, useKickFromTeam, useKickFromPool } from './hooks/useWars';
 import { usePush } from '../../hooks/usePush';
@@ -70,7 +71,10 @@ type Tab = 'active' | 'history' | 'analytics';
 
 export function GuildWar() {
   const [activeTab, setActiveTab] = useState<Tab>('active');
-  const { events, isLoading } = useGuildStore();
+
+  // ✅ TanStack Query: Server state
+  const { data: events = [], isLoading } = useEvents();
+
   const { setPageTitle } = useUIStore();
   const { t } = useTranslation();
   const theme = useTheme();
@@ -202,7 +206,18 @@ export function GuildWar() {
 type LastAction = { desc: string; undo: () => void; expiry: number; }
 
 function ActiveWarManagement({ warId }: { warId: string }) {
-  const { events, members, joinEvent, leaveEvent } = useGuildStore();
+  // ✅ TanStack Query: Server state and mutations
+  const { data: events = [] } = useEvents();
+  const { data: members = [] } = useMembers();
+  const joinEventMutation = useJoinEvent();
+  const leaveEventMutation = useLeaveEvent();
+  const joinEvent = async (eventId: string, userId: string) => {
+    await joinEventMutation.mutateAsync({ eventId, userId });
+  };
+  const leaveEvent = async (eventId: string, userId: string) => {
+    await leaveEventMutation.mutateAsync({ eventId, userId });
+  };
+
   const { t } = useTranslation();
   const theme = useTheme();
   usePush(['wars']); // realtime invalidation per spec

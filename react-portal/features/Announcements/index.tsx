@@ -41,19 +41,54 @@ import {
   Paperclip
 } from 'lucide-react';
 import { formatDateTime, cn, sanitizeHtml, getOptimizedMediaUrl } from '../../lib/utils';
-import { useAuthStore, useGuildStore, useUIStore } from '../../store';
+import { useAuthStore, useUIStore } from '../../store';
 import { useTranslation } from 'react-i18next';
 import { Announcement } from '../../types';
 import { isAfter } from 'date-fns';
 import { Skeleton } from '@mui/material';
 import { useOnline } from '../../hooks/useOnline';
 import { TiptapEditor } from '../../components/TiptapEditor';
+import {
+  useAnnouncements,
+  useCreateAnnouncement,
+  useUpdateAnnouncement,
+  useDeleteAnnouncement,
+  useTogglePinAnnouncement,
+  useArchiveAnnouncement
+} from '../../hooks/useServerState';
 
 type FilterType = 'all' | 'pinned' | 'archived';
 
 export function Announcements() {
   const { user, viewRole } = useAuthStore();
-  const { announcements, createAnnouncement, updateAnnouncement, deleteAnnouncement, togglePinAnnouncement, archiveAnnouncement, isLoading } = useGuildStore();
+
+  // ✅ TanStack Query: Server state with automatic caching
+  const { data: announcements = [], isLoading } = useAnnouncements();
+
+  // ✅ TanStack Query: Mutations with automatic cache invalidation
+  const createAnnouncementMutation = useCreateAnnouncement();
+  const updateAnnouncementMutation = useUpdateAnnouncement();
+  const deleteAnnouncementMutation = useDeleteAnnouncement();
+  const togglePinMutation = useTogglePinAnnouncement();
+  const archiveAnnouncementMutation = useArchiveAnnouncement();
+
+  // Wrapper functions to match existing API
+  const createAnnouncement = async (data: any) => {
+    await createAnnouncementMutation.mutateAsync(data);
+  };
+  const updateAnnouncement = async (id: string, data: any) => {
+    await updateAnnouncementMutation.mutateAsync({ id, data });
+  };
+  const deleteAnnouncement = async (id: string) => {
+    await deleteAnnouncementMutation.mutateAsync(id);
+  };
+  const togglePinAnnouncement = async (id: string) => {
+    await togglePinMutation.mutateAsync(id);
+  };
+  const archiveAnnouncement = async (id: string, isArchived: boolean) => {
+    await archiveAnnouncementMutation.mutateAsync({ id, isArchived });
+  };
+
   const { timezoneOffset, setPageTitle } = useUIStore();
   const { t } = useTranslation();
   const theme = useTheme();
