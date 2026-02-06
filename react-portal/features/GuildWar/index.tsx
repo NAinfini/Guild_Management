@@ -96,10 +96,19 @@ export function GuildWar() {
   const [selectedWarId, setSelectedWarId] = useState<string>('');
 
   useEffect(() => {
+    // If no war selected, select first available
     if (!selectedWarId && warEvents.length > 0) {
       setSelectedWarId(warEvents[0].id);
     }
-  }, [warEvents.length, warEvents[0]?.id, selectedWarId]);  // Stable: length + first ID only
+    // If selected war doesn't exist in available wars, reset to first or empty
+    else if (selectedWarId && warEvents.length > 0 && !warEvents.find(w => w.id === selectedWarId)) {
+      setSelectedWarId(warEvents[0].id);
+    }
+    // If no wars available, clear selection
+    else if (warEvents.length === 0 && selectedWarId) {
+      setSelectedWarId('');
+    }
+  }, [warEvents.length, warEvents.map(w => w.id).join(','), selectedWarId]);  // Stable: length + IDs
 
   if (isLoading && warEvents.length === 0) {
     return (
@@ -161,12 +170,12 @@ export function GuildWar() {
          {activeTab === 'active' && (
              <FormControl size="small" sx={{ minWidth: 240 }}>
                  <Select
-                   value={selectedWarId}
+                   value={warEvents.length === 0 ? '' : selectedWarId}
                    onChange={(e) => setSelectedWarId(e.target.value)}
                    displayEmpty
-                   sx={{ 
-                       borderRadius: 2, 
-                       fontWeight: 700, 
+                   sx={{
+                       borderRadius: 2,
+                       fontWeight: 700,
                        fontSize: '0.8rem',
                        bgcolor: 'background.paper',
                        boxShadow: 1,

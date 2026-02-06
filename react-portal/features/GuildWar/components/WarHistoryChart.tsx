@@ -9,7 +9,7 @@ type WarHistoryChartProps = {
   missingCount?: number;
 };
 
-export function WarHistoryChart({ data, metric = 'score', onMetricChange, missingCount = 0 }: WarHistoryChartProps) {
+export function WarHistoryChart({ data, metric = 'kills', onMetricChange, missingCount = 0 }: WarHistoryChartProps) {
   const theme = useTheme();
   const primary = theme.palette.primary.main;
   const enemy = theme.palette.error.main;

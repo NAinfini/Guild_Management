@@ -3,19 +3,16 @@ import { Card, CardContent, CardHeader, Typography, Stack, Chip, Box, TextField,
 import { CardGridSkeleton } from '../../../components/SkeletonLoaders';
 import { useWarHistory } from '../hooks/useWars';
 import { WarHistoryDetail } from './WarHistoryDetail';
-import { WarHistoryChart } from './WarHistoryChart';
+import { WarHistoryPieCharts } from './WarHistoryPieCharts';
 import { formatDateTime } from '../../../lib/utils';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, AlertTriangle } from 'lucide-react';
 
 export function WarHistory() {
   const { data = [], isLoading } = useWarHistory();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [metric, setMetric] = useState<'score' | 'kills' | 'credits'>('score');
   const [query, setQuery] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-
-
 
   const filtered = useMemo(() => {
     return data
@@ -28,21 +25,6 @@ export function WarHistory() {
   }, [data, query, dateFrom, dateTo]);
 
   const selected = filtered.find((w) => w.id === selectedId) || null;
-
-  const chartData = filtered.map((w) => ({
-    name: w.title,
-    score: metric === 'score' ? w.score ?? null : metric === 'kills' ? w.own_stats?.kills ?? null : w.own_stats?.credits ?? null,
-    enemy: metric === 'score' ? w.enemy_score ?? null : metric === 'kills' ? w.enemy_stats?.kills ?? null : w.enemy_stats?.credits ?? null,
-  }));
-
-  const missingCount = filtered.reduce((acc, w) => {
-    const missingMembers = w.member_stats?.filter((m) =>
-      ['damage', 'healing', 'building_damage', 'credits', 'kills', 'deaths', 'assists'].some(
-        (k) => (m as any)[k] === null || (m as any)[k] === undefined,
-      ),
-    ).length ?? 0;
-    return acc + missingMembers;
-  }, 0);
 
   if (isLoading) return <CardGridSkeleton count={2} aspectRatio="21/9" />;
 
@@ -77,7 +59,7 @@ export function WarHistory() {
         </CardContent>
       </Card>
 
-      <WarHistoryChart data={chartData} metric={metric} onMetricChange={setMetric} missingCount={missingCount} />
+      <WarHistoryPieCharts data={filtered} />
 
       <Card>
         <CardHeader title="Recent Wars" />
@@ -85,7 +67,7 @@ export function WarHistory() {
           <Stack spacing={2}>
             {filtered.map((war) => {
               const missingMembers = war.member_stats?.filter((m) =>
-                ['damage', 'healing', 'building_damage', 'credits', 'kills', 'deaths', 'assists'].some(
+                ['damage', 'healing', 'building_damage', 'credits', 'kills', 'deaths', 'assists', 'damage_taken'].some(
                   (k) => (m as any)[k] === null || (m as any)[k] === undefined,
                 ),
               ).length ?? 0;
@@ -97,21 +79,36 @@ export function WarHistory() {
                   p: 2,
                   borderRadius: 2,
                   border: '1px solid',
-                  borderColor: 'divider',
+                  borderColor: missingMembers > 0 ? 'warning.main' : 'divider',
+                  bgcolor: missingMembers > 0 ? 'warning.lighter' : 'inherit',
                   cursor: 'pointer',
-                  '&:hover': { bgcolor: 'action.hover' },
+                  '&:hover': { bgcolor: missingMembers > 0 ? 'warning.light' : 'action.hover' },
                 }}
               >
-                <Typography variant="subtitle2" fontWeight={800}>
-                  {war.title}
-                </Typography>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  {missingMembers > 0 && (
+                    <Box sx={{ color: 'warning.main', display: 'flex' }}>
+                      <AlertTriangle size={16} />
+                    </Box>
+                  )}
+                  <Typography variant="subtitle2" fontWeight={800}>
+                    {war.title}
+                  </Typography>
+                </Stack>
                 <Typography variant="caption" color="text.secondary">
                   {formatDateTime(war.date)}
                 </Typography>
                 <Stack direction="row" spacing={1} mt={1} flexWrap="wrap">
-                  <Chip label={`Score ${war.score ?? 0}`} size="small" />
+                  {war.score !== null && war.score !== undefined && <Chip label={`Score ${war.score}`} size="small" />}
                   <Chip label={war.result} size="small" color={war.result === 'victory' ? 'success' : war.result === 'draw' ? 'warning' : 'error'} />
-                  {missingMembers > 0 && <Chip label={`Missing: ${missingMembers}`} size="small" color="warning" />}
+                  {missingMembers > 0 && (
+                    <Chip
+                      label={`${missingMembers} incomplete`}
+                      size="small"
+                      color="warning"
+                      icon={<AlertTriangle size={12} />}
+                    />
+                  )}
                 </Stack>
               </Box>
             );

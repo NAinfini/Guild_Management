@@ -108,8 +108,18 @@ export const membersAPI = {
     // API always returns paginated format: { items: [...], pagination: {...} }
     const response = await typedAPI.members.list<{ items: MemberDTO[], pagination: any }>({ query: queryParams });
 
-    if (!response || !response.items) return [];
-    return response.items.map(mapToDomain);
+    console.log('[membersAPI.list] Response:', response);
+    console.log('[membersAPI.list] Has items:', !!response?.items);
+    console.log('[membersAPI.list] Items count:', response?.items?.length);
+
+    if (!response || !response.items) {
+      console.warn('[membersAPI.list] No items in response, returning empty array');
+      return [];
+    }
+
+    const mapped = response.items.map(mapToDomain);
+    console.log('[membersAPI.list] Mapped count:', mapped.length);
+    return mapped;
   },
 
   getProfile: async (id: string): Promise<User> => {
