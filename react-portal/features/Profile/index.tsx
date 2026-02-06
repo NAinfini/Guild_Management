@@ -46,6 +46,7 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { cn, getClassColor, formatPower, sanitizeHtml, getOptimizedMediaUrl } from '../../lib/utils';
+import { PageHeaderSkeleton } from '../../components/SkeletonLoaders';
 import { PROGRESSION_CATEGORIES, clampLevel } from '../../lib/progression';
 import { useAuthStore, useUIStore } from '../../store';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
@@ -124,15 +125,15 @@ const getClassMeta = (classId: string, t: any) => {
 };
 
 export function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
 
   // ✅ TanStack Query: Mutations for profile updates
   const updateMemberMutation = useUpdateMember();
   const updateMember = async (id: string, data: any) => {
     await updateMemberMutation.mutateAsync({ id, data });
   };
-  const changePassword = async (userId: string, current: string, next: string) => {
-    await authAPI.changePassword(userId, current, next);
+  const changePassword = async (_userId: string, current: string, next: string) => {
+    await authAPI.changePassword({ currentPassword: current, newPassword: next });
     return true;
   };
 
@@ -145,7 +146,7 @@ export function Profile() {
     setPageTitle(t('profile.title'));
   }, [setPageTitle, t]);
 
-  if (!user) return null;
+  if (isLoading || !user) return <PageHeaderSkeleton />;
 
   return (
     <Box sx={{ maxWidth: 1400, mx: 'auto', pb: 10, px: { xs: 2, sm: 4 } }}>

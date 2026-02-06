@@ -8,6 +8,7 @@
 
 import type { Env, User, MemberProfile } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
+import { broadcastUpdate } from '../../lib/broadcast';
 import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../lib/utils';
 
 // ============================================================
@@ -111,7 +112,7 @@ export const onRequestPut = createEndpoint<{ message: string; profile: any }, Up
 
   parseBody: (body) => body as UpdateProfileBody,
 
-  handler: async ({ env, user, params, body, request, isAdmin, isModerator }) => {
+  handler: async ({ env, user, params, body, request, isAdmin, isModerator, waitUntil }) => {
     const userId = params.id;
 
     // Only self or admin/mod can update profile
@@ -174,6 +175,20 @@ export const onRequestPut = createEndpoint<{ message: string; profile: any }, Up
       .prepare('SELECT * FROM member_profiles WHERE user_id = ?')
       .bind(userId)
       .first();
+
+    const fullUser = await env.DB
+      .prepare('SELECT * FROM users WHERE user_id = ?')
+      .bind(userId)
+      .first();
+
+    // Broadcast change to all sessions
+    waitUntil(broadcastUpdate(env, {
+      entity: 'members',
+      action: 'updated',
+      payload: [fullUser],
+      ids: [userId],
+      excludeUserId: user!.user_id
+    }));
 
     return {
       message: 'Profile updated successfully',

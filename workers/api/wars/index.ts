@@ -12,6 +12,7 @@
 
 import type { Env } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
+import { broadcastUpdate } from '../../lib/broadcast';
 import { generateId, utcNow, createAuditLog } from '../../lib/utils';
 
 // ============================================================
@@ -218,7 +219,7 @@ export const onRequestPost = createEndpoint<
     return body as CreateWarBody;
   },
 
-  handler: async ({ env, user, body }) => {
+  handler: async ({ env, user, body, waitUntil }) => {
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -245,16 +246,15 @@ export const onRequestPost = createEndpoint<
         await env.DB
           .prepare(`
             INSERT INTO events (
-              event_id, type, title, start_at_utc, start_at_utc, notes,
+              event_id, type, title, start_at_utc, description,
               is_archived, created_by, updated_by, created_at_utc, updated_at_utc
-            ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
           `)
           .bind(
             eventId,
             warData.type || 'guild_war',
             warData.title,
             startAt,
-            startDateUtc,
             warData.notes || null,
             user.user_id,
             user.user_id,
@@ -314,6 +314,15 @@ export const onRequestPost = createEndpoint<
         JSON.stringify({ count: warsToCreate.length })
       );
 
+      // Broadcast batch create
+      waitUntil(broadcastUpdate(env, {
+        entity: 'wars',
+        action: 'created',
+        payload: created.map(c => ({ ...c.event, ...c.war })),
+        ids: created.map(c => c.event.event_id),
+        excludeUserId: user.user_id
+      }));
+
       return {
         message: `Created ${warsToCreate.length} wars successfully`,
         wars: created,
@@ -353,16 +362,15 @@ export const onRequestPost = createEndpoint<
     await env.DB
       .prepare(`
         INSERT INTO events (
-          event_id, type, title, start_at_utc, start_at_utc, notes,
+          event_id, type, title, start_at_utc, description,
           is_archived, created_by, updated_by, created_at_utc, updated_at_utc
-        ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
       `)
       .bind(
         eventId,
         type,
         title,
         startAt,
-        startDateUtc,
         notes || null,
         user.user_id,
         user.user_id,
@@ -424,6 +432,15 @@ export const onRequestPost = createEndpoint<
       .prepare('SELECT * FROM war_history WHERE war_id = ?')
       .bind(warId)
       .first();
+
+    // Broadcast single create
+    waitUntil(broadcastUpdate(env, {
+      entity: 'wars',
+      action: 'created',
+      payload: [Object.assign({}, event || {}, war || {})],
+      ids: [eventId!],
+      excludeUserId: user.user_id
+    }));
 
     return {
       event,

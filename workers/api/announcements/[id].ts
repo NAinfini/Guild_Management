@@ -9,6 +9,7 @@
 
 import type { Env, Announcement } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
+import { broadcastUpdate } from '../../lib/broadcast';
 import {
   utcNow,
   createAuditLog,
@@ -87,7 +88,7 @@ export const onRequestPut = createEndpoint<{ message: string; announcement: Anno
 
   parseBody: (body) => body as UpdateAnnouncementBody,
 
-  handler: async ({ env, user, params, body, request }) => {
+  handler: async ({ env, user, params, body, request, waitUntil }) => {
     const announcementId = params.id;
 
     const existing = await env.DB
@@ -163,6 +164,15 @@ export const onRequestPut = createEndpoint<{ message: string; announcement: Anno
       .bind(announcementId)
       .first<Announcement>();
 
+    // Broadcast update
+    waitUntil(broadcastUpdate(env, {
+      entity: 'announcements',
+      action: 'updated',
+      payload: [updated!],
+      ids: [announcementId],
+      excludeUserId: user!.user_id
+    }));
+
     return {
       message: 'Announcement updated successfully',
       announcement: updated!,
@@ -180,7 +190,7 @@ export const onRequestPatch = createEndpoint<{ message: string; announcement: An
 
   parseBody: (body) => body as PatchAnnouncementBody,
 
-  handler: async ({ env, user, params, body }) => {
+  handler: async ({ env, user, params, body, waitUntil }) => {
     const announcementId = params.id;
     const { isPinned } = body;
 
@@ -213,6 +223,11 @@ export const onRequestPatch = createEndpoint<{ message: string; announcement: An
       .bind(...values)
       .run();
 
+    const updated = await env.DB
+      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .bind(announcementId)
+      .first<Announcement>();
+
     await createAuditLog(
       env.DB,
       'announcement',
@@ -220,13 +235,17 @@ export const onRequestPatch = createEndpoint<{ message: string; announcement: An
       user!.user_id,
       announcementId,
       `${isPinned ? 'Pinned' : 'Unpinned'} announcement`,
-      null
+      undefined
     );
 
-    const updated = await env.DB
-      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
-      .bind(announcementId)
-      .first<Announcement>();
+    // Broadcast update (pinned change)
+    waitUntil(broadcastUpdate(env, {
+      entity: 'announcements',
+      action: 'updated',
+      payload: [updated!],
+      ids: [announcementId],
+      excludeUserId: user!.user_id
+    }));
 
     return {
       message: `Announcement ${isPinned ? 'pinned' : 'unpinned'} successfully`,
@@ -243,7 +262,7 @@ export const onRequestDelete = createEndpoint<{ message: string }>({
   auth: 'required',
   cacheControl: 'no-store',
 
-  handler: async ({ env, user, params }) => {
+  handler: async ({ env, user, params, waitUntil }) => {
     const announcementId = params.id;
 
     const existing = await env.DB
@@ -273,8 +292,16 @@ export const onRequestDelete = createEndpoint<{ message: string }>({
       user!.user_id,
       announcementId,
       'Deleted announcement',
-      null
+      undefined
     );
+
+    // Broadcast delete
+    waitUntil(broadcastUpdate(env, {
+      entity: 'announcements',
+      action: 'deleted',
+      ids: [announcementId],
+      excludeUserId: user!.user_id
+    }));
 
     return { message: 'Announcement deleted successfully' };
   },

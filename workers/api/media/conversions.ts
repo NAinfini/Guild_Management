@@ -32,7 +32,7 @@ interface ConversionListResponse {
 /**
  * GET /media/conversions - List all conversions (admin only)
  */
-export const onRequestGet = createEndpoint<ConversionListResponse, never, ConversionListQuery>({
+export const onRequestGet = createEndpoint<ConversionListResponse, ConversionListQuery>({
   auth: 'admin',
   etag: true,
   cacheControl: 'private, max-age=10',
@@ -94,6 +94,62 @@ export const onRequestGet = createEndpoint<ConversionListResponse, never, Conver
       total,
       limit,
       offset,
+    };
+  },
+});
+
+interface BatchRetryBody {
+  mediaIds: string[];
+}
+
+interface BatchRetryResponse {
+  message: string;
+  queuedCount: number;
+}
+
+/**
+ * POST /media/conversions - Batch retry failed conversions
+ */
+export const onRequestPost = createEndpoint<BatchRetryResponse, never, BatchRetryBody>({
+  auth: 'admin',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => {
+    if (!body || !Array.isArray(body.mediaIds)) {
+      throw new Error('mediaIds array is required');
+    }
+    return body as BatchRetryBody;
+  },
+
+  handler: async ({ env, body }) => {
+    const { mediaIds } = body!;
+    
+    if (mediaIds.length === 0) {
+      return {
+        message: 'No media IDs provided',
+        queuedCount: 0
+      };
+    }
+
+    if (mediaIds.length > 100) {
+      throw new Error('Maximum 100 media items per batch retry');
+    }
+
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const placeholders = mediaIds.map(() => '?').join(',');
+    
+    const result = await env.DB.prepare(`
+      UPDATE media_conversions
+      SET status = 'pending',
+          progress_percent = 0,
+          error_message = NULL,
+          updated_at_utc = ?
+      WHERE media_id IN (${placeholders}) AND status = 'failed'
+    `).bind(now, ...mediaIds).run();
+
+    return {
+      message: 'Failed conversions queued for retry',
+      queuedCount: result.meta.changes || 0,
     };
   },
 });

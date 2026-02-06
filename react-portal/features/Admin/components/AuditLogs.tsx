@@ -3,7 +3,7 @@
  * Displays audit logs with pagination
  */
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Card,
@@ -20,10 +20,11 @@ import {
   Stack,
   TextField,
   MenuItem,
-  CircularProgress,
   Alert,
 } from '@mui/material';
+import { TableSkeleton } from '../../../components/SkeletonLoaders';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuditLogs } from '../../../hooks';
 import { formatDateTime } from '../../../lib/utils';
 
@@ -36,6 +37,7 @@ const ACTION_COLORS: Record<string, 'success' | 'error' | 'warning' | 'info' | '
 };
 
 export function AuditLogs() {
+  const { t } = useTranslation();
   const [entityType, setEntityType] = useState<string>('');
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [limit] = useState(50);
@@ -62,7 +64,7 @@ export function AuditLogs() {
       <Stack direction="row" spacing={2} mb={3} alignItems="center">
         <TextField
           select
-          label="Filter by Type"
+          label={t('admin.filter_type')}
           value={entityType}
           onChange={(e) => {
             setEntityType(e.target.value);
@@ -71,11 +73,11 @@ export function AuditLogs() {
           size="small"
           sx={{ minWidth: 200 }}
         >
-          <MenuItem value="">All Types</MenuItem>
-          <MenuItem value="event">Events</MenuItem>
-          <MenuItem value="announcement">Announcements</MenuItem>
-          <MenuItem value="member">Members</MenuItem>
-          <MenuItem value="war">Wars</MenuItem>
+          <MenuItem value="">{t('admin.all_types')}</MenuItem>
+          <MenuItem value="event">{t('nav.events')}</MenuItem>
+          <MenuItem value="announcement">{t('nav.announcements')}</MenuItem>
+          <MenuItem value="member">{t('nav.roster')}</MenuItem>
+          <MenuItem value="war">{t('nav.guild_war')}</MenuItem>
         </TextField>
 
         <Button
@@ -85,34 +87,32 @@ export function AuditLogs() {
           onClick={() => refetch()}
           disabled={isLoading}
         >
-          Refresh
+          {t('admin.recheck')}
         </Button>
       </Stack>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error instanceof Error ? error.message : 'Failed to load audit logs'}
+          {error instanceof Error ? error.message : t('admin.no_audit_records')}
         </Alert>
       )}
 
       <Card>
         <CardContent sx={{ p: 0 }}>
           {isLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress />
-            </Box>
+            <TableSkeleton rows={10} cols={6} />
           ) : (
             <>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Timestamp</TableCell>
-                      <TableCell>Actor</TableCell>
-                      <TableCell>Action</TableCell>
-                      <TableCell>Entity Type</TableCell>
-                      <TableCell>Entity ID</TableCell>
-                      <TableCell>Details</TableCell>
+                      <TableCell>{t('admin.label_timestamp')}</TableCell>
+                      <TableCell>{t('admin.label_actor')}</TableCell>
+                      <TableCell>{t('admin.label_action')}</TableCell>
+                      <TableCell>{t('admin.label_entity_type')}</TableCell>
+                      <TableCell>{t('admin.label_entity_id')}</TableCell>
+                      <TableCell>{t('admin.label_details')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -138,7 +138,7 @@ export function AuditLogs() {
                         </TableCell>
                         <TableCell>
                           <Typography variant="caption" textTransform="uppercase" fontWeight={700}>
-                            {log.entityType}
+                            {t(`admin.entity_${log.entityType}`)}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -160,7 +160,7 @@ export function AuditLogs() {
               {data?.logs.length === 0 && (
                 <Box sx={{ py: 8, textAlign: 'center' }}>
                   <Typography variant="body2" color="text.secondary">
-                    No audit logs found
+                    {t('admin.no_audit_records')}
                   </Typography>
                 </Box>
               )}
@@ -172,11 +172,11 @@ export function AuditLogs() {
                   onClick={handlePrevious}
                   disabled={!cursor}
                 >
-                  Previous
+                  {t('common.prev')}
                 </Button>
 
                 <Typography variant="caption" color="text.secondary" alignSelf="center">
-                  Showing {data?.logs.length || 0} entries
+                  {t('common.showing_entries', { count: data?.logs.length || 0 })}
                 </Typography>
 
                 <Button
@@ -185,7 +185,7 @@ export function AuditLogs() {
                   onClick={handleNext}
                   disabled={!data?.nextCursor}
                 >
-                  Next
+                  {t('common.next')}
                 </Button>
               </Box>
             </>

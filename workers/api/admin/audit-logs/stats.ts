@@ -39,7 +39,7 @@ interface AuditStatsResponse {
 /**
  * GET /admin/audit-logs/stats - Get audit log statistics
  */
-export const onRequestGet = createEndpoint<AuditStatsResponse, never, AuditStatsQuery>({
+export const onRequestGet = createEndpoint<AuditStatsResponse, AuditStatsQuery>({
   auth: 'admin',
   etag: true,
   cacheControl: 'private, max-age=300', // Cache for 5 minutes

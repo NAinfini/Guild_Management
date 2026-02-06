@@ -234,21 +234,21 @@ async function apiRequestWithRetry<T>(
       } else {
         // Show toast for final error (won't retry)
         if (error instanceof APIError) {
-          // Only show toast for certain error types
-          // Don't show for validation errors (400) as those should be handled by forms
+          // Error handling logic moved to global QueryClient or component level
+          // to avoid duplicate toasts.
+          
+          /* 
+          // Original toast logic removed
           if (error.status === 401) {
-            // Session expired - show toast and could redirect to login
-            toast.error(error.message);
+             toast.error(error.message);
           } else if (error.status === 429) {
-            // Rate limit - show with longer duration
-            toast.apiError(error);
+             toast.apiError(error);
           } else if (error.status && error.status >= 500) {
-            // Server errors - show toast
-            toast.error(error.message, 8000);
+             toast.error(error.message, 8000);
           } else if (error.status === 403) {
-            // Permissions - show toast
-            toast.warning(error.message);
+             toast.warning(error.message);
           }
+          */
           // For other errors (400, 404, 409) let the component handle them
         }
         throw error; // Re-throw if not retryable or max retries reached

@@ -10,7 +10,7 @@
  * Migrated to use createEndpoint pattern.
  */
 
-import type { Env, Media } from '../../lib/types';
+import type { Env, MediaObject } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
 import { utcNow, createAuditLog, generateId, canEditEntity } from '../../lib/utils';
 
@@ -62,7 +62,7 @@ interface BatchDeleteResponse {
 /**
  * GET /api/gallery - List gallery items with filtering
  */
-export const onRequestGet = createEndpoint<GalleryListResponse, never, GalleryListQuery>({
+export const onRequestGet = createEndpoint<GalleryListResponse, GalleryListQuery>({
   auth: 'optional',
   etag: true,
   cacheControl: 'public, max-age=60',
@@ -111,6 +111,9 @@ export const onRequestGet = createEndpoint<GalleryListResponse, never, GalleryLi
           url: row.r2_key ? `https://your-r2-domain.com/${row.r2_key}` : '',
         })),
         notFound: notFound.length > 0 ? notFound : undefined,
+        total: (items.results || []).length,
+        limit: (items.results || []).length,
+        offset: 0,
       };
     }
 
@@ -232,7 +235,7 @@ export const onRequestPost = createEndpoint<{ message: string; item: any }, Crea
 // DELETE /api/gallery - Batch delete gallery items
 // ============================================================
 
-export const onRequestDelete = createEndpoint<BatchDeleteResponse, never, BatchDeleteQuery>({
+export const onRequestDelete = createEndpoint<BatchDeleteResponse, BatchDeleteQuery>({
   auth: 'required',
   cacheControl: 'no-store',
 

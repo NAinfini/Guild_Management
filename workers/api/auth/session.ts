@@ -30,6 +30,7 @@ interface SessionResponse {
 
 export const onRequestGet = createEndpoint<SessionResponse>({
   auth: 'optional',
+  etag: true,
   cacheControl: 'no-store', // Never cache session data
 
   handler: async ({ user, session, isAuthenticated }) => {

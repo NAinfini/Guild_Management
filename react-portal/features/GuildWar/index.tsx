@@ -64,7 +64,8 @@ import { useEvents, useMembers, useJoinEvent, useLeaveEvent } from '../../hooks/
 import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { useWarHistory, useWarTeams, useMovePoolToTeam, useMoveTeamToPool, useMoveTeamToTeam, useKickFromTeam, useKickFromPool } from './hooks/useWars';
 import { usePush } from '../../hooks/usePush';
-import { CircularProgress, Skeleton, useMediaQuery } from '@mui/material';
+import { Skeleton, useMediaQuery } from '@mui/material';
+import { CardGridSkeleton } from '../../components/SkeletonLoaders';
 import { useOnline } from '../../hooks/useOnline';
 
 type Tab = 'active' | 'history' | 'analytics';
@@ -85,21 +86,7 @@ export function GuildWar() {
     setPageTitle(t('nav.guild_war'));
   }, [setPageTitle, t]);
 
-  const renderSkeletons = () => (
-    <Grid container spacing={2} sx={{ mt: 2 }}>
-      {[1,2,3].map(i => (
-        <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
-          <Card>
-            <CardContent>
-              <Skeleton variant="text" width="50%" />
-              <Skeleton variant="text" width="30%" />
-              <Skeleton variant="rectangular" height={70} sx={{ mt: 2, borderRadius: 2 }} />
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-    </Grid>
-  );
+
   
   const warEvents = useMemo(() => 
     events.filter(e => e.type === 'guild_war').sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()),
@@ -116,7 +103,7 @@ export function GuildWar() {
   if (isLoading && warEvents.length === 0) {
     return (
       <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
-        {renderSkeletons()}
+        <CardGridSkeleton count={3} />
       </Box>
     );
   }
@@ -220,12 +207,11 @@ function ActiveWarManagement({ warId }: { warId: string }) {
 
   const { t } = useTranslation();
   const theme = useTheme();
-  usePush(['wars']); // realtime invalidation per spec
   const online = useOnline();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const activeWar = useMemo(() => events.find(e => e.id === warId), [events, warId]);
   
-  const { data: warData, refetch: refetchWar } = useWarTeams(warId);
+  const { data: warData, refetch: refetchWar, isLoading: isLoadingTeams } = useWarTeams(warId);
   const movePoolToTeam = useMovePoolToTeam();
   const moveTeamToPool = useMoveTeamToPool();
   const moveTeamToTeam = useMoveTeamToTeam();
@@ -254,6 +240,8 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     }
     if ((warData as any)?.etag) setEtag((warData as any).etag);
   }, [warData]);
+
+  if (isLoadingTeams) return <ActiveWarSkeleton />;
   
   const [lastAction, setLastAction] = useState<LastAction | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -1096,4 +1084,54 @@ function MemberDetailModal({ userId, members, onClose }: any) {
        </Card>
     </Dialog>
   )
+}
+
+function ActiveWarSkeleton() {
+  return (
+    <Grid container spacing={3} sx={{ flex: 1, minHeight: 0 }}>
+      {/* Left Column: Pool Skeleton */}
+      <Grid size={{ xs: 12, md: 3 }}>
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Skeleton variant="circular" width={32} height={32} />
+            <Box sx={{ flex: 1 }}>
+              <Skeleton variant="text" width="60%" height={24} />
+              <Skeleton variant="text" width="40%" height={16} />
+            </Box>
+          </Stack>
+        </Paper>
+        <Stack spacing={1}>
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} variant="rectangular" height={60} sx={{ borderRadius: 2 }} />
+          ))}
+        </Stack>
+      </Grid>
+
+      {/* Right Column: Teams Board Skeleton */}
+      <Grid size={{ xs: 12, md: 9 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+          <Skeleton variant="text" width="30%" height={32} />
+          <Skeleton variant="rectangular" width={100} height={28} sx={{ borderRadius: 1 }} />
+        </Box>
+        <Stack spacing={2}>
+          {[1, 2].map((i) => (
+            <Card key={i}>
+              <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Skeleton variant="text" width="20%" height={24} />
+              </Box>
+              <CardContent>
+                <Grid container spacing={1}>
+                  {[1, 2, 3, 4, 5].map((j) => (
+                    <Grid key={j} size={{ xs: 12, sm: 6, lg: 4 }}>
+                      <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2 }} />
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          ))}
+        </Stack>
+      </Grid>
+    </Grid>
+  );
 }

@@ -22,7 +22,8 @@ import {
   ResponsiveContainer,
   Area,
 } from 'recharts';
-import { Box, Typography, Alert, CircularProgress } from '@mui/material';
+import { Box, Typography, Alert } from '@mui/material';
+import { CardSkeleton } from '../../../../components/SkeletonLoaders';
 import { useAnalytics } from './AnalyticsContext';
 import { transformForCompare, formatWarDateShort, formatNumber } from './utils';
 import { getUserColor, formatMetricName } from './types';
@@ -82,11 +83,7 @@ export function CompareTrendChart({ perWarStats, wars, members, isLoading }: Com
 
   // Loading state
   if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <CardSkeleton aspectRatio="16/9" />;
   }
 
   // No data state

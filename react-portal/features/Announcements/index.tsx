@@ -46,6 +46,7 @@ import { useTranslation } from 'react-i18next';
 import { Announcement } from '../../types';
 import { isAfter } from 'date-fns';
 import { Skeleton } from '@mui/material';
+import { CardGridSkeleton } from '../../components/SkeletonLoaders';
 import { useOnline } from '../../hooks/useOnline';
 import { TiptapEditor } from '../../components/TiptapEditor';
 import {
@@ -56,6 +57,8 @@ import {
   useTogglePinAnnouncement,
   useArchiveAnnouncement
 } from '../../hooks/useServerState';
+import { MarkdownRenderer } from '../../components/MarkdownRenderer';
+import { useLastSeen } from '../../hooks/useLastSeen';
 
 type FilterType = 'all' | 'pinned' | 'archived';
 
@@ -103,8 +106,7 @@ export function Announcements() {
 
   const effectiveRole = viewRole || user?.role;
   const isAdmin = effectiveRole === 'admin' || effectiveRole === 'moderator';
-  const lastSeenKey = 'last_seen_announcements_at';
-  const lastSeen = localStorage.getItem(lastSeenKey) || new Date(0).toISOString();
+  const { lastSeen, markAsSeen, hasNewContent } = useLastSeen('last_seen_announcements_at');
 
   useEffect(() => {
     setPageTitle(t('nav.announcements'));
@@ -130,39 +132,26 @@ export function Announcements() {
     });
   }, [announcements, filter, search]);
 
+  // Auto-mark as seen on unmount (or we could do it on mount/periodic)
   useEffect(() => {
-    return () => localStorage.setItem(lastSeenKey, new Date().toISOString());
-  }, []);
+    return () => markAsSeen();
+  }, [markAsSeen]);
 
   const handleMarkAllAsRead = () => {
     setIsMarkingAllAsRead(true);
-    localStorage.setItem('last_seen_announcements_at', new Date().toISOString());
+    markAsSeen();
     setTimeout(() => setIsMarkingAllAsRead(false), 500);
   };
 
   if (isLoading && announcements.length === 0) {
     return (
       <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 10, px: { xs: 2, sm: 4 } }}>
-        {renderSkeletons()}
+        <CardGridSkeleton count={3} aspectRatio="16/9" />
       </Box>
     );
   }
 
-  function renderSkeletons() {
-    return (
-      <Stack spacing={2} sx={{ mt: 2 }}>
-        {[1,2,3].map(i => (
-          <Card key={i}>
-            <CardContent>
-              <Skeleton variant="text" width="50%" />
-              <Skeleton variant="text" width="30%" />
-              <Skeleton variant="rectangular" height={60} sx={{ mt: 2, borderRadius: 2 }} />
-            </CardContent>
-          </Card>
-        ))}
-      </Stack>
-    );
-  }
+
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 10, px: { xs: 2, sm: 4 } }}>
@@ -262,7 +251,7 @@ export function Announcements() {
       {/* Feed List */}
       <Stack spacing={2}>
         {filteredAnnouncements.map((ann) => {
-          const isNew = isAfter(new Date(ann.created_at), new Date(lastSeen));
+          const isNew = hasNewContent(ann.created_at);
           return (
             <Card 
               key={ann.id}
@@ -291,14 +280,16 @@ export function Announcements() {
                                   {formatDateTime(ann.created_at, 0, true)}
                               </Typography>
                           </Stack>
-                          <Typography 
-                              variant="body2" 
-                              color="text.secondary"
-                              sx={{ 
-                                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden'
-                              }}
-                              dangerouslySetInnerHTML={sanitizeHtml(ann.content_html.replace(/<[^>]+>/g, ' ') || '')}
-                          />
+                          <Box sx={{ 
+                              display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                              typography: 'body2', color: 'text.secondary'
+                          }}>
+                              {ann.content_html.trim().startsWith('<') ? (
+                                  <span dangerouslySetInnerHTML={sanitizeHtml(ann.content_html.replace(/<[^>]+>/g, ' ') || '')} />
+                              ) : (
+                                  <MarkdownRenderer>{ann.content_html}</MarkdownRenderer>
+                              )}
+                          </Box>
                           {/* Media Counters */}
                           {ann.media_urls && ann.media_urls.length > 0 && (
                              <Stack direction="row" spacing={1} mt={2}>
@@ -375,12 +366,18 @@ export function Announcements() {
             </Box>
 
             <DialogContent sx={{ p: 5 }}>
-               <Typography 
-                  variant="body1" 
-                  color="text.secondary" 
-                  sx={{ '& p': { mb: 2, lineHeight: 1.8 } }} 
-                  dangerouslySetInnerHTML={sanitizeHtml(selectedAnnouncement.content_html)} 
-               />
+               {selectedAnnouncement.content_html.trim().startsWith('<') ? (
+                   <Typography 
+                      variant="body1" 
+                      color="text.secondary" 
+                      sx={{ '& p': { mb: 2, lineHeight: 1.8 } }} 
+                      dangerouslySetInnerHTML={sanitizeHtml(selectedAnnouncement.content_html)} 
+                   />
+               ) : (
+                   <Box sx={{ '& p': { mb: 2, lineHeight: 1.8 } }}>
+                       <MarkdownRenderer>{selectedAnnouncement.content_html}</MarkdownRenderer>
+                   </Box>
+               )}
 
                {selectedAnnouncement.media_urls && selectedAnnouncement.media_urls.length > 0 && (
                   <Box mt={4}>

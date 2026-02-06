@@ -18,9 +18,10 @@ import {
   DialogActions,
   useTheme,
   alpha,
-  CircularProgress
+  Pagination
 } from '@mui/material';
 import { Image, ExternalLink, Download, Plus, Trash2, Upload, X, ZoomIn } from 'lucide-react';
+import { CardGridSkeleton } from '../../components/SkeletonLoaders';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useUIStore } from '../../store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -42,13 +43,27 @@ export function Gallery() {
     setPageTitle(t('nav.gallery'));
   }, [setPageTitle, t]);
 
+  const [page, setPage] = useState(1);
+  const LIMIT = 24;
+  const [isDragOver, setIsDragOver] = useState(false);
+
   // Fetch gallery images
   const { data: galleryData, isLoading } = useQuery({
-    queryKey: ['gallery'],
-    queryFn: () => galleryAPI.list({ page: 1, limit: 100 }),
+    queryKey: ['gallery', page],
+    queryFn: () => galleryAPI.list({ page, limit: LIMIT }),
   });
 
   const images = galleryData?.images || [];
+  const totalPages = (galleryData as any)?.total ? Math.ceil((galleryData as any).total / LIMIT) : 1;
+
+  // ... mutations ... (unchanged, just omitting from replacement chunk but need to ensure I don't delete them. 
+  // Wait, I am replacing a huge chunk if I am not careful.
+  // I will replace only lines 46-51 (useQuery) and insert helper functions before return.
+  
+  // Actually, I'll split this chunk.
+  // Chunk 1: State and useQuery
+  // Chunk 2: processFiles helper and handlers
+
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -90,18 +105,53 @@ export function Gallery() {
     setDeleteDialog(null);
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      // Upload each file
-      (Array.from(files) as File[]).forEach(file => {
+  const handleFiles = (files: File[]) => {
+    if (files.length > 0) {
+      files.forEach(file => {
         uploadMutation.mutate(file);
       });
     }
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  };
+
+  const processAndUploadFiles = async (files: File[]) => {
+      const newFiles: File[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        try {
+            const processed = file.type.startsWith('image/') ? await convertToWebP(file) : file;
+            newFiles.push(processed);
+        } catch (err) {
+            console.error(err);
+            newFiles.push(file);
+        }
+      }
+      handleFiles(newFiles);
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      processAndUploadFiles(Array.from(files));
     }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          processAndUploadFiles(Array.from(e.dataTransfer.files));
+      }
   };
 
   return (
@@ -121,10 +171,8 @@ export function Gallery() {
       )}
 
       {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
+        <CardGridSkeleton count={8} aspectRatio="4/3" />
+      ) : (<>
         <Grid container spacing={3}>
           {images.map(img => {
             // Construct image URL from R2 key
@@ -236,7 +284,19 @@ export function Gallery() {
             </Grid>
           )}
         </Grid>
-      )}
+          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+            <Pagination 
+                count={totalPages} 
+                page={page} 
+                onChange={(_, p) => setPage(p)} 
+                color="primary" 
+                size="large"
+                showFirstButton 
+                showLastButton
+            />
+  
+        </Box>
+      </>)}
 
       {/* Delete Confirmation Dialog */}
       <Dialog
@@ -283,16 +343,20 @@ export function Gallery() {
             sx={{
               p: 4,
               border: '2px dashed',
-              borderColor: 'divider',
+              borderColor: isDragOver ? 'primary.main' : 'divider',
               borderRadius: 3,
               textAlign: 'center',
               cursor: 'pointer',
               transition: 'all 0.2s',
+              bgcolor: isDragOver ? 'action.hover' : 'transparent',
               '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' }
             }}
             onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
           >
-            <Upload size={48} style={{ opacity: 0.5, marginBottom: 16 }} />
+            <Upload size={48} style={{ opacity: 0.5, marginBottom: 16, color: isDragOver ? theme.palette.primary.main : 'inherit' }} />
             <Typography variant="body2" fontWeight={700} mb={1}>
               {t('gallery.drop_files')}
             </Typography>
@@ -306,25 +370,7 @@ export function Gallery() {
             accept="image/*"
             multiple
             style={{ display: 'none' }}
-
-
-// ... inside component ...
-            onChange={async (e) => {
-              if (e.target.files && e.target.files.length > 0) {
-                 const newFiles: File[] = [];
-                 for (let i = 0; i < e.target.files.length; i++) {
-                    const file = e.target.files[i];
-                    try {
-                       const processed = file.type.startsWith('image/') ? await convertToWebP(file) : file;
-                       newFiles.push(processed);
-                    } catch (err) {
-                       console.error(err);
-                       newFiles.push(file);
-                    }
-                 }
-                 handleFileSelect(newFiles); 
-              }
-            }}
+            onChange={handleFileSelect}
           />
         </DialogContent>
       </Dialog>

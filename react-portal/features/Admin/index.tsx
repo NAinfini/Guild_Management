@@ -36,6 +36,7 @@ import {
   Grid,
   Skeleton
 } from '@mui/material';
+import { CardGridSkeleton, TableSkeleton } from '../../components/SkeletonLoaders';
 import { 
   ShieldAlert, 
   UserCog, 
@@ -155,23 +156,7 @@ export function Admin() {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
 
-  const renderSkeletons = () => (
-    <Grid container spacing={2} sx={{ mt: 2 }}>
-      {[1,2,3,4].map(i => (
-        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
-          <Card>
-            <CardContent>
-              <Stack spacing={1}>
-                <Skeleton variant="text" width="50%" />
-                <Skeleton variant="text" width="30%" />
-                <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2 }} />
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-    </Grid>
-  );
+
 
   useEffect(() => {
     setPageTitle(t('nav.admin'));
@@ -180,7 +165,7 @@ export function Admin() {
   if (isLoading && members.length === 0) {
     return (
       <Box sx={{ p: { xs: 2, sm: 3 } }}>
-        {renderSkeletons()}
+        {isMobile ? <CardGridSkeleton count={4} /> : <TableSkeleton rows={10} cols={5} />}
       </Box>
     );
   }

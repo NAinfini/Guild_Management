@@ -59,6 +59,7 @@ export interface EndpointContext<TQuery = any, TBody = any> {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isModerator: boolean;
+  waitUntil: (promise: Promise<any>) => void;
 }
 
 export interface EndpointConfig<TData = any, TQuery = any, TBody = any> {
@@ -221,6 +222,7 @@ export function createEndpoint<TData = any, TQuery = any, TBody = any>(
           isAuthenticated: authData.isAuthenticated,
           isAdmin: authData.isAdmin,
           isModerator: authData.isModerator,
+          waitUntil: context.waitUntil,
         };
 
         // Execute handler

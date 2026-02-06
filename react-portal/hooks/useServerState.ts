@@ -15,6 +15,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { membersAPI, eventsAPI, announcementsAPI, adminAPI, warsAPI } from '../lib/api';
 import { queryKeys } from '../lib/queryKeys';
+import { User } from '../types';
 
 // ============================================================================
 // MEMBERS
@@ -26,7 +27,6 @@ export function useMembers(options?: { includeInactive?: boolean }) {
     queryFn: () => membersAPI.list(options),
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000, // Auto-refetch every 60s (replaces polling)
-    refetchOnWindowFocus: true,
   });
 }
 
@@ -59,7 +59,6 @@ export function useEvents(options?: { includeArchived?: boolean }) {
     queryFn: () => eventsAPI.list(options),
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
-    refetchOnWindowFocus: true,
   });
 }
 
@@ -154,7 +153,35 @@ export function useJoinEvent() {
   return useMutation({
     mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) =>
       eventsAPI.join(eventId, userId),
-    onSuccess: () => {
+    onMutate: async ({ eventId, userId }) => {
+      // Fetch members list to get full user data for optimism
+      const members = queryClient.getQueryData<User[]>(queryKeys.members.list()) || [];
+      const userData = members.find(m => m.id === userId);
+
+      await queryClient.cancelQueries({ queryKey: queryKeys.events.all });
+      const previous = queryClient.getQueryData(queryKeys.events.all);
+
+      queryClient.setQueryData(queryKeys.events.all, (old: any) => {
+        if (!old) return old;
+        const items = (old.items || old || []).map((e: any) => {
+          if (e.id === eventId) {
+            const participants = [...(e.participants || [])];
+            if (userData && !participants.find(p => p.id === userId)) {
+              participants.push(userData);
+            }
+            return { ...e, participants };
+          }
+          return e;
+        });
+        return Array.isArray(old) ? items : { ...old, items };
+      });
+
+      return { previous };
+    },
+    onError: (err, variables, context: any) => {
+      queryClient.setQueryData(queryKeys.events.all, context.previous);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
   });
@@ -165,7 +192,30 @@ export function useLeaveEvent() {
   return useMutation({
     mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) =>
       eventsAPI.leave(eventId, userId),
-    onSuccess: () => {
+    onMutate: async ({ eventId, userId }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.events.all });
+      const previous = queryClient.getQueryData(queryKeys.events.all);
+
+      queryClient.setQueryData(queryKeys.events.all, (old: any) => {
+        if (!old) return old;
+        const items = (old.items || old || []).map((e: any) => {
+          if (e.id === eventId) {
+            return {
+              ...e,
+              participants: (e.participants || []).filter((p: any) => p.id !== userId)
+            };
+          }
+          return e;
+        });
+        return Array.isArray(old) ? items : { ...old, items };
+      });
+
+      return { previous };
+    },
+    onError: (err, variables, context: any) => {
+      queryClient.setQueryData(queryKeys.events.all, context.previous);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
   });
@@ -181,7 +231,6 @@ export function useAnnouncements(options?: { includeArchived?: boolean }) {
     queryFn: () => announcementsAPI.list(options),
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
-    refetchOnWindowFocus: true,
   });
 }
 

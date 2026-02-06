@@ -35,8 +35,8 @@ interface AuditLogsResponse {
 interface AuditLogQuery {
   cursor?: string;
   limit?: number;
-  date_range_start: string; // REQUIRED
-  date_range_end: string;   // REQUIRED
+  date_range_start?: string; // Optional (defaults to last 30 days)
+  date_range_end?: string;   // Optional (defaults to now)
   entity_type?: string;
   actor_id?: string;
   search?: string;
@@ -95,6 +95,7 @@ function validateDateRange(start: string, end: string): { start: Date; end: Date
  */
 export const onRequestGet = createEndpoint<AuditLogsResponse, AuditLogQuery>({
   auth: 'admin',
+  etag: true,
   cacheControl: 'no-store',
 
   handler: async ({ env, request }) => {
@@ -109,12 +110,14 @@ export const onRequestGet = createEndpoint<AuditLogsResponse, AuditLogQuery>({
     const actorId = url.searchParams.get('actor_id') || undefined;
     const search = url.searchParams.get('search') || undefined;
 
-    // Validate required date range
-    if (!dateRangeStart || !dateRangeEnd) {
-      throw new Error('date_range_start and date_range_end are required');
-    }
+    // Default to last 30 days if no range provided
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const { start: startDate, end: endDate } = validateDateRange(dateRangeStart, dateRangeEnd);
+    const startStr = dateRangeStart || thirtyDaysAgo.toISOString();
+    const endStr = dateRangeEnd || now.toISOString();
+
+    const { start: startDate, end: endDate } = validateDateRange(startStr, endStr);
 
     // Decode cursor if provided
     let cursorData: { created_at: string; audit_id: string } | null = null;
@@ -210,8 +213,8 @@ export const onRequestGet = createEndpoint<AuditLogsResponse, AuditLogQuery>({
       has_next: hasNext,
       cursor: nextCursor,
       total_in_range: totalResult?.total || 0,
-      range_start: dateRangeStart,
-      range_end: dateRangeEnd,
+      range_start: startStr,
+      range_end: endStr,
     };
   },
 });

@@ -14,13 +14,14 @@ import {
   Slide,
   Divider,
 } from '@mui/material';
-import {
-  Close as CloseIcon,
-  Delete as DeleteIcon,
-  Archive as ArchiveIcon,
-  Unarchive as UnarchiveIcon,
-  PushPin as PinIcon,
-} from '@mui/icons-material';
+import { 
+  X as CloseIcon, 
+  Trash2 as DeleteIcon, 
+  Archive as ArchiveIcon, 
+  RefreshCcw as UnarchiveIcon, 
+  Pin as PinIcon 
+} from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useBulkSelection } from './BulkSelectionProvider';
 
 interface BulkActionToolbarProps {
@@ -42,6 +43,7 @@ export function BulkActionToolbar({
   onUnpin,
   isLoading = false,
 }: BulkActionToolbarProps) {
+  const { t } = useTranslation();
   const { selectedCount, clearSelection } = useBulkSelection();
 
   return (
@@ -78,7 +80,7 @@ export function BulkActionToolbar({
               <CloseIcon />
             </IconButton>
             <Typography variant="h6">
-              {selectedCount} {entityType} selected
+              {t('common.items_selected', { count: selectedCount, type: t(`nav.${entityType}`).toLowerCase() })}
             </Typography>
           </Box>
 
@@ -94,7 +96,7 @@ export function BulkActionToolbar({
                 disabled={isLoading}
                 sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
               >
-                Pin
+                {t('common.pin')}
               </Button>
             )}
 
@@ -106,7 +108,7 @@ export function BulkActionToolbar({
                 disabled={isLoading}
                 sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
               >
-                Unpin
+                {t('common.unpin')}
               </Button>
             )}
 
@@ -118,7 +120,7 @@ export function BulkActionToolbar({
                 disabled={isLoading}
                 sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
               >
-                Archive
+                {t('common.archive')}
               </Button>
             )}
 
@@ -130,7 +132,7 @@ export function BulkActionToolbar({
                 disabled={isLoading}
                 sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
               >
-                Unarchive
+                {t('common.unarchive')}
               </Button>
             )}
 
@@ -142,7 +144,7 @@ export function BulkActionToolbar({
                 onClick={onDelete}
                 disabled={isLoading}
               >
-                Delete
+                {t('common.delete')}
               </Button>
             )}
           </Box>

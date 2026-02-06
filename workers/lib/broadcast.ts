@@ -3,8 +3,10 @@
  */
 
 interface BroadcastOptions {
-  type: string;
-  data: any;
+  entity: 'wars' | 'events' | 'announcements' | 'members';
+  action: 'updated' | 'created' | 'deleted';
+  payload?: any[];
+  ids?: string[];
   excludeUserId?: string;
 }
 
@@ -30,7 +32,7 @@ export async function broadcastUpdate(env: any, options: BroadcastOptions): Prom
       console.error('[Broadcast] Failed:', await response.text());
     } else {
       const result = await response.json();
-      console.info(`[Broadcast] Sent ${options.type} to ${result.sent || 0} clients`);
+      console.info(`[Broadcast] Sent ${options.entity}:${options.action} to ${result.sent || 0} clients`);
     }
   } catch (error) {
     console.error('[Broadcast] Error:', error);

@@ -9,6 +9,7 @@
 
 import type { Env } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
+import { broadcastUpdate } from '../../lib/broadcast';
 import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../lib/utils';
 import { notFoundResponse, noContentResponse } from '../../../shared/utils/response';
 
@@ -128,7 +129,7 @@ export const onRequestPut = createEndpoint<WarResponse, UpdateWarBody>({
 
   parseBody: (body) => body as UpdateWarBody,
 
-  handler: async ({ env, user, params, body, request }) => {
+  handler: async ({ env, user, params, body, request, waitUntil }) => {
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -246,6 +247,15 @@ export const onRequestPut = createEndpoint<WarResponse, UpdateWarBody>({
       .bind(warId)
       .first<any>();
 
+    // Broadcast update
+    waitUntil(broadcastUpdate(env, {
+      entity: 'wars',
+      action: 'updated',
+      payload: [updated],
+      ids: [eventId],
+      excludeUserId: user!.user_id
+    }));
+
     return { war: updated };
   },
 });
@@ -258,7 +268,7 @@ export const onRequestDelete = createEndpoint({
   auth: 'moderator',
   cacheControl: 'no-store',
 
-  handler: async ({ env, user, params, request }) => {
+  handler: async ({ env, user, params, request, waitUntil }) => {
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -289,8 +299,16 @@ export const onRequestDelete = createEndpoint({
       user.user_id,
       eventId,
       `Archived war event: ${event.title}`,
-      null
+      undefined
     );
+
+    // Broadcast delete (archive)
+    waitUntil(broadcastUpdate(env, {
+      entity: 'wars',
+      action: 'deleted',
+      ids: [eventId],
+      excludeUserId: user!.user_id
+    }));
 
     const origin = request.headers.get('Origin');
     return noContentResponse(origin);

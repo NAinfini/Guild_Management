@@ -14,11 +14,12 @@ import {
   InputAdornment, 
   IconButton,
   Alert,
-  useTheme
+  useTheme,
+  CircularProgress
 } from '@mui/material';
 import { useAuth } from '../../hooks';
 import { useNavigate, Link, useSearch } from '@tanstack/react-router';
-import { Eye, EyeOff, AlertCircle, ArrowLeft, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, ArrowLeft, Lock, User, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export function Login() {
@@ -34,8 +35,13 @@ export function Login() {
   const [isCapsLockOn, setIsCapsLockOn] = useState(false);
   const [stayLoggedIn, setStayLoggedIn] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   const returnTo = (search as any).returnTo || '/';
+
+  // Basic inline validation
+  const usernameError = submitted && !username;
+  const passwordError = submitted && !password;
 
   // Detect Caps Lock
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -48,7 +54,12 @@ export function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitted(true);
     setLocalError(null);
+
+    if (!username || !password) {
+        return;
+    }
 
     const result = await login({ username, password, rememberMe: stayLoggedIn });
     if (result.success) {
@@ -131,7 +142,8 @@ export function Login() {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         disabled={isLoading}
-                        required
+                        error={usernameError}
+                        helperText={usernameError ? t('login.error_username_required', 'Username is required') : ''}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -145,42 +157,43 @@ export function Login() {
                      />
 
                      <Box>
-                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.1em', color: 'text.secondary' }}>
-                                {t('login.label_password')}
-                            </Typography>
-                            {isCapsLockOn && (
-                                <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'warning.main', fontSize: '0.7rem', fontWeight: 800 }}>
-                                    <AlertCircle size={12} /> {t('login.caps_lock')}
-                                </Box>
-                            )}
-                         </Box>
-                         <TextField
-                            fullWidth
-                            type={showPassword ? "text" : "password"}
-                            placeholder={t('login.placeholder_password')}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled={isLoading}
-                            required
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <Lock size={18} opacity={0.5} />
-                                    </InputAdornment>
-                                ),
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                )
-                            }}
-                            sx={{
-                                '& .MuiOutlinedInput-root': { borderRadius: 3 }
-                            }}
-                         />
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                             <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.1em', color: 'text.secondary' }}>
+                                 {t('login.label_password')}
+                             </Typography>
+                             {isCapsLockOn && (
+                                 <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'warning.main', fontSize: '0.7rem', fontWeight: 800 }}>
+                                     <AlertCircle size={12} /> {t('login.caps_lock')}
+                                 </Box>
+                             )}
+                          </Box>
+                          <TextField
+                             fullWidth
+                             type={showPassword ? "text" : "password"}
+                             placeholder={t('login.placeholder_password')}
+                             value={password}
+                             onChange={(e) => setPassword(e.target.value)}
+                             disabled={isLoading}
+                             error={passwordError}
+                             helperText={passwordError ? t('login.error_password_required', 'Password is required') : ''}
+                             InputProps={{
+                                 startAdornment: (
+                                     <InputAdornment position="start">
+                                         <Lock size={18} opacity={0.5} />
+                                     </InputAdornment>
+                                 ),
+                                 endAdornment: (
+                                     <InputAdornment position="end">
+                                         <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                         </IconButton>
+                                     </InputAdornment>
+                                 )
+                             }}
+                             sx={{
+                                 '& .MuiOutlinedInput-root': { borderRadius: 3 }
+                             }}
+                          />
                      </Box>
 
                      <FormControlLabel
@@ -199,7 +212,7 @@ export function Login() {
                         variant="contained" 
                         fullWidth 
                         size="large"
-                        disabled={!username || isLoading}
+                        disabled={isLoading}
                         sx={{ 
                             height: 48, 
                             borderRadius: 3, 
@@ -208,7 +221,12 @@ export function Login() {
                             letterSpacing: '0.1em' 
                         }}
                      >
-                        {isLoading ? t('login.validating') : t('login.action_login')}
+                        {isLoading ? (
+                            <Stack direction="row" spacing={1} alignItems="center">
+                                <CircularProgress size={20} color="inherit" />
+                                <span>{t('login.validating')}</span>
+                            </Stack>
+                        ) : t('login.action_login')}
                      </Button>
                   </Stack>
                </form>

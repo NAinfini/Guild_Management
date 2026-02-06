@@ -21,7 +21,7 @@ interface DuplicateCheckResponse {
 /**
  * GET /media/check-duplicate - Check for duplicate media by SHA-256 hash
  */
-export const onRequestGet = createEndpoint<DuplicateCheckResponse, never, DuplicateCheckQuery>({
+export const onRequestGet = createEndpoint<DuplicateCheckResponse, DuplicateCheckQuery>({
   auth: 'required', // Must be authenticated to check for duplicates
   etag: true,
   cacheControl: 'private, max-age=300', // Cache for 5 minutes

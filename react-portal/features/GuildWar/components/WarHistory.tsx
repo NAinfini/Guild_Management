@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader, Typography, Stack, Chip, Box, CircularProgress, TextField, InputAdornment, Button } from '@mui/material';
+import { Card, CardContent, CardHeader, Typography, Stack, Chip, Box, TextField, InputAdornment, Button, Skeleton } from '@mui/material';
+import { CardGridSkeleton } from '../../../components/SkeletonLoaders';
 import { useWarHistory } from '../hooks/useWars';
 import { WarHistoryDetail } from './WarHistoryDetail';
 import { WarHistoryChart } from './WarHistoryChart';
@@ -43,7 +44,7 @@ export function WarHistory() {
     return acc + missingMembers;
   }, 0);
 
-  if (isLoading) return <CircularProgress />;
+  if (isLoading) return <CardGridSkeleton count={2} aspectRatio="21/9" />;
 
   return (
     <Stack spacing={3}>

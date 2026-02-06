@@ -22,14 +22,13 @@ binding = "BUCKET"
 bucket_name = "testbucket"
 
 # Temporarily disabled - fix build errors first
-# [[durable_objects.bindings]]
-# name = "CONNECTIONS"
-# class_name = "ConnectionManager"
-# script_name = "guild-management"
+[[durable_objects.bindings]]
+name = "CONNECTIONS"
+class_name = "ConnectionManager"
 
-# [[migrations]]
-# tag = "v1"
-# new_sqlite_classes = ["ConnectionManager"]
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ConnectionManager"]
 
 [observability]
 enabled = true

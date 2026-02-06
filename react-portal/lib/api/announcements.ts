@@ -10,7 +10,7 @@ import type { Announcement } from '../../types';
 // Backend Types
 // ============================================================================
 
-interface AnnouncementDTO {
+export interface AnnouncementDTO {
   announcement_id: string;
   title: string;
   body_html: string | null;
@@ -34,7 +34,7 @@ export interface CreateAnnouncementData {
 // Mappers
 // ============================================================================
 
-const mapToDomain = (dto: AnnouncementDTO): Announcement => {
+export const mapToDomain = (dto: AnnouncementDTO): Announcement => {
   const media = (dto as any).media_urls;
   return {
     id: dto.announcement_id,

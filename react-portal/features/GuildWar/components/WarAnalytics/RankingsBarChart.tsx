@@ -20,11 +20,12 @@ import {
   Cell,
   LabelList,
 } from 'recharts';
-import { Box, Typography, Alert, CircularProgress, Stack, Avatar, Chip } from '@mui/material';
+import { Box, Typography, Alert, Stack, Avatar, Chip } from '@mui/material';
+import { CardSkeleton } from '../../../../components/SkeletonLoaders';
 import { useAnalytics } from './AnalyticsContext';
 import { transformForRankings, formatNumber } from './utils';
 import { formatMetricName } from './types';
-import type { MemberStats } from './types';
+import type { MemberStats, MetricType } from './types';
 
 // ============================================================================
 // Main Component
@@ -68,11 +69,7 @@ export function RankingsBarChart({ members, isLoading }: RankingsBarChartProps) 
 
   // Loading state
   if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <CardSkeleton aspectRatio="16/9" />;
   }
 
   // No data state
@@ -117,7 +114,7 @@ export function RankingsBarChart({ members, isLoading }: RankingsBarChartProps) 
             <LabelList
               dataKey="value"
               position="right"
-              formatter={(value: number) => formatNumber(value)}
+              formatter={(value: any) => formatNumber(Number(value))}
               style={{ fontSize: '0.75rem', fontWeight: 600 }}
             />
           </Bar>
@@ -211,9 +208,7 @@ function RankingsTooltip({ active, payload, metric }: RankingsTooltipProps) {
 
       {/* Value */}
       <Box sx={{ mb: 0.5 }}>
-        <Typography variant="body2" fontWeight={600}>
-          {formatMetricName(metric)}:
-        </Typography>
+        \u003cTypography variant=\"body2\" fontWeight={600}\u003e\r\n          {formatMetricName(metric as MetricType)}:\r\n        \u003c/Typography\u003e
         <Typography variant="body2" fontFamily="monospace" fontSize="1.1rem">
           {formatNumber(data.value)}
         </Typography>

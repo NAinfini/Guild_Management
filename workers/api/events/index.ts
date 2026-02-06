@@ -12,6 +12,7 @@
 
 import type { Env, Event } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
+import { broadcastUpdate } from '../../lib/broadcast';
 import { utcNow, createAuditLog, generateId } from '../../lib/utils';
 import {
   parsePaginationQuery,
@@ -184,7 +185,7 @@ export const onRequestPost = createEndpoint<
     return body as CreateEventBody;
   },
 
-  handler: async ({ env, user, body }) => {
+  handler: async ({ env, user, body, waitUntil }) => {
     const now = utcNow();
 
     // ============================================================
@@ -195,7 +196,7 @@ export const onRequestPost = createEndpoint<
       const createdEvents: Event[] = [];
 
       for (const eventData of eventsToCreate) {
-        const eventId = generateId();
+        const eventId = generateId('evt');
         const { title, description, eventDate, eventType, minLevel, maxParticipants } = eventData;
 
         await env.DB
@@ -235,6 +236,15 @@ export const onRequestPost = createEndpoint<
         JSON.stringify({ count: eventsToCreate.length })
       );
 
+      // Broadcast batch create
+      waitUntil(broadcastUpdate(env, {
+        entity: 'events',
+        action: 'created',
+        payload: createdEvents,
+        ids: createdEvents.map(e => e.event_id),
+        excludeUserId: user!.user_id
+      }));
+
       return {
         message: `Created ${eventsToCreate.length} events successfully`,
         events: createdEvents,
@@ -244,7 +254,7 @@ export const onRequestPost = createEndpoint<
     // ============================================================
     // SINGLE CREATE MODE: Create one event
     // ============================================================
-    const eventId = generateId();
+    const eventId = generateId('evt');
     const { title, description, eventDate, eventType, minLevel, maxParticipants } = body as CreateEventBody;
 
     await env.DB
@@ -283,6 +293,15 @@ export const onRequestPost = createEndpoint<
       .bind(eventId)
       .first<Event>();
 
+    // Broadcast single create
+    waitUntil(broadcastUpdate(env, {
+      entity: 'events',
+      action: 'created',
+      payload: [newEvent!],
+      ids: [eventId],
+      excludeUserId: user!.user_id
+    }));
+
     return {
       message: 'Event created successfully',
       event: newEvent!,
@@ -306,7 +325,7 @@ export const onRequestDelete = createEndpoint<
     eventIds: searchParams.get('eventIds') || undefined,
   }),
 
-  handler: async ({ env, user, query }) => {
+  handler: async ({ env, user, query, waitUntil }) => {
     const { action, eventIds } = query;
 
     if (!eventIds) {
@@ -358,10 +377,20 @@ export const onRequestDelete = createEndpoint<
       JSON.stringify({ eventIds: ids, action })
     );
 
+    // Broadcast batch delete/archive
+    if (affectedCount > 0) {
+      waitUntil(broadcastUpdate(env, {
+        entity: 'events',
+        action: action === 'delete' ? 'deleted' : 'updated',
+        ids: ids,
+        excludeUserId: user!.user_id
+      }));
+    }
+
     return {
       message: `Batch ${action} completed`,
       affectedCount,
-      action,
+      action: action || 'delete',
     };
   },
 });

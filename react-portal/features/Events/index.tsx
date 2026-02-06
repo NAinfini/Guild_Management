@@ -60,6 +60,7 @@ import { BottomSheetDialog } from '../../components/BottomSheetDialog';
 import { DecorativeGlyph } from '../../components/DecorativeGlyph';
 import { EnhancedButton } from '../../components/EnhancedButton';
 import { Skeleton } from '@mui/material';
+import { CardGridSkeleton } from '../../components/SkeletonLoaders';
 import {
   useEvents,
   useMembers,
@@ -114,7 +115,6 @@ export function Events() {
   const theme = useTheme();
   const mobile = useMobileOptimizations();
   const online = useOnline();
-  usePush(['events']); // invalidate events on push
 
   useEffect(() => {
     setPageTitle(t('nav.events'));
@@ -147,19 +147,7 @@ export function Events() {
       });
   }, [events, filter, showArchived]);
 
-  const renderSkeletons = () => (
-    <Stack spacing={2} sx={{ mt: 2 }}>
-      {[1,2,3].map((i) => (
-        <Card key={i}>
-          <CardContent>
-            <Skeleton variant="text" width="40%" />
-            <Skeleton variant="text" width="60%" />
-            <Skeleton variant="rectangular" height={32} sx={{ mt: 2, borderRadius: 2 }} />
-          </CardContent>
-        </Card>
-      ))}
-    </Stack>
-  );
+
 
   const handleMarkAllAsRead = () => {
     setIsMarkingAllAsRead(true);
@@ -241,7 +229,7 @@ export function Events() {
       data-testid="events-root"
     >
 
-      {isLoading && events.length === 0 && renderSkeletons()}
+      {isLoading && events.length === 0 && <CardGridSkeleton count={3} aspectRatio="16/9" />}
 
       <Stack direction="row" flexWrap="wrap" gap={2} alignItems="center" justifyContent="space-between" mb={4}>
         <ToggleButtonGroup
@@ -310,7 +298,7 @@ export function Events() {
         )}
       </Stack>
 
-      {isLoading && filteredEvents.length === 0 && renderSkeletons()}
+      {isLoading && filteredEvents.length === 0 && <CardGridSkeleton count={3} aspectRatio="16/9" />}
 
       <Stack spacing={4}>
         {filteredEvents.map(event => {

@@ -26,7 +26,7 @@ interface EventListItemDTO {
   updated_at_utc: string;
 }
 
-interface EventDetailDTO extends EventListItemDTO {
+export interface EventDetailDTO extends EventListItemDTO {
   participants?: Array<{
     user_id: string;
     username: string;
@@ -57,7 +57,7 @@ export interface JoinEventResponse {
 // Mappers
 // ============================================================================
 
-const mapToDomain = (dto: EventListItemDTO | EventDetailDTO): Event => {
+export const mapToDomain = (dto: EventListItemDTO | EventDetailDTO): Event => {
   // Map participants if present
   let participants: User[] = [];
   if ('participants' in dto && dto.participants) {

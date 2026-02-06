@@ -34,7 +34,7 @@ interface EntityHistoryResponse {
 /**
  * GET /admin/audit-logs/entity/:entityId - Get entity history
  */
-export const onRequestGet = createEndpoint<EntityHistoryResponse, never, EntityHistoryQuery>({
+export const onRequestGet = createEndpoint<EntityHistoryResponse, EntityHistoryQuery>({
   auth: 'admin',
   etag: true,
   cacheControl: 'private, max-age=60',

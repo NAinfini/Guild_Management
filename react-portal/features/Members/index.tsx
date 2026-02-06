@@ -22,6 +22,10 @@ import {
   Paper,
   Badge
 } from '@mui/material';
+import * as ReactWindow from 'react-window';
+const List = (ReactWindow as any).FixedSizeList;
+import { AutoSizer } from 'react-virtualized-auto-sizer';
+const AnyAutoSizer = AutoSizer as any;
 import { 
   Search, 
   Volume2, 
@@ -49,6 +53,7 @@ import { Skeleton } from '@mui/material';
 import { RosterFilterPanel } from './components/RosterFilterPanel';
 import type { RosterFilterState } from '../../hooks/useFilterPresets';
 import { useMembers } from '../../hooks/useServerState';
+import { CardGridSkeleton } from '../../components/SkeletonLoaders';
 
 // Helper to determine active status based on availability
 // Helper to determine active status based on availability
@@ -164,13 +169,25 @@ export function Roster() {
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   
   // Advanced filter state
-  const [filters, setFilters] = useState<RosterFilterState>({
-    roles: [],
-    classes: [],
-    powerRange: [0, 999999999],
-    status: 'all',
-    hasMedia: false,
+  const [filters, setFilters] = useState<RosterFilterState>(() => {
+    try {
+      const saved = localStorage.getItem('roster_filters');
+      return saved ? JSON.parse(saved) : { roles: [], classes: [], powerRange: [0, 999999999], status: 'all', hasMedia: false };
+    } catch {
+      return { roles: [], classes: [], powerRange: [0, 999999999], status: 'all', hasMedia: false };
+    }
   });
+
+  useEffect(() => {
+    localStorage.setItem('roster_filters', JSON.stringify(filters));
+  }, [filters]);
+
+  const isXl = useMediaQuery(theme.breakpoints.up('xl'));
+  const isLg = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
+  const isSm = useMediaQuery(theme.breakpoints.up('sm'));
+
+  const columns = isXl ? 6 : isLg ? 5 : isMd ? 4 : isSm ? 3 : 2;
 
   // Extract available roles and classes from members
   const { availableRoles, availableClasses } = useMemo(() => {
@@ -198,27 +215,10 @@ export function Roster() {
 
     return list;
   }, [members, search, sort]);
-
-  const renderSkeletons = () => (
-    <Grid container spacing={2} sx={{ mt: 2 }}>
-      {[1,2,3,4].map(i => (
-        <Grid key={i} item xs={12} sm={6} md={4}>
-          <Card>
-            <CardContent>
-              <Skeleton variant="text" width="40%" />
-              <Skeleton variant="text" width="60%" />
-              <Skeleton variant="rectangular" height={80} sx={{ mt: 2, borderRadius: 2 }} />
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-    </Grid>
-  );
-
   if (isLoading && (!members || members.length === 0)) {
     return (
       <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
-        {renderSkeletons()}
+        <CardGridSkeleton count={12} xs={6} sm={4} md={3} lg={2.4} xl={2} aspectRatio="1/1" />
       </Box>
     );
   }
@@ -400,28 +400,37 @@ export function Roster() {
         {/* Scrollable Content Area */}
         <Box sx={{
           flex: 1,
-          overflow: 'auto',
+          overflow: 'hidden',
           p: { xs: 1.5, sm: 2, md: 3 },
           bgcolor: 'background.default',
-          WebkitOverflowScrolling: 'touch'
         }}>
-           <Grid container spacing={{ xs: 1.5, sm: 2 }}>
-             {filteredMembers.map(member => (
-               <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2.4, xl: 2 }} key={member.id}>
-                  <RosterCard 
-                     member={member} 
-                     onClick={() => setSelectedMember(member)}
-                     audio={audioController}
-                  />
-               </Grid>
-             ))}
-           </Grid>
-           {filteredMembers.length === 0 && (
-              <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.5, gap: 2 }}>
-                 <Users size={48} strokeWidth={1} />
-                 <Typography variant="h6" fontWeight={700}>No members found</Typography>
-              </Box>
-           )}
+          {filteredMembers.length > 0 ? (
+           <AnyAutoSizer>
+             {({ height, width }: any) => {
+               const gap = 16;
+               const itemWidth = (width - (columns - 1) * gap) / columns;
+               // Estimate height: width (1:1 aspect) + ~90px for content
+               const itemHeight = itemWidth + 90; 
+               
+               return (
+                 <List
+                   height={height}
+                   width={width}
+                   itemCount={Math.ceil(filteredMembers.length / columns)}
+                   itemSize={itemHeight}
+                   itemData={{ members: filteredMembers, columns, setSelectedMember, audioController, gap }}
+                 >
+                   {RosterRow}
+                 </List>
+               );
+             }}
+           </AnyAutoSizer>
+          ) : (
+            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.5, gap: 2 }}>
+                <Users size={48} strokeWidth={1} />
+                <Typography variant="h6" fontWeight={700}>No members found</Typography>
+            </Box>
+          )}
         </Box>
       </Paper>
 
@@ -759,3 +768,23 @@ function getBadgeStyle(classType: string, theme: any) {
     
     return { color, bgcolor, borderColor: alpha(color, 0.2) };
 }
+
+const RosterRow = ({ index, style, data }: any) => {
+  const { members, columns, setSelectedMember, audioController, gap } = data;
+  const start = index * columns;
+  const end = Math.min(start + columns, members.length);
+  const items = members.slice(start, end);
+  
+  return (
+    <div style={{ ...style, display: 'flex', gap: gap, paddingBottom: gap }}>
+       {items.map((m: User) => (
+          <Box key={m.id} sx={{ flex: 1, minWidth: 0 }}>
+              <RosterCard member={m} onClick={() => setSelectedMember(m)} audio={audioController} />
+          </Box>
+       ))}
+       {Array.from({ length: columns - items.length }).map((_, i) => (
+           <Box key={`e-${i}`} sx={{ flex: 1 }} />
+       ))}
+    </div>
+  );
+};

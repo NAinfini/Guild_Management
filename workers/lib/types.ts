@@ -11,6 +11,7 @@ export interface Env {
   BUCKET: R2Bucket;
   ENVIRONMENT: string;
   ASSETS: Fetcher;
+  CONNECTIONS: DurableObjectNamespace;
 }
 
 // ============================================================

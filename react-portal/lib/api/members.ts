@@ -10,7 +10,7 @@ import type { User, ClassType } from '../../types';
 // Backend Types
 // ============================================================================
 
-interface MemberDTO {
+export interface MemberDTO {
   user_id: string;
   username: string;
   wechat_name: string | null;
@@ -52,7 +52,7 @@ export interface ProgressionItem {
 // Mappers
 // ============================================================================
 
-const mapToDomain = (dto: MemberDTO): User => {
+export const mapToDomain = (dto: MemberDTO): User => {
   // Parse classes
   let classList: ClassType[] = [];
   if (Array.isArray(dto.classes)) {

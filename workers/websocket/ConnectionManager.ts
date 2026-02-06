@@ -22,7 +22,8 @@ export class ConnectionManager {
     // Handle internal broadcast requests
     if (url.pathname === '/broadcast' && request.method === 'POST') {
       try {
-        const body = await request.json() as { excludeUserId?: string };
+        const body = await request.json() as any;
+        if (!body.timestamp) body.timestamp = new Date().toISOString();
         const sent = this.broadcast(body, body.excludeUserId);
         return new Response(JSON.stringify({ sent }), {
           headers: { 'Content-Type': 'application/json' },
@@ -83,6 +84,7 @@ export class ConnectionManager {
     // Set up alarm for cleanup (every 10 minutes)
     await this.state.storage.setAlarm(Date.now() + 10 * 60 * 1000);
 
+    console.log(`[WebSocket] Upgrading for user: ${userId}`);
     // Return the client WebSocket
     return new Response(null, {
       status: 101,

@@ -12,6 +12,7 @@
 
 import type { Env, Announcement } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
+import { broadcastUpdate } from '../../lib/broadcast';
 import { generateId, utcNow, createAuditLog, sanitizeHtml } from '../../lib/utils';
 import { validateBody, createAnnouncementSchema } from '../../lib/validation';
 import {
@@ -97,7 +98,7 @@ export const onRequestGet = createEndpoint<
           ORDER BY is_pinned DESC, created_at_utc DESC
         `;
 
-        const result = await env.DB.prepare(sqlQuery).bind(...ids).all();
+        const result = await env.DB.prepare(sqlQuery).bind(...ids).all<Announcement>();
         const found = result.results || [];
         const foundIds = new Set(found.map((a: any) => a.announcement_id));
         const notFound = ids.filter(id => !foundIds.has(id));
@@ -191,7 +192,7 @@ export const onRequestPost = createEndpoint<
     return validation.data;
   },
 
-  handler: async ({ env, body, user }) => {
+  handler: async ({ env, body, user, waitUntil }) => {
     try {
       if (!user) {
         throw new Error('User is required');
@@ -262,6 +263,15 @@ export const onRequestPost = createEndpoint<
           JSON.stringify({ count: announcementsToCreate.length })
         );
 
+        // Broadcast batch create
+        waitUntil(broadcastUpdate(env, {
+          entity: 'announcements',
+          action: 'created',
+          payload: created,
+          ids: created.map(a => a.announcement_id),
+          excludeUserId: user.user_id
+        }));
+
         return {
           message: `Created ${announcementsToCreate.length} announcements successfully`,
           announcements: created,
@@ -325,6 +335,15 @@ export const onRequestPost = createEndpoint<
         .bind(announcementId)
         .first<Announcement>();
 
+      // Broadcast single create
+      waitUntil(broadcastUpdate(env, {
+        entity: 'announcements',
+        action: 'created',
+        payload: [announcement!],
+        ids: [announcementId],
+        excludeUserId: user.user_id
+      }));
+
       return { announcement: announcement! };
     } catch (error) {
       console.error('Create announcement error:', error);
@@ -349,7 +368,7 @@ export const onRequestDelete = createEndpoint<
     announcementIds: searchParams.get('announcementIds') || undefined,
   }),
 
-  handler: async ({ env, user, query }) => {
+  handler: async ({ env, user, query, waitUntil }) => {
     const { action, announcementIds } = query;
 
     if (!announcementIds) {
@@ -401,10 +420,20 @@ export const onRequestDelete = createEndpoint<
       JSON.stringify({ announcementIds: ids, action })
     );
 
+    // Broadcast batch delete/archive
+    if (affectedCount > 0) {
+      waitUntil(broadcastUpdate(env, {
+        entity: 'announcements',
+        action: action === 'delete' ? 'deleted' : 'updated',
+        ids: ids,
+        excludeUserId: user!.user_id
+      }));
+    }
+
     return {
       message: `Batch ${action} completed`,
       affectedCount,
-      action,
+      action: action || 'delete',
     };
   },
 });

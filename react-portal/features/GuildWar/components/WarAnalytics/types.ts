@@ -247,6 +247,7 @@ export interface RankingDataPoint {
   class: string;
   value: number;
   wars_participated: number;
+  rank: number;
 }
 
 export interface TeamDataPoint {

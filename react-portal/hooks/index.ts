@@ -7,3 +7,4 @@ export * from '../features/GuildWar/hooks/useWars';
 export * from '../features/Admin/hooks/useAdmin';
 export { useOnline } from './useOnline';
 export { usePush } from './usePush';
+export { useWebSocket } from './useWebSocket';

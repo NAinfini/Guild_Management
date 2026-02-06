@@ -25,7 +25,7 @@ interface WarTeamDTO {
   }>;
 }
 
-interface WarHistoryDTO {
+export interface WarHistoryDTO {
   war_id: string;
   event_id: string;
   war_date: string;
@@ -73,7 +73,7 @@ const mapTeamToDomain = (dto: WarTeamDTO): WarTeam => ({
   })),
 });
 
-const mapHistoryToDomain = (dto: WarHistoryDTO): WarHistoryEntry => ({
+export const mapHistoryToDomain = (dto: WarHistoryDTO): WarHistoryEntry => ({
     id: dto.war_id,
     event_id: dto.event_id,
     date: dto.war_date,

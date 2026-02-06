@@ -9,6 +9,7 @@
 
 import type { Env, Event } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
+import { broadcastUpdate } from '../../lib/broadcast';
 import {
   utcNow,
   createAuditLog,
@@ -90,7 +91,7 @@ export const onRequestPut = createEndpoint<{ message: string; event: Event }, Up
 
   parseBody: (body) => body as UpdateEventBody,
 
-  handler: async ({ env, user, params, body, request }) => {
+  handler: async ({ env, user, params, body, request, waitUntil }) => {
     const eventId = params.id;
 
     // Get existing event
@@ -159,6 +160,15 @@ export const onRequestPut = createEndpoint<{ message: string; event: Event }, Up
       .bind(eventId)
       .first<Event>();
 
+    // Broadcast update
+    waitUntil(broadcastUpdate(env, {
+      entity: 'events',
+      action: 'updated',
+      payload: [updatedEvent],
+      ids: [eventId],
+      excludeUserId: user!.user_id
+    }));
+
     return {
       message: 'Event updated successfully',
       event: updatedEvent!,
@@ -176,7 +186,7 @@ export const onRequestPatch = createEndpoint<{ message: string; event: Event }, 
 
   parseBody: (body) => body as PatchEventBody,
 
-  handler: async ({ env, user, params, body }) => {
+  handler: async ({ env, user, params, body, waitUntil }) => {
     const eventId = params.id;
     const { isPinned, signupLocked } = body;
 
@@ -232,6 +242,15 @@ export const onRequestPatch = createEndpoint<{ message: string; event: Event }, 
       .bind(eventId)
       .first<Event>();
 
+    // Broadcast update
+    waitUntil(broadcastUpdate(env, {
+      entity: 'events',
+      action: 'updated',
+      payload: [updated],
+      ids: [eventId],
+      excludeUserId: user!.user_id
+    }));
+
     return {
       message: `Event ${auditActions.join(' and ')} successfully`,
       event: updated!,
@@ -247,7 +266,7 @@ export const onRequestDelete = createEndpoint<{ message: string }>({
   auth: 'required',
   cacheControl: 'no-store',
 
-  handler: async ({ env, user, params }) => {
+  handler: async ({ env, user, params, waitUntil }) => {
     const eventId = params.id;
 
     const existingEvent = await env.DB
@@ -278,8 +297,16 @@ export const onRequestDelete = createEndpoint<{ message: string }>({
       user!.user_id,
       eventId,
       'Deleted event',
-      null
+      undefined
     );
+
+    // Broadcast delete
+    waitUntil(broadcastUpdate(env, {
+      entity: 'events',
+      action: 'deleted',
+      ids: [eventId],
+      excludeUserId: user!.user_id
+    }));
 
     return { message: 'Event deleted successfully' };
   },
