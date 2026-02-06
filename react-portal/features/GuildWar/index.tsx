@@ -266,20 +266,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     if (lastAction) setToastOpen(true);
   }, [lastAction]);
 
-  // Guard: Return early AFTER all hooks
-  if (!warId) {
-    return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography variant="body2" color="text.secondary">
-          {t('guild_war.no_active_wars')}
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (isLoadingTeams) return <ActiveWarSkeleton />;
-
-
+  // ✅ ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
   const assignedUserIds = useMemo(() => {
     const set = new Set<string>();
     teams.forEach(t => t.members.forEach(m => set.add(m.user_id)));
@@ -303,6 +290,19 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     else if (poolSort === 'class') list = list.sort((a, b) => (a.classes?.[0] || 'z').localeCompare(b.classes?.[0] || 'z'));
     return list;
   }, [pool.length, activeWar?.id, assignedUserIds.size, poolSort]);  // Stable: counts + IDs + sort mode
+
+  // Guard: Return early AFTER all hooks
+  if (!warId) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary">
+          {t('guild_war.no_active_wars')}
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (isLoadingTeams) return <ActiveWarSkeleton />;
 
   const toggleSelection = (id: string, multi: boolean) => {
     const newSet = new Set(multi ? selectedIds : []);
