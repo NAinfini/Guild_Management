@@ -797,9 +797,9 @@ function DraggableMemberCard({ member, selected, onClick, onDoubleClick, onKick,
           </Stack>
           
           <Stack direction="row" alignItems="center" spacing={1}>
-              {member.classes && member.classes.length > 0 && (
-                 <Box sx={{ 
-                     px: 1, py: 0.25, borderRadius: 4, 
+              {member.classes && member.classes.length > 0 && member.classes[0] && (
+                 <Box sx={{
+                     px: 1, py: 0.25, borderRadius: 4,
                      fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase',
                      bgcolor: (() => {
                          const c = member.classes[0];
