@@ -125,14 +125,15 @@ async function request<T>(
       }
 
       // Enhanced error messages based on status code
-      let userMessage = errorData.message || 'An error occurred';
+      let userMessage = errorData.message || (errorData.error?.message) || 'An error occurred';
       
       switch (resp.status) {
         case 400:
-          userMessage = `Invalid request: ${errorData.message || 'Please check your input'}`;
+          userMessage = `Invalid request: ${userMessage}`;
           break;
         case 401:
-          userMessage = 'Session expired. Please log in again.';
+          // Use backend message if available (e.g. "Incorrect credentials"), otherwise default
+          userMessage = userMessage !== 'An error occurred' ? userMessage : 'Session expired. Please log in again.';
           break;
         case 403:
           userMessage = 'You do not have permission to perform this action.';

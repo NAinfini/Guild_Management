@@ -598,8 +598,7 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                                               const current = field.value || [];
                                               const classId = opt.id as ClassType;
                                               if (current.includes(classId)) field.onChange(current.filter((c: ClassType) => c !== classId));
-                                              else if (current.length < 2) field.onChange([...current, classId]);
-                                              else field.onChange([classId]);
+                                              else field.onChange([...current, classId]);
                                            }}
                                            variant={field.value?.includes(opt.id as ClassType) ? 'filled' : 'outlined'}
                                            size="small"

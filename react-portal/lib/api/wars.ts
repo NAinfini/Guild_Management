@@ -79,6 +79,8 @@ const mapHistoryToDomain = (dto: WarHistoryDTO): WarHistoryEntry => ({
     date: dto.war_date,
     title: dto.title,
     result: dto.result,
+    score: dto.our_kills, // Fallback/Placeholder: using Kills as score for now
+    enemy_score: dto.enemy_kills,
     own_stats: {
         kills: dto.our_kills,
         towers: dto.our_towers,

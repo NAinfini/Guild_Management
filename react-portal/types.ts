@@ -133,6 +133,8 @@ export interface WarHistoryEntry {
   date: string;
   title: string;
   result: 'victory' | 'defeat' | 'draw' | 'pending';
+  score?: number;
+  enemy_score?: number;
   own_stats: { kills: number; towers: number; base_hp: number; credits: number; distance?: number };
   enemy_stats: { kills: number; towers: number; base_hp: number; credits: number; distance?: number };
   teams_snapshot: WarTeam[];

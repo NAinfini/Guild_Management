@@ -310,7 +310,8 @@ export function Layout() {
                   <>
                    <Button
                       onClick={(e) => setUserMenuAnchor(e.currentTarget)}
-                      startIcon={
+                      startIcon={undefined}
+                      endIcon={
                         <Avatar
                           src={user?.avatar_url}
                           alt={user?.username || 'Guest'}
@@ -325,19 +326,18 @@ export function Layout() {
                            {!user && <UserCog size={isSmallMobile ? 14 : 18} />}
                         </Avatar>
                       }
-                      endIcon={!isSmallMobile && <ChevronDown size={14} />}
                       sx={{
                         textTransform: 'none',
                         color: 'text.primary',
                         borderRadius: 2,
                         minWidth: { xs: 'auto', sm: 'auto' },
                         px: { xs: 1, sm: 2 },
+                        gap: 1.5,
                         '&:hover': { bgcolor: 'action.hover' }
                       }}
                    >
-                     <Box sx={{ textAlign: 'right', mr: { xs: 0, sm: 1 }, display: { xs: 'none', md: 'block' } }}>
+                     <Box sx={{ textAlign: 'right', display: { xs: 'none', md: 'block' } }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 800, lineHeight: 1, fontSize: { sm: '0.8rem', md: '0.875rem' } }}>{user?.username || 'Guest'}</Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: { sm: '0.55rem', md: '0.6rem' } }}>{effectiveRole?.toUpperCase() || 'UNAUTHORIZED'}</Typography>
                      </Box>
                    </Button>
                    <Menu

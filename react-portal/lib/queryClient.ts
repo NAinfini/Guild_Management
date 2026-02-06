@@ -37,7 +37,7 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       
       // Don't refetch on mount if data is fresh
-      refetchOnMount: false,
+
       
       // Do refetch on reconnect
       refetchOnReconnect: true,

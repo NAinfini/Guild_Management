@@ -14,7 +14,7 @@ export function WarHistory() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
-  if (isLoading) return <CircularProgress />;
+
 
   const filtered = useMemo(() => {
     return data
@@ -42,6 +42,8 @@ export function WarHistory() {
     ).length ?? 0;
     return acc + missingMembers;
   }, 0);
+
+  if (isLoading) return <CircularProgress />;
 
   return (
     <Stack spacing={3}>

@@ -127,6 +127,9 @@ export const membersAPI = {
     if (data.wechatName !== undefined) payload.wechat_name = data.wechatName;
 
     const response = await typedAPI.members.update<{ member: MemberDTO }>({ params: { id }, body: payload });
+    if (!response || !response.member) {
+      throw new Error('Failed to update profile: No data returned');
+    }
     return mapToDomain(response.member);
   },
 
