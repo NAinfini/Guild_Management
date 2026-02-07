@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-heading: "Space Grotesk Variable", "Space Grotesk", sans-serif;
+    --font-body: "Inter Variable", "Inter", sans-serif;
+  }
+
+  /* Global Reset & Base */
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-body);
+    color: var(--text0);
+    background: var(--bg0);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Global Transitions */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Keep native date/time picker trigger visible across all themes */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  border-radius: 6px;
+  padding: 2px;
+  border: 0;
+  box-shadow: none;
+  background-color: transparent;
+  filter: brightness(0) saturate(100%) invert(100%) drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  background-color: transparent;
+  filter: brightness(0) saturate(100%) invert(100%) drop-shadow(0 0 4px rgba(255, 255, 255, 1));
+}

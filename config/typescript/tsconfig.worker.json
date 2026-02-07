@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "../../node_modules/.tmp/tsconfig.worker.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["@cloudflare/workers-types"],
+    "skipLibCheck": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "noEmit": true,
+    "baseUrl": "../../",
+    "paths": {
+      "@guild/shared-api/*": ["packages/shared-api/src/*"],
+      "@guild/shared-utils/*": ["packages/shared-utils/src/*"]
+    }
+  },
+  "include": [
+    "../../apps/worker/src/**/*",
+    "../../apps/worker/tests/**/*",
+    "../../packages/shared-api/src/**/*",
+    "../../packages/shared-utils/src/**/*"
+  ],
+  "exclude": ["../../node_modules", "../../dist"]
+}

@@ -1,19 +1,31 @@
 {
-  "name": "Guild_Management",
+  "name": "guild-management",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build:fresh": "npm install && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "test": "vitest",
-    "db:generate": "drizzle-kit generate",
-    "db:studio": "drizzle-kit studio",
-    "db:check": "drizzle-kit check",
-    "prune": "ts-prune --project tsconfig.app.json",
+    "dev": "npm run dev:portal",
+    "dev:portal": "vite --config config/vite/vite.portal.config.ts",
+    "build": "npm run build:portal",
+    "build:portal": "vite build --config config/vite/vite.portal.config.ts",
+    "build:fresh": "npm install && npm run build:portal",
+    "preview": "vite preview --config config/vite/vite.portal.config.ts",
+    "lint": "npm run lint:portal && npm run lint:worker",
+    "lint:portal": "eslint --config config/eslint/eslint.config.js \"apps/portal/src/**/*.{ts,tsx}\"",
+    "lint:worker": "eslint --config config/eslint/eslint.config.js \"apps/worker/src/**/*.ts\"",
+    "test": "npm run test:portal && npm run test:worker",
+    "test:portal": "vitest --config config/vitest/vitest.portal.config.ts",
+    "test:worker": "vitest --config config/vitest/vitest.workers.config.ts",
+    "typecheck": "npm run typecheck:portal && npm run typecheck:worker && npm run typecheck:node",
+    "typecheck:portal": "tsc -p config/typescript/tsconfig.portal.json",
+    "typecheck:worker": "tsc -p config/typescript/tsconfig.worker.json",
+    "typecheck:node": "tsc -p config/typescript/tsconfig.node.json",
+    "worker:dev": "wrangler dev --config config/wrangler/wrangler.toml",
+    "worker:deploy": "wrangler deploy --config config/wrangler/wrangler.toml",
+    "db:generate": "drizzle-kit generate --config config/drizzle/drizzle.config.ts",
+    "db:studio": "drizzle-kit studio --config config/drizzle/drizzle.config.ts",
+    "db:check": "drizzle-kit check --config config/drizzle/drizzle.config.ts",
+    "prune": "ts-prune --project config/typescript/tsconfig.portal.json",
     "clean": "rimraf dist .wrangler-output"
   },
   "dependencies": {
@@ -101,5 +113,9 @@
   },
   "overrides": {
     "esbuild": "^0.27.3"
-  }
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }

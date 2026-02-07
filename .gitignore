@@ -29,3 +29,5 @@ yarn.lock
 *.njsproj
 *.sln
 *.sw?
+*.backup
+lint_output.json

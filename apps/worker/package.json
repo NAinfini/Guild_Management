@@ -1,0 +1,15 @@
+{
+  "name": "@guild/worker",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --config ../../config/wrangler/wrangler.toml",
+    "deploy": "wrangler deploy --config ../../config/wrangler/wrangler.toml",
+    "test": "vitest --config ../../config/vitest/vitest.workers.config.ts"
+  },
+  "dependencies": {
+    "@guild/shared-api": "*",
+    "@guild/shared-utils": "*"
+  }
+}

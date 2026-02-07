@@ -1,0 +1,34 @@
+name = "guild-management"
+main = "../../apps/worker/src/worker.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "https://guild-management.na-infini.workers.dev,http://localhost:5173,http://localhost:3000"
+
+[assets]
+directory = "../../dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+html_handling = "auto-trailing-slash"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "testdatabase"
+database_id = "dc4363ba-3ec6-4909-85fd-72b838572ce2"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "testbucket"
+
+[[durable_objects.bindings]]
+name = "CONNECTIONS"
+class_name = "ConnectionManager"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ConnectionManager"]
+
+[observability]
+enabled = true

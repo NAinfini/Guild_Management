@@ -1,0 +1,10 @@
+{
+  "name": "@guild/shared-api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./contracts": "./src/contracts.ts",
+    "./endpoints": "./src/endpoints.ts"
+  }
+}

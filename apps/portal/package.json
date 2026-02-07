@@ -1,0 +1,16 @@
+{
+  "name": "@guild/portal",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config ../../config/vite/vite.portal.config.ts",
+    "build": "vite build --config ../../config/vite/vite.portal.config.ts",
+    "preview": "vite preview --config ../../config/vite/vite.portal.config.ts",
+    "test": "vitest --config ../../config/vitest/vitest.portal.config.ts"
+  },
+  "dependencies": {
+    "@guild/shared-api": "*",
+    "@guild/shared-utils": "*"
+  }
+}
