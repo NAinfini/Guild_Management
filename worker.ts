@@ -26,15 +26,6 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    // Handle OPTIONS preflight
-    if (request.method === 'OPTIONS') {
-      const origin = request.headers.get('Origin');
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders(origin),
-      });
-    }
-
     // Handle WebSocket upgrade requests
     if (pathname === '/api/ws') {
       const upgradeHeader = request.headers.get('Upgrade');
@@ -49,20 +40,23 @@ export default {
 
     // Handle API routes
     if (pathname.startsWith('/api/')) {
+      const method = request.method.toUpperCase();
+      const origin = request.headers.get('Origin');
+
       // Use registry-based route matching
       const routeMatch = matchRoute(pathname);
 
       if (!routeMatch) {
-        const origin = request.headers.get('Origin');
         return new Response(
           JSON.stringify({
             success: false,
             error: {
               code: 'NOT_FOUND',
-              message: 'API endpoint not found',
+              message: 'API endpoint does not exist',
             },
             meta: {
               path: pathname,
+              method,
               timestamp: new Date().toISOString(),
             },
           }),
@@ -77,7 +71,21 @@ export default {
       }
 
       const { handler, params, path } = routeMatch;
-      const method = request.method.toUpperCase();
+
+      // Handle API OPTIONS preflight with route-aware Allow header
+      if (method === 'OPTIONS') {
+        const allowedMethods = Object.keys(handler)
+          .filter(k => k.startsWith('onRequest'))
+          .map(k => k.replace('onRequest', '').toUpperCase());
+
+        return new Response(null, {
+          status: 204,
+          headers: {
+            ...corsHeaders(origin),
+            'Allow': [...allowedMethods, 'OPTIONS'].join(', '),
+          },
+        });
+      }
 
       // Map HTTP methods to handler functions
       let handlerFn;
@@ -100,30 +108,29 @@ export default {
       }
 
       if (!handlerFn) {
-        const origin = request.headers.get('Origin');
+        const allowedMethods = Object.keys(handler)
+          .filter(k => k.startsWith('onRequest'))
+          .map(k => k.replace('onRequest', '').toUpperCase());
+
         return new Response(
           JSON.stringify({
             success: false,
             error: {
               code: 'METHOD_NOT_ALLOWED',
-              message: `Method ${method} not allowed for this endpoint`,
+              message: `Method ${method} does not exist for this API endpoint`,
             },
             meta: {
               path: pathname,
-              allowedMethods: Object.keys(handler)
-                .filter(k => k.startsWith('onRequest'))
-                .map(k => k.replace('onRequest', '').toUpperCase()),
+              method,
+              allowedMethods,
             },
           }),
           {
             status: 405,
             headers: {
               'Content-Type': 'application/json',
-              'Allow': Object.keys(handler)
-                .filter(k => k.startsWith('onRequest'))
-                .map(k => k.replace('onRequest', '').toUpperCase())
-                .join(', '),
-              ...corsHeaders(request.headers.get('Origin')),
+              'Allow': [...allowedMethods, 'OPTIONS'].join(', '),
+              ...corsHeaders(origin),
             },
           }
         );
@@ -142,7 +149,6 @@ export default {
       };
 
       try {
-        const origin = request.headers.get('Origin');
         const rawResponse = await handlerFn(context);
         const response = new Response(rawResponse.body, rawResponse);
         const cors = corsHeaders(origin);
@@ -176,6 +182,15 @@ export default {
           }
         );
       }
+    }
+
+    // Handle non-API OPTIONS preflight
+    if (request.method === 'OPTIONS') {
+      const origin = request.headers.get('Origin');
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders(origin),
+      });
     }
 
     // For non-API routes, serve static assets
