@@ -48,7 +48,7 @@ export function WarTeamDragDrop({ warId, teams, unassignedMembers, onAssign, dis
                     sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
                   >
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <Avatar src={m.avatar_url} sx={{ width: 32, height: 32 }} />
+                      <Avatar src={m.avatar_url} alt={m.username} sx={{ width: 32, height: 32 }} />
                       <Box>
                         <Typography variant="body2" fontWeight={700}>{m.username}</Typography>
                         <Typography variant="caption" color="text.secondary">{m.classes?.[0]?.replace('_', ' ') || '—'}</Typography>

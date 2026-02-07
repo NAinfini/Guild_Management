@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useFilteredList } from '../../hooks/useFilteredList';
 import { 
   Card, 
   CardContent, 
@@ -59,14 +60,30 @@ import {
 } from '../../hooks/useServerState';
 import { MarkdownRenderer } from '../../components/MarkdownRenderer';
 import { useLastSeen } from '../../hooks/useLastSeen';
+import { PageFilterBar, type FilterOption } from '../../components/PageFilterBar';
 
 type FilterType = 'all' | 'pinned' | 'archived';
 
 export function Announcements() {
   const { user, viewRole } = useAuthStore();
 
+  const { timezoneOffset, setPageTitle } = useUIStore();
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const online = useOnline();
+
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [search, setSearch] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   // ✅ TanStack Query: Server state with automatic caching
-  const { data: announcements = [], isLoading } = useAnnouncements();
+  const { data: announcements = [], isLoading } = useAnnouncements({
+    includeArchived: filter === 'archived',
+    search,
+    startDate: filter === 'all' ? startDate : undefined, // Only use date filter in 'all' view or as needed
+    endDate: filter === 'all' ? endDate : undefined
+  });
 
   // ✅ TanStack Query: Mutations with automatic cache invalidation
   const createAnnouncementMutation = useCreateAnnouncement();
@@ -92,13 +109,6 @@ export function Announcements() {
     await archiveAnnouncementMutation.mutateAsync({ id, isArchived });
   };
 
-  const { timezoneOffset, setPageTitle } = useUIStore();
-  const { t } = useTranslation();
-  const theme = useTheme();
-  const online = useOnline();
-
-  const [filter, setFilter] = useState<FilterType>('all');
-  const [search, setSearch] = useState('');
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Announcement | null>(null);
@@ -112,25 +122,25 @@ export function Announcements() {
     setPageTitle(t('nav.announcements'));
   }, [setPageTitle, t]);
 
-  const filteredAnnouncements = useMemo(() => {
-    let result = announcements;
-    if (filter === 'pinned') result = result.filter(a => a.is_pinned && !a.is_archived);
-    else if (filter === 'archived') result = result.filter(a => a.is_archived);
-    else result = result.filter(a => !a.is_archived);
+  const announcementFilterFn = useMemo(
+    () => filter === 'pinned' ? (a: any) => a.is_pinned : undefined,
+    [filter]
+  );
+  const announcementSortFn = useMemo(
+    () => (a: any, b: any) => {
+      if (a.is_pinned !== b.is_pinned && filter !== 'archived') return a.is_pinned ? -1 : 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    },
+    [filter]
+  );
 
-    if (search) {
-        const lowerSearch = search.toLowerCase();
-        result = result.filter(a =>
-            a.title.toLowerCase().includes(lowerSearch) ||
-            a.content_html.toLowerCase().includes(lowerSearch)
-        );
-    }
-
-    return result.sort((a, b) => {
-        if (a.is_pinned !== b.is_pinned && filter !== 'archived') return a.is_pinned ? -1 : 1;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
-  }, [announcements, filter, search]);
+  const filteredAnnouncements = useFilteredList({
+    items: announcements,
+    searchText: '',
+    searchFields: [],
+    filterFn: announcementFilterFn,
+    sortFn: announcementSortFn,
+  });
 
   // Auto-mark as seen on unmount (or we could do it on mount/periodic)
   useEffect(() => {
@@ -142,6 +152,12 @@ export function Announcements() {
     markAsSeen();
     setTimeout(() => setIsMarkingAllAsRead(false), 500);
   };
+
+  const categories: FilterOption[] = [
+    { value: 'all', label: t('announcements.filter_all') },
+    { value: 'pinned', label: t('announcements.filter_pinned') },
+    { value: 'archived', label: t('announcements.filter_archived') },
+  ];
 
   if (isLoading && announcements.length === 0) {
     return (
@@ -155,98 +171,46 @@ export function Announcements() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 10, px: { xs: 2, sm: 4 } }}>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-         <Button
-            size="small"
-            startIcon={<CheckCircle2 size={16} />}
-            onClick={handleMarkAllAsRead}
-            disabled={isMarkingAllAsRead}
-            sx={{ fontWeight: 900, borderRadius: 2, letterSpacing: '0.05em' }}
-         >
-            {isMarkingAllAsRead ? t('common.loading') : t('common.mark_all_read')}
-         </Button>
-
-         {isAdmin && (
+      <PageFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={t('announcements.search_placeholder')}
+        category={filter}
+        onCategoryChange={(val) => setFilter(val as FilterType)}
+        categories={categories}
+        startDate={startDate}
+        onStartDateChange={setStartDate}
+        endDate={endDate}
+        onEndDateChange={setEndDate}
+        resultsCount={filteredAnnouncements.length}
+        isLoading={isLoading}
+        extraActions={
+          <Stack direction="row" spacing={1}>
             <Button
+              size="small"
+              variant="outlined"
+              startIcon={<CheckCircle2 size={16} />}
+              onClick={handleMarkAllAsRead}
+              disabled={isMarkingAllAsRead}
+              sx={{ fontWeight: 900, borderRadius: 2 }}
+            >
+              {isMarkingAllAsRead ? t('common.loading') : t('common.mark_all_read')}
+            </Button>
+            {isAdmin && (
+              <Button
                 variant="contained"
+                size="small"
                 startIcon={<Plus size={18} />}
                 onClick={() => { setEditTarget(null); setIsEditorOpen(true); }}
                 disabled={!online}
-                sx={{ fontWeight: 900, borderRadius: 3, px: 3 }}
-            >
-               {t('announcements.new_broadcast')}
-            </Button>
-         )}
-      </Box>
-
-      {/* Filter Bar & Search */}
-      <Box sx={{ 
-          position: 'sticky', top: 10, zIndex: 10, 
-          bgcolor: 'background.paper',
-          p: 2, borderRadius: 2, border: 1, borderColor: 'divider',
-          display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 4,
-          boxShadow: 1
-      }}>
-         <Box sx={{ display: 'flex' }}>
-            <Box sx={{ bgcolor: 'action.hover', p: 0.5, borderRadius: 2 }}>
-               <ToggleButtonGroup
-                  value={filter}
-                  exclusive
-                  onChange={(_, v) => v && setFilter(v)}
-                  size="small"
-                  aria-label="announcement filter"
-                  sx={{ 
-                      '& .MuiToggleButton-root': { 
-                          border: 0, 
-                          borderRadius: '8px !important', 
-                          fontSize: '0.7rem', 
-                          fontWeight: 800, 
-                          px: 2,
-                          py: 0.75,
-                          textTransform: 'uppercase',
-                          color: 'text.secondary',
-                          '&.Mui-selected': {
-                              bgcolor: 'background.paper',
-                              color: 'primary.main',
-                              boxShadow: 1
-                          }
-                      }
-                  }}
-               >
-                   <ToggleButton value="all" aria-label="all announcements">
-                       <Stack direction="row" spacing={1} alignItems="center">
-                          <Megaphone size={14} />
-                          <span>{t('announcements.filter_all')}</span>
-                       </Stack>
-                   </ToggleButton>
-                   <ToggleButton value="pinned" aria-label="pinned announcements">
-                       <Stack direction="row" spacing={1} alignItems="center">
-                          <Pin size={14} />
-                          <span>{t('announcements.filter_pinned')}</span>
-                       </Stack>
-                   </ToggleButton>
-                   <ToggleButton value="archived" aria-label="archived announcements">
-                       <Stack direction="row" spacing={1} alignItems="center">
-                          <Archive size={14} />
-                          <span>{t('announcements.filter_archived')}</span>
-                       </Stack>
-                   </ToggleButton>
-               </ToggleButtonGroup>
-            </Box>
-         </Box>
-
-         <TextField 
-            placeholder={t('announcements.search_placeholder')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            size="small"
-            InputProps={{
-               startAdornment: <InputAdornment position="start"><Search size={16} /></InputAdornment>,
-               sx: { borderRadius: 2, bgcolor: 'background.default', fontSize: '0.8rem', fontWeight: 600 }
-            }}
-            sx={{ width: { xs: '100%', sm: 300 } }}
-         />
-      </Box>
+                sx={{ fontWeight: 900, borderRadius: 2 }}
+              >
+                {t('announcements.new_broadcast')}
+              </Button>
+            )}
+          </Stack>
+        }
+      />
 
       {/* Feed List */}
       <Stack spacing={2}>

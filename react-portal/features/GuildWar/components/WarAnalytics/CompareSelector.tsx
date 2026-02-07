@@ -213,6 +213,7 @@ export function CompareSelector({ members, isLoading = false }: CompareSelectorP
 
                   <Avatar
                     src={member.avatar_url}
+                    alt={member.username}
                     sx={{ width: 32, height: 32, mr: 1.5 }}
                   >
                     {member.username[0]}

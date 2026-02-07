@@ -8,6 +8,7 @@
 import type { Env } from '../../../../lib/types';
 import { createEndpoint } from '../../../../lib/endpoint-factory';
 import { utcNow, createAuditLog } from '../../../../lib/utils';
+import { NotFoundError } from '../../../../lib/errors';
 
 /**
  * DELETE /api/announcements/:id/media/:mediaId - Remove media attachment
@@ -27,7 +28,7 @@ export const onRequestDelete = createEndpoint<{ success: true; message: string }
       .first();
 
     if (!announcement) {
-      throw new Error('Announcement not found');
+      throw new NotFoundError('Announcement');
     }
 
     // Check attachment exists
@@ -37,7 +38,7 @@ export const onRequestDelete = createEndpoint<{ success: true; message: string }
       .first();
 
     if (!attachment) {
-      throw new Error('Media attachment not found');
+      throw new NotFoundError('Media attachment');
     }
 
     // Delete the attachment

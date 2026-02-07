@@ -138,79 +138,42 @@ export function getRateLimitKey(
   return `ratelimit:${endpoint}:${identifier}`;
 }
 
-// In-memory rate limit store (would use KV/Durable Objects in production)
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+/**
+ * Rate limit result from Durable Object
+ */
+export interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetAt: number;
+}
 
 /**
- * Check rate limit
- * Returns true if request is allowed, false if rate limit exceeded
+ * Check rate limit via ConnectionManager Durable Object
+ * Uses DO SQLite for distributed, persistent counters
  */
-export function checkRateLimit(
+export async function checkRateLimitDO(
+  env: { CONNECTIONS: DurableObjectNamespace },
   key: string,
   maxRequests: number,
   windowMs: number
-): boolean {
-  // If maxRequests is 0, block all requests
+): Promise<RateLimitResult> {
   if (maxRequests === 0) {
-    return false;
+    return { allowed: false, remaining: 0, resetAt: Date.now() };
   }
 
-  const now = Date.now();
-  const record = rateLimitStore.get(key);
-
-  if (!record || now > record.resetAt) {
-    // Create new record
-    rateLimitStore.set(key, {
-      count: 1,
-      resetAt: now + windowMs,
+  try {
+    const id = env.CONNECTIONS.idFromName('rate-limiter');
+    const stub = env.CONNECTIONS.get(id);
+    const response = await stub.fetch('https://internal/rate-limit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, maxRequests, windowMs }),
     });
-    return true;
-  }
-
-  if (record.count >= maxRequests) {
-    // Rate limit exceeded
-    return false;
-  }
-
-  // Increment count
-  record.count++;
-  return true;
-}
-
-/**
- * Get remaining requests for a rate limit key
- */
-export function getRateLimitRemaining(
-  key: string,
-  maxRequests: number
-): { remaining: number; resetAt: number } {
-  const record = rateLimitStore.get(key);
-  if (!record) {
-    return { remaining: maxRequests, resetAt: Date.now() };
-  }
-
-  return {
-    remaining: Math.max(0, maxRequests - record.count),
-    resetAt: record.resetAt,
-  };
-}
-
-/**
- * Clean up expired rate limit records (call periodically)
- */
-export function cleanupRateLimits(): void {
-  const now = Date.now();
-  for (const [key, record] of rateLimitStore.entries()) {
-    if (now > record.resetAt) {
-      rateLimitStore.delete(key);
-    }
+    return await response.json() as RateLimitResult;
+  } catch (error) {
+    console.error('[RateLimit] DO call failed, failing open:', error);
+    // Fail open if DO is unavailable
+    return { allowed: true, remaining: maxRequests, resetAt: Date.now() };
   }
 }
-
-// Auto-cleanup disabled for Cloudflare Workers
-// Workers are stateless and the in-memory store gets reset on each instance
-// If persistent rate limiting is needed, use Durable Objects or KV
-// if (typeof setInterval !== 'undefined') {
-//   setInterval(cleanupRateLimits, 5 * 60 * 1000);
-// }
 

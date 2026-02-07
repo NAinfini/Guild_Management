@@ -15,6 +15,7 @@
 import type { Env, User } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
 import { successResponse, errorResponse, utcNow, createAuditLog } from '../../lib/utils';
+import { DB_TABLES, MEMBER_USER_SELECT_FIELDS, pickAllowedFields } from '../../lib/db-schema';
 
 // ============================================================
 // Types
@@ -27,6 +28,7 @@ interface MemberListQuery {
   cursor?: string;
   fields?: string;
   ids?: string; // Comma-separated IDs for batch fetch
+  since?: string; // ISO timestamp for incremental polling
 }
 
 interface BatchUpdateQuery {
@@ -71,6 +73,22 @@ interface BatchReadResponse {
   notFound: string[];
 }
 
+const MEMBER_BATCH_FIELD_MAP: Record<string, string> = {
+  userId: 'user_id',
+  username: 'username',
+  wechatName: 'wechat_name',
+  power: 'power',
+  isActive: 'is_active',
+  role: 'role',
+  createdAt: 'created_at_utc',
+  updatedAt: 'updated_at_utc',
+  user_id: 'user_id',
+  wechat_name: 'wechat_name',
+  is_active: 'is_active',
+  created_at_utc: 'created_at_utc',
+  updated_at_utc: 'updated_at_utc',
+};
+
 // Cursor helpers
 function encodeCursor(timestamp: string, id: string): string {
   return btoa(`${timestamp}|${id}`);
@@ -102,6 +120,7 @@ export const onRequestGet = createEndpoint<
     cursor: searchParams.get('cursor') || undefined,
     fields: searchParams.get('fields') || undefined,
     ids: searchParams.get('ids') || undefined, // NEW: Support for batch fetch
+    since: searchParams.get('since') || undefined, // Incremental polling
   }),
 
   handler: async ({ env, query }) => {
@@ -119,33 +138,14 @@ export const onRequestGet = createEndpoint<
         throw new Error('Maximum 100 IDs per request');
       }
 
-      const fields = query.fields?.split(',').map(f => f.trim()).filter(f => f.length > 0);
-
-      // Build SELECT clause based on requested fields
-      const selectFields = fields && fields.length > 0
-        ? fields.map(f => {
-            const fieldMap: Record<string, string> = {
-              userId: 'user_id',
-              username: 'username',
-              wechatName: 'wechat_name',
-              power: 'power',
-              stamina: 'stamina',
-              loyalty: 'loyalty',
-              classCode: 'class_code',
-              titleHtml: 'title_html',
-              isActive: 'is_active',
-              role: 'role',
-              createdAt: 'created_at_utc',
-              updatedAt: 'updated_at_utc',
-            };
-            return fieldMap[f] || f;
-          }).join(', ')
-        : '*';
+      const fields = query.fields?.split(',').map(f => f.trim()).filter(f => f.length > 0) || [];
+      const mappedRequested = fields.map((f) => MEMBER_BATCH_FIELD_MAP[f]).filter(Boolean);
+      const selectFields = pickAllowedFields(mappedRequested, MEMBER_USER_SELECT_FIELDS, MEMBER_USER_SELECT_FIELDS).join(', ');
 
       const placeholders = ids.map(() => '?').join(',');
       const sqlQuery = `
         SELECT ${selectFields}
-        FROM users
+        FROM ${DB_TABLES.users}
         WHERE user_id IN (${placeholders})
           AND deleted_at_utc IS NULL
         ORDER BY power DESC, username ASC
@@ -161,21 +161,7 @@ export const onRequestGet = createEndpoint<
         if (fields && fields.length > 0) {
           const converted: any = {};
           for (const field of fields) {
-            const camelToSnake: Record<string, string> = {
-              userId: 'user_id',
-              username: 'username',
-              wechatName: 'wechat_name',
-              power: 'power',
-              stamina: 'stamina',
-              loyalty: 'loyalty',
-              classCode: 'class_code',
-              titleHtml: 'title_html',
-              isActive: 'is_active',
-              role: 'role',
-              createdAt: 'created_at_utc',
-              updatedAt: 'updated_at_utc',
-            };
-            const snakeField = camelToSnake[field] || field;
+            const snakeField = MEMBER_BATCH_FIELD_MAP[field] || field;
             if (member[snakeField] !== undefined) {
               converted[field] = member[snakeField];
             }
@@ -225,6 +211,11 @@ export const onRequestGet = createEndpoint<
       if (query.role) {
         whereClauses.push('u.role = ?');
         bindings.push(query.role);
+      }
+
+      if (query.since) {
+        whereClauses.push('u.updated_at_utc > ?');
+        bindings.push(query.since);
       }
 
       if (cursorTimestamp && cursorId) {

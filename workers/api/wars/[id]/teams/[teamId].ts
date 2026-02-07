@@ -10,6 +10,7 @@
 import type { Env } from '../../../../lib/types';
 import { createEndpoint } from '../../../../lib/endpoint-factory';
 import { utcNow, createAuditLog } from '../../../../lib/utils';
+import { NotFoundError } from '../../../../lib/errors';
 
 // ============================================================
 // Types
@@ -53,7 +54,7 @@ export const onRequestGet = createEndpoint<TeamResponse>({
       .first();
 
     if (!team) {
-      throw new Error('Team not found');
+      throw new NotFoundError('Team');
     }
 
     const members = await env.DB
@@ -111,7 +112,7 @@ export const onRequestPut = createEndpoint<TeamResponse, any, UpdateTeamBody>({
       .first();
 
     if (!team) {
-      throw new Error('Team not found');
+      throw new NotFoundError('Team');
     }
 
     const updateFields: string[] = [];
@@ -204,7 +205,7 @@ export const onRequestDelete = createEndpoint<{ message: string }>({
       .first();
 
     if (!team) {
-      throw new Error('Team not found');
+      throw new NotFoundError('Team');
     }
 
     const now = utcNow();

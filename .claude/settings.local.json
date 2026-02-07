@@ -20,7 +20,10 @@
       "Bash(npx wrangler:*)",
       "Bash(git push:*)",
       "Bash(node scripts/generate-admin-password.js:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm run build)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

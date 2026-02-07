@@ -26,6 +26,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { StyleBuilder } from '../../components/tools/StyleBuilder';
+import { ThemeShowcase } from './components/ThemeShowcase';
 import { useUIStore } from '../../store';
 
 interface Tool {
@@ -50,10 +51,18 @@ export function Tools() {
 
   const tools: Tool[] = [
     {
+      id: 'theme-lab',
+      title: t('tools.theme_lab_title'),
+      description: t('tools.theme_lab_subtitle'),
+      icon: Palette,
+      color: theme.palette.secondary.main,
+      type: 'modal'
+    },
+    {
       id: 'style-builder',
       title: t('tools.builder_title'),
       description: t('tools.builder_subtitle'),
-      icon: Palette,
+      icon: Wrench,
       color: theme.palette.primary.main,
       type: 'modal'
     }
@@ -162,8 +171,9 @@ export function Tools() {
            </IconButton>
         </DialogTitle>
         <DialogContent sx={{ p: 4, pt: 2 }}>
+           {selectedTool?.id === 'theme-lab' && <ThemeShowcase />}
            {selectedTool?.id === 'style-builder' && <StyleBuilder />}
-           {selectedTool?.id !== 'style-builder' && (
+           {selectedTool?.id !== 'style-builder' && selectedTool?.id !== 'theme-lab' && (
               <Box sx={{ py: 10, textAlign: 'center', opacity: 0.5 }}>
                  <Wrench size={48} style={{ margin: '0 auto', marginBottom: 16 }} />
                   <Typography variant="h6" fontWeight={800}>{t('tools.coming_soon')}</Typography>

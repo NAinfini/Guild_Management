@@ -1,23 +1,54 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format } from "date-fns";
+import { enUS, zhCN } from "date-fns/locale";
 import DOMPurify from "dompurify";
+import i18n, { getDateFormat } from "../i18n/config";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+// Get locale object for date-fns based on current language
+function getDateLocale() {
+  return i18n.language === 'zh' ? zhCN : enUS;
 }
 
 export function formatDateTime(isoString: string, offset: number = 0, includeYear: boolean = true) {
   const date = new Date(isoString);
   // Apply manual offset if needed (in hours)
   const adjustedDate = new Date(date.getTime() + offset * 3600000);
-  return format(adjustedDate, includeYear ? "MMM d, yyyy HH:mm" : "MMM d, HH:mm");
+  const formatStr = includeYear ? getDateFormat('shortDateTime') : getDateFormat('shortDateTimeNoYear');
+  return format(adjustedDate, formatStr, { locale: getDateLocale() });
+}
+
+export function formatDate(isoString: string, offset: number = 0, includeYear: boolean = true): string {
+  const date = new Date(isoString);
+  const adjustedDate = new Date(date.getTime() + offset * 3600000);
+  const formatStr = includeYear ? getDateFormat('shortDate') : getDateFormat('shortDateNoYear');
+  return format(adjustedDate, formatStr, { locale: getDateLocale() });
 }
 
 export function formatTimeOnly(isoString: string, offset: number = 0) {
   const date = new Date(isoString);
   const adjustedDate = new Date(date.getTime() + offset * 3600000);
-  return format(adjustedDate, "HH:mm");
+  return format(adjustedDate, getDateFormat('shortTime'), { locale: getDateLocale() });
+}
+
+export function formatLongDate(isoString: string, offset: number = 0): string {
+  const date = new Date(isoString);
+  const adjustedDate = new Date(date.getTime() + offset * 3600000);
+  return format(adjustedDate, getDateFormat('longDate'), { locale: getDateLocale() });
+}
+
+export function formatMonthYear(isoString: string, offset: number = 0): string {
+  const date = new Date(isoString);
+  const adjustedDate = new Date(date.getTime() + offset * 3600000);
+  return format(adjustedDate, getDateFormat('monthYear'), { locale: getDateLocale() });
+}
+
+export function formatWeekday(date: Date): string {
+  return format(date, getDateFormat('weekday'), { locale: getDateLocale() });
 }
 
 export function getClassColor(classType?: string): string {

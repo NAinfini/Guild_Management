@@ -2,7 +2,9 @@
 export const typography = {
   // Headings favor a display font; body stays highly legible.
   fontFamily: [
+    '"Space Grotesk Variable"',
     '"Space Grotesk"',
+    '"Inter Variable"',
     'Inter',
     'system-ui',
     'Roboto',

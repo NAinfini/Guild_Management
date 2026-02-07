@@ -5,6 +5,7 @@
  */
 
 import type { Env } from '../../lib/types';
+import { DB_TABLES } from '../../lib/db-schema';
 
 // ============================================================
 // Poll Handler Types
@@ -20,7 +21,7 @@ export interface PollHandler {
 
 export async function fetchMembers(env: Env, since?: string): Promise<any[]> {
   // Preload class map
-  const { results: classRows } = await env.DB.prepare('SELECT user_id, class_code FROM member_classes').all();
+  const { results: classRows } = await env.DB.prepare(`SELECT user_id, class_code FROM ${DB_TABLES.memberClasses}`).all();
   const classMap = classRows.reduce<Record<string, string[]>>((acc, row: any) => {
     if (!acc[row.user_id]) acc[row.user_id] = [];
     acc[row.user_id].push(row.class_code);
@@ -40,8 +41,8 @@ export async function fetchMembers(env: Env, since?: string): Promise<any[]> {
       mp.bio_text,
       mp.vacation_start_at_utc,
       mp.vacation_end_at_utc
-    FROM users u
-    LEFT JOIN member_profiles mp ON mp.user_id = u.user_id
+    FROM ${DB_TABLES.users} u
+    LEFT JOIN ${DB_TABLES.memberProfiles} mp ON mp.user_id = u.user_id
     WHERE u.deleted_at_utc IS NULL
     ${since ? 'AND u.updated_at_utc > ?' : ''}
     ORDER BY (u.role = 'admin') DESC, (u.role = 'moderator') DESC, u.power DESC
@@ -75,8 +76,8 @@ export async function fetchMembers(env: Env, since?: string): Promise<any[]> {
 
 export async function fetchEvents(env: Env, since?: string): Promise<any[]> {
   const eventQuery = since
-    ? `SELECT * FROM events WHERE updated_at_utc > ? ORDER BY start_at_utc ASC`
-    : `SELECT * FROM events WHERE is_archived = 0 ORDER BY start_at_utc ASC`;
+    ? `SELECT * FROM ${DB_TABLES.events} WHERE updated_at_utc > ? ORDER BY start_at_utc ASC`
+    : `SELECT * FROM ${DB_TABLES.events} WHERE is_archived = 0 ORDER BY start_at_utc ASC`;
 
   const stmt = since
     ? env.DB.prepare(eventQuery).bind(since)
@@ -92,10 +93,11 @@ export async function fetchEvents(env: Env, since?: string): Promise<any[]> {
     const placeholders = eventIds.map(() => '?').join(',');
     const { results: participants } = await env.DB.prepare(
       `
-        SELECT ep.event_id, u.user_id, u.username, u.role, u.power, u.is_active
-        FROM event_participants ep
-        JOIN users u ON ep.user_id = u.user_id
-        WHERE ep.event_id IN (${placeholders})
+        SELECT et.event_id, u.user_id, u.username, u.role, u.power, u.is_active
+        FROM ${DB_TABLES.teamMembers} tm
+        JOIN ${DB_TABLES.eventTeams} et ON tm.team_id = et.team_id
+        JOIN ${DB_TABLES.users} u ON tm.user_id = u.user_id
+        WHERE et.event_id IN (${placeholders})
       `
     ).bind(...eventIds).all();
 
@@ -137,8 +139,8 @@ export async function fetchEvents(env: Env, since?: string): Promise<any[]> {
 
 export async function fetchAnnouncements(env: Env, since?: string): Promise<any[]> {
   const announcementQuery = since
-    ? `SELECT * FROM announcements WHERE updated_at_utc > ? ORDER BY created_at_utc DESC`
-    : `SELECT * FROM announcements WHERE is_archived = 0 ORDER BY is_pinned DESC, created_at_utc DESC`;
+    ? `SELECT * FROM ${DB_TABLES.announcements} WHERE updated_at_utc > ? ORDER BY created_at_utc DESC`
+    : `SELECT * FROM ${DB_TABLES.announcements} WHERE is_archived = 0 ORDER BY is_pinned DESC, created_at_utc DESC`;
 
   const stmt = since
     ? env.DB.prepare(announcementQuery).bind(since)

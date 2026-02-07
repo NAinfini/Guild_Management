@@ -13,7 +13,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { membersAPI, eventsAPI, announcementsAPI, adminAPI, warsAPI } from '../lib/api';
+import { membersAPI, eventsAPI, announcementsAPI, adminAPI } from '../lib/api';
 import { queryKeys } from '../lib/queryKeys';
 import { User } from '../types';
 import { useAuthStore } from '../store';
@@ -27,7 +27,7 @@ export function useMembers(options?: { includeInactive?: boolean }) {
     queryKey: queryKeys.members.list(options),
     queryFn: () => membersAPI.list(options),
     staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000, // Auto-refetch every 60s (replaces polling)
+    refetchInterval: 60 * 1000,
   });
 }
 
@@ -54,7 +54,7 @@ export function useUpdateMember() {
 // EVENTS
 // ============================================================================
 
-export function useEvents(options?: { includeArchived?: boolean }) {
+export function useEvents(options?: { type?: string; includeArchived?: boolean; search?: string; startDate?: string; endDate?: string }) {
   return useQuery({
     queryKey: queryKeys.events.list(options),
     queryFn: () => eventsAPI.list(options),
@@ -106,23 +106,7 @@ export function useTogglePinEvent() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => eventsAPI.togglePin(id),
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.events.all });
-      const previous = queryClient.getQueryData(queryKeys.events.all); // Note: this might be loose, but acceptable for optimistic
-      queryClient.setQueryData(queryKeys.events.all, (old: any) => ({ // Ideally target specific list key if possible, but 'all' partial match works in qK v3? v5 requires exact or fuzziness. 
-        // NOTE: setQueryData with array key does exact match usually? Tanstack Query v5 is fuzzy invalidation but exact setting?
-        // Actually, for optimistic updates on a LIST, we should probably target the default list.
-        // For SAFETY in this refactor, I will keep standard invalidation mostly.
-        // But for the Optimistic Update:
-        ...old,
-        items: old?.items?.map((e: any) => e.id === id ? { ...e, is_pinned: !e.is_pinned } : e) || []
-      }));
-      return { previous };
-    },
-    onError: (err, id, context: any) => {
-      queryClient.setQueryData(queryKeys.events.all, context.previous);
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
   });
@@ -160,36 +144,10 @@ export function useJoinEvent() {
         await eventsAPI.addMember(eventId, userId);
       }
     },
-    onMutate: async ({ eventId, userId }) => {
-      // Fetch members list to get full user data for optimism
-      const members = queryClient.getQueryData<User[]>(queryKeys.members.list()) || [];
-      const userData = members.find(m => m.id === userId);
-
-      await queryClient.cancelQueries({ queryKey: queryKeys.events.all });
-      const previous = queryClient.getQueryData(queryKeys.events.all);
-
-      queryClient.setQueryData(queryKeys.events.all, (old: any) => {
-        if (!old) return old;
-        const items = (old.items || old || []).map((e: any) => {
-          if (e.id === eventId) {
-            const participants = [...(e.participants || [])];
-            if (userData && !participants.find(p => p.id === userId)) {
-              participants.push(userData);
-            }
-            return { ...e, participants };
-          }
-          return e;
-        });
-        return Array.isArray(old) ? items : { ...old, items };
-      });
-
-      return { previous };
-    },
-    onError: (err, variables, context: any) => {
-      queryClient.setQueryData(queryKeys.events.all, context.previous);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    onSuccess: async () => {
+      // Ensure event lists/details refresh immediately after join.
+      await queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      await queryClient.refetchQueries({ queryKey: queryKeys.events.all, type: 'active' });
     },
   });
 }
@@ -204,31 +162,9 @@ export function useLeaveEvent() {
       }
       return eventsAPI.kick(eventId, userId);
     },
-    onMutate: async ({ eventId, userId }) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.events.all });
-      const previous = queryClient.getQueryData(queryKeys.events.all);
-
-      queryClient.setQueryData(queryKeys.events.all, (old: any) => {
-        if (!old) return old;
-        const items = (old.items || old || []).map((e: any) => {
-          if (e.id === eventId) {
-            return {
-              ...e,
-              participants: (e.participants || []).filter((p: any) => p.id !== userId)
-            };
-          }
-          return e;
-        });
-        return Array.isArray(old) ? items : { ...old, items };
-      });
-
-      return { previous };
-    },
-    onError: (err, variables, context: any) => {
-      queryClient.setQueryData(queryKeys.events.all, context.previous);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      await queryClient.refetchQueries({ queryKey: queryKeys.events.all, type: 'active' });
     },
   });
 }
@@ -237,7 +173,7 @@ export function useLeaveEvent() {
 // ANNOUNCEMENTS
 // ============================================================================
 
-export function useAnnouncements(options?: { includeArchived?: boolean }) {
+export function useAnnouncements(options?: { includeArchived?: boolean; search?: string; startDate?: string; endDate?: string }) {
   return useQuery({
     queryKey: queryKeys.announcements.list(options),
     queryFn: () => announcementsAPI.list(options),

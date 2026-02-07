@@ -45,6 +45,9 @@ interface ListAnnouncementsQuery extends PaginationQuery {
   filter?: string; // all|pinned|archived
   search?: string;
   ids?: string; // NEW: Comma-separated IDs for batch fetch
+  startDate?: string;
+  endDate?: string;
+  since?: string; // Incremental polling
 }
 
 interface BatchDeleteQuery {
@@ -72,6 +75,9 @@ export const onRequestGet = createEndpoint<
     limit: searchParams.get('limit') || undefined,
     cursor: searchParams.get('cursor') || undefined,
     ids: searchParams.get('ids') || undefined,
+    startDate: searchParams.get('startDate') || undefined,
+    endDate: searchParams.get('endDate') || undefined,
+    since: searchParams.get('since') || undefined,
   }),
 
   handler: async ({ env, query }) => {
@@ -92,7 +98,10 @@ export const onRequestGet = createEndpoint<
 
         const placeholders = ids.map(() => '?').join(',');
         const sqlQuery = `
-          SELECT * FROM announcements
+          SELECT
+            announcement_id, title, body_html, is_pinned, is_archived,
+            created_by AS author_id, updated_by, created_at_utc, updated_at_utc, archived_at_utc
+          FROM announcements
           WHERE announcement_id IN (${placeholders})
             AND deleted_at_utc IS NULL
           ORDER BY is_pinned DESC, created_at_utc DESC
@@ -132,13 +141,31 @@ export const onRequestGet = createEndpoint<
         params.push(`%${query.search}%`, `%${query.search}%`);
       }
 
+      if (query.startDate) {
+        clauses.push('created_at_utc >= ?');
+        params.push(query.startDate);
+      }
+
+      if (query.endDate) {
+        clauses.push('created_at_utc <= ?');
+        params.push(query.endDate);
+      }
+
+      if (query.since) {
+        clauses.push('updated_at_utc > ?');
+        params.push(query.since);
+      }
+
       if (cursor) {
         clauses.push('(created_at_utc < ? OR (created_at_utc = ? AND announcement_id < ?))');
         params.push(cursor.timestamp, cursor.timestamp, cursor.id);
       }
 
       const dbQuery = `
-        SELECT * FROM announcements
+        SELECT
+          announcement_id, title, body_html, is_pinned, is_archived,
+          created_by AS author_id, updated_by, created_at_utc, updated_at_utc, archived_at_utc
+        FROM announcements
         WHERE ${clauses.join(' AND ')}
         ORDER BY is_pinned DESC, created_at_utc DESC, announcement_id DESC
         LIMIT ${limit + 1}
@@ -248,7 +275,12 @@ export const onRequestPost = createEndpoint<
           await env.DB.batch(statements);
 
           created.push((await env.DB
-            .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+            .prepare(`
+              SELECT
+                announcement_id, title, body_html, is_pinned, is_archived,
+                created_by AS author_id, updated_by, created_at_utc, updated_at_utc, archived_at_utc
+              FROM announcements WHERE announcement_id = ?
+            `)
             .bind(announcementId)
             .first<Announcement>())!);
         }
@@ -331,7 +363,12 @@ export const onRequestPost = createEndpoint<
       );
 
       const announcement = await env.DB
-        .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+        .prepare(`
+          SELECT
+            announcement_id, title, body_html, is_pinned, is_archived,
+            created_by AS author_id, updated_by, created_at_utc, updated_at_utc, archived_at_utc
+          FROM announcements WHERE announcement_id = ?
+        `)
         .bind(announcementId)
         .first<Announcement>();
 

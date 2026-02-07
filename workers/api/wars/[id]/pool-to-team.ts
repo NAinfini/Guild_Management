@@ -6,6 +6,7 @@
 import type { Env } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog, successResponse } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 // SingleMove interface updated to include roleTag
 interface SingleMove {
@@ -29,7 +30,7 @@ export const onRequestPost = createEndpoint<{ message: string; count: number }, 
 
     // Get War Details
     const warHistory = await env.DB.prepare('SELECT war_id FROM war_history WHERE event_id = ?').bind(eventId).first<{ war_id: string }>();
-    if (!warHistory) throw new Error('War not found');
+    if (!warHistory) throw new NotFoundError('War');
     const warId = warHistory.war_id;
 
     const moves: SingleMove[] = [];

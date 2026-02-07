@@ -6,6 +6,7 @@
 
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 interface ConversionStatus {
   conversion_id: string;
@@ -36,7 +37,7 @@ export const onRequestGet = createEndpoint<ConversionStatus[]>({
       .first();
 
     if (!media) {
-      throw new Error('Media not found');
+      throw new NotFoundError('Media');
     }
 
     const conversions = await env.DB

@@ -3,7 +3,7 @@
  */
 
 import type { EventContext, Env, User, Session, RequestContext } from './types';
-import { getSession, getUser, getCookieValue, unauthorizedResponse, handleCors } from './utils';
+import { getSession, getUser, getCookieValue, unauthorizedResponse, handleCors, setSessionCookie } from './utils';
 
 // ============================================================
 // Authentication Middleware
@@ -36,10 +36,11 @@ export async function withAuth(
     return unauthorizedResponse('User not found or inactive');
   }
 
-  // Update session last_used_at
+  // Update session last_used_at and slide expiration window (12 hours from now)
+  const newExpiry = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
   await context.env.DB
-    .prepare('UPDATE sessions SET last_used_at_utc = datetime(\'now\') WHERE session_id = ?')
-    .bind(sessionId)
+    .prepare('UPDATE sessions SET last_used_at_utc = datetime(\'now\'), expires_at_utc = ?, updated_at_utc = datetime(\'now\') WHERE session_id = ?')
+    .bind(newExpiry, sessionId)
     .run();
 
   // Create request context
@@ -52,10 +53,13 @@ export async function withAuth(
   };
 
   // Call handler with context
-  return handler({
+  const response = await handler({
     ...context,
     data: requestContext,
   });
+
+  // Refresh cookie TTL in browser (sliding session)
+  return setSessionCookie(response, sessionId, 12 * 60 * 60);
 }
 
 // ============================================================
@@ -81,10 +85,11 @@ export async function withOptionalAuth(
     if (session) {
       user = await getUser(context.env.DB, session.user_id);
       
-      // Update session last_used_at
+      // Update session last_used_at and slide expiration (12 hours)
+      const newExpiry = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
       await context.env.DB
-        .prepare('UPDATE sessions SET last_used_at_utc = datetime(\'now\') WHERE session_id = ?')
-        .bind(sessionId)
+        .prepare('UPDATE sessions SET last_used_at_utc = datetime(\'now\'), expires_at_utc = ?, updated_at_utc = datetime(\'now\') WHERE session_id = ?')
+        .bind(newExpiry, sessionId)
         .run();
     }
   }
@@ -99,10 +104,17 @@ export async function withOptionalAuth(
   };
 
   // Call handler with context
-  return handler({
+  const response = await handler({
     ...context,
     data: requestContext,
   });
+
+  // Refresh cookie if authenticated (sliding session)
+  if (sessionId && user) {
+    return setSessionCookie(response, sessionId, 12 * 60 * 60);
+  }
+
+  return response;
 }
 
 // ============================================================
@@ -176,4 +188,3 @@ export function getRateLimitKey(request: Request, prefix: string): string {
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
   return `${prefix}:${ip}`;
 }
-

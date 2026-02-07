@@ -7,6 +7,7 @@
 import { createEndpoint } from '../../../../lib/endpoint-factory';
 import { utcNow } from '../../../../lib/utils';
 import { createAuditLog } from '../../../../lib/utils';
+import { NotFoundError } from '../../../../lib/errors';
 
 interface VideoUrlUpdateRequest {
   url?: string;
@@ -59,7 +60,7 @@ export const onRequestPut = createEndpoint<VideoUrlResponse, any, VideoUrlUpdate
       .first<any>();
 
     if (!existing) {
-      throw new Error('Video URL not found');
+      throw new NotFoundError('Video URL');
     }
 
     const now = utcNow();
@@ -155,7 +156,7 @@ export const onRequestDelete = createEndpoint<{ success: true; message: string }
       .first();
 
     if (!existing) {
-      throw new Error('Video URL not found');
+      throw new NotFoundError('Video URL');
     }
 
     // Delete from member_media (will cascade delete from media_objects)

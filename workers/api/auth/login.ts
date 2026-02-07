@@ -16,6 +16,7 @@ import {
 } from '../../lib/utils';
 import { checkRateLimit, getRateLimitKey } from '../../lib/middleware';
 import { validateBody, loginSchema } from '../../lib/validation';
+import { AuthenticationError, ForbiddenError } from '../../lib/errors';
 
 // ============================================================
 // Types
@@ -79,11 +80,11 @@ export const onRequestPost = createEndpoint<LoginResponse | Response, LoginBody>
     }
 
     if (!user) {
-      throw new Error('Incorrect credentials');
+      throw new AuthenticationError('Incorrect credentials');
     }
 
     if (!user.is_active) {
-      throw new Error('Account is inactive');
+      throw new ForbiddenError('Account is inactive');
     }
 
     // Get password hash
@@ -99,7 +100,7 @@ export const onRequestPost = createEndpoint<LoginResponse | Response, LoginBody>
     }
 
     if (!authRecord) {
-      throw new Error('Incorrect credentials');
+      throw new AuthenticationError('Incorrect credentials');
     }
 
     // Verify password
@@ -115,15 +116,15 @@ export const onRequestPost = createEndpoint<LoginResponse | Response, LoginBody>
     }
 
     if (!isValid) {
-      throw new Error('Incorrect credentials');
+      throw new AuthenticationError('Incorrect credentials');
     }
 
     // Create session
     const sessionId = generateId('ses');
     const now = utcNow();
     // If "Stay logged in" is checked (rememberMe = true), session lasts 30 days
-    // Otherwise, session lasts 1 day
-    const maxAge = body.rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60; // 30 days or 1 day
+    // Otherwise, session lasts 12 hours (kept as 12h per user request)
+    const maxAge = body.rememberMe ? 30 * 24 * 60 * 60 : 12 * 60 * 60; // 30 days or 12 hours
     const expiresAt = new Date(Date.now() + maxAge * 1000).toISOString().replace('T', ' ').substring(0, 19);
 
     const userAgent = request.headers.get('User-Agent') || null;

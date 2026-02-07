@@ -106,20 +106,23 @@ export function Layout() {
     admin: theme.palette.error.main,
     moderator: theme.palette.warning.main,
     member: theme.palette.primary.main,
-    external: theme.custom?.mutedText || theme.palette.text.secondary,
+    external: theme.palette.text.secondary,
   };
 
   const SidebarContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.paper', borderRight: `1px solid ${theme.palette.divider}` }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${theme.palette.divider}` }}>
          <Typography variant="h6" sx={{ 
-            fontWeight: 900, 
-            background: `linear-gradient(45deg, ${alpha(theme.palette.primary.main, 0.8)} 30%, ${alpha(theme.palette.secondary.main, 0.8)} 90%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            fontWeight: 950, 
+            background: `var(--logo-bg)`,
+            color: `var(--logo-text)`,
+            padding: '2px 8px',
             fontStyle: 'italic',
             textTransform: 'uppercase',
-            letterSpacing: '-0.05em'
+            letterSpacing: '-0.02em',
+            display: 'inline-block',
+            borderRadius: 'var(--radiusInput)',
+            boxShadow: 'var(--shadow1)'
          }}>
             BaiYe Portal
          </Typography>
@@ -142,19 +145,20 @@ export function Layout() {
             activeProps={{ 
               'aria-current': 'page',
               style: { 
-                background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, transparent 100%)`,
-                borderRight: `3px solid ${theme.palette.primary.main}`,
-                color: theme.palette.primary.main
+                background: `var(--nav-active-bg)`,
+                opacity: 1,
+                color: 'var(--text0)',
+                borderRight: 'var(--stroke) solid var(--accent1)',
               } 
             }}
             sx={{
               mb: 0.5,
-              borderRadius: 2,
+              borderRadius: 'var(--radiusBtn)',
               border: '1px solid transparent',
               '&:hover': {
-                backgroundColor: theme.palette.action.hover,
-                borderColor: alpha(theme.palette.primary.main, 0.2),
-                boxShadow: theme.custom?.glow,
+                backgroundColor: 'var(--surface2)',
+                borderColor: 'var(--accent0)',
+                boxShadow: 'var(--glow)',
                 transform: 'translateX(4px)',
               },
               '&:focus-visible': {
@@ -200,12 +204,12 @@ export function Layout() {
                              py: 0.5, 
                              fontSize: '0.6rem',
                              fontWeight: 900,
-                             bgcolor: isActive ? roleColors[r] : 'transparent',
-                             color: isActive ? '#fff' : roleColors[r],
-                             borderColor: roleColors[r],
+                             bgcolor: isActive ? (roleColors[r] || theme.palette.primary.main) : 'transparent',
+                             color: isActive ? '#fff' : (roleColors[r] || theme.palette.primary.main),
+                             borderColor: roleColors[r] || theme.palette.primary.main,
                              '&:hover': {
-                                bgcolor: isActive ? roleColors[r] : alpha(roleColors[r], 0.1),
-                                borderColor: roleColors[r]
+                                bgcolor: isActive ? (roleColors[r] || '#f59e0b') : 'rgba(245, 158, 11, 0.1)',
+                                borderColor: roleColors[r] || '#f59e0b'
                              }
                           }}
                         >
@@ -224,6 +228,7 @@ export function Layout() {
   );
 
   return (
+    <>
     <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       {/* Mobile Sidebar (Drawer) */}
       {isMobile && (
@@ -270,8 +275,8 @@ export function Layout() {
         <AppBar position="sticky" elevation={0} color="transparent" sx={{ 
             borderBottom: theme.custom?.border, 
             background: theme.palette.mode === 'dark' 
-              ? `linear-gradient(to bottom, ${alpha(theme.palette.background.default, 0.9)}, ${alpha(theme.palette.background.default, 0.7)})`
-              : alpha(theme.palette.background.default, 0.8),
+              ? `linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.7))`
+              : 'rgba(255,255,255,0.8)',
             backdropFilter: 'blur(16px)',
             zIndex: theme.zIndex.drawer + 1,
             transition: 'all 0.3s ease'
@@ -320,7 +325,7 @@ export function Layout() {
                              height: { xs: 28, sm: 32 },
                              borderRadius: 1,
                              border: `1px solid ${theme.palette.primary.main}`,
-                             bgcolor: user ? 'transparent' : alpha(theme.palette.primary.main, 0.1)
+                             bgcolor: user ? 'transparent' : 'rgba(245, 158, 11, 0.1)'
                           }}
                         >
                            {!user && <UserCog size={isSmallMobile ? 14 : 18} />}
@@ -348,19 +353,19 @@ export function Layout() {
                       slotProps={{ paper: { sx: { width: 220, borderRadius: 2, border: theme.custom?.border, boxShadow: theme.custom?.customShadow } } }}
                    >
                       {user ? (
-                         <>
-                            <Box sx={{ px: 2, py: 1 }}>
+                         [
+                            <Box key="header" sx={{ px: 2, py: 1 }}>
                               <Typography variant="overline" sx={{ fontWeight: 900, color: 'text.disabled' }}>{t('nav.operative_account')}</Typography>
-                            </Box>
-                            <MenuItem component={Link} to="/profile" onClick={() => setUserMenuAnchor(null)}>
+                            </Box>,
+                            <MenuItem key="profile" component={Link} to="/profile" onClick={() => setUserMenuAnchor(null)}>
                                <ListItemIcon><UserCog size={16} /></ListItemIcon>
                                <ListItemText primary={t('nav.identity_dossier')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
-                            </MenuItem>
-                            <MenuItem component={Link} to="/settings" onClick={() => setUserMenuAnchor(null)}>
+                            </MenuItem>,
+                            <MenuItem key="settings" component={Link} to="/settings" onClick={() => setUserMenuAnchor(null)}>
                                <ListItemIcon><Settings size={16} /></ListItemIcon>
                                <ListItemText primary={t('nav.terminal_config')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
                             </MenuItem>
-                         </>
+                         ]
                       ) : (
                          <MenuItem component={Link} to="/login" onClick={() => setUserMenuAnchor(null)}>
                             <ListItemIcon><LogIn size={16} /></ListItemIcon>
@@ -384,15 +389,13 @@ export function Layout() {
                           <ChevronDown size={14} />
                       </MenuItem>
 
-                      {user && (
-                         <>
-                           <Divider sx={{ my: 1 }} />
-                           <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                      {user && [
+                           <Divider key="logout-div" sx={{ my: 1 }} />,
+                           <MenuItem key="logout" onClick={handleLogout} sx={{ color: 'error.main' }}>
                               <ListItemIcon><LogOut size={16} color="var(--mui-palette-error-main)"/></ListItemIcon>
                               <ListItemText primary={t('nav.sever_connection')} primaryTypographyProps={{ variant: 'body2', fontWeight: 700 }} />
                            </MenuItem>
-                         </>
-                      )}
+                      ]}
                    </Menu>
 
                    {/* Independent Menus for Theme and Language to keep it simple without nested menu complexities of MUI */}
@@ -402,11 +405,14 @@ export function Layout() {
                       onClose={() => setThemeMenuAnchor(null)}
                       anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
                       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                      slotProps={{ paper: { sx: { width: 220, borderRadius: 2, border: theme.custom?.border, boxShadow: theme.custom?.customShadow } } }}
                    >
-                      <MenuItem onClick={() => { setTheme('default'); setThemeMenuAnchor(null); }}>{t('themes.default')}</MenuItem>
-                      <MenuItem onClick={() => { setTheme('chineseInk'); setThemeMenuAnchor(null); }}>{t('themes.chinese_ink')}</MenuItem>
-                      <MenuItem onClick={() => { setTheme('darkGold'); setThemeMenuAnchor(null); }}>{t('themes.dark_gold')}</MenuItem>
-                      <MenuItem onClick={() => { setTheme('neonSpectral'); setThemeMenuAnchor(null); }}>{t('themes.neon_spectral')}</MenuItem>
+                      <MenuItem onClick={() => { setTheme('default'); setThemeMenuAnchor(null); }}>{t('settings.theme_default')}</MenuItem>
+                      <MenuItem onClick={() => { setTheme('chinese-ink'); setThemeMenuAnchor(null); }}>{t('settings.theme_chinese_ink')}</MenuItem>
+                      <MenuItem onClick={() => { setTheme('dark-gold'); setThemeMenuAnchor(null); }}>{t('settings.theme_dark_gold')}</MenuItem>
+                      <MenuItem onClick={() => { setTheme('neon-spectral'); setThemeMenuAnchor(null); }}>{t('settings.theme_neon')}</MenuItem>
+                      <MenuItem onClick={() => { setTheme('redgold'); setThemeMenuAnchor(null); }}>{t('settings.theme_red_gold')}</MenuItem>
+                      <MenuItem onClick={() => { setTheme('softpink'); setThemeMenuAnchor(null); }}>{t('settings.theme_soft_pink')}</MenuItem>
                    </Menu>
 
                    <Menu
@@ -415,6 +421,7 @@ export function Layout() {
                       onClose={() => setLangMenuAnchor(null)}
                       anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
                       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                      slotProps={{ paper: { sx: { width: 220, borderRadius: 2, border: theme.custom?.border, boxShadow: theme.custom?.customShadow } } }}
                    >
                       <MenuItem selected={i18n.language === 'en'} onClick={() => changeLanguage('en')}>English</MenuItem>
                       <MenuItem selected={i18n.language === 'zh'} onClick={() => changeLanguage('zh')}>简体中文</MenuItem>
@@ -427,13 +434,13 @@ export function Layout() {
         <OfflineBanner />
 
         <Box
+          id="main-content"
           sx={{
              flexGrow: 1,
              p: { xs: mobile.spacing.page, sm: mobile.spacing.page, md: 3, lg: 4 },
              pb: { xs: 'calc(96px + env(safe-area-inset-bottom))', lg: 4 },
              overflowY: 'auto',
-             bgcolor: 'background.default',
-             backgroundImage: 'radial-gradient(ellipse at top, rgba(255,255,255,0.05), transparent)',
+             bgcolor: 'transparent',
              WebkitOverflowScrolling: 'touch'
           }}
           className="custom-scrollbar"
@@ -446,5 +453,6 @@ export function Layout() {
         </Box>
       </Box>
     </Box>
+    </>
   );
 }

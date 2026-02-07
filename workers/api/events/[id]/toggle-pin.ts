@@ -6,6 +6,7 @@
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog, assertIfMatch, etagFromTimestamp, successResponse, notFoundResponse } from '../../../lib/utils';
 import type { Event } from '../../../lib/types';
+import { NotFoundError } from '../../../lib/errors';
 
 interface TogglePinResponse {
   message: string;
@@ -26,7 +27,7 @@ export const onRequestPost = createEndpoint<TogglePinResponse>({
       .first<Event>();
 
     if (!event) {
-      throw new Error('Event not found'); // createEndpoint handles errors, but notFoundResponse is better? 
+      throw new NotFoundError('Event'); // createEndpoint handles errors, but notFoundResponse is better? 
       // createEndpoint wraps errors. If we want 404, we should throw a specific error or strict return.
       // But let's stick to throwing for now or return Response logic if supported.
       // Wait, createEndpoint handler supports returning Response now.

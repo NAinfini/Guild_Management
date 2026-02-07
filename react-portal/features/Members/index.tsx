@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { useFilteredList } from '../../hooks/useFilteredList';
 import {
   Card,
   CardContent,
@@ -22,25 +23,23 @@ import {
   Paper,
   Badge
 } from '@mui/material';
-import * as ReactWindow from 'react-window';
-const List = (ReactWindow as any).FixedSizeList;
+import { List } from 'react-window';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
-const AnyAutoSizer = AutoSizer as any;
 import { 
-  Search, 
-  Volume2, 
-  VolumeX, 
-  Image as ImageIcon, 
-  X, 
-  Zap, 
-  ChevronLeft, 
-  ChevronRight, 
-  Play,
   ChevronDown,
   ChevronUp,
   Users,
-  Filter
+  Filter,
+  Volume2,
+  VolumeX,
+  Image as ImageIcon,
+  X,
+  Zap,
+  ChevronLeft,
+  ChevronRight,
+  Play,
 } from 'lucide-react';
+import { PageFilterBar, type FilterOption } from '../../components/PageFilterBar';
 import { useUIStore, useAuthStore } from '../../store';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -202,19 +201,19 @@ export function Roster() {
     };
   }, [members.length]); // Stable: only recompute when member count changes
 
-  const filteredMembers = useMemo(() => {
-    if (!members) return [];
-    const list = [...members].filter(m =>
-      m.username.toLowerCase().includes(search.toLowerCase()) ||
-      m.wechat_name?.toLowerCase().includes(search.toLowerCase())
-    );
+  const memberSortFn = useMemo(() => {
+    if (sort === 'power') return (a: any, b: any) => (b.power || 0) - (a.power || 0);
+    if (sort === 'name') return (a: any, b: any) => a.username.localeCompare(b.username);
+    if (sort === 'class') return (a: any, b: any) => (a.classes?.[0] || '').localeCompare(b.classes?.[0] || '');
+    return undefined;
+  }, [sort]);
 
-    if (sort === 'power') list.sort((a, b) => (b.power || 0) - (a.power || 0));
-    if (sort === 'name') list.sort((a, b) => a.username.localeCompare(b.username));
-    if (sort === 'class') list.sort((a, b) => (a.classes?.[0] || '').localeCompare(b.classes?.[0] || ''));
-
-    return list;
-  }, [members.length, members.map(m => m.user_id).join(','), search, sort]); // Stable: length + IDs + filters
+  const filteredMembers = useFilteredList({
+    items: members || [],
+    searchText: search,
+    searchFields: ['username', 'wechat_name'] as any,
+    sortFn: memberSortFn,
+  });
   if (isLoading && (!members || members.length === 0)) {
     return (
       <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
@@ -236,6 +235,14 @@ export function Roster() {
     );
   }
 
+  const hasAdvancedFilters = (
+    filters.roles.length +
+    filters.classes.length +
+    (filters.status !== 'all' ? 1 : 0) +
+    (filters.hasMedia ? 1 : 0) +
+    (filters.powerRange[0] > 0 || filters.powerRange[1] < 999999999 ? 1 : 0)
+  ) > 0;
+
   return (
     <Box sx={{
       p: { xs: 0, sm: 1, md: 2, lg: 4 },
@@ -252,150 +259,51 @@ export function Roster() {
         borderColor: 'divider'
       }}>
 
-        {/* Header Toolbar */}
-        <Box sx={{
-            p: { xs: 2, sm: 2.5, md: 3 },
-            borderBottom: 1,
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            display: 'flex',
-            flexDirection: { xs: 'column', lg: 'row' },
-            gap: { xs: 1.5, sm: 2 },
-            alignItems: { xs: 'stretch', lg: 'center' },
-            justifyContent: 'space-between'
-        }}>
-            {/* Search & Sort Group */}
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1.5, sm: 2 }} alignItems="stretch" sx={{ flex: { xs: 1, lg: 'unset' } }}>
-                <TextField
-                    placeholder={t('roster.search_placeholder')}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    size="small"
-                    fullWidth={isSmallMobile}
-                    InputProps={{
-                        startAdornment: <InputAdornment position="start"><Search size={isSmallMobile ? 14 : 16} /></InputAdornment>,
-                        sx: {
-                          borderRadius: 2,
-                          fontSize: { xs: '0.75rem', sm: '0.8rem' },
-                          fontWeight: 600,
-                          width: { xs: '100%', sm: 260 }
-                        }
-                    }}
-                    sx={{ width: { xs: '100%', sm: 'auto' } }}
-                />
-
-                <ToggleButtonGroup
-                    value={sort}
-                    exclusive
-                    onChange={(_, v) => v && setSort(v)}
-                    size="small"
-                    fullWidth={isSmallMobile}
-                    sx={{
-                      width: { xs: '100%', sm: 'auto' },
-                      '& .MuiToggleButton-root': {
-                         px: { xs: 1.5, sm: 2 },
-                         py: { xs: 0.6, sm: 0.8 },
-                         border: 0,
-                         borderRadius: 2,
-                         fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                         fontWeight: 800,
-                         color: 'text.secondary',
-                         flex: isSmallMobile ? 1 : 'unset',
-                         '&.Mui-selected': {
-                            bgcolor: 'action.selected',
-                            color: 'primary.main'
-                         },
-                         '&:first-of-type': { borderRadius: 2 },
-                         '&:last-of-type': { borderRadius: 2 },
-                         mx: { xs: 0.25, sm: 0.5 }
-                      }
-                    }}
-                >
-                    {(['power', 'name', 'class'] as const).map(s => (
-                        <ToggleButton key={s} value={s}>
-                            {isSmallMobile ? t(`roster.sort_${s}`).substring(0, 4) : t(`roster.sort_${s}`)}
-                        </ToggleButton>
-                    ))}
-                </ToggleButtonGroup>
-                
-                {/* Filter Button */}
-                <Button
-                  variant={(
-                    filters.roles.length > 0 ||
-                    filters.classes.length > 0 ||
-                    filters.status !== 'all' ||
-                    filters.hasMedia ||
-                    filters.powerRange[0] > 0 ||
-                    filters.powerRange[1] < 999999999
-                  ) ? 'contained' : 'outlined'}
-                  startIcon={<Filter size={16} />}
-                  onClick={() => setFilterPanelOpen(true)}
-                  size="small"
-                  sx={{ 
-                    borderRadius: 2,
-                    fontWeight: 700,
-                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                    px: { xs: 1.5, sm: 2 },
-                    py: { xs: 0.75, sm: 0.8 },
-                  }}
-                >
-                  {isMobile ? '' : 'Filters'}
-                  {(
-                    filters.roles.length +
-                    filters.classes.length +
-                    (filters.status !== 'all' ? 1 : 0) +
-                    (filters.hasMedia ? 1 : 0) +
-                    (filters.powerRange[0] > 0 || filters.powerRange[1] < 999999999 ? 1 : 0)
-                  ) > 0 && (
-                    <Chip
-                      label={
-                        filters.roles.length +
-                        filters.classes.length +
-                        (filters.status !== 'all' ? 1 : 0) +
-                        (filters.hasMedia ? 1 : 0) +
-                        (filters.powerRange[0] > 0 || filters.powerRange[1] < 999999999 ? 1 : 0)
-                      }
-                      size="small"
-                      sx={{
-                        ml: 0.5,
-                        height: 18,
-                        fontSize: '0.65rem',
-                        fontWeight: 900,
-                        '& .MuiChip-label': { px: 0.75 }
-                      }}
-                    />
-                  )}
-                </Button>
-            </Stack>
-
-            {/* Audio Controls */}
+        <PageFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t('roster.search_placeholder')}
+          category={sort}
+          onCategoryChange={(v) => setSort(v as any)}
+          categories={[
+            { value: 'power', label: t('roster.sort_power') },
+            { value: 'name', label: t('roster.sort_name') },
+            { value: 'class', label: t('roster.sort_class') },
+          ]}
+          onAdvancedClick={() => setFilterPanelOpen(true)}
+          advancedOpen={filterPanelOpen}
+          hasAdvancedFilters={hasAdvancedFilters}
+          resultsCount={filteredMembers.length}
+          isLoading={isLoading}
+          extraActions={
             <Paper elevation={0} sx={{
-               display: { xs: 'flex', sm: 'flex' },
-               alignItems: 'center',
-               gap: { xs: 1.5, sm: 2 },
-               px: { xs: 1.5, sm: 2 },
-               py: { xs: 0.75, sm: 1 },
-               borderRadius: { xs: 2, sm: 3 },
-               border: 1,
-               borderColor: 'divider',
-               bgcolor: 'background.default'
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 3,
+              border: 1,
+              borderColor: 'divider',
+              bgcolor: 'background.default'
             }}>
                 <IconButton
                     size="small"
                     onClick={() => setAudioSettings({ mute: !audioSettings.mute })}
                     color={audioSettings.mute ? "error" : "primary"}
-                    sx={{ p: { xs: 0.75, sm: 1 } }}
+                    sx={{ p: 0.5 }}
                 >
-                    {audioSettings.mute ? <VolumeX size={isSmallMobile ? 16 : 18} /> : <Volume2 size={isSmallMobile ? 16 : 18} />}
+                    {audioSettings.mute ? <VolumeX size={16} /> : <Volume2 size={16} />}
                 </IconButton>
                 <Slider
                     size="small"
                     value={audioSettings.volume}
                     onChange={(_, v) => setAudioSettings({ volume: v as number })}
-                    sx={{ width: { xs: 60, sm: 80 } }}
+                    sx={{ width: 60 }}
                 />
             </Paper>
-        </Box>
+          }
+        />
 
         {/* Scrollable Content Area */}
         <Box sx={{
@@ -405,26 +313,23 @@ export function Roster() {
           bgcolor: 'background.default',
         }}>
           {filteredMembers.length > 0 ? (
-           <AnyAutoSizer>
-             {({ height, width }: any) => {
+           <AutoSizer>
+             {({ height, width }) => {
                const gap = 16;
                const itemWidth = (width - (columns - 1) * gap) / columns;
-               // Estimate height: width (1:1 aspect) + ~90px for content
-               const itemHeight = itemWidth + 90; 
-               
+               const itemHeight = itemWidth + 90;
                return (
                  <List
-                   height={height}
-                   width={width}
-                   itemCount={Math.ceil(filteredMembers.length / columns)}
-                   itemSize={itemHeight}
-                   itemData={{ members: filteredMembers, columns, setSelectedMember, audioController, gap }}
-                 >
-                   {RosterRow}
-                 </List>
+                   style={{ height, width }}
+                   rowCount={Math.ceil(filteredMembers.length / columns)}
+                   rowHeight={itemHeight}
+                   rowComponent={RosterRow}
+                   rowProps={{ members: filteredMembers, columns, setSelectedMember, audioController, gap }}
+                   overscanCount={2}
+                 />
                );
              }}
-           </AnyAutoSizer>
+           </AutoSizer>
           ) : (
             <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.5, gap: 2 }}>
                 <Users size={48} strokeWidth={1} />
@@ -769,22 +674,42 @@ function getBadgeStyle(classType: string, theme: any) {
     return { color, bgcolor, borderColor: alpha(color, 0.2) };
 }
 
-const RosterRow = ({ index, style, data }: any) => {
-  const { members, columns, setSelectedMember, audioController, gap } = data;
+function RosterRow({
+  index,
+  style,
+  members,
+  columns,
+  setSelectedMember,
+  audioController,
+  gap,
+}: {
+  index: number;
+  style: React.CSSProperties;
+  members: User[];
+  columns: number;
+  setSelectedMember: (member: User) => void;
+  audioController: ReturnType<typeof useGlobalAudio>;
+  gap: number;
+}) {
   const start = index * columns;
   const end = Math.min(start + columns, members.length);
   const items = members.slice(start, end);
-  
+
   return (
-    <div style={{ ...style, display: 'flex', gap: gap, paddingBottom: gap }}>
-       {items.map((m: User) => (
-          <Box key={m.id} sx={{ flex: 1, minWidth: 0 }}>
-              <RosterCard member={m} onClick={() => setSelectedMember(m)} audio={audioController} />
-          </Box>
-       ))}
-       {Array.from({ length: columns - items.length }).map((_, i) => (
-           <Box key={`e-${i}`} sx={{ flex: 1 }} />
-       ))}
+    <div style={{ ...style, display: 'flex', gap, paddingBottom: gap }}>
+      {items.map((member) => (
+        <Box key={member.id} sx={{ flex: 1, minWidth: 0 }}>
+          <RosterCard
+            member={member}
+            onClick={() => setSelectedMember(member)}
+            audio={audioController}
+          />
+        </Box>
+      ))}
+      {Array.from({ length: columns - items.length }).map((_, i) => (
+        <Box key={`empty-${index}-${i}`} sx={{ flex: 1 }} />
+      ))}
     </div>
   );
-};
+}
+

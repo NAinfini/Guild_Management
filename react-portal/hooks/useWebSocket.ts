@@ -2,7 +2,10 @@
  * WebSocket Client Hook (Refactored)
  * Manages WebSocket connection and handles real-time updates with Delta Cache Updates.
  *
- * This hook replaces usePush for efficient real-time state synchronization.
+ * Features:
+ * - Sequence number tracking for gap detection
+ * - Entity subscription filtering
+ * - Exponential backoff reconnection
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
@@ -20,9 +23,27 @@ export function useWebSocket() {
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSeqRef = useRef<Record<string, number>>({});
   const queryClient = useQueryClient();
 
   const handleMessage = useCallback((message: WebSocketMessage) => {
+    // Handle welcome message with initial seqs (sent on connect)
+    if (message.type === 'welcome' && message.data?.seqs) {
+      const serverSeqs = message.data.seqs as Record<string, number>;
+      const clientSeqs = lastSeqRef.current;
+
+      // Check each entity for gaps (reconnect scenario)
+      for (const [entity, serverSeq] of Object.entries(serverSeqs)) {
+        const clientSeq = clientSeqs[entity] || 0;
+        if (clientSeq > 0 && serverSeq > clientSeq) {
+          queryClient.invalidateQueries({ queryKey: [entity] });
+        }
+      }
+
+      lastSeqRef.current = serverSeqs;
+      return;
+    }
+
     // Handle legacy message format if any
     if (message.type && !message.entity) {
         if (message.type === 'ping') {
@@ -31,16 +52,27 @@ export function useWebSocket() {
         }
     }
 
-    const { entity, action, payload, ids } = message;
+    const { entity, action, payload, ids, seq } = message;
     if (!entity || !action) return;
 
-    // console.info(`[WebSocket] Real-time ${action} on ${entity}`, { ids });
+    // Sequence gap detection
+    if (seq !== undefined && entity) {
+      const lastSeen = lastSeqRef.current[entity] || 0;
+      if (seq > lastSeen + 1 && lastSeen > 0) {
+        // Gap detected: missed messages. Invalidate cache for full refetch.
+        console.warn(`[WebSocket] Seq gap for ${entity}: expected ${lastSeen + 1}, got ${seq}. Invalidating.`);
+        queryClient.invalidateQueries({ queryKey: [entity] });
+        lastSeqRef.current[entity] = seq;
+        return;
+      }
+      lastSeqRef.current[entity] = seq;
+    }
 
     // Helper to update a list in the cache
     const updateList = (baseKey: readonly any[], items: any[], idField: string) => {
         queryClient.setQueriesData({ queryKey: baseKey }, (oldData: any) => {
             if (!oldData) return oldData;
-            
+
             let list = Array.isArray(oldData) ? oldData : (oldData.items || []);
             const isArray = Array.isArray(oldData);
 
@@ -49,7 +81,7 @@ export function useWebSocket() {
             } else if (payload && payload.length > 0) {
                 const newItemsMap = new Map(items.map((i: any) => [i[idField], i]));
                 list = list.map((item: any) => newItemsMap.has(item[idField]) ? newItemsMap.get(item[idField]) : item);
-                
+
                 items.forEach((newItem: any) => {
                     if (!list.find((existing: any) => existing[idField] === newItem[idField])) {
                         list.unshift(newItem);
@@ -76,29 +108,29 @@ export function useWebSocket() {
     try {
         if (entity === 'members') {
             const mapped = payload?.map(mapMember) || [];
-            updateList(queryKeys.members.all, mapped, 'user_id');
-            updateDetails(queryKeys.members.detail, mapped, 'user_id');
+            updateList(queryKeys.members.all, mapped, 'id');
+            updateDetails(queryKeys.members.detail, mapped, 'id');
             if (action === 'updated') toast.info('Member profile updated');
         }
 
         if (entity === 'events') {
             const mapped = payload?.map(mapEvent) || [];
-            updateList(queryKeys.events.all, mapped, 'event_id');
-            updateDetails(queryKeys.events.detail, mapped, 'event_id');
+            updateList(queryKeys.events.all, mapped, 'id');
+            updateDetails(queryKeys.events.detail, mapped, 'id');
             if (action === 'created') toast.success(`New Event: ${mapped[0]?.title}`);
             if (action === 'deleted') toast.info('Event cancelled');
         }
 
         if (entity === 'announcements') {
             const mapped = payload?.map(mapAnnouncement) || [];
-            updateList(queryKeys.announcements.all, mapped, 'announcement_id');
-            updateDetails(queryKeys.announcements.detail, mapped, 'announcement_id');
+            updateList(queryKeys.announcements.all, mapped, 'id');
+            updateDetails(queryKeys.announcements.detail, mapped, 'id');
             if (action === 'created') toast.success(`New Announcement: ${mapped[0]?.title}`, 5000);
         }
 
         if (entity === 'wars') {
             const mapped = payload?.map(mapWar) || [];
-            updateList(queryKeys.wars.history(), mapped, 'event_id');
+            updateList(queryKeys.wars.history(), mapped, 'id');
             if (action === 'updated') toast.info('War results updated');
         }
     } catch (err) {
@@ -123,7 +155,12 @@ export function useWebSocket() {
       ws.onopen = () => {
         setIsConnected(true);
         setReconnectAttempts(0);
-        // console.info('[WebSocket] Connected');
+
+        // Subscribe to all entities by default
+        ws.send(JSON.stringify({
+          type: 'subscribe',
+          entities: ['members', 'events', 'announcements', 'wars'],
+        }));
       };
 
       ws.onmessage = (event) => {
@@ -158,10 +195,23 @@ export function useWebSocket() {
     setIsConnected(false);
   }, []);
 
+  /**
+   * Update entity subscription. Sends subscribe message to DO.
+   * Pages can call this to filter broadcasts to relevant entities only.
+   */
+  const subscribe = useCallback((entities: string[]) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'subscribe',
+        entities,
+      }));
+    }
+  }, []);
+
   useEffect(() => {
     connect();
     return () => disconnect();
   }, [connect, disconnect]);
 
-  return { isConnected, reconnectAttempts };
+  return { isConnected, reconnectAttempts, subscribe };
 }

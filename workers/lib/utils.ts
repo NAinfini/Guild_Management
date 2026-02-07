@@ -155,6 +155,8 @@ export async function createAuditLog(
 ): Promise<void> {
   const auditId = generateId('aud');
   const now = utcNow();
+  const safeDiffTitle = diffTitle ?? null;
+  const safeDetailText = detailText ?? null;
 
   await db
     .prepare(`
@@ -163,7 +165,7 @@ export async function createAuditLog(
         diff_title, detail_text, created_at_utc, updated_at_utc
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
-    .bind(auditId, entityType, action, actorId, entityId, diffTitle, detailText, now, now)
+    .bind(auditId, entityType, action, actorId, entityId, safeDiffTitle, safeDetailText, now, now)
     .run();
 }
 
@@ -202,7 +204,7 @@ export function setSessionCookie(response: Response, sessionId: string, maxAge: 
   const newResponse = new Response(response.body, response);
   newResponse.headers.set(
     'Set-Cookie',
-    `session_id=${sessionId}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`
+    `session_id=${sessionId}; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=${maxAge}`
   );
   return newResponse;
 }
@@ -211,7 +213,7 @@ export function clearSessionCookie(response: Response): Response {
   const newResponse = new Response(response.body, response);
   newResponse.headers.set(
     'Set-Cookie',
-    'session_id=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0'
+    'session_id=; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=0'
   );
   return newResponse;
 }
@@ -385,25 +387,22 @@ export function assertIfMatch(request: Request, currentEtag: string | null): Res
 }
 
 // ============================================================
-// CORS Helpers
+// CORS Helpers (delegates to shared/utils/response.ts)
 // ============================================================
 
-export function corsHeaders(origin: string | null = '*'): HeadersInit {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Max-Age': '86400',
-  };
+import { corsHeaders as sharedCorsHeaders } from '../../shared/utils/response';
+
+export function corsHeaders(origin?: string | null): HeadersInit {
+  return sharedCorsHeaders(origin);
 }
 
 export function handleCors(request: Request): Response | null {
   if (request.method === 'OPTIONS') {
+    const origin = request.headers.get('Origin');
     return new Response(null, {
       status: 204,
-      headers: corsHeaders(),
+      headers: sharedCorsHeaders(origin),
     });
   }
   return null;
 }
-

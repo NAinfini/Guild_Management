@@ -66,7 +66,10 @@ export function Login() {
       // Force a full page reload to ensure cookie is properly set
       window.location.href = returnTo || '/';
     } else {
-      setLocalError(result.error || t('login.error_fail'));
+      // Map server error code to translation key if possible
+      const errorKey = result.error;
+      const translatedError = errorKey ? t(`errors.${errorKey}`, { defaultValue: errorKey }) : t('login.error_fail');
+      setLocalError(translatedError);
     }
   };
 
@@ -129,7 +132,7 @@ export function Login() {
             <CardContent sx={{ p: 4, pt: 4 }}>
                {(error || localError) && (
                  <Alert severity="error" icon={<AlertCircle size={18} />} sx={{ mb: 3, borderRadius: 2 }}>
-                    {localError || error}
+                    {localError || (error ? t(`errors.${error}`, { defaultValue: error }) : '')}
                  </Alert>
                )}
 
@@ -143,7 +146,7 @@ export function Login() {
                         onChange={(e) => setUsername(e.target.value)}
                         disabled={isLoading}
                         error={usernameError}
-                        helperText={usernameError ? t('login.error_username_required', 'Username is required') : ''}
+                        helperText={usernameError ? t('login.error_username_required') : ''}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -173,9 +176,9 @@ export function Login() {
                              placeholder={t('login.placeholder_password')}
                              value={password}
                              onChange={(e) => setPassword(e.target.value)}
-                             disabled={isLoading}
+                              disabled={isLoading}
                              error={passwordError}
-                             helperText={passwordError ? t('login.error_password_required', 'Password is required') : ''}
+                             helperText={passwordError ? t('login.error_password_required') : ''}
                              InputProps={{
                                  startAdornment: (
                                      <InputAdornment position="start">
@@ -233,9 +236,6 @@ export function Login() {
             </CardContent>
           </Card>
 
-          <Typography align="center" variant="caption" display="block" color="text.disabled" sx={{ mt: 3, maxWidth: 300, mx: 'auto', lineHeight: 1.4 }}>
-             {t('login.disclaimer')}
-          </Typography>
        </Box>
     </Box>
   );

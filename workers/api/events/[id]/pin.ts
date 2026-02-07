@@ -8,6 +8,7 @@
 import type { Env, Event } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 // ============================================================
 // Types
@@ -43,7 +44,7 @@ export const onRequestPost = createEndpoint<PinEventResponse, PinEventBody, any>
       .run();
 
     if (!result.meta.changes) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event');
     }
 
     await createAuditLog(

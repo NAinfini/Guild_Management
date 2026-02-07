@@ -1,5 +1,6 @@
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { useFilteredList } from '../../hooks/useFilteredList';
 import {
   Card,
   CardContent,
@@ -41,7 +42,7 @@ import {
 import { formatDateTime, cn, getClassColor, formatPower } from '../../lib/utils';
 import { useAuthStore, useUIStore } from '../../store';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
-import { useMobileOptimizations } from '../../hooks';
+import { useMobileOptimizations, useLocaleDate } from '../../hooks';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { Announcement, Event, User } from '../../types';
@@ -56,6 +57,7 @@ import { ErrorState } from '../../components/ErrorState';
 
 export function Dashboard() {
   const { t } = useTranslation();
+  const { formatDateTime: formatDateLocalized, formatDate, formatTime } = useLocaleDate();
   const queryClient = useQueryClient();
 
   // ✅ TanStack Query: Auto-fetches and caches server state
@@ -103,18 +105,25 @@ export function Dashboard() {
   };
 
   // Upcoming Events: Next 7 days, limit 3
-  const upcomingEvents = useMemo(() => {
-    if (!events || events.length === 0) return [];
+  const upcomingFilterFn = useMemo(() => {
     const now = new Date();
     const sevenDaysLater = addDays(now, 7);
-    return events
-      .filter(e => {
-        const start = new Date(e.start_time);
-        return isAfter(start, now) && isBefore(start, sevenDaysLater) && !e.is_archived;
-      })
-      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-      .slice(0, 3);
-  }, [events.length, events.map(e => `${e.id}:${e.start_time}:${e.is_archived}`).join('|')]);  // Stable: length + IDs + times + archived
+    return (e: any) => {
+      const start = new Date(e.start_time);
+      return isAfter(start, now) && isBefore(start, sevenDaysLater) && !e.is_archived;
+    };
+  }, []);
+  const upcomingSortFn = useMemo(
+    () => (a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+    []
+  );
+  const upcomingEvents = useFilteredList({
+    items: events || [],
+    searchText: '',
+    searchFields: [],
+    filterFn: upcomingFilterFn,
+    sortFn: upcomingSortFn,
+  }).slice(0, 3);
 
   // Pinned / Featured strip
   const pinnedEvents = useMemo(() => {
@@ -123,7 +132,7 @@ export function Dashboard() {
       .filter(e => e.is_pinned && !e.is_archived)
       .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
       .slice(0, 4);
-  }, [events.length, events.map(e => `${e.id}:${e.is_pinned}`).join('|')]);  // Stable: length + IDs + pinned
+  }, [events]);
 
   const notifications = useMemo(() => {
     const list: { id: string; title: string; type: 'event' | 'announcement'; time: string; path: string; isNew: boolean }[] = [];
@@ -164,12 +173,12 @@ export function Dashboard() {
     }
 
     return list.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 3);
-  }, [announcements.length, events.length, lastSeen.announcements, lastSeen.events, t]);  // Stable: counts + lastSeen
+  }, [announcements, events, lastSeen, t]);
 
   const myJoinedEvents = useMemo(() => {
     if (!events || events.length === 0 || !user) return [];
     return events.filter(e => e.participants?.some(p => p.id === user.id));
-  }, [events.length, user?.id, events.map(e => `${e.id}:${e.participants?.length || 0}`).join('|')]);  // Stable: length + user + participant counts
+  }, [events, user]);
 
   const hasConflict = useCallback((event: Event) => {
     const start = new Date(event.start_time);
@@ -231,7 +240,7 @@ export function Dashboard() {
                     {t('dashboard.my_schedule')}
                  </Typography>
               </Stack>
-              <MyScheduleStrip events={events} userId={user.id} />
+              <MyScheduleStrip events={events} userId={user.id} formatDate={formatDate} />
             </Stack>
           )}
 
@@ -281,13 +290,23 @@ export function Dashboard() {
               <Card 
                 variant="outlined" 
                 sx={{ 
-                  borderRadius: 3, 
-                  borderColor: alpha(theme.palette.secondary.main, 0.3),
-                  background: `linear-gradient(90deg, ${alpha(theme.palette.secondary.main, 0.08)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
+                  borderRadius: 'var(--radiusCard)', 
+                  borderColor: 'var(--divider)',
+                  background: 'var(--surface1)',
                   px: { xs: 2, sm: 3 }, 
                   py: { xs: 1.5, sm: 2 },
                   position: 'relative',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  border: 'var(--stroke) solid var(--divider)',
+                  boxShadow: 'var(--shadow2)',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(135deg, var(--accent1) 0%, transparent 100%)',
+                    opacity: 0.1,
+                    pointerEvents: 'none',
+                  }
                 }}
               >
                 <DecorativeGlyph icon={CalendarDays} color={alpha(theme.palette.secondary.main, 0.35)} size={140} opacity={0.12} right={-10} top={-20} />
@@ -358,6 +377,7 @@ export function Dashboard() {
                   user={user}
                   onCopy={() => handleCopySignup(event)}
                   isConflicted={hasConflict(event)}
+                  formatDateLocalized={formatDateLocalized}
                 />
               ))}
               {upcomingEvents.length === 0 && (
@@ -458,7 +478,7 @@ export function Dashboard() {
           </Card>
 
           {/* Last Guild War Section */}
-          <LastWarStats />
+          <LastWarStats formatDateLocalized={formatDateLocalized} />
 
         </Stack>
       </Box>
@@ -469,7 +489,7 @@ export function Dashboard() {
 
 // --- SUBCOMPONENTS ---
 
-function MyScheduleStrip({ events, userId }: { events: Event[], userId: string }) {
+function MyScheduleStrip({ events, userId, formatDate }: { events: Event[], userId: string, formatDate: (date: string, monthsOffset?: number, includeYear?: boolean) => string }) {
   const { t } = useTranslation();
   const theme = useTheme();
 
@@ -508,19 +528,22 @@ function MyScheduleStrip({ events, userId }: { events: Event[], userId: string }
                sx={{
                  minWidth: { xs: 100, sm: 120 },
                  height: { xs: 95, sm: 110 },
-                 borderRadius: { xs: 3, sm: 4 },
+                 borderRadius: 'var(--radiusCard)',
                  border: '1px solid',
-                 borderColor: isToday ? 'primary.main' : 'divider',
-                 bgcolor: isToday ? 'action.hover' : 'background.paper',
+                 borderColor: isToday ? 'var(--accent0)' : 'var(--divider)',
+                 bgcolor: isToday ? 'var(--surface2)' : 'var(--surface1)',
                  p: { xs: 1.25, sm: 1.5 },
                  display: 'flex',
                  flexDirection: 'column',
                  opacity: isYesterday ? 0.6 : 1,
-                 transition: 'all 0.2s',
+                 transition: 'all var(--motionFast) var(--ease)',
                  cursor: 'default',
+                 boxShadow: isToday ? 'var(--glow)' : 'none',
                  '&:hover': {
-                    borderColor: 'primary.main',
-                    bgcolor: 'action.hover'
+                    borderColor: 'var(--accent0)',
+                    bgcolor: 'var(--surface2)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: 'var(--shadow1)'
                  }
                }}
              >
@@ -534,7 +557,7 @@ function MyScheduleStrip({ events, userId }: { events: Event[], userId: string }
                        fontSize: { xs: '0.6rem', sm: '0.65rem' }
                      }}
                    >
-                      {isToday ? t('common.today') : formatDateTime(dateStr).split(',')[0]}
+                      {isToday ? t('common.today') : formatDate(dateStr, 0, false)}
                    </Typography>
                    <Typography
                      variant="caption"
@@ -597,7 +620,7 @@ function MyScheduleStrip({ events, userId }: { events: Event[], userId: string }
   );
 }
 
-function EventCard({ event, user, onCopy, isConflicted }: any) {
+function EventCard({ event, user, onCopy, isConflicted, formatDateLocalized }: { event: any; user: any; onCopy: () => void; isConflicted: boolean; formatDateLocalized: (date: string) => string }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const isJoined = user && event.participants?.some((p: any) => p.id === user.id);
@@ -660,7 +683,7 @@ function EventCard({ event, user, onCopy, isConflicted }: any) {
                      }}
                    >
                       <Clock size={14} />
-                      {formatDateTime(event.start_time)}
+                      {formatDateLocalized(event.start_time)}
                    </Typography>
                 </Stack>
              </Stack>
@@ -679,7 +702,7 @@ function EventCard({ event, user, onCopy, isConflicted }: any) {
   );
 }
 
-function LastWarStats() {
+function LastWarStats({ formatDateLocalized }: { formatDateLocalized: (date: string) => string }) {
     const { t } = useTranslation();
     const theme = useTheme();
     const { data: warHistory = [], isLoading: isLoadingHistory } = useWarHistory();
@@ -722,13 +745,29 @@ function LastWarStats() {
     const isVictory = latestWar.result === 'victory';
 
     return (
-        <Card sx={{ position: 'relative', overflow: 'hidden' }}>
+        <Card sx={{ 
+            position: 'relative', 
+            overflow: 'hidden',
+            border: 'var(--stroke) solid var(--accent0)',
+            borderRadius: 'var(--radiusCard)',
+            boxShadow: 'var(--shadow3)',
+            background: 'var(--surface1)',
+            '&::after': {
+                content: '""',
+                position: 'absolute',
+                inset: 0,
+                border: '1px solid var(--sigA)', // Signature line if theme defines it
+                opacity: 0.5,
+                pointerEvents: 'none',
+                borderRadius: 'inherit'
+            }
+        }}>
             <DecorativeGlyph icon={Swords} color={theme.palette.primary.main} size={180} opacity={0.05} right={-20} top={-20} />
             <CardHeader 
                 title={
                     <Stack direction="row" alignItems="center" gap={1}>
-                        <Swords size={16} color={theme.palette.primary.main} />
-                        <Typography variant="overline" fontWeight={900} letterSpacing="0.15em">{t('dashboard.latest_conflict')}</Typography>
+                        <Swords size={16} color="var(--accent0)" />
+                        <Typography variant="overline" fontWeight={900} letterSpacing="0.15em" color="var(--text1)">{t('dashboard.latest_conflict')}</Typography>
                     </Stack>
                 }
                 sx={{ p: 3, pb: 1 }}
@@ -746,7 +785,7 @@ function LastWarStats() {
                             />
                         </Stack>
                         <Typography variant="caption" color="text.disabled" fontWeight={700}>
-                            {formatDateTime(latestWar.date)}
+                            {formatDateLocalized(latestWar.date)}
                         </Typography>
                     </Box>
 

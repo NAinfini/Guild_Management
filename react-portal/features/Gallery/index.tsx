@@ -20,8 +20,9 @@ import {
   alpha,
   Pagination
 } from '@mui/material';
-import { Image, ExternalLink, Download, Plus, Trash2, Upload, X, ZoomIn } from 'lucide-react';
+import { Image, ExternalLink, Download, Plus, Trash2, Upload, X, ZoomIn, Search } from 'lucide-react';
 import { CardGridSkeleton } from '../../components/SkeletonLoaders';
+import { PageFilterBar, type FilterOption } from '../../components/PageFilterBar';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useUIStore } from '../../store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -44,17 +45,35 @@ export function Gallery() {
   }, [setPageTitle, t]);
 
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [category, setCategory] = useState('all');
   const LIMIT = 24;
   const [isDragOver, setIsDragOver] = useState(false);
 
   // Fetch gallery images
   const { data: galleryData, isLoading } = useQuery({
-    queryKey: ['gallery', page],
-    queryFn: () => galleryAPI.list({ page, limit: LIMIT }),
+    queryKey: ['gallery', page, search, startDate, endDate, category],
+    queryFn: () => galleryAPI.list({ 
+      page, 
+      limit: LIMIT,
+      search: search || undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      category: category !== 'all' ? category : undefined
+    }),
   });
 
   const images = galleryData?.images || [];
-  const totalPages = (galleryData as any)?.total ? Math.ceil((galleryData as any).total / LIMIT) : 1;
+  const totalItems = galleryData?.pagination?.total || 0;
+  const totalPages = galleryData?.pagination?.pages || 1;
+
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, startDate, endDate, category]);
 
   // ... mutations ... (unchanged, just omitting from replacement chunk but need to ensure I don't delete them. 
   // Wait, I am replacing a huge chunk if I am not careful.
@@ -156,10 +175,28 @@ export function Gallery() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 10, px: { xs: 2, sm: 4 } }}>
-      {isAdmin && (
-        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'flex-end' }}>
+      <PageFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={t('gallery.search_placeholder')}
+        category={category}
+        onCategoryChange={setCategory}
+        categories={[
+            { value: 'all', label: t('gallery.filter_all') || 'All' },
+            { value: 'event', label: t('gallery.filter_event') || 'Events' },
+            { value: 'war', label: t('gallery.filter_war') || 'Wars' },
+            { value: 'other', label: t('gallery.filter_other') || 'Other' },
+        ]}
+        startDate={startDate}
+        onStartDateChange={setStartDate}
+        endDate={endDate}
+        onEndDateChange={setEndDate}
+        resultsCount={totalItems}
+        isLoading={isLoading}
+        extraActions={isAdmin && (
           <Button
             variant="contained"
+            size="small"
             startIcon={<Upload size={18} />}
             onClick={() => setUploadDialogOpen(true)}
             disabled={uploadMutation.isPending}
@@ -167,8 +204,8 @@ export function Gallery() {
           >
             {uploadMutation.isPending ? t('common.uploading') : t('gallery.upload')}
           </Button>
-        </Box>
-      )}
+        )}
+      />
 
       {isLoading ? (
         <CardGridSkeleton count={8} aspectRatio="4/3" />

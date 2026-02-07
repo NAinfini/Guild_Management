@@ -84,6 +84,7 @@ export function PlayerSelector({ members, isLoading = false }: PlayerSelectorPro
                 <Stack direction="row" spacing={1.5} alignItems="center" width="100%">
                   <Avatar
                     src={member.avatar_url}
+                    alt={member.username}
                     sx={{ width: 32, height: 32 }}
                   >
                     {member.username[0]}
@@ -191,7 +192,7 @@ function SelectedMemberCard({ member, wars }: SelectedMemberCardProps) {
         <Stack spacing={2}>
           {/* Header */}
           <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar src={member.avatar_url} sx={{ width: 48, height: 48 }}>
+            <Avatar src={member.avatar_url} alt={member.username} sx={{ width: 48, height: 48 }}>
               {member.username[0]}
             </Avatar>
             <Box flex={1}>

@@ -8,6 +8,7 @@
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog, assertIfMatch, etagFromTimestamp, successResponse } from '../../../lib/utils';
 import type { User } from '../../../lib/types';
+import { NotFoundError } from '../../../lib/errors';
 
 interface ToggleActiveResponse {
   message: string;
@@ -28,7 +29,7 @@ export const onRequestPost = createEndpoint<ToggleActiveResponse>({
       .first<User>();
 
     if (!member) {
-      throw new Error('Member not found');
+      throw new NotFoundError('Member');
     }
 
     // 2. Concurrency check

@@ -11,6 +11,7 @@
 import type { Env, Event } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 // ============================================================
 // Types
@@ -61,7 +62,7 @@ export const onRequestPost = createEndpoint<JoinEventResponse, BatchJoinBody | R
       .first<Event>();
 
     if (!event) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event');
     }
 
     if (event.signup_locked) {

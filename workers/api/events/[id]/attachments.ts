@@ -7,6 +7,7 @@
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { generateId } from '../../../lib/utils';
 import { utcNow } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 interface AttachmentResponse {
   attachment_id: string;
@@ -40,7 +41,7 @@ export const onRequestPost = createEndpoint<AttachmentsListResponse>({
       .first();
 
     if (!event) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event');
     }
 
     // Parse request body

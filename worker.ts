@@ -7,7 +7,7 @@
  */
 
 import type { Env } from './workers/lib/types';
-import { corsHeaders } from './workers/lib/utils';
+import { corsHeaders, setAllowedOrigins } from './shared/utils/response';
 
 // Import route registrar (auto-initializes all routes)
 import './workers/lib/route-registrar';
@@ -18,6 +18,11 @@ export { ConnectionManager } from './workers/websocket/ConnectionManager';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // Configure CORS origins from environment
+    if (env.ALLOWED_ORIGINS) {
+      setAllowedOrigins(env.ALLOWED_ORIGINS);
+    }
+
     const url = new URL(request.url);
     const pathname = url.pathname;
 

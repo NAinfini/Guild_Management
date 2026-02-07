@@ -8,6 +8,7 @@
 import type { Env, User } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 // ============================================================
 // Types
@@ -35,7 +36,7 @@ export const onRequestPost = createEndpoint<ActivateResponse>({
       .first<User>();
 
     if (!targetUser) {
-      throw new Error('Member not found');
+      throw new NotFoundError('Member');
     }
 
     if (!targetUser.deleted_at_utc) {

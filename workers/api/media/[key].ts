@@ -7,6 +7,7 @@
 
 import type { Env } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
+import { NotFoundError } from '../../lib/errors';
 
 // ============================================================
 // GET /api/media/[key]
@@ -21,12 +22,7 @@ export const onRequestGet = createEndpoint<Response, any, any>({
     const object = await env.BUCKET.get(key);
 
     if (!object) {
-      throw new Error('Object not found'); // Factory catches and returns 500? No, 404 should be specific.
-      // Wait, factory treats Error as 500 unless it has status?
-      // createEndpoint factory handles Errors. Basic Error is 500.
-      // I should throw specific error or return Response with 404.
-      // Factory allows returning Response.
-      return new Response('Object not found', { status: 404 });
+      throw new NotFoundError('Object');
     }
 
     const headers = new Headers();

@@ -290,7 +290,7 @@ function CompletionStatus({ user }: { user: User }) {
     <Card sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1), borderColor: alpha(theme.palette.warning.main, 0.2), borderRadius: 3 }}>
        <CardContent sx={{ p: 2 }}>
           <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-             <Avatar sx={{ bgcolor: 'warning.main', color: 'warning.contrastText' }} variant="rounded">
+             <Avatar alt="" sx={{ bgcolor: 'warning.main', color: 'warning.contrastText' }} variant="rounded">
                 <AlertTriangle size={20} />
              </Avatar>
              <Box>
@@ -370,7 +370,7 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
                          cursor: 'pointer', transition: 'all 0.2s', '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' }
                      }}
                   >
-                     <Avatar sx={{ bgcolor: 'action.selected' }}><Upload size={20} /></Avatar>
+                     <Avatar alt="" sx={{ bgcolor: 'action.selected' }}><Upload size={20} /></Avatar>
                      <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">{t('profile.add_media')}</Typography>
                   </Box>
                </Grid>
@@ -473,7 +473,7 @@ function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, 
                                     key={clsId}
                                     label={meta.fullLabel}
                                     onDelete={() => field.onChange(selectedClasses.filter((c: string) => c !== clsId))}
-                                    avatar={idx === 0 ? <Avatar sx={{ bgcolor: 'white !important', color: 'black !important', fontSize: '0.6rem !important' }}>M</Avatar> : undefined}
+                                    avatar={idx === 0 ? <Avatar alt="Main" sx={{ bgcolor: 'white !important', color: 'black !important', fontSize: '0.6rem !important' }}>M</Avatar> : undefined}
                                     sx={{ 
                                         color: meta.color, 
                                         bgcolor: meta.bgColor, 

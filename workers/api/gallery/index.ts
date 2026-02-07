@@ -26,8 +26,11 @@ interface GalleryListQuery {
   category?: string; // Filter by category
   featured?: string; // Filter by is_featured (boolean)
   uploader?: string; // Filter by uploaded_by (user_id)
+  search?: string; // Search in title or description
   limit?: number; // Pagination limit
   offset?: number; // Pagination offset
+  startDate?: string; // Filter by created_at_utc
+  endDate?: string; // Filter by created_at_utc
 }
 
 interface GalleryImage {
@@ -38,15 +41,19 @@ interface GalleryImage {
   category: string | null;
   is_featured: boolean;
   uploaded_by: string | null;
+  uploader_username: string | null;
   created_at_utc: string;
   url: string;
 }
 
 interface GalleryListResponse {
   images: GalleryImage[];
-  total: number;
-  limit: number;
-  offset: number;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 interface BatchDeleteQuery {
@@ -72,8 +79,11 @@ export const onRequestGet = createEndpoint<GalleryListResponse, GalleryListQuery
     category: searchParams.get('category') || undefined,
     featured: searchParams.get('featured') || undefined,
     uploader: searchParams.get('uploader') || undefined,
+    search: searchParams.get('search') || undefined,
     limit: parseInt(searchParams.get('limit') || '50'),
     offset: parseInt(searchParams.get('offset') || '0'),
+    startDate: searchParams.get('startDate') || undefined,
+    endDate: searchParams.get('endDate') || undefined,
   }),
 
   handler: async ({ env, query }) => {
@@ -86,9 +96,10 @@ export const onRequestGet = createEndpoint<GalleryListResponse, GalleryListQuery
 
       const items = await env.DB
         .prepare(`
-          SELECT gi.*, mo.r2_key
+          SELECT gi.*, mo.r2_key, u.username as uploader_username
           FROM gallery_images gi
           JOIN media_objects mo ON gi.media_id = mo.media_id
+          LEFT JOIN users u ON mo.created_by = u.user_id
           WHERE gi.gallery_id IN (${placeholders})
           ORDER BY gi.created_at_utc DESC
         `)
@@ -107,13 +118,17 @@ export const onRequestGet = createEndpoint<GalleryListResponse, GalleryListQuery
           category: row.category,
           is_featured: row.is_featured === 1,
           uploaded_by: row.uploaded_by,
+          uploader_username: row.uploader_username,
           created_at_utc: row.created_at_utc,
-          url: row.r2_key ? `https://your-r2-domain.com/${row.r2_key}` : '',
+          url: row.r2_key ? `/api/media/${row.r2_key}` : '',
         })),
         notFound: notFound.length > 0 ? notFound : undefined,
-        total: (items.results || []).length,
-        limit: (items.results || []).length,
-        offset: 0,
+        pagination: {
+          page: 1,
+          limit: items.results?.length || 0,
+          total: items.results?.length || 0,
+          pages: 1
+        }
       };
     }
 
@@ -146,10 +161,33 @@ export const onRequestGet = createEndpoint<GalleryListResponse, GalleryListQuery
       params.push(query.uploader);
     }
 
+    // Search filter
+    if (query.search) {
+      const search = `%${query.search.toLowerCase()}%`;
+      conditions.push('(LOWER(gi.title) LIKE ? OR LOWER(gi.description) LIKE ? OR LOWER(u.username) LIKE ?)');
+      params.push(search, search, search);
+    }
+
+    if (query.startDate) {
+      conditions.push('gi.created_at_utc >= ?');
+      params.push(query.startDate);
+    }
+
+    if (query.endDate) {
+      conditions.push('gi.created_at_utc <= ?');
+      params.push(query.endDate);
+    }
+
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Get total count
-    const countQuery = `SELECT COUNT(*) as total FROM gallery_images gi ${whereClause}`;
+    const countQuery = `
+      SELECT COUNT(*) as total 
+      FROM gallery_images gi 
+      JOIN media_objects mo ON gi.media_id = mo.media_id
+      LEFT JOIN users u ON mo.created_by = u.user_id
+      ${whereClause}
+    `;
     const countResult = await env.DB.prepare(countQuery).bind(...params).first<{ total: number }>();
     const total = countResult?.total || 0;
 
@@ -158,9 +196,10 @@ export const onRequestGet = createEndpoint<GalleryListResponse, GalleryListQuery
     const offset = query.offset || 0;
 
     const itemsQuery = `
-      SELECT gi.*, mo.r2_key
+      SELECT gi.*, mo.r2_key, u.username as uploader_username
       FROM gallery_images gi
       JOIN media_objects mo ON gi.media_id = mo.media_id
+      LEFT JOIN users u ON mo.created_by = u.user_id
       ${whereClause}
       ORDER BY gi.created_at_utc DESC
       LIMIT ? OFFSET ?
@@ -180,17 +219,21 @@ export const onRequestGet = createEndpoint<GalleryListResponse, GalleryListQuery
         category: row.category,
         is_featured: row.is_featured === 1,
         uploaded_by: row.uploaded_by,
+        uploader_username: row.uploader_username,
         created_at_utc: row.created_at_utc,
-        url: row.r2_key ? `https://your-r2-domain.com/${row.r2_key}` : '',
+        url: row.r2_key ? `/api/media/${row.r2_key}` : '',
       })),
-      total,
-      limit,
-      offset,
+      pagination: {
+        page: Math.floor(offset / limit) + 1,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
     };
   },
 });
 
-export const onRequestPost = createEndpoint<{ message: string; item: MediaObject }, CreateGalleryItemBody, any>({
+export const onRequestPost = createEndpoint<{ message: string; item: GalleryImage }, CreateGalleryItemBody, any>({
   auth: 'required',
   cacheControl: 'no-store',
 
@@ -200,16 +243,33 @@ export const onRequestPost = createEndpoint<{ message: string; item: MediaObject
   },
 
   handler: async ({ env, user, body }) => {
-    const { mediaId, description } = body;
+    const { mediaId, title, description, category } = body;
     const now = utcNow();
 
-    // If we have a gallery_items table:
-    // await env.DB.prepare('INSERT INTO gallery_items ...').run();
+    // Check media exists and get created_by for permission check
+    const media = await env.DB
+      .prepare('SELECT * FROM media_objects WHERE media_id = ?')
+      .bind(mediaId)
+      .first<MediaObject>();
 
-    // If we are just updating media metadata:
+    if (!media) {
+      throw new Error('Media not found');
+    }
+
+    if (!canEditEntity(user!, media.created_by)) {
+      throw new Error('You do not have permission to add this media to gallery');
+    }
+
+    // Create gallery entry
+    const galleryId = generateId('gal');
     await env.DB
-      .prepare('UPDATE media SET description = ?, updated_at_utc = ? WHERE media_id = ?')
-      .bind(description || null, now, mediaId)
+      .prepare(`
+        INSERT INTO gallery_images (
+          gallery_id, media_id, title, description, category, uploaded_by,
+          created_at_utc, updated_at_utc
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .bind(galleryId, mediaId, title || null, description || null, category || null, user!.user_id, now, now)
       .run();
 
     await createAuditLog(
@@ -217,16 +277,42 @@ export const onRequestPost = createEndpoint<{ message: string; item: MediaObject
       'gallery',
       'add_item',
       user!.user_id,
-      mediaId,
+      galleryId,
       'Added item to gallery',
       JSON.stringify(body)
     );
 
-    const item = await env.DB.prepare('SELECT * FROM media WHERE media_id = ?').bind(mediaId).first<MediaObject>();
+    const item = await env.DB
+      .prepare(`
+        SELECT gi.*, mo.r2_key, u.username as uploader_username
+        FROM gallery_images gi
+        JOIN media_objects mo ON gi.media_id = mo.media_id
+        LEFT JOIN users u ON gi.uploaded_by = u.user_id
+        WHERE gi.gallery_id = ?
+      `)
+      .bind(galleryId)
+      .first<any>();
+
+    // Get R2 public URL from environment or construct from R2 binding
+    // For Cloudflare R2, use the public URL or R2 dev URL
+    // For Cloudflare R2, construct URL from R2 binding
+    // In production, use R2 custom domain or workers.dev path
+    const url = item?.r2_key ? `/api/media/${item.r2_key}` : '';
 
     return {
       message: 'Gallery item added',
-      item: item!,
+      item: {
+        gallery_id: item!.gallery_id,
+        media_id: item!.media_id,
+        title: item!.title,
+        description: item!.description,
+        category: item!.category,
+        is_featured: item!.is_featured === 1,
+        uploaded_by: item!.uploaded_by,
+        uploader_username: item!.uploader_username,
+        created_at_utc: item!.created_at_utc,
+        url,
+      },
     };
   },
 });
@@ -252,66 +338,67 @@ export const onRequestDelete = createEndpoint<BatchDeleteResponse, BatchDeleteQu
       throw new Error('User not authenticated');
     }
 
-    const mediaIds = query.mediaIds.split(',').map(id => id.trim()).filter(id => id.length > 0);
+    const galleryIds = query.mediaIds.split(',').map(id => id.trim()).filter(id => id.length > 0);
     const failed: Array<{ mediaId: string; error: string }> = [];
     let deletedCount = 0;
 
     // Validate IDs are provided
-    if (mediaIds.length === 0) {
-      throw new Error('At least one mediaId is required');
+    if (galleryIds.length === 0) {
+      throw new Error('At least one gallery item ID is required');
     }
 
-    if (mediaIds.length > 100) {
-      throw new Error('Maximum 100 media items per batch delete');
+    if (galleryIds.length > 100) {
+      throw new Error('Maximum 100 gallery items per batch delete');
     }
 
     // ============================================================
-    // PHASE 1: Fetch all media items and validate ownership
+    // PHASE 1: Fetch all gallery items and validate ownership
     // ============================================================
-    const placeholders = mediaIds.map(() => '?').join(',');
-    const mediaItems = await env.DB
+    const placeholders = galleryIds.map(() => '?').join(',');
+    const galleryItems = await env.DB
       .prepare(`
-        SELECT * FROM media
-        WHERE entity_type = 'gallery' AND media_id IN (${placeholders})
+        SELECT gi.*, mo.r2_key, mo.created_by as media_created_by
+        FROM gallery_images gi
+        JOIN media_objects mo ON gi.media_id = mo.media_id
+        WHERE gi.gallery_id IN (${placeholders})
       `)
-      .bind(...mediaIds)
+      .bind(...galleryIds)
       .all();
 
     const foundItems = new Map<string, any>(
-      (mediaItems.results || []).map((item: any) => [item.media_id, item])
+      (galleryItems.results || []).map((item: any) => [item.gallery_id, item])
     );
 
     // Identify not found items
-    for (const mediaId of mediaIds) {
-      if (!foundItems.has(mediaId)) {
-        failed.push({ mediaId, error: 'Media item not found' });
+    for (const galleryId of galleryIds) {
+      if (!foundItems.has(galleryId)) {
+        failed.push({ mediaId: galleryId, error: 'Gallery item not found' });
       }
     }
 
     // ============================================================
     // PHASE 2: Filter items user can delete and track failures
     // ============================================================
-    const deletableItems: Array<{ id: string; key: string | null }> = [];
-    const permissionDenied: string[] = [];
+    const deletableItems: Array<{ id: string; r2Key: string | null; mediaId: string }> = [];
 
-    for (const [mediaId, item] of foundItems) {
-      if (canEditEntity(user, item.user_id)) {
-        deletableItems.push({ id: mediaId, key: item.key });
+    for (const [galleryId, item] of foundItems) {
+      // Check if user can delete (uploaded_by or admin/moderator)
+      if (canEditEntity(user, item.uploaded_by)) {
+        deletableItems.push({ id: galleryId, r2Key: item.r2_key, mediaId: item.media_id });
       } else {
-        permissionDenied.push(mediaId);
-        failed.push({ mediaId, error: 'Permission denied' });
+        failed.push({ mediaId: galleryId, error: 'Permission denied' });
       }
     }
 
     // ============================================================
-    // PHASE 3: Batch delete from database
+    // PHASE 3: Batch delete from database (gallery_images table)
     // ============================================================
     if (deletableItems.length > 0) {
       const deletePlaceholders = deletableItems.map(() => '?').join(',');
       const deletableIds = deletableItems.map(item => item.id);
 
       const result = await env.DB
-        .prepare(`DELETE FROM media WHERE media_id IN (${deletePlaceholders})`)
+        .prepare(`DELETE FROM gallery_images WHERE gallery_id IN (${deletePlaceholders})`)
         .bind(...deletableIds)
         .run();
 
@@ -332,17 +419,36 @@ export const onRequestDelete = createEndpoint<BatchDeleteResponse, BatchDeleteQu
     }
 
     // ============================================================
-    // PHASE 4: Delete files from R2 storage
+    // PHASE 4: Delete media_objects and R2 files (optional - if media is only used by gallery)
     // ============================================================
-    // Note: R2 deletions are done individually since delete() doesn't support batch
-    // We do this after DB commit to ensure data consistency
+    // Note: We check if media_objects are referenced elsewhere before deleting
     const r2Failed: Array<{ mediaId: string; error: string }> = [];
-    for (const { id, key } of deletableItems) {
-      if (key) {
-        try {
-          await env.BUCKET.delete(key);
-        } catch (error: any) {
-          r2Failed.push({ mediaId: id, error: `R2 deletion failed: ${error.message || 'Unknown error'}` });
+    for (const { id, r2Key, mediaId } of deletableItems) {
+      // Check if media is used elsewhere (member_media, announcement_media, event_attachments)
+      const usageCheck = await env.DB
+        .prepare(`
+          SELECT COUNT(*) as count
+          FROM (
+            SELECT 1 FROM member_media WHERE media_id = ?
+            UNION ALL
+            SELECT 1 FROM announcement_media WHERE media_id = ?
+            UNION ALL
+            SELECT 1 FROM event_attachments WHERE media_id = ?
+          )
+        `)
+        .bind(mediaId, mediaId, mediaId)
+        .first<{ count: number }>();
+
+      if (usageCheck?.count === 0) {
+        // Safe to delete media_objects and R2 file
+        await env.DB.prepare('DELETE FROM media_objects WHERE media_id = ?').bind(mediaId).run();
+
+        if (r2Key) {
+          try {
+            await env.BUCKET.delete(r2Key);
+          } catch (error: any) {
+            r2Failed.push({ mediaId: id, error: `R2 deletion failed: ${error.message || 'Unknown error'}` });
+          }
         }
       }
     }

@@ -76,18 +76,28 @@ export interface ResponseOptions {
 
 /**
  * Allowed origins for CORS
- * Add development/staging origins as needed
+ * Defaults provided as fallback; call setAllowedOrigins() with env var to override
  */
-const ALLOWED_ORIGINS = [
+let ALLOWED_ORIGINS = [
   'https://guild-management.na-infini.workers.dev',
-  'http://localhost:5173', // Vite dev server
-  'http://localhost:3000', // Alternative dev port
+  'http://localhost:5173',
+  'http://localhost:3000',
 ];
+
+/**
+ * Configure allowed origins from environment variable
+ * Call once at worker startup with env.ALLOWED_ORIGINS
+ *
+ * @param originsCSV - Comma-separated list of allowed origins
+ */
+export function setAllowedOrigins(originsCSV: string): void {
+  ALLOWED_ORIGINS = originsCSV.split(',').map(o => o.trim()).filter(Boolean);
+}
 
 /**
  * Allowed HTTP headers for CORS
  */
-const ALLOWED_HEADERS = 'Content-Type, Authorization, If-None-Match, If-Match';
+const ALLOWED_HEADERS = 'Content-Type, Authorization, If-None-Match, If-Match, X-CSRF-Token';
 
 /**
  * CORS headers generation
@@ -100,7 +110,17 @@ export function corsHeaders(origin?: string | null): Record<string, string> {
   const normalizedOrigin = origin && origin !== 'null' ? origin : '';
 
   // Check if origin is allowed
-  const allowOrigin = ALLOWED_ORIGINS.includes(normalizedOrigin)
+  const isLocalDevOrigin = (() => {
+    if (!normalizedOrigin) return false;
+    try {
+      const parsed = new URL(normalizedOrigin);
+      return parsed.protocol === 'http:' && (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1');
+    } catch {
+      return false;
+    }
+  })();
+
+  const allowOrigin = (ALLOWED_ORIGINS.includes(normalizedOrigin) || isLocalDevOrigin)
     ? normalizedOrigin
     : ALLOWED_ORIGINS[0]; // Default to production
 

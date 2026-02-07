@@ -5,6 +5,7 @@
 
 import { createEndpoint } from '../../../../lib/endpoint-factory';
 import { utcNow, createAuditLog } from '../../../../lib/utils';
+import { NotFoundError } from '../../../../lib/errors';
 
 interface ReorderMediaRequest {
   media_ids: string[]; // Full ordered list of media IDs
@@ -49,7 +50,7 @@ export const onRequestPut = createEndpoint<ReorderMediaResponse>({
       .first();
 
     if (!member) {
-      throw new Error('Member not found');
+      throw new NotFoundError('Member');
     }
 
     // Get current media for this member (optionally filtered by kind)

@@ -1,5 +1,5 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
+import { useFilteredList } from '../../hooks/useFilteredList';
 import { 
   Card, 
   CardContent, 
@@ -49,18 +49,21 @@ import {
   LogOut,
   Edit,
   Swords,
-  CalendarDays
+  CalendarDays,
+  Filter,
+  LockOpen
 } from 'lucide-react';
 import { formatDateTime, getClassColor, cn, formatPower } from '../../lib/utils';
 import { useAuthStore, useUIStore } from '../../store';
 import { useTranslation } from 'react-i18next';
 import { User, Event } from '../../types';
-import { useMobileOptimizations, useOnline, usePush } from '../../hooks';
+import { useMobileOptimizations, useOnline } from '../../hooks';
 import { BottomSheetDialog } from '../../components/BottomSheetDialog';
 import { DecorativeGlyph } from '../../components/DecorativeGlyph';
 import { EnhancedButton } from '../../components/EnhancedButton';
 import { Skeleton } from '@mui/material';
 import { CardGridSkeleton } from '../../components/SkeletonLoaders';
+import { PageFilterBar, type FilterOption } from '../../components/PageFilterBar';
 import {
   useEvents,
   useMembers,
@@ -76,9 +79,26 @@ type EventFilter = 'all' | 'weekly_mission' | 'guild_war' | 'other';
 
 export function Events() {
   const { user, viewRole } = useAuthStore();
+  const { timezoneOffset, setPageTitle } = useUIStore();
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const mobile = useMobileOptimizations();
+  const online = useOnline();
+
+  const [filter, setFilter] = useState<EventFilter>('all');
+  const [search, setSearch] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
 
   // ✅ TanStack Query: Server state with automatic caching and refetching
-  const { data: events = [], isLoading: isLoadingEvents } = useEvents();
+  const { data: events = [], isLoading: isLoadingEvents } = useEvents({ 
+    includeArchived: showArchived,
+    type: filter === 'all' ? undefined : filter,
+    search,
+    startDate,
+    endDate
+  });
   const { data: members = [], isLoading: isLoadingMembers } = useMembers();
   const isLoading = isLoadingEvents || isLoadingMembers;
 
@@ -110,22 +130,13 @@ export function Events() {
     await deleteEventMutation.mutateAsync(id);
   };
 
-  const { timezoneOffset, setPageTitle } = useUIStore();
-  const { t } = useTranslation();
-  const theme = useTheme();
-  const mobile = useMobileOptimizations();
-  const online = useOnline();
-
   useEffect(() => {
     setPageTitle(t('nav.events'));
   }, [setPageTitle, t]);
   
-  const [filter, setFilter] = useState<EventFilter>('all');
-  const [showArchived, setShowArchived] = useState(false);
-  const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
   const [addMemberModalOpen, setAddMemberModalOpen] = useState<string | null>(null); // Event ID if open
   
-  // Confirmation dialog states (replacing browser confirm())
+  // Confirmation dialog states
   const [conflictDialog, setConflictDialog] = useState<{ event: Event; conflictingEvent: Event } | null>(null);
   const [withdrawDialog, setWithdrawDialog] = useState<string | null>(null); // Event ID
   const [kickDialog, setKickDialog] = useState<{ eventId: string; userId: string; username: string } | null>(null);
@@ -137,26 +148,31 @@ export function Events() {
   const lastSeenKey = 'last_seen_events_at';
   const lastSeen = localStorage.getItem(lastSeenKey) || new Date(0).toISOString();
 
-  const filteredEvents = useMemo(() => {
-    return events
-      .filter(e => (showArchived ? e.is_archived : !e.is_archived))
-      .filter(e => filter === 'all' || e.type === filter)
-      .sort((a, b) => {
-          if (!showArchived && a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
-          return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
-      });
-  }, [events, filter, showArchived]);
+  const eventSortFn = useMemo(
+    () => (a: any, b: any) => {
+      if (!showArchived && a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+      return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+    },
+    [showArchived]
+  );
 
+  const filteredEvents = useFilteredList({
+    items: events,
+    searchText: '',
+    searchFields: [],
+    sortFn: eventSortFn,
+  });
 
-
-  const handleMarkAllAsRead = () => {
-    setIsMarkingAllAsRead(true);
-    localStorage.setItem(lastSeenKey, new Date().toISOString());
-    setTimeout(() => setIsMarkingAllAsRead(false), 500);
-  };
+  const categories: FilterOption[] = [
+    { value: 'all', label: t('events.filter_all') },
+    { value: 'weekly_mission', label: t('events.filter_weekly') },
+    { value: 'guild_war', label: t('events.filter_guild') },
+    { value: 'other', label: t('events.filter_other') },
+  ];
 
   const getConflictingEvent = (event: Event) => {
-    const myJoinedEvents = events.filter(e => user && e.participants?.some(p => p.id === user.id));
+    if (!user) return undefined;
+    const myJoinedEvents = events.filter(e => e.participants?.some(p => p.id === user.id));
     const start = new Date(event.start_time).getTime();
     const end = event.end_time ? new Date(event.end_time).getTime() : start + (3600 * 1000);
     
@@ -179,25 +195,17 @@ export function Events() {
   };
 
   const confirmJoinWithConflict = () => {
-    if (conflictDialog) {
-      joinEvent(conflictDialog.event.id, user!.id);
+    if (conflictDialog && user) {
+      joinEvent(conflictDialog.event.id, user.id);
       setConflictDialog(null);
     }
   };
 
-  const handleWithdraw = (eventId: string) => {
-    setWithdrawDialog(eventId);
-  };
-
   const confirmWithdraw = () => {
-    if (withdrawDialog) {
-      leaveEvent(withdrawDialog, user!.id);
+    if (withdrawDialog && user) {
+      leaveEvent(withdrawDialog, user.id);
       setWithdrawDialog(null);
     }
-  };
-
-  const handleKick = (eventId: string, userId: string, username: string) => {
-    setKickDialog({ eventId, userId, username });
   };
 
   const confirmKick = () => {
@@ -205,10 +213,6 @@ export function Events() {
       leaveEvent(kickDialog.eventId, kickDialog.userId);
       setKickDialog(null);
     }
-  };
-
-  const handleDelete = (eventId: string) => {
-    setDeleteDialog(eventId);
   };
 
   const confirmDelete = () => {
@@ -228,127 +232,99 @@ export function Events() {
       }}
       data-testid="events-root"
     >
+      <PageFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={t('events.search_placeholder') || 'Search events...'}
+        category={filter}
+        onCategoryChange={(val) => setFilter(val as EventFilter)}
+        categories={categories}
+        startDate={startDate}
+        onStartDateChange={setStartDate}
+        endDate={endDate}
+        onEndDateChange={setEndDate}
+        resultsCount={filteredEvents.length}
+        isLoading={isLoading}
+        extraActions={
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant={showArchived ? "contained" : "outlined"}
+              size="small"
+              onClick={() => setShowArchived(!showArchived)}
+              startIcon={<Archive size={14} />}
+              sx={{ fontWeight: 900, borderRadius: 2 }}
+            >
+              {showArchived ? t('events.active_archive') : t('events.historical_data')}
+            </Button>
+            {isAdmin && (
+              <EnhancedButton
+                size="small"
+                onClick={() => setAddMemberModalOpen(null)}
+                startIcon={<Plus size={14} />}
+                disabled={!online}
+                sx={{ fontWeight: 900, borderRadius: 2 }}
+              >
+                {t('events.new_deployment')}
+              </EnhancedButton>
+            )}
+          </Stack>
+        }
+      />
 
-      {isLoading && events.length === 0 && <CardGridSkeleton count={3} aspectRatio="16/9" />}
-
-      <Stack direction="row" flexWrap="wrap" gap={2} alignItems="center" justifyContent="space-between" mb={4}>
-        <ToggleButtonGroup
-            value={filter}
-            exclusive
-            onChange={(_, newFilter) => newFilter && setFilter(newFilter)}
-            aria-label="event filters"
-            size="small"
-            sx={{ 
-                bgcolor: 'background.paper', 
-                borderRadius: 2,
-                '& .MuiToggleButton-root': { 
-                    border: 'none', 
-                    borderRadius: 2, 
-                    mx: 0.5,
-                    fontSize: '0.65rem',
-                    fontWeight: 900,
-                    letterSpacing: '0.1em',
-                    py: 1,
-                    minHeight: mobile.touchTargetSize,
-                    px: 2,
-                    textTransform: 'uppercase',
-                    '&.Mui-selected': {
-                        bgcolor: 'background.default',
-                        color: 'primary.main',
-                        boxShadow: 2
-                    }
-                }
-            }}
-        >
-            {(['all', 'weekly_mission', 'guild_war', 'other'] as const).map(f => (
-               <ToggleButton key={f} value={f}>
-                  {t(`events.filter_${f.split('_')[0]}`)}
-               </ToggleButton>
-            ))}
-        </ToggleButtonGroup>
-        
-        <Button 
-            variant={showArchived ? "contained" : "outlined"} 
-            size="small" 
-            onClick={() => setShowArchived(!showArchived)} 
-            startIcon={<Archive size={14} />}
-            sx={{ 
-                height: 40,
-                fontSize: '0.65rem', 
-                fontWeight: 900, 
-                letterSpacing: '0.1em'
-            }}
-        >
-          {showArchived ? t('events.active_archive') : t('events.historical_data')}
-        </Button>
-        {isAdmin && (
-           <EnhancedButton 
-               size="small" 
-               onClick={() => setAddMemberModalOpen(null)} 
-               startIcon={<Plus size={14} />}
-               disabled={!online}
-               sx={{ 
-                   height: 40, 
-                   fontSize: '0.65rem', 
-                   letterSpacing: '0.1em'
-               }}
-           >
-             {t('events.new_deployment')}
-           </EnhancedButton>
-        )}
-      </Stack>
-
-      {isLoading && filteredEvents.length === 0 && <CardGridSkeleton count={3} aspectRatio="16/9" />}
-
-      <Stack spacing={4}>
-        {filteredEvents.map(event => {
-          const isUpdated = event.updated_at && new Date(event.updated_at) > new Date(lastSeen);
-          const conflict = getConflictingEvent(event);
+      {(isLoading && filteredEvents.length === 0) ? (
+        <CardGridSkeleton count={3} aspectRatio="16/9" />
+      ) : (
+        <Stack spacing={4}>
+          {filteredEvents.map(event => {
+            const isUpdated = event.updated_at && new Date(event.updated_at) > new Date(lastSeen);
+            const conflict = getConflictingEvent(event);
+            
+            return (
+              <EventOperationCard 
+                key={event.id} 
+                event={event} 
+                user={user}
+                isAdmin={isAdmin}
+                isUpdated={isUpdated}
+                conflict={conflict}
+                onJoin={() => handleJoin(event)}
+                onLeave={() => setWithdrawDialog(event.id)}
+                onKick={(userId: string, username: string) => setKickDialog({ eventId: event.id, userId, username })}
+                onAdd={() => setAddMemberModalOpen(event.id)}
+                onToggleArchive={() => archiveEvent(event.id, !event.is_archived)}
+                onTogglePin={() => togglePinEvent(event.id)}
+                onToggleLock={() => toggleLockEvent(event.id)}
+                onDelete={() => setDeleteDialog(event.id)}
+              />
+            );
+          })}
           
-          return (
-            <EventOperationCard 
-              key={event.id} 
-              event={event} 
-              user={user}
-              isAdmin={isAdmin}
-              isUpdated={isUpdated}
-              conflict={conflict}
-              onJoin={() => handleJoin(event)}
-              onLeave={() => handleWithdraw(event.id)}
-              onKick={(userId: string, username: string) => handleKick(event.id, userId, username)}
-              onAdd={() => setAddMemberModalOpen(event.id)}
-              onToggleArchive={() => archiveEvent(event.id, !event.is_archived)}
-              onTogglePin={() => togglePinEvent(event.id)}
-              onToggleLock={() => toggleLockEvent(event.id)}
-              onDelete={() => handleDelete(event.id)}
-            />
-          );
-        })}
-        
-        {filteredEvents.length === 0 && (
-          <Box sx={{ 
-              py: 8, 
-              textAlign: 'center', 
-              border: '2px dashed', 
-              borderColor: 'divider', 
-              borderRadius: 4, 
-              bgcolor: 'action.hover' 
-          }}>
-            <Box sx={{ p: 4, mb: 2, borderRadius: '50%', bgcolor: 'background.paper', display: 'inline-flex' }}>
-                <Clock className="opacity-40" size={48} />
+          {filteredEvents.length === 0 && (
+            <Box sx={{ 
+                py: 8, 
+                textAlign: 'center', 
+                border: '2px dashed', 
+                borderColor: 'divider', 
+                borderRadius: 4, 
+                bgcolor: 'action.hover' 
+            }}>
+              <Box sx={{ p: 4, mb: 2, borderRadius: '50%', bgcolor: 'background.paper', display: 'inline-flex' }}>
+                  <Clock className="opacity-40" size={48} />
+              </Box>
+              <Typography variant="overline" display="block" color="text.secondary" fontWeight={900} letterSpacing="0.2em">
+                  {t('events.no_operations')}
+              </Typography>
             </Box>
-            <Typography variant="overline" display="block" color="text.secondary" fontWeight={900} letterSpacing="0.2em">
-                {t('events.no_operations')}
-            </Typography>
-          </Box>
-        )}
-      </Stack>
+          )}
+        </Stack>
+      )}
 
       {addMemberModalOpen && (
          <AddMemberModal 
            open={!!addMemberModalOpen}
            onClose={() => setAddMemberModalOpen(null)} 
            members={members}
+           currentUserId={user?.id}
            currentParticipants={events.find(e => e.id === addMemberModalOpen)?.participants || []}
            onAdd={(userId: string) => joinEvent(addMemberModalOpen!, userId)}
          />
@@ -472,13 +448,14 @@ export function Events() {
   );
 }
 
-function AddMemberModal({ open, onClose, members, currentParticipants, onAdd }: any) {
+function AddMemberModal({ open, onClose, members, currentParticipants, currentUserId, onAdd }: any) {
    const [searchQuery, setSearchQuery] = useState('');
    const { t } = useTranslation();
    const theme = useTheme();
    const mobile = useMobileOptimizations();
    
    const availableMembers = members
+      .filter((m: User) => m.id !== currentUserId)
       .filter((m: User) => !currentParticipants.some((p: User) => p.id === m.id))
       .filter((m: User) => m.username.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -497,8 +474,8 @@ function AddMemberModal({ open, onClose, members, currentParticipants, onAdd }: 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 InputProps={{
-                    startAdornment: <InputAdornment position="start"><Search size={16} /></InputAdornment>,
-                    sx: { borderRadius: 2, fontSize: '0.85rem' }
+                  startAdornment: <InputAdornment position="start"><Search size={16} /></InputAdornment>,
+                  sx: { borderRadius: 2, fontSize: '0.85rem' }
                 }}
                 sx={{ mb: 2, mt: 1 }}
             />
@@ -514,7 +491,7 @@ function AddMemberModal({ open, onClose, members, currentParticipants, onAdd }: 
                     sx={{ '&:hover': { bgcolor: 'action.hover' }, borderRadius: 1, mx: 1, width: 'auto' }}
                   >
                      <ListItemAvatar>
-                        <Avatar src={m.avatar_url} variant="rounded" sx={{ width: 32, height: 32 }} />
+                        <Avatar src={m.avatar_url} alt={m.username} variant="rounded" sx={{ width: 32, height: 32 }} />
                      </ListItemAvatar>
                      <ListItemText 
                         primary={<Typography variant="body2" fontWeight={800}>{m.username}</Typography>}
@@ -582,10 +559,10 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                           fontWeight: 900,
                           textTransform: 'uppercase',
                           letterSpacing: '0.05em',
-                          bgcolor: theme.custom?.eventTypes[event.type as keyof typeof theme.custom.eventTypes]?.bg,
-                          color: theme.custom?.eventTypes[event.type as keyof typeof theme.custom.eventTypes]?.text,
-                          borderColor: theme.custom?.eventTypes[event.type as keyof typeof theme.custom.eventTypes]?.main
-                        }}
+                           bgcolor: theme.custom?.eventTypes?.[event.type as keyof typeof theme.custom.eventTypes]?.bg || 'rgba(0,0,0,0.1)',
+                           color: theme.custom?.eventTypes?.[event.type as keyof typeof theme.custom.eventTypes]?.text || theme.palette.text.primary,
+                           borderColor: theme.custom?.eventTypes?.[event.type as keyof typeof theme.custom.eventTypes]?.main || theme.palette.divider
+                         }}
                      />
                      {event.is_pinned && <Pin size={14} style={{ color: theme.palette.primary.main }} />}
                      {isUpdated && (
@@ -596,24 +573,15 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                               height: 18,
                               fontSize: '0.55rem',
                               fontWeight: 900,
-                              bgcolor: theme.custom?.chips.updated.bg,
-                              color: theme.custom?.chips.updated.text,
-                              borderColor: theme.custom?.chips.updated.main
+                              bgcolor: theme.custom?.chips?.updated?.bg || 'rgba(0,255,255,0.1)',
+                              color: theme.custom?.chips?.updated?.text || theme.palette.text.secondary,
+                              borderColor: theme.custom?.chips?.updated?.main || theme.palette.divider
                             }}
                         />
                      )}
                   </Stack>
                   
                   <Stack direction="row" flexWrap="wrap" gap={2} alignItems="center">
-                      <Tooltip title="Copy Roster">
-                        <IconButton 
-                            size="small" 
-                            onClick={handleCopyRoster} 
-                            sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
-                        >
-                            <Copy size={14} />
-                        </IconButton>
-                      </Tooltip>
                       <Tooltip title="Copy Roster">
                         <IconButton 
                             size="small" 
@@ -658,7 +626,7 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                    display: 'grid', 
                    gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, 
                    gap: 1.5 
-               }} data-testid="participant-grid" data-cols={mobile.isMobile ? '1' : '3'}>
+               }} data-testid="participant-grid">
                   {event.participants?.map((p: User) => (
                      <Box 
                         key={p.id} 
@@ -697,8 +665,6 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                                       sx={{ 
                                           p: 0.5, 
                                           color: 'text.secondary',
-                                          minWidth: mobile.touchTargetSize,
-                                          minHeight: mobile.touchTargetSize,
                                           '&:hover': { color: 'error.main' }
                                       }}
                                   >
@@ -750,7 +716,7 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                                    borderColor: alpha(theme.custom?.warRoles.lead.main as string, 0.3)
                                }}>
                                    {formatPower(p.power)}
-                               </Box>
+                                </Box>
                            </Stack>
                         </Stack>
                      </Box>
@@ -767,20 +733,12 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                             borderRadius: 2,
                             color: 'text.secondary',
                             borderColor: 'divider',
-                            minHeight: mobile.touchTargetSize * 1.2
+                            minHeight: 80
                         }}
                      >
                          <Plus size={16} />
                          <Typography variant="caption" fontWeight={900}>{t('events.add_operative')}</Typography>
                      </Button>
-                  )}
-
-                  {(!event.participants || event.participants.length === 0) && !isAdmin && (
-                      <Box sx={{ gridColumn: '1 / -1', py: 3, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
-                         <Typography variant="caption" fontWeight={900} color="text.disabled" letterSpacing="0.1em">
-                             {t('events.awaiting_deployment')}
-                         </Typography>
-                      </Box>
                   )}
                </Box>
             </Box>
@@ -805,43 +763,66 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                     onClick={isJoined ? onLeave : onJoin}
                     disabled={!online || event.is_locked || (!isJoined && isFull)}
                     startIcon={isJoined ? <UserMinus size={16} /> : <UserPlus size={16} />}
-                    sx={{ height: mobile.touchTargetSize + 8, fontWeight: 900, borderRadius: 3, letterSpacing: '0.1em' }}
+                    sx={{ height: 56, fontWeight: 900, borderRadius: 3, letterSpacing: '0.1em' }}
                  >
                     {isJoined ? t('events.withdraw') : t('events.enlist')}
                  </Button>
                )}
                {isAdmin && (
                    <Stack direction="row" spacing={1} justifyContent="center">
-                   <IconButton onClick={() => { /* Edit logic */ }} sx={{ minWidth: mobile.touchTargetSize, minHeight: mobile.touchTargetSize }}><Edit size={18} /></IconButton>
-                     <IconButton onClick={onTogglePin} color={event.is_pinned ? "primary" : "default"} disabled={!online} sx={{ minWidth: mobile.touchTargetSize, minHeight: mobile.touchTargetSize }}><Pin size={18} /></IconButton>
-                    <IconButton onClick={onToggleLock} color={event.is_locked ? "error" : "default"} disabled={!online} sx={{ minWidth: mobile.touchTargetSize, minHeight: mobile.touchTargetSize }}><Lock size={18} /></IconButton>
-                    <IconButton onClick={onToggleArchive} disabled={!online} sx={{ minWidth: mobile.touchTargetSize, minHeight: mobile.touchTargetSize }}><Archive size={18} /></IconButton>
-                    <IconButton onClick={onDelete} color="error" disabled={!online} sx={{ minWidth: mobile.touchTargetSize, minHeight: mobile.touchTargetSize }}><Trash2 size={18} /></IconButton>
-                  </Stack>
-               )}
-               
-               {conflict && isJoined && (
-                  <Alert severity="warning" icon={<AlertTriangle size={14} />} sx={{ py: 0, px: 2, alignItems: 'center', '& .MuiAlert-message': { fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase' } }}>
-                     {t('events.overlap_detected')}
-                  </Alert>
+                       <Tooltip title={t('common.edit')}>
+                        <IconButton size="small" sx={{ bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
+                           <Edit size={16} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={event.is_pinned ? t('common.unpin') : t('common.pin')}>
+                        <IconButton 
+                          size="small" 
+                          onClick={onTogglePin}
+                          sx={{ 
+                              bgcolor: event.is_pinned ? alpha(theme.palette.primary.main, 0.2) : 'action.hover',
+                              border: '1px solid',
+                              borderColor: event.is_pinned ? alpha(theme.palette.primary.main, 0.5) : 'divider',
+                              color: event.is_pinned ? theme.palette.primary.light : 'text.secondary'
+                          }}
+                        >
+                           <Pin size={16} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={event.is_locked ? t('common.unlock') : t('common.lock')}>
+                        <IconButton 
+                          size="small" 
+                          onClick={onToggleLock}
+                          sx={{ 
+                              bgcolor: event.is_locked ? alpha(theme.palette.error.main, 0.2) : 'action.hover',
+                              border: '1px solid',
+                              borderColor: event.is_locked ? alpha(theme.palette.error.main, 0.5) : 'divider',
+                              color: event.is_locked ? theme.palette.error.light : 'text.secondary'
+                          }}
+                        >
+                           {event.is_locked ? <Lock size={16} /> : <LockOpen size={16} />}
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={t('common.delete')}>
+                        <IconButton 
+                          size="small" 
+                          onClick={onDelete}
+                          sx={{ 
+                              bgcolor: alpha(theme.palette.error.main, 0.05), 
+                              border: '1px solid',
+                              borderColor: alpha(theme.palette.error.main, 0.2),
+                              color: 'error.main',
+                              '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.1), borderColor: 'error.main' } 
+                          }}
+                        >
+                           <Trash2 size={16} />
+                        </IconButton>
+                      </Tooltip>
+                   </Stack>
                )}
             </Stack>
-
          </Stack>
       </CardContent>
     </Card>
-  )
-}
-
-// Utility to map class types to visual styles
-function getBadgeStyle(classType: string, theme: any) {
-    // This is a simplified mapping, ideally this logic is centralized or based on the theme palette
-    let color = theme.palette.text.secondary;
-    let bgcolor = theme.palette.action.hover;
-    
-    if (classType.includes('tianwei')) { color = '#fcd34d'; bgcolor = 'rgba(252, 211, 77, 0.1)'; }
-    if (classType.includes('tieyi')) { color = '#60a5fa'; bgcolor = 'rgba(96, 165, 250, 0.1)'; }
-    if (classType.includes('susu')) { color = '#34d399'; bgcolor = 'rgba(52, 211, 153, 0.1)'; }
-    
-    return { color, bgcolor };
+  );
 }

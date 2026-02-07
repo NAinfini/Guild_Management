@@ -85,7 +85,7 @@ export const ENDPOINTS = {
     update: { method: 'PUT', path: '/announcements/:id' },
     delete: { method: 'DELETE', path: '/announcements/:id' },
     toggleArchive: { method: 'POST', path: '/announcements/:id/toggle-archive' },
-    togglePin: { method: 'POST', path: '/announcements/:id/toggle-pin' },
+    togglePin: { method: 'POST', path: '/announcements/:id/pin' },
     attachMedia: { method: 'POST', path: '/announcements/:id/media' },
     removeMedia: { method: 'DELETE', path: '/announcements/:id/media/:mediaId' },
     reorderMedia: { method: 'PUT', path: '/announcements/:id/media' },

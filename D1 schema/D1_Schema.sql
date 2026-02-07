@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS api_keys (
   is_active INTEGER NOT NULL DEFAULT 1,
   last_used_at_utc TEXT,
   expires_at_utc TEXT,
-  created_at_utc TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  created_at_utc TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_api_keys_user ON api_keys(user_id);
@@ -482,8 +482,6 @@ CREATE INDEX IF NOT EXISTS idx_events_pinned ON events(is_pinned, start_at_utc);
 CREATE INDEX IF NOT EXISTS idx_events_updated_at ON events(updated_at_utc DESC);
 CREATE INDEX IF NOT EXISTS idx_events_deleted ON events(deleted_at_utc) WHERE deleted_at_utc IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS idx_events_deleted ON events(deleted_at_utc) WHERE deleted_at_utc IS NOT NULL;
-
 -- event_participants replaced by team_members + event_teams assignment
 -- (Legacy table removed)
 
@@ -530,7 +528,7 @@ CREATE TABLE IF NOT EXISTS teams (
   name          TEXT NOT NULL,
   description   TEXT,
   is_locked     INTEGER NOT NULL DEFAULT 0 CHECK (is_locked IN (0, 1)),
-  created_by    TEXT, 
+  created_by    TEXT REFERENCES users(user_id) ON DELETE SET NULL,
   created_at_utc    TEXT NOT NULL,
   updated_at_utc    TEXT NOT NULL
 );
@@ -597,7 +595,7 @@ CREATE INDEX IF NOT EXISTS idx_war_history_updated ON war_history(updated_at_utc
 -- Per-member stats per war (History + Analytics)
 CREATE TABLE IF NOT EXISTS war_member_stats (
   war_id            TEXT NOT NULL REFERENCES war_history(war_id) ON DELETE CASCADE,
-  user_id           TEXT NOT NULL REFERENCES users(user_id),
+  user_id           TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
   kills             INTEGER,
   deaths            INTEGER,
   assists           INTEGER,

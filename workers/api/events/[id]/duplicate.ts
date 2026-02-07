@@ -8,6 +8,8 @@
 import type { Env, Event } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog, generateId, canEditEntity } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
+import { DB_TABLES, EVENT_COLUMNS } from '../../../lib/db-schema';
 
 // ============================================================
 // Types
@@ -31,12 +33,12 @@ export const onRequestPost = createEndpoint<DuplicateEventResponse, any, any>({
 
     // Get event
     const event = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.events} WHERE ${EVENT_COLUMNS.id} = ?`)
       .bind(eventId)
       .first<Event>();
 
     if (!event) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event');
     }
 
     if (!canEditEntity(user!, event.created_by)) {
@@ -53,10 +55,10 @@ export const onRequestPost = createEndpoint<DuplicateEventResponse, any, any>({
 
     await env.DB
       .prepare(`
-        INSERT INTO events (
-          event_id, title, description, start_at_utc, type, 
-          min_level, max_participants, created_by, created_at_utc, updated_at_utc
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO ${DB_TABLES.events} (
+          ${EVENT_COLUMNS.id}, ${EVENT_COLUMNS.title}, ${EVENT_COLUMNS.description}, ${EVENT_COLUMNS.startAt}, ${EVENT_COLUMNS.type},
+          ${EVENT_COLUMNS.capacity}, ${EVENT_COLUMNS.createdBy}, ${EVENT_COLUMNS.createdAt}, ${EVENT_COLUMNS.updatedAt}
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
         newEventId,
@@ -64,8 +66,7 @@ export const onRequestPost = createEndpoint<DuplicateEventResponse, any, any>({
         event.description,
         newStartAt,
         event.type,
-        event.min_level,
-        event.max_participants,
+        event.capacity ?? null,
         user!.user_id,
         now,
         now
@@ -83,7 +84,7 @@ export const onRequestPost = createEndpoint<DuplicateEventResponse, any, any>({
     );
 
     const newEvent = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.events} WHERE ${EVENT_COLUMNS.id} = ?`)
       .bind(newEventId)
       .first<Event>();
 

@@ -5,6 +5,8 @@ import { QueryClientProvider } from '@tanstack/react-query' // Keep original imp
 import { ThemeControllerProvider } from './theme/ThemeController'
 import { queryClient } from './lib/queryClient'
 import App from './App'
+import '@fontsource-variable/inter'
+import '@fontsource-variable/space-grotesk'
 import './index.css'
 import { useUIStore } from './store'
 import './i18n/config'

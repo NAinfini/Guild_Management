@@ -8,6 +8,7 @@
 import type { Env } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, etagFromTimestamp, assertIfMatch, createAuditLog } from '../../../lib/utils';
+import { DB_TABLES } from '../../../lib/db-schema';
 
 // ============================================================
 // Types
@@ -52,7 +53,7 @@ export const onRequestPut = createEndpoint<UpdateAvailabilityResponse, any, Upda
     }
 
     const current = await env.DB
-      .prepare('SELECT updated_at_utc, created_at_utc FROM users WHERE user_id = ?')
+      .prepare(`SELECT updated_at_utc, created_at_utc FROM ${DB_TABLES.users} WHERE user_id = ?`)
       .bind(userId)
       .first<{ updated_at_utc: string; created_at_utc: string }>();
 
@@ -66,7 +67,7 @@ export const onRequestPut = createEndpoint<UpdateAvailabilityResponse, any, Upda
 
     // Delete existing availability
     await env.DB
-      .prepare('DELETE FROM member_availability WHERE user_id = ?')
+      .prepare(`DELETE FROM ${DB_TABLES.memberAvailabilityBlocks} WHERE user_id = ?`)
       .bind(userId)
       .run();
 
@@ -74,17 +75,17 @@ export const onRequestPut = createEndpoint<UpdateAvailabilityResponse, any, Upda
     for (const block of blocks) {
       await env.DB
         .prepare(`
-          INSERT INTO member_availability (
-            user_id, weekday, start_min, end_min, created_at_utc, updated_at_utc
-          ) VALUES (?, ?, ?, ?, ?, ?)
+          INSERT INTO ${DB_TABLES.memberAvailabilityBlocks} (
+            block_id, user_id, weekday, start_min, end_min, created_at_utc, updated_at_utc
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
         `)
-        .bind(userId, block.weekday, block.startMin, block.endMin, now, now)
+        .bind(`ab_${crypto.randomUUID()}`, userId, block.weekday, block.startMin, block.endMin, now, now)
         .run();
     }
 
     // Update user timestamp
     await env.DB
-      .prepare('UPDATE users SET updated_at_utc = ? WHERE user_id = ?')
+      .prepare(`UPDATE ${DB_TABLES.users} SET updated_at_utc = ? WHERE user_id = ?`)
       .bind(now, userId)
       .run();
 

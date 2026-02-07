@@ -1,13 +1,18 @@
 
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { ThemeProvider as MuiThemeProvider, StyledEngineProvider, createTheme, CssBaseline, GlobalStyles } from '@mui/material';
-import { defaultTheme } from './themes/default';
 import { chineseInkTheme } from './themes/chineseInk';
 import { darkGoldTheme } from './themes/darkGold';
+import { defaultTheme } from './themes/default';
 import { neonSpectralTheme } from './themes/neonSpectral';
+import { redGoldTheme } from './themes/redGold';
+import { softPinkTheme } from './themes/softPink';
 import { ThemeOptions } from '@mui/material/styles';
+import { initTheme, setTheme as setThemeController, getTheme, type ThemeMode } from './theme-engine';
+import './themes.css'; // Import the CSS variables and Atmosphere styles
 
-export type ThemeMode = 'default' | 'chineseInk' | 'darkGold' | 'neonSpectral';
+// Re-export ThemeMode for convenience
+export type { ThemeMode };
 
 interface ThemeContextType {
   currentTheme: ThemeMode;
@@ -32,6 +37,9 @@ interface ThemeControllerProps {
 const GlobalScrollbar = () => (
   <GlobalStyles
     styles={(theme) => ({
+      body: {
+        backgroundColor: 'transparent !important', /* Allow atmosphere */
+      },
       '*::-webkit-scrollbar': {
         width: '6px',
         height: '6px',
@@ -56,21 +64,33 @@ const GlobalScrollbar = () => (
 
 export const ThemeControllerProvider: React.FC<ThemeControllerProps> = ({ children }) => {
   const [currentThemeMode, setCurrentThemeMode] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('app-theme-mode');
-    return (saved as ThemeMode) || 'default';
+    return initTheme(); // Initialize from localStorage
   });
 
   const setTheme = (mode: ThemeMode) => {
     setCurrentThemeMode(mode);
-    localStorage.setItem('app-theme-mode', mode);
+    setThemeController(mode); // Sync with theme controller
   };
+
+  // Sync theme with DOM for CSS variables
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', currentThemeMode);
+    document.documentElement.setAttribute('data-theme-switching', 'true');
+    const timer = window.setTimeout(() => {
+      document.documentElement.removeAttribute('data-theme-switching');
+    }, 520);
+    return () => window.clearTimeout(timer);
+  }, [currentThemeMode]);
 
   const themeOptions: ThemeOptions = useMemo(() => {
     switch (currentThemeMode) {
-      case 'chineseInk': return chineseInkTheme;
-      case 'darkGold': return darkGoldTheme;
-      case 'neonSpectral': return neonSpectralTheme;
-      default: return defaultTheme;
+      case 'default': return defaultTheme;
+      case 'chinese-ink': return chineseInkTheme;
+      case 'dark-gold': return darkGoldTheme;
+      case 'neon-spectral': return neonSpectralTheme;
+      case 'redgold': return redGoldTheme;
+      case 'softpink': return softPinkTheme;
+      default: return defaultTheme; // Safe fallback to default
     }
   }, [currentThemeMode]);
 
@@ -82,6 +102,20 @@ export const ThemeControllerProvider: React.FC<ThemeControllerProps> = ({ childr
         <MuiThemeProvider theme={theme}>
           <CssBaseline />
           <GlobalScrollbar />
+
+          {/* ATMOSPHERIC BACKGROUND LAYERS */}
+          <div className="app-atmosphere">
+            <div className="atmo-layer-base" />
+            <div className="atmo-layer-texture" />
+            <div className="atmo-layer-fx" />
+          </div>
+          <div className={`theme-ornaments theme-${currentThemeMode}`} aria-hidden="true">
+            <span className="ornament o1" />
+            <span className="ornament o2" />
+            <span className="ornament o3" />
+            <span className="ornament o4" />
+          </div>
+
           {children}
         </MuiThemeProvider>
       </StyledEngineProvider>

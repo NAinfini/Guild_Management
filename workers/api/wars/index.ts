@@ -137,8 +137,8 @@ export const onRequestGet = createEndpoint<
     // LIST MODE: List wars with pagination
     // ============================================================
     const whereClause = query.includeArchived
-      ? '1=1'
-      : 'e.is_archived = 0';
+      ? `e.type = 'guild_war'`
+      : `e.type = 'guild_war' AND e.is_archived = 0`;
 
     const wars = await env.DB
       .prepare(`

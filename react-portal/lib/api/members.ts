@@ -100,17 +100,16 @@ export const mapToDomain = (dto: MemberDTO): User => {
 // ============================================================================
 
 export const membersAPI = {
-  list: async (params?: { includeInactive?: boolean; role?: string }): Promise<User[]> => {
+  list: async (params?: { includeInactive?: boolean; role?: string; since?: string }): Promise<User[]> => {
     const queryParams: any = {};
     if (params?.includeInactive) queryParams.includeInactive = 'true';
     if (params?.role) queryParams.role = params.role;
+    if (params?.since) queryParams.since = params.since;
 
     // API always returns paginated format: { items: [...], pagination: {...} }
     const response = await typedAPI.members.list<{ items: MemberDTO[], pagination: any }>({ query: queryParams });
 
-    console.log('[membersAPI.list] Response:', response);
-    console.log('[membersAPI.list] Has items:', !!response?.items);
-    console.log('[membersAPI.list] Items count:', response?.items?.length);
+
 
     if (!response || !response.items) {
       console.warn('[membersAPI.list] No items in response, returning empty array');
@@ -118,7 +117,7 @@ export const membersAPI = {
     }
 
     const mapped = response.items.map(mapToDomain);
-    console.log('[membersAPI.list] Mapped count:', mapped.length);
+
     return mapped;
   },
 

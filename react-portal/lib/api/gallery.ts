@@ -55,6 +55,9 @@ export const galleryAPI = {
     limit?: number;
     category?: string;
     featured?: boolean;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
   }) => {
     return api.get<GalleryListResponse>('/gallery', params);
   },
@@ -69,15 +72,21 @@ export const galleryAPI = {
   /**
    * Create new gallery image entry
    */
-  create: (data: CreateGalleryImageRequest) => {
-    return api.post<GalleryImage>('/gallery', data);
+  create: async (data: CreateGalleryImageRequest) => {
+    const response = await api.post<{ message: string; item: GalleryImage }>('/gallery', {
+      mediaId: data.media_id,
+      title: data.title,
+      description: data.description,
+      category: data.category,
+    });
+    return response.item;
   },
 
   /**
    * Update gallery image metadata
    */
   update: (id: string, data: UpdateGalleryImageRequest) => {
-    return api.patch<GalleryImage>(`/gallery/${id}`, data);
+    return api.put<GalleryImage>(`/gallery/${id}`, data);
   },
 
   /**

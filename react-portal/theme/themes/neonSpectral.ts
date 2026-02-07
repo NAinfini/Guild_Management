@@ -1,223 +1,349 @@
-
-import { ThemeOptions, alpha } from '@mui/material/styles';
+import { ThemeOptions } from '@mui/material/styles';
 import { typography } from '../typography';
 
-// Neon Spectral Theme - High Contrast & Vibrant
+/**
+ * NEON SPECTRAL THEME
+ * Atmosphere: Cyber City Glow & Scanlines
+ * Material: Hologram Glass & Neon Seams
+ * Hover: Signal Jitter & Seam Intensity
+ */
 export const neonSpectralTheme: ThemeOptions = {
   palette: {
     mode: 'dark',
     primary: {
-      main: '#00f2ea', // Cyan Neon
-      light: '#80fbf7',
-      dark: '#00bdb5',
-      contrastText: '#000000',
+      main: '#06b6d4', // Cyan
+      contrastText: '#000',
     },
     secondary: {
-      main: '#ff00ff', // Magenta Neon
-      light: '#ff80ff',
-      dark: '#b300b3',
-      contrastText: '#ffffff',
-    },
-    error: {
-      main: '#ff3333',
-      light: '#ff8080',
-      dark: '#b30000',
-    },
-    warning: {
-      main: '#ffcc00',
-      light: '#ffe066',
-      dark: '#b38f00',
-    },
-    success: {
-      main: '#39ff14', // Electric Lime
-      light: '#85ff6e',
-      dark: '#22ad05',
+      main: '#d946ef', // Magenta
+      contrastText: '#fff',
     },
     background: {
-      default: '#050510', // Deepest Blue/Black
-      paper: '#0a0a1f',   // Dark Blue/Purple
+      default: '#050510',
+      paper: '#0a0f1e', // Slightly darker than surface1 bg
     },
     text: {
-      primary: '#ffffff',
-      secondary: '#b3b3cc',
+      primary: '#e2e8f0',
+      secondary: '#94a3b8',
     },
+    divider: 'rgba(6, 182, 212, 0.2)',
     action: {
-      hover: alpha('#00f2ea', 0.1),
-      selected: alpha('#ff00ff', 0.15),
-      disabled: alpha('#5c5c8a', 0.3),
+      hover: 'rgba(6, 182, 212, 0.1)',
+      selected: 'rgba(6, 182, 212, 0.2)',
     },
-    divider: alpha('#3333ff', 0.2),
   },
   custom: {
     surface: {
       base: '#050510',
-      raised: '#0a0a1f',
-      overlay: alpha('#050510', 0.9),
+      raised: '#0a0f1e',
+      overlay: 'rgba(5, 5, 16, 0.9)',
     },
-    borderStrong: `1px solid ${alpha('#00f2ea', 0.35)}`,
-    mutedText: '#b3b3cc',
-    // Neon glow effects
-    glow: `0 0 10px ${alpha('#00f2ea', 0.6)}, 0 0 20px ${alpha('#00f2ea', 0.4)}`,
-    glowCyan: `0 0 10px ${alpha('#00f2ea', 0.6)}, 0 0 20px ${alpha('#00f2ea', 0.4)}`,
-    glowGreen: `0 0 10px ${alpha('#39ff14', 0.6)}, 0 0 20px ${alpha('#39ff14', 0.4)}`,
-    glowRed: `0 0 10px ${alpha('#ff3333', 0.6)}, 0 0 20px ${alpha('#ff3333', 0.4)}`,
-    glowGold: `0 0 10px ${alpha('#ffcc00', 0.6)}, 0 0 20px ${alpha('#ffcc00', 0.4)}`,
-    border: `1px solid ${alpha('#00f2ea', 0.3)}`,
-    cardBorder: `1px solid ${alpha('#ff00ff', 0.2)}`,
-    customShadow: `0 8px 32px 0 ${alpha('#000000', 0.5)}`,
-    gradient: `linear-gradient(135deg, ${alpha('#00f2ea', 0.15)} 0%, ${alpha('#ff00ff', 0.05)} 100%)`,
-    shimmer: `linear-gradient(90deg, transparent, ${alpha('#ffffff', 0.1)}, transparent)`,
-
+    borderStrong: '1px solid #06b6d4',
+    mutedText: '#94a3b8',
+    glow: '0 0 20px rgba(6, 182, 212, 0.5)',
+    glowCyan: '0 0 20px rgba(6, 182, 212, 0.5)',
+    glowGreen: '0 0 20px rgba(16, 185, 129, 0.5)',
+    glowRed: '0 0 20px rgba(239, 68, 68, 0.5)',
+    glowGold: '0 0 20px rgba(245, 158, 11, 0.5)',
+    border: '1px solid rgba(6, 182, 212, 0.3)',
+    cardBorder: '1px solid rgba(6, 182, 212, 0.2)',
+    customShadow: '0 0 30px rgba(0, 0, 0, 0.8)',
+    gradient: 'linear-gradient(135deg, #06b6d4 0%, #d946ef 100%)',
+    shimmer: 'linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.2), transparent)',
+    
     // Status colors
     status: {
-      active: { main: '#39ff14', bg: alpha('#39ff14', 0.15), text: '#85ff6e' },
-      inactive: { main: '#5c5c8a', bg: alpha('#5c5c8a', 0.15), text: '#b3b3cc' },
-      vacation: { main: '#00f2ea', bg: alpha('#00f2ea', 0.15), text: '#80fbf7' },
-      unknown: { main: '#b3b3cc', bg: alpha('#b3b3cc', 0.10), text: '#e6e6f2' },
+      active: { main: '#34d399', bg: 'rgba(52, 211, 153, 0.2)', text: '#34d399' },
+      inactive: { main: '#94a3b8', bg: 'rgba(148, 163, 184, 0.2)', text: '#94a3b8' },
+      vacation: { main: '#06b6d4', bg: 'rgba(6, 182, 212, 0.2)', text: '#06b6d4' },
+      unknown: { main: '#475569', bg: 'rgba(71, 85, 105, 0.2)', text: '#475569' },
     },
 
-    // Guild war result colors
-    result: {
-      win: { main: '#39ff14', bg: alpha('#39ff14', 0.15), text: '#85ff6e', glow: `0 0 15px ${alpha('#39ff14', 0.5)}` },
-      loss: { main: '#ff3333', bg: alpha('#ff3333', 0.15), text: '#ff8080', glow: `0 0 15px ${alpha('#ff3333', 0.5)}` },
-      draw: { main: '#ffcc00', bg: alpha('#ffcc00', 0.15), text: '#ffe066', glow: `0 0 15px ${alpha('#ffcc00', 0.5)}` },
-      unknown: { main: '#5c5c8a', bg: alpha('#5c5c8a', 0.15), text: '#b3b3cc' },
+    // War role colors
+    warRoles: {
+      dps: { main: '#d946ef', bg: 'rgba(217, 70, 239, 0.2)', text: '#d946ef' },
+      heal: { main: '#06b6d4', bg: 'rgba(6, 182, 212, 0.2)', text: '#06b6d4' },
+      tank: { main: '#06b6d4', bg: 'rgba(6, 182, 212, 0.2)', text: '#06b6d4' },
+      lead: { main: '#06b6d4', bg: 'rgba(6, 182, 212, 0.3)', text: '#06b6d4' },
     },
-
-    // Class colors
-    classes: {
-      mingjin: { main: '#00f2ea', bg: alpha('#00f2ea', 0.15), text: '#80fbf7' },
-      qiansi: { main: '#39ff14', bg: alpha('#39ff14', 0.15), text: '#85ff6e' },
-      pozhu: { main: '#ff00ff', bg: alpha('#ff00ff', 0.15), text: '#ff80ff' },
-      lieshi: { main: '#ff3333', bg: alpha('#ff3333', 0.15), text: '#ff8080' },
+    
+    roleColors: {
+      admin: '#d946ef',
+      moderator: '#06b6d4',
+      member: '#e2e8f0',
+      external: '#94a3b8',
     },
 
     // Event type colors
     eventTypes: {
-      weekly_mission: { main: '#00f2ea', bg: alpha('#00f2ea', 0.15), text: '#80fbf7' },
-      guild_war: { main: '#ff3333', bg: alpha('#ff3333', 0.15), text: '#ff8080' },
-      other: { main: '#ff00ff', bg: alpha('#ff00ff', 0.15), text: '#ff80ff' },
-    },
-
-    // Role colors
-    roles: {
-      admin: { main: '#ff3333', bg: alpha('#ff3333', 0.15), text: '#ff8080' },
-      moderator: { main: '#ffcc00', bg: alpha('#ffcc00', 0.15), text: '#ffe066' },
-      member: { main: '#00f2ea', bg: alpha('#00f2ea', 0.15), text: '#80fbf7' },
-      external: { main: '#e5e7eb', bg: alpha('#e5e7eb', 0.12), text: '#f9fafb' },
-    },
-    roleColors: {
-      admin: '#ff3333',
-      moderator: '#ffcc00',
-      member: '#00f2ea',
-      external: '#e5e7eb',
-    },
-
-     // War role colors
-     warRoles: {
-      dps: { main: '#ff3333', bg: alpha('#ff3333', 0.15), text: '#ff8080' },
-      heal: { main: '#39ff14', bg: alpha('#39ff14', 0.15), text: '#85ff6e' },
-      tank: { main: '#00f2ea', bg: alpha('#00f2ea', 0.15), text: '#80fbf7' },
-      lead: { main: '#ffcc00', bg: alpha('#ffcc00', 0.15), text: '#ffe066' },
+      weekly_mission: { main: '#06b6d4', bg: 'rgba(6, 182, 212, 0.15)', text: '#06b6d4' },
+      guild_war: { main: '#d946ef', bg: 'rgba(217, 70, 239, 0.15)', text: '#d946ef' },
+      other: { main: '#94a3b8', bg: 'rgba(148, 163, 184, 0.1)', text: '#94a3b8' },
     },
 
     // Chip/pill colors
     chips: {
-      new: { main: '#39ff14', bg: alpha('#39ff14', 0.15), text: '#85ff6e' },
-      updated: { main: '#00f2ea', bg: alpha('#00f2ea', 0.15), text: '#80fbf7' },
-      pinned: { main: '#ffcc00', bg: alpha('#ffcc00', 0.15), text: '#ffe066' },
-      locked: { main: '#5c5c8a', bg: alpha('#5c5c8a', 0.15), text: '#b3b3cc' },
-      conflict: { main: '#ff8800', bg: alpha('#ff8800', 0.15), text: '#ffbb66' },
+      new: { main: '#06b6d4', bg: 'rgba(6, 182, 212, 0.2)', text: '#06b6d4' },
+      updated: { main: '#34d399', bg: 'rgba(52, 211, 153, 0.2)', text: '#34d399' },
+      pinned: { main: '#d946ef', bg: 'rgba(217, 70, 239, 0.2)', text: '#d946ef' },
+      locked: { main: '#f43f5e', bg: 'rgba(244, 63, 94, 0.2)', text: '#f43f5e' },
+      conflict: { main: '#f43f5e', bg: 'rgba(244, 63, 94, 0.2)', text: '#f43f5e' },
     },
+
+    // War result colors
+    result: {
+      win: { main: '#34d399', bg: 'rgba(52, 211, 153, 0.2)', text: '#34d399' },
+      loss: { main: '#f43f5e', bg: 'rgba(244, 63, 94, 0.2)', text: '#f43f5e' },
+      draw: { main: '#06b6d4', bg: 'rgba(6, 182, 212, 0.2)', text: '#06b6d4' },
+      unknown: { main: '#475569', bg: 'rgba(71, 85, 105, 0.2)', text: '#475569' },
+    },
+
+    // Class colors
+    classes: {
+      mingjin: { main: '#d946ef', bg: 'rgba(217, 70, 239, 0.15)', text: '#d946ef' },
+      qiansi: { main: '#06b6d4', bg: 'rgba(6, 182, 212, 0.15)', text: '#06b6d4' },
+      pozhu: { main: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', text: '#f59e0b' },
+      lieshi: { main: '#e2e8f0', bg: 'rgba(226, 232, 240, 0.1)', text: '#e2e8f0' },
+    },
+
+    // Role display colors
+    roles: {
+      admin: { main: '#d946ef', bg: 'rgba(217, 70, 239, 0.15)', text: '#d946ef' },
+      moderator: { main: '#06b6d4', bg: 'rgba(6, 182, 212, 0.15)', text: '#06b6d4' },
+      member: { main: '#e2e8f0', bg: 'rgba(226, 232, 240, 0.1)', text: '#e2e8f0' },
+      external: { main: '#94a3b8', bg: 'rgba(148, 163, 184, 0.15)', text: '#94a3b8' },
+    }
   },
   typography: {
     ...typography,
-    fontFamily: '"Orbitron", "Inter", sans-serif', // Sci-fi font preference
+    fontFamily: '"Rajdhani", sans-serif',
+    h1: { ...typography.h1, fontFamily: '"Orbitron", sans-serif', letterSpacing: '0.2em' },
+    h2: { ...typography.h2, fontFamily: '"Orbitron", sans-serif' },
     button: {
-      fontWeight: 800,
+      fontFamily: '"Orbitron", sans-serif',
       letterSpacing: '0.1em',
-      textTransform: 'uppercase',
-    },
-    h1: { ...typography.h1, fontWeight: 900, letterSpacing: '-0.02em', textShadow: `0 0 20px ${alpha('#00f2ea', 0.3)}` },
-    h2: { ...typography.h2, fontWeight: 800, letterSpacing: '-0.01em', textShadow: `0 0 15px ${alpha('#ff00ff', 0.3)}` },
-    h3: { ...typography.h3, fontWeight: 800 },
-    // h4 and h6 might not be defined in the base typography import, so we define them or skip if not needed.
-    // Assuming standard MUI theme structure, they should be fine if typed as ThemeOptions. 
-    // The linter might be inferring from the imported object.
-    h4: { fontWeight: 700 },
-    h6: { fontWeight: 700, letterSpacing: '0.05em' },
+      fontWeight: 700,
+    }
+  },
+  shape: {
+    borderRadius: 0,
   },
   components: {
     MuiButton: {
       styleOverrides: {
-        root: ({ theme }) => ({
-          borderRadius: 2, // Sharper corners for sci-fi look
-          boxShadow: `0 0 10px ${alpha(theme.palette.primary.main, 0.2)}`,
-          border: '1px solid transparent',
-          '&:hover': {
-            boxShadow: `0 0 20px ${alpha(theme.palette.primary.main, 0.5)}`,
-            borderColor: theme.palette.primary.main,
+        root: {
+          borderRadius: 0,
+          position: 'relative',
+          background: 'rgba(6, 182, 212, 0.05)',
+          color: 'var(--accent1)',
+          transition: 'all 0.2s ease',
+          overflow: 'visible',
+          // Neon seam border OUTSIDE the button
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: '-2px', // Border is OUTSIDE the button
+            clipPath: 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)',
+            background: 'linear-gradient(135deg, var(--accent1), var(--accent0))',
+            opacity: 0.4,
+            zIndex: -1,
+            pointerEvents: 'none',
+            transition: 'opacity 0.2s ease',
           },
-        }),
-        contained: ({ theme }) => ({
-          background: theme.palette.primary.main,
-          color: theme.palette.primary.contrastText,
+          // Inner clipping for button content
+          clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)',
           '&:hover': {
-            background: theme.palette.primary.light,
+            background: 'rgba(6, 182, 212, 0.15)',
+            boxShadow: '0 0 20px var(--accent1), 0 0 30px var(--accent0)',
+            animation: 'glitchJitter 0.3s ease-in-out',
+            '&::before': {
+              opacity: 1,
+              boxShadow: '0 0 15px var(--accent1)',
+            },
+            '& .MuiButton-label, &': {
+              animation: 'glitchChroma 0.3s ease-in-out',
+            }
           },
-        }),
-        outlined: ({ theme }) => ({
-          borderColor: theme.palette.primary.main,
-          color: theme.palette.primary.main,
+        },
+        containedPrimary: {
+          backgroundColor: 'var(--accent1)',
+          color: '#000',
+          boxShadow: '0 0 20px rgba(6, 182, 212, 0.5)',
           '&:hover': {
-            borderColor: theme.palette.primary.light,
-            backgroundColor: alpha(theme.palette.primary.main, 0.1),
+            backgroundColor: '#22d3ee',
+            boxShadow: '0 0 30px rgba(6, 182, 212, 0.8)',
           },
-        }),
-      },
+          '&::before': {
+            opacity: 0.8,
+          }
+        }
+      }
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'var(--surface1)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid var(--divider)',
+          position: 'relative',
+          overflow: 'visible',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: '-1px',
+            background: 'linear-gradient(45deg, var(--accent1), transparent, var(--accent0))',
+            zIndex: -1,
+            opacity: 0.2,
+          },
+          '&:hover': {
+            borderColor: 'var(--accent1)',
+            '&::before': { opacity: 0.6 }
+          }
+        }
+      }
     },
     MuiPaper: {
       styleOverrides: {
-        root: ({ theme }) => ({
-          backgroundImage: 'none',
-          backgroundColor: alpha(theme.palette.background.paper || '#0a0a1f', 0.7),
-          backdropFilter: 'blur(12px)',
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
-          borderRadius: 16,
-          boxShadow: `0 8px 32px 0 ${alpha('#000000', 0.4)}`,
-        }),
-      },
+        root: {
+          backgroundColor: 'var(--surface1)',
+          backdropFilter: 'blur(8px)',
+        }
+      }
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-notchedOutline': {
+             borderColor: 'var(--divider)',
+             borderRadius: '0px',
+             clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)',
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+             borderColor: 'var(--accent1)',
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+             borderColor: 'var(--accent1)',
+             borderWidth: '1px',
+             boxShadow: '0 0 10px var(--accent1)',
+          }
+        }
+      }
     },
     MuiChip: {
       styleOverrides: {
         root: {
-          fontWeight: 800,
-          border: '1px solid transparent',
+          borderRadius: 0,
+          clipPath: 'polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px)',
+          backgroundColor: 'rgba(6, 182, 212, 0.1)',
+          border: '1px solid var(--accent1)',
+          color: 'var(--accent1)',
+          textShadow: '0 0 5px var(--accent1)',
+          '& .MuiChip-label': {
+             paddingLeft: '8px',
+             paddingRight: '8px',
+          }
         },
         filled: ({ theme }) => ({
-          background: alpha(theme.palette.primary.main, 0.15),
-          color: theme.palette.primary.light,
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-        }),
-      },
+          backgroundColor: theme.palette.primary.main,
+          color: theme.palette.primary.contrastText,
+          boxShadow: `0 0 15px ${theme.palette.primary.main}`,
+        })
+      }
     },
-    MuiAppBar: {
+    MuiTabs: {
       styleOverrides: {
-        root: ({ theme }) => ({
-          background: alpha('#050510', 0.8),
-          backdropFilter: 'blur(16px)',
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-        }),
-      },
+        indicator: {
+           background: 'linear-gradient(90deg, transparent, var(--accent1), transparent)',
+           height: '3px',
+           boxShadow: '0 0 10px var(--accent1)',
+           animation: 'pulse 2s infinite',
+        }
+      }
     },
-    MuiDrawer: {
+    MuiSwitch: {
       styleOverrides: {
-        paper: ({ theme }) => ({
-          background: alpha('#050510', 0.9),
-          backdropFilter: 'blur(16px)',
-          borderRight: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-        }),
-      },
+        track: {
+           backgroundColor: 'rgba(6, 182, 212, 0.2)',
+        },
+        thumb: {
+           backgroundColor: 'var(--accent1)',
+           boxShadow: '0 0 10px var(--accent1)',
+        }
+      }
     },
-  },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          position: 'relative',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            backgroundColor: 'rgba(6, 182, 212, 0.15)',
+            boxShadow: '0 0 20px rgba(6, 182, 212, 0.4)',
+            animation: 'glitchJitter 0.3s ease-in-out',
+          }
+        }
+      }
+    },
+    MuiToggleButton: {
+      styleOverrides: {
+        root: {
+          border: '1px solid var(--divider)',
+          clipPath: 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)',
+          '&:hover': {
+            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+            borderColor: 'var(--accent1)',
+          },
+          '&.Mui-selected': {
+            backgroundColor: 'rgba(6, 182, 212, 0.2)',
+            borderColor: 'var(--accent1)',
+            boxShadow: '0 0 10px var(--accent1)',
+          }
+        }
+      }
+    },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          backgroundColor: 'var(--surface1)',
+          border: '1px solid var(--accent1)',
+          color: 'var(--text0)',
+          boxShadow: '0 0 15px rgba(6, 182, 212, 0.3)',
+        }
+      }
+    },
+    MuiSlider: {
+      styleOverrides: {
+        thumb: {
+          backgroundColor: 'var(--accent1)',
+          border: '2px solid var(--accent0)',
+          boxShadow: '0 0 10px var(--accent1)',
+          '&:hover': {
+            boxShadow: '0 0 20px var(--accent1)',
+          }
+        },
+        track: {
+          background: 'linear-gradient(90deg, var(--accent1), var(--accent0))',
+          height: '3px',
+          border: 'none',
+        },
+        rail: {
+          backgroundColor: 'rgba(6, 182, 212, 0.2)',
+          height: '2px',
+        }
+      }
+    },
+    MuiLinearProgress: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'rgba(6, 182, 212, 0.2)',
+          height: '4px',
+        },
+        bar: {
+          background: 'linear-gradient(90deg, var(--accent1), var(--accent0))',
+          boxShadow: '0 0 10px var(--accent1)',
+          animation: 'pulse 2s infinite',
+        }
+      }
+    }
+  }
 };

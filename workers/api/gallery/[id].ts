@@ -10,6 +10,7 @@
 import type { Env } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
 import { createAuditLog, canEditEntity, utcNow } from '../../lib/utils';
+import { NotFoundError } from '../../lib/errors';
 
 interface GalleryImage {
   gallery_id: string;
@@ -53,7 +54,7 @@ export const onRequestGet = createEndpoint<GalleryImage, any, any>({
       .first();
 
     if (!item) {
-      throw new Error('Gallery item not found');
+      throw new NotFoundError('Gallery item');
     }
 
     return {
@@ -88,7 +89,7 @@ export const onRequestPut = createEndpoint<GalleryImage, any, any>({
       .first<any>();
 
     if (!existing) {
-      throw new Error('Gallery item not found');
+      throw new NotFoundError('Gallery item');
     }
 
     // Check permissions: uploader or moderator/admin can update
@@ -210,7 +211,7 @@ export const onRequestDelete = createEndpoint<{ success: true; message: string }
       .first<any>();
 
     if (!existing) {
-      throw new Error('Gallery item not found');
+      throw new NotFoundError('Gallery item');
     }
 
     // Check permissions

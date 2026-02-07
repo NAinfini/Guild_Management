@@ -54,10 +54,14 @@ export const mapToDomain = (dto: AnnouncementDTO): Announcement => {
 // ============================================================================
 
 export const announcementsAPI = {
-  list: async (params?: { includeArchived?: boolean }): Promise<Announcement[]> => {
+  list: async (params?: { includeArchived?: boolean; search?: string; startDate?: string; endDate?: string; since?: string }): Promise<Announcement[]> => {
     // API always returns paginated format: { items: [...], pagination: {...} }
     const query: any = {};
     if (params?.includeArchived) query.includeArchived = 'true';
+    if (params?.search) query.search = params.search;
+    if (params?.startDate) query.startDate = params.startDate;
+    if (params?.endDate) query.endDate = params.endDate;
+    if (params?.since) query.since = params.since;
     
     const response = await typedAPI.announcements.list<{ items: AnnouncementDTO[], pagination: any }>({ query });
 
@@ -66,15 +70,8 @@ export const announcementsAPI = {
   },
 
   get: async (id: string): Promise<Announcement> => {
-    // Optimization: If we have a detail endpoint, use it.
-    // For now, reuse list if no specific endpoint, or call typedAPI.announcements.get if exists?
-    // Looking at api-builder or previous files... no direct get seen in simple dump.
-    // Let's assume list and find for safety or try get param.
-    // Actually, usually `list` caches.
-    const list = await announcementsAPI.list();
-    const found = list.find(a => a.id === id);
-    if (!found) throw new Error('Announcement not found');
-    return found;
+    const response = await typedAPI.announcements.get<{ announcement: AnnouncementDTO }>({ params: { id } });
+    return mapToDomain(response.announcement);
   },
 
   create: async (data: CreateAnnouncementData): Promise<Announcement> => {
@@ -103,8 +100,12 @@ export const announcementsAPI = {
   },
 
   pin: async (id: string): Promise<Announcement> => {
-    const response = await typedAPI.announcements.togglePin<{ announcement: AnnouncementDTO }>({ params: { id }, body: {} });
-    return mapToDomain(response.announcement);
+    const current = await announcementsAPI.get(id);
+    await typedAPI.announcements.togglePin<{ isPinned: boolean; message: string }>({
+      params: { id },
+      body: { isPinned: !current.is_pinned },
+    });
+    return announcementsAPI.get(id);
   },
 
   duplicate: async (id: string): Promise<Announcement> => {

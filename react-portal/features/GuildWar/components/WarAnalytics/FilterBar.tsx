@@ -28,8 +28,9 @@ import {
   TextField,
   InputAdornment,
 } from '@mui/material';
-import { Calendar, ChevronDown, Search, X } from 'lucide-react';
+import { Calendar, ChevronDown, Search, X, Filter } from 'lucide-react';
 import { useAnalytics } from './AnalyticsContext';
+import { PageFilterBar } from '../../../../components/PageFilterBar';
 import { DATE_RANGE_PRESETS } from './types';
 import type { WarSummary } from './types';
 
@@ -59,56 +60,43 @@ export function FilterBar({ wars, isLoading = false }: FilterBarProps) {
   const totalWarsCount = wars?.length || 0;
 
   return (
-    <Box
-      sx={{
-        p: 2,
-        bgcolor: 'background.paper',
-        borderBottom: 1,
-        borderColor: 'divider',
-      }}
-    >
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
-        {/* Date Range Selector */}
-        <DateRangeSelector value={dateRangePreset} onChange={handleDateRangeChange} />
+    <PageFilterBar
+      isLoading={isLoading}
+      resultsCount={selectedWarsCount}
+      extraActions={
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
+          {/* Selection summary removed per user request */}
 
-        {/* War Multi-Selector */}
-        <WarMultiSelector
-          wars={wars}
-          selected={filters.selectedWars}
-          onChange={(warIds) => updateFilters({ selectedWars: warIds })}
-          isLoading={isLoading}
-        />
+          {/* Date Range Selector */}
+          <DateRangeSelector value={dateRangePreset} onChange={handleDateRangeChange} />
 
-        {/* Participation Toggle */}
-        <FormControlLabel
-          control={
-            <Switch
-              checked={filters.participationOnly}
-              onChange={(e) => updateFilters({ participationOnly: e.target.checked })}
-              size="small"
-            />
-          }
-          label={
-            <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-              Only participated
-            </Typography>
-          }
-        />
+          {/* War Multi-Selector */}
+          <WarMultiSelector
+            wars={wars}
+            selected={filters.selectedWars}
+            onChange={(warIds) => updateFilters({ selectedWars: warIds })}
+            isLoading={isLoading}
+          />
 
-        {/* Selection Summary */}
-        <Box sx={{ ml: 'auto' }}>
-          <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-            {selectedWarsCount > 0 ? (
-              <>
-                <strong>{selectedWarsCount}</strong> of {totalWarsCount} wars selected
-              </>
-            ) : (
-              <>Select wars to analyze</>
-            )}
-          </Typography>
-        </Box>
-      </Stack>
-    </Box>
+          {/* Participation Toggle */}
+          <FormControlLabel
+            control={
+              <Switch
+                checked={filters.participationOnly}
+                onChange={(e) => updateFilters({ participationOnly: e.target.checked })}
+                size="small"
+              />
+            }
+            label={
+              <Typography variant="body2" sx={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
+                Participated
+              </Typography>
+            }
+            sx={{ ml: 1 }}
+          />
+        </Stack>
+      }
+    />
   );
 }
 

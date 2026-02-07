@@ -8,6 +8,7 @@
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog, assertIfMatch, etagFromTimestamp, successResponse } from '../../../lib/utils';
 import type { Event } from '../../../lib/types';
+import { NotFoundError } from '../../../lib/errors';
 
 interface ToggleLockResponse {
   message: string;
@@ -28,7 +29,7 @@ export const onRequestPost = createEndpoint<ToggleLockResponse>({
       .first<Event>();
 
     if (!event) {
-      throw new Error('Event not found'); // validation error map handles this? actually generic error
+      throw new NotFoundError('Event'); // validation error map handles this? actually generic error
     }
 
     // 2. Concurrency check

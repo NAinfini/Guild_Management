@@ -276,7 +276,7 @@ function MemberManagement() {
                 <Card onClick={() => setSelectedMember(m)} sx={{ cursor: 'pointer' }}>
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center" mb={1}>
-                      <Avatar src={m.avatar_url} variant="rounded" sx={{ width: 44, height: 44 }} />
+                      <Avatar src={m.avatar_url} alt={m.username} variant="rounded" sx={{ width: 44, height: 44 }} />
                       <Box>
                         <Typography variant="subtitle2" fontWeight={800} dangerouslySetInnerHTML={sanitizeHtml(m.username)} />
                         <Typography variant="caption" fontFamily="monospace" color="text.secondary">{m.wechat_name || t('admin.no_wechat')}</Typography>
@@ -344,7 +344,7 @@ function MemberManagement() {
                       >
                          <TableCell>
                             <Stack direction="row" spacing={2} alignItems="center">
-                               <Avatar src={m.avatar_url} variant="rounded" sx={{ width: 40, height: 40 }} />
+                               <Avatar src={m.avatar_url} alt={m.username} variant="rounded" sx={{ width: 40, height: 40 }} />
                                <Box>
                                    <Typography variant="subtitle2" fontWeight={800} dangerouslySetInnerHTML={sanitizeHtml(m.username)} />
                                    <Typography variant="caption" fontFamily="monospace" color="text.secondary">{m.wechat_name || t('admin.no_wechat')}</Typography>
@@ -436,7 +436,7 @@ function MemberDetailModal({ member, onClose, onUpdate }: { member: User, onClos
       >
          <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.default', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
              <Stack direction="row" spacing={3} alignItems="center">
-                 <Avatar src={member.avatar_url} variant="rounded" sx={{ width: 64, height: 64, boxShadow: 3 }} />
+                 <Avatar src={member.avatar_url} alt={member.username} variant="rounded" sx={{ width: 64, height: 64, boxShadow: 3 }} />
                  <Box>
                      <Typography variant="h4" fontWeight={900} textTransform="uppercase" fontStyle="italic" lineHeight={1}>{member.username}</Typography>
                      <Stack direction="row" spacing={1} mt={1}>
@@ -511,7 +511,7 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                      <Stack spacing={3}>
                         <Stack direction="row" spacing={3}>
                            <Box sx={{ position: 'relative', width: 80, height: 80 }}>
-                              <Avatar src={currentAvatar} variant="rounded" sx={{ width: '100%', height: '100%' }} />
+                              <Avatar src={currentAvatar} alt={member.username} variant="rounded" sx={{ width: '100%', height: '100%' }} />
                               <IconButton 
                                  component="label" 
                                  size="small" 

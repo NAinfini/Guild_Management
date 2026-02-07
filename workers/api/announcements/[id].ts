@@ -18,6 +18,7 @@ import {
   canEditEntity,
   sanitizeHtml
 } from '../../lib/utils';
+import { NotFoundError } from '../../lib/errors';
 
 // ============================================================
 // Types
@@ -51,20 +52,25 @@ export const onRequestGet = createEndpoint<AnnouncementResponse>({
     const announcementId = params.id;
 
     const announcement = await env.DB
-      .prepare('SELECT * FROM announcements WHERE announcement_id = ? AND is_archived = 0')
+      .prepare(`
+        SELECT
+          announcement_id, title, body_html, is_pinned, is_archived,
+          created_by AS author_id, updated_by, created_at_utc, updated_at_utc, archived_at_utc
+        FROM announcements WHERE announcement_id = ? AND is_archived = 0
+      `)
       .bind(announcementId)
       .first<Announcement>();
 
     if (!announcement) {
-      throw new Error('Announcement not found');
+      throw new NotFoundError('Announcement');
     }
 
     // Get media
     const media = await env.DB
       .prepare(`
-        SELECT m.* 
+        SELECT mo.*
         FROM announcement_media am
-        JOIN media m ON am.media_id = m.media_id
+        JOIN media_objects mo ON am.media_id = mo.media_id
         WHERE am.announcement_id = ?
         ORDER BY am.sort_order
       `)
@@ -92,15 +98,21 @@ export const onRequestPut = createEndpoint<{ message: string; announcement: Anno
     const announcementId = params.id;
 
     const existing = await env.DB
-      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .prepare(`
+        SELECT
+          announcement_id, title, body_html, is_pinned, is_archived,
+          created_by AS author_id, updated_by, created_at_utc, updated_at_utc, archived_at_utc
+        FROM announcements WHERE announcement_id = ?
+      `)
       .bind(announcementId)
       .first<Announcement>();
 
     if (!existing) {
-      throw new Error('Announcement not found');
+      throw new NotFoundError('Announcement');
     }
 
-    if (!canEditEntity(user!, existing.created_by)) {
+    // Note: existing.author_id is actually created_by from database, but we alias it for frontend compatibility
+    if (!canEditEntity(user!, existing.author_id as string)) {
       throw new Error('You do not have permission to edit this announcement');
     }
 
@@ -160,7 +172,12 @@ export const onRequestPut = createEndpoint<{ message: string; announcement: Anno
     );
 
     const updated = await env.DB
-      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .prepare(`
+        SELECT
+          announcement_id, title, body_html, is_pinned, is_archived,
+          created_by AS author_id, updated_by, created_at_utc, updated_at_utc, archived_at_utc
+        FROM announcements WHERE announcement_id = ?
+      `)
       .bind(announcementId)
       .first<Announcement>();
 
@@ -199,12 +216,17 @@ export const onRequestPatch = createEndpoint<{ message: string; announcement: An
     }
 
     const existing = await env.DB
-      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .prepare(`
+        SELECT
+          announcement_id, title, body_html, is_pinned, is_archived,
+          created_by AS author_id, updated_by, created_at_utc, updated_at_utc, archived_at_utc
+        FROM announcements WHERE announcement_id = ?
+      `)
       .bind(announcementId)
       .first<Announcement>();
 
     if (!existing) {
-      throw new Error('Announcement not found');
+      throw new NotFoundError('Announcement');
     }
 
     const now = utcNow();
@@ -224,7 +246,12 @@ export const onRequestPatch = createEndpoint<{ message: string; announcement: An
       .run();
 
     const updated = await env.DB
-      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .prepare(`
+        SELECT
+          announcement_id, title, body_html, is_pinned, is_archived,
+          created_by AS author_id, updated_by, created_at_utc, updated_at_utc, archived_at_utc
+        FROM announcements WHERE announcement_id = ?
+      `)
       .bind(announcementId)
       .first<Announcement>();
 
@@ -266,15 +293,21 @@ export const onRequestDelete = createEndpoint<{ message: string }>({
     const announcementId = params.id;
 
     const existing = await env.DB
-      .prepare('SELECT * FROM announcements WHERE announcement_id = ?')
+      .prepare(`
+        SELECT
+          announcement_id, title, body_html, is_pinned, is_archived,
+          created_by AS author_id, updated_by, created_at_utc, updated_at_utc, archived_at_utc
+        FROM announcements WHERE announcement_id = ?
+      `)
       .bind(announcementId)
       .first<Announcement>();
 
     if (!existing) {
-      throw new Error('Announcement not found');
+      throw new NotFoundError('Announcement');
     }
 
-    if (!canEditEntity(user!, existing.created_by)) {
+    // Note: existing.author_id is actually created_by from database, but we alias it for frontend compatibility
+    if (!canEditEntity(user!, existing.author_id as string)) {
       throw new Error('You do not have permission to delete this announcement');
     }
 

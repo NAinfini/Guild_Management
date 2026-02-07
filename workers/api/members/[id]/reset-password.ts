@@ -7,13 +7,14 @@
 
 import type { Env, User } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
-import { 
-  utcNow, 
-  createAuditLog, 
-  etagFromTimestamp, 
-  assertIfMatch, 
-  hashPassword 
+import {
+  utcNow,
+  createAuditLog,
+  etagFromTimestamp,
+  assertIfMatch,
+  hashPassword
 } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 // ============================================================
 // Types
@@ -43,7 +44,7 @@ export const onRequestPost = createEndpoint<ResetPasswordResponse>({
       .first<User>();
 
     if (!targetUser) {
-      throw new Error('Member not found');
+      throw new NotFoundError('Member');
     }
 
     const currentEtag = etagFromTimestamp(targetUser.updated_at_utc || targetUser.created_at_utc);

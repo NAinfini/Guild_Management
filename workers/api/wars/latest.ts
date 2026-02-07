@@ -61,13 +61,13 @@ export const onRequestGet = createEndpoint<ActiveWarDTO[], ActiveWarQuery>({
     for (const war of wars.results as any[]) {
       const eventId = war.event_id;
 
-      // Get teams assigned to this event via event_teams
+      // Get non-pool teams assigned to this event via event_teams
       const eventTeamsResult = await env.DB
         .prepare(`
           SELECT t.*, et.assigned_at_utc
           FROM event_teams et
           JOIN teams t ON et.team_id = t.team_id
-          WHERE et.event_id = ?
+          WHERE et.event_id = ? AND t.name != 'Pool'
           ORDER BY t.created_at_utc
         `)
         .bind(eventId)
@@ -89,9 +89,8 @@ export const onRequestGet = createEndpoint<ActiveWarDTO[], ActiveWarQuery>({
 
           return {
             team_id: team.team_id,
-            team_name: team.team_name,
-            note: team.note,
-            sort_order: team.sort_order || 0,
+            team_name: team.name,
+            sort_order: 0,
             is_locked: team.is_locked ? 1 : 0,
             members: (members.results || []).map((m: any) => ({
               user_id: m.user_id,
@@ -106,26 +105,30 @@ export const onRequestGet = createEndpoint<ActiveWarDTO[], ActiveWarQuery>({
         })
       );
 
-      // Pool = all active members NOT assigned to any team for this event
-      const assignedUserIds = teamsWithMembers
-        .flatMap(t => t.members)
-        .map((m: any) => m.user_id);
+      // Pool = members currently assigned to the event's Pool team
+      const poolTeam = await env.DB
+        .prepare(`
+          SELECT t.team_id
+          FROM event_teams et
+          JOIN teams t ON et.team_id = t.team_id
+          WHERE et.event_id = ? AND t.name = 'Pool'
+          LIMIT 1
+        `)
+        .bind(eventId)
+        .first<{ team_id: string }>();
 
-      const poolQuery = assignedUserIds.length > 0
-        ? `SELECT u.user_id, u.username, u.power, u.wechat_name
-           FROM users u
-           WHERE u.is_active = 1
-             AND u.user_id NOT IN (${assignedUserIds.map(() => '?').join(',')})
-           ORDER BY u.power DESC`
-        : `SELECT u.user_id, u.username, u.power, u.wechat_name
-           FROM users u
-           WHERE u.is_active = 1
-           ORDER BY u.power DESC`;
-
-      const poolResult = await env.DB
-        .prepare(poolQuery)
-        .bind(...assignedUserIds)
-        .all();
+      const poolResult = poolTeam
+        ? await env.DB
+            .prepare(`
+              SELECT tm.user_id, u.username, u.power, u.wechat_name
+              FROM team_members tm
+              JOIN users u ON tm.user_id = u.user_id
+              WHERE tm.team_id = ?
+              ORDER BY tm.sort_order, u.power DESC
+            `)
+            .bind(poolTeam.team_id)
+            .all()
+        : { results: [] as any[] };
       
       const pool: WarPoolMemberDTO[] = (poolResult.results || []).map((p: any) => ({
           user_id: p.user_id,

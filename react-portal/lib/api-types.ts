@@ -4,25 +4,26 @@
 
 export interface LoginResponse {
   user: {
-    userId: string;
+    user_id: string;
     username: string;
-    wechatName: string | null;
+    wechat_name: string | null;
     role: string;
     power: number;
-    isActive: boolean;
+    is_active: number;
   };
-  csrfToken: string | null;
+  sessionId: string;
+  csrfToken?: string | null;
 }
 
 export interface SessionResponse {
   user: {
-    userId: string;
+    user_id: string;
     username: string;
-    wechatName: string | null;
+    wechat_name: string | null;
     role: string;
     power: number;
-    isActive: boolean;
-    sessionExpiresAt?: string;
-  };
+    is_active: number;
+    session_expires_at_utc?: string;
+  } | null;
   csrfToken: string | null;
 }

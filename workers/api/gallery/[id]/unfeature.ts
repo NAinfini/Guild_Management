@@ -7,6 +7,7 @@
 
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 interface UnfeatureResponse {
   message: string;
@@ -31,7 +32,7 @@ export const onRequestPost = createEndpoint<UnfeatureResponse, any, any>({
       .first<any>();
 
     if (!item) {
-      throw new Error('Gallery item not found');
+      throw new NotFoundError('Gallery item');
     }
 
     // If already not featured, just return success

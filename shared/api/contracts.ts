@@ -139,6 +139,7 @@ export interface WebSocketMessage<T = any> {
   payload?: T[];
   ids?: string[];
   timestamp?: string;
-  type?: string; 
+  seq?: number;
+  type?: string;
   data?: any;
 }

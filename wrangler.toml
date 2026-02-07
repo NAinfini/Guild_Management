@@ -5,6 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "https://guild-management.na-infini.workers.dev,http://localhost:5173,http://localhost:3000"
 
 [assets]
 directory = "./dist"

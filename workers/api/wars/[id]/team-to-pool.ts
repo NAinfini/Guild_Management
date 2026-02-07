@@ -6,6 +6,7 @@
 import type { Env } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog, successResponse } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 interface SingleMove {
   userId: string;
@@ -26,12 +27,12 @@ export const onRequestPost = createEndpoint<{ message: string; count: number }, 
 
     // Get War Details
     const warHistory = await env.DB.prepare('SELECT war_id FROM war_history WHERE event_id = ?').bind(eventId).first<{ war_id: string }>();
-    if (!warHistory) throw new Error('War not found');
+    if (!warHistory) throw new NotFoundError('War');
     const warId = warHistory.war_id;
 
     // Get Event Type to determine Pool Name
     const event = await env.DB.prepare('SELECT type FROM events WHERE event_id = ?').bind(eventId).first<{ type: string }>();
-    if (!event) throw new Error('Event not found');
+    if (!event) throw new NotFoundError('Event');
 
     const poolName = event.type === 'guild_war' ? 'Pool' : 'Participants';
 

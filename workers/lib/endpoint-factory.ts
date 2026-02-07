@@ -38,9 +38,11 @@ import {
   getRateLimitConfig,
   getUserTier,
   getRateLimitKey,
-  checkRateLimit,
-  getRateLimitRemaining,
+  checkRateLimitDO,
 } from './rate-limit';
+
+// Import typed error classes
+import { AppError } from './errors';
 
 // ============================================================
 // Endpoint Configuration Types
@@ -163,20 +165,22 @@ export function createEndpoint<TData = any, TQuery = any, TBody = any>(
         const url = new URL(request.url);
         const path = url.pathname;
 
-        // Check rate limit (before executing handler)
+        // Check rate limit via Durable Object (distributed)
         const rateLimitConfig = getRateLimitConfig(method, path);
+        let rateLimitInfo: { remaining: number; resetAt: number; limit: number } | undefined;
         if (rateLimitConfig) {
           const userTier = getUserTier(authData.user, authData.isModerator);
           const tierConfig = rateLimitConfig[userTier];
           const rateLimitKey = getRateLimitKey(request, path, authData.user?.user_id);
 
-          if (!checkRateLimit(rateLimitKey, tierConfig.requests, tierConfig.window)) {
-            const { remaining, resetAt } = getRateLimitRemaining(rateLimitKey, tierConfig.requests);
+          const result = await checkRateLimitDO(env, rateLimitKey, tierConfig.requests, tierConfig.window);
+          if (!result.allowed) {
             return tooManyRequestsResponse(
-              `Rate limit exceeded. Try again in ${Math.ceil((resetAt - Date.now()) / 1000)} seconds.`,
+              `Rate limit exceeded. Try again in ${Math.ceil((result.resetAt - Date.now()) / 1000)} seconds.`,
               origin
             );
           }
+          rateLimitInfo = { remaining: result.remaining, resetAt: result.resetAt, limit: tierConfig.requests };
         }
 
         // Parse query parameters
@@ -238,20 +242,6 @@ export function createEndpoint<TData = any, TQuery = any, TBody = any>(
           data = transformResponse(data);
         }
 
-        // Get rate limit info for response headers
-        let rateLimitInfo;
-        if (rateLimitConfig) {
-          const userTier = getUserTier(authData.user, authData.isModerator);
-          const tierConfig = rateLimitConfig[userTier];
-          const rateLimitKey = getRateLimitKey(request, path, authData.user?.user_id);
-          const { remaining, resetAt } = getRateLimitRemaining(rateLimitKey, tierConfig.requests);
-          rateLimitInfo = {
-            limit: tierConfig.requests,
-            remaining,
-            resetAt,
-          };
-        }
-
         // Check ETag for conditional requests (GET only)
         if (method === 'GET' && etag) {
           const etagValue = typeof etag === 'function'
@@ -303,7 +293,18 @@ export function createEndpoint<TData = any, TQuery = any, TBody = any>(
         // Get origin for error responses
         const origin = authContext.request.headers.get('Origin');
 
-        // Handle known error types
+        // Typed error classes (preferred path)
+        if (error instanceof AppError) {
+          return errorResponse(
+            error.errorCode,
+            error.message,
+            error.statusCode,
+            error.details,
+            origin
+          );
+        }
+
+        // String-matching fallback for backwards compatibility
         if (error instanceof Error) {
           const message = error.message.toLowerCase();
 

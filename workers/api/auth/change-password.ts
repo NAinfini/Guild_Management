@@ -9,6 +9,7 @@ import type { Env } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
 import { utcNow, hashPassword, verifyPassword, createAuditLog } from '../../lib/utils';
 import { validateBody, changePasswordSchema } from '../../lib/validation';
+import { NotFoundError } from '../../lib/errors';
 
 // ============================================================
 // Types
@@ -51,7 +52,7 @@ export const onRequestPost = createEndpoint<ChangePasswordResponse, ChangePasswo
       .first<{ password_hash: string; salt: string }>();
 
     if (!authRecord) {
-      throw new Error('Password record not found');
+      throw new NotFoundError('Password record');
     }
 
     // Verify current password

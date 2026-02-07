@@ -14,7 +14,7 @@ import type {
 
 const mapTeamToDomain = (dto: WarTeamDTO): WarTeam => ({
   id: dto.team_id,
-  name: dto.team_name,
+  name: (dto as any).team_name || (dto as any).name || '',
   note: dto.note || undefined,
   is_locked: !!dto.is_locked,
   members: (dto.members || []).map((m) => ({
@@ -28,7 +28,7 @@ export const mapHistoryToDomain = (dto: WarHistoryDTO): WarHistoryEntry => ({
     event_id: dto.event_id,
     date: dto.war_date,
     title: dto.title,
-    result: (dto.result === 'win' ? 'victory' : dto.result === 'loss' ? 'defeat' : dto.result) as any, // normalization
+    result: dto.result === 'win' ? 'victory' : dto.result === 'loss' ? 'defeat' : dto.result === 'unknown' ? 'pending' : dto.result,
     score: dto.our_kills || 0,
     enemy_score: dto.enemy_kills || 0,
     own_stats: {
@@ -152,10 +152,15 @@ export const warsAPI = {
   },
 
   createHistory: async (data: Partial<WarHistoryEntry>): Promise<WarHistoryEntry> => {
+    // Map frontend result values to backend result values
+    const result = data.result === 'victory' ? 'win' :
+                   data.result === 'defeat' ? 'loss' :
+                   data.result === 'pending' ? 'unknown' : data.result;
+
     const payload = {
         title: data.title,
         warDate: data.date,
-        result: data.result,
+        result: result,
         ourKills: data.own_stats?.kills,
         // ... map rest if needed
     };
@@ -164,6 +169,11 @@ export const warsAPI = {
   },
 
   updateWarStats: async (warId: string, data: Partial<WarHistoryEntry>, ifMatch?: string): Promise<WarHistoryEntry> => {
+    // Map frontend result values to backend result values
+    const result = data.result === 'victory' ? 'win' :
+                   data.result === 'defeat' ? 'loss' :
+                   data.result === 'pending' ? 'unknown' : data.result;
+
     const payload: any = {
       ourKills: data.own_stats?.kills,
       enemyKills: data.enemy_stats?.kills,
@@ -175,7 +185,7 @@ export const warsAPI = {
       ourCredits: data.own_stats?.credits,
       enemyCredits: data.enemy_stats?.credits,
       notes: data.notes,
-      result: data.result,
+      result: result,
     };
     const response = await api.put<{ war: WarHistoryDTO }>(`/wars/history/${warId}`, payload, { headers: ifMatch ? { 'If-Match': ifMatch } : undefined } as any);
     return mapHistoryToDomain(response.war);
@@ -217,13 +227,14 @@ export const warsAPI = {
         war_id: parseInt(war.war_id) || war.war_id, // Handle if string
         war_date: war.war_date,
         title: war.title,
-        result: war.result === 'victory' || war.result === 'win' ? 'win' : 
-                war.result === 'defeat' || war.result === 'loss' ? 'loss' : war.result,
+        result: war.result === 'victory' || war.result === 'win' ? 'win' :
+                war.result === 'defeat' || war.result === 'loss' ? 'loss' :
+                war.result === 'pending' || war.result === 'unknown' ? 'unknown' : war.result,
         our_kills: war.our_kills,
         enemy_kills: war.enemy_kills,
         our_towers: war.our_towers,
         enemy_towers: war.enemy_towers,
-        participant_count: 0, 
+        participant_count: 0,
         missing_stats_count: 0,
       }));
   },

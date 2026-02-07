@@ -11,6 +11,7 @@ import { createEndpoint } from '../../../lib/endpoint-factory';
 import { generateId } from '../../../lib/utils';
 import { utcNow } from '../../../lib/utils';
 import { createAuditLog } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 interface VideoUrlCreateRequest {
   url: string;
@@ -67,7 +68,7 @@ export const onRequestPost = createEndpoint<VideoUrlResponse, any, VideoUrlCreat
       .first<{ user_id: string }>();
 
     if (!member) {
-      throw new Error('Member not found');
+      throw new NotFoundError('Member');
     }
 
     const now = utcNow();

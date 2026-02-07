@@ -5,6 +5,7 @@
 
 import type { ApiKey } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
+import { NotFoundError } from '../../../lib/errors';
 
 interface RevokeResponse {
   success: true;
@@ -31,7 +32,7 @@ export const onRequestDelete = createEndpoint<RevokeResponse, any, any>({
       .first<ApiKey>();
 
     if (!existingKey) {
-      throw new Error('API key not found');
+      throw new NotFoundError('API key');
     }
 
     if (existingKey.user_id !== user!.user_id) {

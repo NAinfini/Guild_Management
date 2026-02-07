@@ -8,6 +8,7 @@
 import type { Env, Announcement } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 // ============================================================
 // Types
@@ -44,7 +45,7 @@ export const onRequestPost = createEndpoint<PinAnnouncementResponse, any, PinAnn
       .run();
 
     if (!result.meta.changes) {
-      throw new Error('Announcement not found');
+      throw new NotFoundError('Announcement');
     }
 
     await createAuditLog(

@@ -10,6 +10,7 @@
 import type { Env, Event } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
 import { broadcastUpdate } from '../../lib/broadcast';
+import { DB_TABLES, EVENT_COLUMNS } from '../../lib/db-schema';
 import {
   utcNow,
   createAuditLog,
@@ -17,6 +18,7 @@ import {
   assertIfMatch,
   canEditEntity
 } from '../../lib/utils';
+import { NotFoundError } from '../../lib/errors';
 
 // ============================================================
 // Types
@@ -27,8 +29,8 @@ interface UpdateEventBody {
   description?: string;
   eventDate?: string;
   eventType?: string;
-  minLevel?: number;
   maxParticipants?: number;
+  capacity?: number;
   // Add other event fields
 }
 
@@ -55,12 +57,12 @@ export const onRequestGet = createEndpoint<EventResponse, any, any>({
     const eventId = params.id;
 
     const event = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ? AND is_archived = 0')
+      .prepare(`SELECT * FROM ${DB_TABLES.events} WHERE ${EVENT_COLUMNS.id} = ? AND ${EVENT_COLUMNS.isArchived} = 0`)
       .bind(eventId)
       .first<Event>();
 
     if (!event) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event');
     }
 
     // Load participants from team_members linked to this event
@@ -69,15 +71,14 @@ export const onRequestGet = createEndpoint<EventResponse, any, any>({
         SELECT DISTINCT
           tm.user_id,
           u.username,
-          u.avatar_url,
           u.power,
           tm.joined_at_utc as created_at_utc,
           t.name as team_name,
           t.team_id
-        FROM team_members tm
-        INNER JOIN event_teams et ON et.team_id = tm.team_id
-        INNER JOIN users u ON tm.user_id = u.user_id
-        LEFT JOIN teams t ON tm.team_id = t.team_id
+        FROM ${DB_TABLES.teamMembers} tm
+        INNER JOIN ${DB_TABLES.eventTeams} et ON et.team_id = tm.team_id
+        INNER JOIN ${DB_TABLES.users} u ON tm.user_id = u.user_id
+        LEFT JOIN ${DB_TABLES.teams} t ON tm.team_id = t.team_id
         WHERE et.event_id = ?
         ORDER BY tm.joined_at_utc
       `)
@@ -106,12 +107,12 @@ export const onRequestPut = createEndpoint<{ message: string; event: Event }, Up
 
     // Get existing event
     const existingEvent = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.events} WHERE ${EVENT_COLUMNS.id} = ?`)
       .bind(eventId)
       .first<Event>();
 
     if (!existingEvent) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event');
     }
 
     // Check permissions
@@ -133,8 +134,8 @@ export const onRequestPut = createEndpoint<{ message: string; event: Event }, Up
       description: 'description',
       eventDate: 'start_at_utc',
       eventType: 'type',
-      minLevel: 'min_level',
-      maxParticipants: 'max_participants',
+      maxParticipants: EVENT_COLUMNS.capacity,
+      capacity: EVENT_COLUMNS.capacity,
     };
 
     for (const [key, column] of Object.entries(fieldMap)) {
@@ -150,7 +151,7 @@ export const onRequestPut = createEndpoint<{ message: string; event: Event }, Up
       updateValues.push(now, eventId);
 
       await env.DB
-        .prepare(`UPDATE events SET ${updateFields.join(', ')} WHERE event_id = ?`)
+          .prepare(`UPDATE ${DB_TABLES.events} SET ${updateFields.join(', ')} WHERE ${EVENT_COLUMNS.id} = ?`)
         .bind(...updateValues)
         .run();
     }
@@ -166,7 +167,7 @@ export const onRequestPut = createEndpoint<{ message: string; event: Event }, Up
     );
 
     const updatedEvent = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.events} WHERE ${EVENT_COLUMNS.id} = ?`)
       .bind(eventId)
       .first<Event>();
 
@@ -209,12 +210,12 @@ export const onRequestPatch = createEndpoint<{ message: string; event: Event }, 
     }
 
     const existing = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.events} WHERE ${EVENT_COLUMNS.id} = ?`)
       .bind(eventId)
       .first<Event>();
 
     if (!existing) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event');
     }
 
     const now = utcNow();
@@ -237,7 +238,7 @@ export const onRequestPatch = createEndpoint<{ message: string; event: Event }, 
     values.push(eventId);
 
     await env.DB
-      .prepare(`UPDATE events SET ${updates.join(', ')} WHERE event_id = ?`)
+      .prepare(`UPDATE ${DB_TABLES.events} SET ${updates.join(', ')} WHERE ${EVENT_COLUMNS.id} = ?`)
       .bind(...values)
       .run();
 
@@ -252,7 +253,7 @@ export const onRequestPatch = createEndpoint<{ message: string; event: Event }, 
     );
 
     const updated = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.events} WHERE ${EVENT_COLUMNS.id} = ?`)
       .bind(eventId)
       .first<Event>();
 
@@ -288,12 +289,12 @@ export const onRequestDelete = createEndpoint<{ message: string }, any, any>({
     const eventId = params.id;
 
     const existingEvent = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.events} WHERE ${EVENT_COLUMNS.id} = ?`)
       .bind(eventId)
       .first<Event>();
 
     if (!existingEvent) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event');
     }
 
     if (!canEditEntity(user!, existingEvent.created_by)) {
@@ -304,7 +305,7 @@ export const onRequestDelete = createEndpoint<{ message: string }, any, any>({
 
     // Soft delete
     await env.DB
-      .prepare('UPDATE events SET deleted_at_utc = ?, updated_at_utc = ? WHERE event_id = ?')
+      .prepare(`UPDATE ${DB_TABLES.events} SET ${EVENT_COLUMNS.deletedAt} = ?, ${EVENT_COLUMNS.updatedAt} = ? WHERE ${EVENT_COLUMNS.id} = ?`)
       .bind(now, now, eventId)
       .run();
 

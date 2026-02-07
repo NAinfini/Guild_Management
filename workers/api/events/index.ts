@@ -14,6 +14,7 @@ import type { Env, Event } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
 import { broadcastUpdate } from '../../lib/broadcast';
 import { utcNow, createAuditLog, generateId } from '../../lib/utils';
+import { DB_TABLES, EVENT_COLUMNS, EVENT_SELECT_FIELDS, pickAllowedFields } from '../../lib/db-schema';
 import {
   parsePaginationQuery,
   buildPaginatedResponse,
@@ -28,6 +29,9 @@ import {
 interface EventsListQuery extends PaginationQuery {
   ids?: string; // NEW: Comma-separated IDs for batch fetch
   fields?: string; // NEW: Field filtering
+  startDate?: string;
+  endDate?: string;
+  since?: string; // Incremental polling
 }
 
 interface CreateEventBody {
@@ -35,8 +39,8 @@ interface CreateEventBody {
   description?: string;
   eventDate: string;
   eventType: string;
-  minLevel?: number;
   maxParticipants?: number;
+  capacity?: number;
 }
 
 interface CreateEventsBody {
@@ -82,6 +86,9 @@ export const onRequestGet = createEndpoint<
     cursor: searchParams.get('cursor') || undefined,
     ids: searchParams.get('ids') || undefined,
     fields: searchParams.get('fields') || undefined,
+    startDate: searchParams.get('startDate') || undefined,
+    endDate: searchParams.get('endDate') || undefined,
+    since: searchParams.get('since') || undefined,
   }),
 
   handler: async ({ env, query }) => {
@@ -99,16 +106,16 @@ export const onRequestGet = createEndpoint<
         throw new Error('Maximum 100 IDs per request');
       }
 
-      const fields = query.fields?.split(',').map(f => f.trim()).filter(f => f.length > 0);
-      const selectFields = fields && fields.length > 0 ? fields.join(', ') : '*';
+      const requestedFields = query.fields?.split(',').map(f => f.trim()).filter(f => f.length > 0);
+      const selectFields = pickAllowedFields(requestedFields, EVENT_SELECT_FIELDS, EVENT_SELECT_FIELDS).join(', ');
 
       const placeholders = ids.map(() => '?').join(',');
       const sqlQuery = `
         SELECT ${selectFields}
-        FROM events
-        WHERE event_id IN (${placeholders})
-          AND deleted_at_utc IS NULL
-        ORDER BY start_at_utc DESC, event_id DESC
+        FROM ${DB_TABLES.events}
+        WHERE ${EVENT_COLUMNS.id} IN (${placeholders})
+          AND ${EVENT_COLUMNS.deletedAt} IS NULL
+        ORDER BY ${EVENT_COLUMNS.startAt} DESC, ${EVENT_COLUMNS.id} DESC
       `;
 
       const result = await env.DB.prepare(sqlQuery).bind(...ids).all();
@@ -128,24 +135,79 @@ export const onRequestGet = createEndpoint<
     // ============================================================
     const { limit, cursor } = parsePaginationQuery(query);
 
-    const whereClauses = ['is_archived = 0', 'deleted_at_utc IS NULL'];
+    const whereClauses = [`${EVENT_COLUMNS.isArchived} = 0`, `${EVENT_COLUMNS.deletedAt} IS NULL`];
     const bindings: any[] = [];
 
     if (cursor) {
-      whereClauses.push('(start_at_utc < ? OR (start_at_utc = ? AND event_id < ?))');
+      whereClauses.push(`(${EVENT_COLUMNS.startAt} < ? OR (${EVENT_COLUMNS.startAt} = ? AND ${EVENT_COLUMNS.id} < ?))`);
       bindings.push(cursor.timestamp, cursor.timestamp, cursor.id);
     }
 
+    if (query.startDate) {
+      whereClauses.push(`${EVENT_COLUMNS.startAt} >= ?`);
+      bindings.push(query.startDate);
+    }
+
+    if (query.endDate) {
+      whereClauses.push(`${EVENT_COLUMNS.startAt} <= ?`);
+      bindings.push(query.endDate);
+    }
+
+    if (query.since) {
+      whereClauses.push(`${EVENT_COLUMNS.updatedAt} > ?`);
+      bindings.push(query.since);
+    }
+
     const sqlQuery = `
-      SELECT * FROM events
+      SELECT * FROM ${DB_TABLES.events}
       WHERE ${whereClauses.join(' AND ')}
-      ORDER BY start_at_utc DESC, event_id DESC
+      ORDER BY ${EVENT_COLUMNS.startAt} DESC, ${EVENT_COLUMNS.id} DESC
       LIMIT ${limit + 1}
     `;
 
     const events = await env.DB.prepare(sqlQuery).bind(...bindings).all<Event>();
+    const eventRows = events.results || [];
 
-    return buildPaginatedResponse(events.results || [], limit, 'start_at_utc', 'event_id');
+    // Load participants for each event via team_members + event_teams
+    const eventIds = eventRows.map((e: any) => e.event_id);
+    let participantsMap: Record<string, any[]> = {};
+
+    if (eventIds.length > 0) {
+      const placeholders = eventIds.map(() => '?').join(',');
+      const participantsResult = await env.DB
+        .prepare(`
+          SELECT DISTINCT
+            et.event_id,
+            tm.user_id,
+            u.username,
+            u.wechat_name,
+            u.power,
+            mc.class_code
+          FROM ${DB_TABLES.teamMembers} tm
+          INNER JOIN ${DB_TABLES.eventTeams} et ON et.team_id = tm.team_id
+          INNER JOIN ${DB_TABLES.users} u ON tm.user_id = u.user_id
+          LEFT JOIN ${DB_TABLES.memberClasses} mc ON mc.user_id = tm.user_id AND mc.sort_order = 0
+          WHERE et.event_id IN (${placeholders})
+          ORDER BY tm.joined_at_utc
+        `)
+        .bind(...eventIds)
+        .all();
+
+      for (const p of (participantsResult.results || [])) {
+        const eid = (p as any).event_id;
+        if (!participantsMap[eid]) participantsMap[eid] = [];
+        participantsMap[eid].push(p);
+      }
+    }
+
+    // Attach participants to each event
+    const eventsWithParticipants = eventRows.map((e: any) => ({
+      ...e,
+      participants: participantsMap[e.event_id] || [],
+      participantCount: (participantsMap[e.event_id] || []).length,
+    }));
+
+    return buildPaginatedResponse(eventsWithParticipants, limit, 'start_at_utc', 'event_id');
   },
 });
 
@@ -197,14 +259,14 @@ export const onRequestPost = createEndpoint<
 
       for (const eventData of eventsToCreate) {
         const eventId = generateId('evt');
-        const { title, description, eventDate, eventType, minLevel, maxParticipants } = eventData;
+        const { title, description, eventDate, eventType, maxParticipants, capacity } = eventData;
 
         await env.DB
           .prepare(`
-            INSERT INTO events (
-              event_id, title, description, start_at_utc, type,
-              min_level, max_participants, created_by, created_at_utc, updated_at_utc
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO ${DB_TABLES.events} (
+              ${EVENT_COLUMNS.id}, ${EVENT_COLUMNS.title}, ${EVENT_COLUMNS.description}, ${EVENT_COLUMNS.startAt}, ${EVENT_COLUMNS.type},
+              ${EVENT_COLUMNS.capacity}, ${EVENT_COLUMNS.createdBy}, ${EVENT_COLUMNS.createdAt}, ${EVENT_COLUMNS.updatedAt}
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `)
           .bind(
             eventId,
@@ -212,8 +274,7 @@ export const onRequestPost = createEndpoint<
             description || null,
             eventDate,
             eventType,
-            minLevel || 0,
-            maxParticipants || 0,
+            capacity ?? maxParticipants ?? null,
             user!.user_id,
             now,
             now
@@ -221,7 +282,7 @@ export const onRequestPost = createEndpoint<
           .run();
 
         createdEvents.push((await env.DB
-          .prepare('SELECT * FROM events WHERE event_id = ?')
+          .prepare(`SELECT * FROM ${DB_TABLES.events} WHERE ${EVENT_COLUMNS.id} = ?`)
           .bind(eventId)
           .first<Event>())!);
       }
@@ -255,14 +316,14 @@ export const onRequestPost = createEndpoint<
     // SINGLE CREATE MODE: Create one event
     // ============================================================
     const eventId = generateId('evt');
-    const { title, description, eventDate, eventType, minLevel, maxParticipants } = body as CreateEventBody;
+    const { title, description, eventDate, eventType, maxParticipants, capacity } = body as CreateEventBody;
 
     await env.DB
       .prepare(`
-        INSERT INTO events (
-          event_id, title, description, start_at_utc, type,
-          min_level, max_participants, created_by, created_at_utc, updated_at_utc
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO ${DB_TABLES.events} (
+          ${EVENT_COLUMNS.id}, ${EVENT_COLUMNS.title}, ${EVENT_COLUMNS.description}, ${EVENT_COLUMNS.startAt}, ${EVENT_COLUMNS.type},
+          ${EVENT_COLUMNS.capacity}, ${EVENT_COLUMNS.createdBy}, ${EVENT_COLUMNS.createdAt}, ${EVENT_COLUMNS.updatedAt}
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
         eventId,
@@ -270,8 +331,7 @@ export const onRequestPost = createEndpoint<
         description || null,
         eventDate,
         eventType,
-        minLevel || 0,
-        maxParticipants || 0,
+        capacity ?? maxParticipants ?? null,
         user!.user_id,
         now,
         now
@@ -289,7 +349,7 @@ export const onRequestPost = createEndpoint<
     );
 
     const newEvent = await env.DB
-      .prepare('SELECT * FROM events WHERE event_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.events} WHERE ${EVENT_COLUMNS.id} = ?`)
       .bind(eventId)
       .first<Event>();
 
@@ -350,8 +410,8 @@ export const onRequestDelete = createEndpoint<
     if (action === 'delete') {
       const result = await env.DB
         .prepare(`
-          UPDATE events SET deleted_at_utc = ?, updated_at_utc = ?
-          WHERE event_id IN (${placeholders}) AND deleted_at_utc IS NULL
+          UPDATE ${DB_TABLES.events} SET ${EVENT_COLUMNS.deletedAt} = ?, ${EVENT_COLUMNS.updatedAt} = ?
+          WHERE ${EVENT_COLUMNS.id} IN (${placeholders}) AND ${EVENT_COLUMNS.deletedAt} IS NULL
         `)
         .bind(now, now, ...ids)
         .run();
@@ -359,8 +419,8 @@ export const onRequestDelete = createEndpoint<
     } else if (action === 'archive') {
       const result = await env.DB
         .prepare(`
-          UPDATE events SET is_archived = 1, updated_at_utc = ?
-          WHERE event_id IN (${placeholders})
+          UPDATE ${DB_TABLES.events} SET ${EVENT_COLUMNS.isArchived} = 1, ${EVENT_COLUMNS.updatedAt} = ?
+          WHERE ${EVENT_COLUMNS.id} IN (${placeholders})
         `)
         .bind(now, ...ids)
         .run();

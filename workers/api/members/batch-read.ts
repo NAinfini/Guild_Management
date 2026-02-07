@@ -8,6 +8,7 @@
 
 import type { Env } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
+import { DB_TABLES, MEMBER_USER_SELECT_FIELDS, pickAllowedFields } from '../../lib/db-schema';
 
 // ============================================================
 // Types
@@ -23,6 +24,22 @@ interface BatchReadResponse {
   totalCount: number;
   notFound: string[];
 }
+
+const MEMBER_BATCH_FIELD_MAP: Record<string, string> = {
+  userId: 'user_id',
+  username: 'username',
+  wechatName: 'wechat_name',
+  power: 'power',
+  isActive: 'is_active',
+  role: 'role',
+  createdAt: 'created_at_utc',
+  updatedAt: 'updated_at_utc',
+  user_id: 'user_id',
+  wechat_name: 'wechat_name',
+  is_active: 'is_active',
+  created_at_utc: 'created_at_utc',
+  updated_at_utc: 'updated_at_utc',
+};
 
 // ============================================================
 // GET /api/members/batch-read
@@ -63,49 +80,15 @@ export const onRequestGet = createEndpoint<BatchReadResponse, BatchReadQuery>({
 
     // Build SELECT clause based on requested fields
     // Always include user_id for identification
-    const selectFields = fields && fields.length > 0
-      ? fields.includes('user_id')
-        ? fields.map(f => {
-            // Map camelCase to snake_case for database columns
-            const fieldMap: Record<string, string> = {
-              userId: 'user_id',
-              username: 'username',
-              wechatName: 'wechat_name',
-              power: 'power',
-              stamina: 'stamina',
-              loyalty: 'loyalty',
-              classCode: 'class_code',
-              titleHtml: 'title_html',
-              isActive: 'is_active',
-              role: 'role',
-              createdAt: 'created_at_utc',
-              updatedAt: 'updated_at_utc',
-            };
-            return fieldMap[f] || f;
-          }).join(', ')
-        : `user_id, ${fields.map(f => {
-            const fieldMap: Record<string, string> = {
-              username: 'username',
-              wechatName: 'wechat_name',
-              power: 'power',
-              stamina: 'stamina',
-              loyalty: 'loyalty',
-              classCode: 'class_code',
-              titleHtml: 'title_html',
-              isActive: 'is_active',
-              role: 'role',
-              createdAt: 'created_at_utc',
-              updatedAt: 'updated_at_utc',
-            };
-            return fieldMap[f] || f;
-          }).join(', ')}`
-      : '*';
+    const mappedRequested = (fields || []).map((f) => MEMBER_BATCH_FIELD_MAP[f]).filter(Boolean);
+    const baseFields = pickAllowedFields(mappedRequested, MEMBER_USER_SELECT_FIELDS, MEMBER_USER_SELECT_FIELDS);
+    const selectFields = baseFields.join(', ');
 
     // Build query with placeholders
     const placeholders = ids.map(() => '?').join(',');
     const sqlQuery = `
       SELECT ${selectFields}
-      FROM users
+      FROM ${DB_TABLES.users}
       WHERE user_id IN (${placeholders})
         AND deleted_at_utc IS NULL
       ORDER BY power DESC, username ASC
@@ -126,21 +109,7 @@ export const onRequestGet = createEndpoint<BatchReadResponse, BatchReadQuery>({
         // Only convert requested fields
         const converted: any = {};
         for (const field of fields) {
-          const camelToSnake: Record<string, string> = {
-            userId: 'user_id',
-            username: 'username',
-            wechatName: 'wechat_name',
-            power: 'power',
-            stamina: 'stamina',
-            loyalty: 'loyalty',
-            classCode: 'class_code',
-            titleHtml: 'title_html',
-            isActive: 'is_active',
-            role: 'role',
-            createdAt: 'created_at_utc',
-            updatedAt: 'updated_at_utc',
-          };
-          const snakeField = camelToSnake[field] || field;
+          const snakeField = MEMBER_BATCH_FIELD_MAP[field] || field;
           if (member[snakeField] !== undefined) {
             converted[field] = member[snakeField];
           }

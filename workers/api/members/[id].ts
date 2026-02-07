@@ -10,6 +10,8 @@ import type { Env, User, MemberProfile } from '../../lib/types';
 import { createEndpoint } from '../../lib/endpoint-factory';
 import { broadcastUpdate } from '../../lib/broadcast';
 import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../lib/utils';
+import { NotFoundError } from '../../lib/errors';
+import { DB_TABLES } from '../../lib/db-schema';
 
 // ============================================================
 // Types
@@ -44,35 +46,55 @@ export const onRequestGet = createEndpoint<MemberResponse>({
 
     // Get user
     const targetUser = await env.DB
-      .prepare('SELECT * FROM users WHERE user_id = ? AND deleted_at_utc IS NULL')
+      .prepare(`SELECT * FROM ${DB_TABLES.users} WHERE user_id = ? AND deleted_at_utc IS NULL`)
       .bind(userId)
       .first<User>();
 
     if (!targetUser) {
-      throw new Error('Member not found');
+      throw new NotFoundError('Member');
     }
 
     // Get profile
     const profile = await env.DB
-      .prepare('SELECT * FROM member_profiles WHERE user_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.memberProfiles} WHERE user_id = ?`)
       .bind(userId)
       .first<MemberProfile>();
 
     // Get classes
     const classes = await env.DB
-      .prepare('SELECT class_code FROM member_classes WHERE user_id = ? ORDER BY sort_order')
+      .prepare(`SELECT class_code FROM ${DB_TABLES.memberClasses} WHERE user_id = ? ORDER BY sort_order`)
       .bind(userId)
       .all();
 
     // Get media
     const media = await env.DB
-      .prepare('SELECT * FROM media WHERE user_id = ? AND is_verified = 1 ORDER BY created_at_utc DESC')
+      .prepare(`
+        SELECT
+          mm.media_id,
+          mm.kind,
+          mm.is_avatar,
+          mm.sort_order,
+          mo.storage_type,
+          mo.r2_key,
+          mo.url,
+          mo.content_type,
+          mo.size_bytes,
+          mo.width,
+          mo.height,
+          mo.duration_ms,
+          mo.created_at_utc,
+          mo.updated_at_utc
+        FROM ${DB_TABLES.memberMedia} mm
+        INNER JOIN ${DB_TABLES.mediaObjects} mo ON mo.media_id = mm.media_id
+        WHERE mm.user_id = ?
+        ORDER BY mm.sort_order, mo.created_at_utc DESC
+      `)
       .bind(userId)
       .all();
 
     // Get progression
     const progression = await env.DB
-      .prepare('SELECT * FROM member_progression WHERE user_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.memberProgression} WHERE user_id = ?`)
       .bind(userId)
       .all();
 
@@ -81,8 +103,8 @@ export const onRequestGet = createEndpoint<MemberResponse>({
       const notesResult = await env.DB
         .prepare(`
           SELECT man.*, u.username as updated_by_username
-          FROM member_notes man
-          LEFT JOIN users u ON man.updated_by = u.user_id
+          FROM ${DB_TABLES.memberNotes} man
+          LEFT JOIN ${DB_TABLES.users} u ON man.updated_by = u.user_id
           WHERE man.user_id = ?
           ORDER BY man.slot
         `)
@@ -121,7 +143,7 @@ export const onRequestPut = createEndpoint<{ message: string; profile: any }, Up
     }
 
     const current = await env.DB
-      .prepare('SELECT updated_at_utc, created_at_utc FROM users WHERE user_id = ?')
+      .prepare(`SELECT updated_at_utc, created_at_utc FROM ${DB_TABLES.users} WHERE user_id = ?`)
       .bind(userId)
       .first<{ updated_at_utc: string; created_at_utc: string }>();
     const currentEtag = etagFromTimestamp(current?.updated_at_utc || current?.created_at_utc);
@@ -150,7 +172,7 @@ export const onRequestPut = createEndpoint<{ message: string; profile: any }, Up
         values.push(now, userId);
         
         await env.DB
-          .prepare(`UPDATE users SET ${updates.join(', ')} WHERE user_id = ?`)
+          .prepare(`UPDATE ${DB_TABLES.users} SET ${updates.join(', ')} WHERE user_id = ?`)
           .bind(...values)
           .run();
       }
@@ -172,12 +194,12 @@ export const onRequestPut = createEndpoint<{ message: string; profile: any }, Up
     );
 
     const updatedProfile = await env.DB
-      .prepare('SELECT * FROM member_profiles WHERE user_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.memberProfiles} WHERE user_id = ?`)
       .bind(userId)
       .first();
 
     const fullUser = await env.DB
-      .prepare('SELECT * FROM users WHERE user_id = ?')
+      .prepare(`SELECT * FROM ${DB_TABLES.users} WHERE user_id = ?`)
       .bind(userId)
       .first();
 

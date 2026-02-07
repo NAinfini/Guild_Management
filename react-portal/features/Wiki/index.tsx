@@ -112,7 +112,7 @@ export function Wiki() {
                                '&:hover': { transform: !article.isDummy ? 'translateX(4px)' : 'none', boxShadow: !article.isDummy ? 2 : 0 }
                            }}
                         >
-                           <Avatar sx={{ bgcolor: alpha(theme.palette.getContrastText(theme.palette.background.paper), 0.05), color: article.color, borderRadius: 2 }}>
+                           <Avatar alt="" sx={{ bgcolor: alpha(theme.palette.getContrastText(theme.palette.background.paper), 0.05), color: article.color, borderRadius: 2 }}>
                               <article.icon size={20} />
                            </Avatar>
                            <Box flex={1}>
@@ -147,7 +147,7 @@ export function Wiki() {
                      
                      <Stack direction="row" spacing={3} alignItems="center" divider={<Box sx={{ height: 16, width: 1, bgcolor: 'divider' }} />}>
                         <Stack direction="row" spacing={1} alignItems="center">
-                           <Avatar sx={{ width: 24, height: 24, bgcolor: 'primary.light', color: 'primary.contrastText', borderRadius: 1 }}><Cpu size={14} /></Avatar>
+                           <Avatar alt="" sx={{ width: 24, height: 24, bgcolor: 'primary.light', color: 'primary.contrastText', borderRadius: 1 }}><Cpu size={14} /></Avatar>
                            <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">{t('common.active')}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={1} alignItems="center">

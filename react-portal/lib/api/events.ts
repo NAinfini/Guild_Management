@@ -62,11 +62,11 @@ export const mapToDomain = (dto: EventListItemDTO | EventDetailDTO): Event => {
   let participants: User[] = [];
   if ('participants' in dto && dto.participants) {
     participants = dto.participants.map(p => ({
-      id: p.user_id,
-      username: p.username,
-      wechat_name: p.wechat_name || undefined,
-      power: p.power,
-      classes: p.class_code ? [p.class_code as any] : [],
+      id: (p as any).user_id || (p as any).id || '',
+      username: p.username || (p as any).name || '',
+      wechat_name: (p as any).wechat_name || undefined,
+      power: (p as any).power || 0,
+      classes: (p as any).class_code ? [(p as any).class_code as any] : [],
       role: 'member', // Default, as this info might be limited in event view
       active_status: 'active'
     }));
@@ -96,10 +96,14 @@ export const eventsAPI = {
   /**
    * List events with optional filters
    */
-  list: async (params?: { type?: string; includeArchived?: boolean }): Promise<Event[]> => {
+  list: async (params?: { type?: string; includeArchived?: boolean; search?: string; startDate?: string; endDate?: string; since?: string }): Promise<Event[]> => {
     const queryParams: Record<string, string> = {};
     if (params?.type) queryParams.type = params.type;
     if (params?.includeArchived) queryParams.includeArchived = 'true';
+    if (params?.search) queryParams.search = params.search;
+    if (params?.startDate) queryParams.startDate = params.startDate;
+    if (params?.endDate) queryParams.endDate = params.endDate;
+    if (params?.since) queryParams.since = params.since;
 
     // API always returns paginated format: { items: [...], pagination: {...} }
     const response = await typedAPI.events.list<{ items: EventListItemDTO[], pagination: any }>({ query: queryParams });
@@ -112,8 +116,19 @@ export const eventsAPI = {
    * Get single event details
    */
   get: async (id: string): Promise<Event> => {
-    const response = await typedAPI.events.get<{ event: EventDetailDTO }>({ params: { id } });
-    return mapToDomain(response.event);
+    const response = await typedAPI.events.get<{ event: EventDetailDTO; attendees?: any[] }>({ params: { id } });
+    // Merge attendees into event DTO so mapToDomain can find them
+    const eventDto = response.event;
+    if (!eventDto.participants && response.attendees) {
+      eventDto.participants = response.attendees.map((a: any) => ({
+        user_id: a.user_id || a.id,
+        username: a.username || a.name,
+        wechat_name: a.wechat_name || null,
+        power: a.power || 0,
+        class_code: a.class_code || null,
+      }));
+    }
+    return mapToDomain(eventDto);
   },
 
   /**
@@ -157,7 +172,8 @@ export const eventsAPI = {
    * Kick member from event (Admin/Mod only)
    */
   kick: async (id: string, userId: string): Promise<{ message: string }> => {
-    return typedAPI.events.kick<{ message: string }>({ params: { id }, body: { userId } });
+    // Use leave endpoint with batch mode to remove another user (kick)
+    return typedAPI.events.leave<{ message: string }>({ params: { id }, body: { userIds: [userId] } });
   },
 
   /**

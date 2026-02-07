@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useFilteredList } from '../../hooks/useFilteredList';
 import { 
   Card, 
   CardContent, 
@@ -61,9 +62,9 @@ import { useAuthStore, useUIStore } from '../../store';
 import { User, WarTeam } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { useEvents, useMembers, useJoinEvent, useLeaveEvent } from '../../hooks/useServerState';
-import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent, useSensors, useSensor, PointerSensor, KeyboardSensor } from '@dnd-kit/core';
 import { useWarHistory, useWarTeams, useMovePoolToTeam, useMoveTeamToPool, useMoveTeamToTeam, useKickFromTeam, useKickFromPool } from './hooks/useWars';
-import { usePush } from '../../hooks/usePush';
+// 2026-02-06T13:26:16Z
 import { Skeleton, useMediaQuery } from '@mui/material';
 import { CardGridSkeleton } from '../../components/SkeletonLoaders';
 import { useOnline } from '../../hooks/useOnline';
@@ -88,10 +89,19 @@ export function GuildWar() {
 
 
 
-  const warEvents = useMemo(() => {
-    if (!events || events.length === 0) return [];
-    return events.filter(e => e.type === 'guild_war').sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
-  }, [events.length, events.map(e => e.id).join(',')]);  // Stable dependencies: length + IDs
+  const warFilterFn = useMemo(() => (e: any) => e.type === 'guild_war', []);
+  const warSortFn = useMemo(
+    () => (a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime(),
+    []
+  );
+
+  const warEvents = useFilteredList({
+    items: events || [],
+    searchText: '',
+    searchFields: [],
+    filterFn: warFilterFn,
+    sortFn: warSortFn,
+  });
 
   const [selectedWarId, setSelectedWarId] = useState<string>('');
 
@@ -108,7 +118,7 @@ export function GuildWar() {
     else if (warEvents.length === 0 && selectedWarId) {
       setSelectedWarId('');
     }
-  }, [warEvents.length, warEvents.map(w => w.id).join(','), selectedWarId]);  // Stable: length + IDs
+  }, [warEvents, selectedWarId]);
 
   if (isLoading && warEvents.length === 0) {
     return (
@@ -241,6 +251,12 @@ function ActiveWarManagement({ warId }: { warId: string }) {
   const [teamSort, setTeamSort] = useState<'power' | 'class'>('power');
   const [conflictOpen, setConflictOpen] = useState(false);
 
+  // DnD sensors: pointer (mouse/touch) + keyboard (Space to grab, Arrow keys to move)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
+
   useEffect(() => {
     if (warData?.teams) {
       setTeams(warData.teams);
@@ -280,7 +296,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     const set = new Set<string>();
     teams.forEach(t => t.members.forEach(m => set.add(m.user_id)));
     return set;
-  }, [teams.map(t => `${t.id}:${t.members.map(m => m.user_id).join(',')}`).join('|')]);  // Stable: team IDs + member IDs
+  }, [teams]);
 
   const legacyTeams = useMemo(() => {
     return teams.map(t => ({
@@ -290,7 +306,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
         .map(m => members.find(u => u.id === m.user_id))
         .filter(Boolean) as User[],
     }));
-  }, [teams.map(t => t.id).join(','), members.length]);  // Stable: team IDs + member count
+  }, [teams, members]);
 
   const poolMembers = useMemo(() => {
     const source = pool.length > 0 ? pool : activeWar?.participants || [];
@@ -298,7 +314,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
     if (poolSort === 'power') list = list.sort((a, b) => b.power - a.power);
     else if (poolSort === 'class') list = list.sort((a, b) => (a.classes?.[0] || 'z').localeCompare(b.classes?.[0] || 'z'));
     return list;
-  }, [pool.length, activeWar?.id, assignedUserIds.size, poolSort]);  // Stable: counts + IDs + sort mode
+  }, [pool, activeWar?.participants, assignedUserIds, poolSort]);
 
   // Guard: Return early AFTER all hooks
   if (!warId) {
@@ -583,7 +599,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
   }
 
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2, position: 'relative' }}>
         <Grid container spacing={3} sx={{ flex: 1, minHeight: 0 }}>
             {/* LEFT COLUMN: POOL */}
@@ -747,15 +763,18 @@ function ActiveWarManagement({ warId }: { warId: string }) {
 }
 
 function DraggableMemberCard({ member, selected, onClick, onDoubleClick, onKick, role }: { member: User, selected?: boolean, onClick: (id: string, e: React.MouseEvent) => void, onDoubleClick: (id: string, e: React.MouseEvent) => void, onKick: () => void, role?: string }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: member.id });
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: member.id,
+    attributes: { roleDescription: 'draggable member' },
+  });
   const theme = useTheme();
 
   const getRoleIcon = (r?: string) => {
      switch(r) {
-        case 'lead': return <Crown size={12} color={theme.custom?.warRoles.lead.main} />;
-        case 'dmg': return <Swords size={12} color={theme.custom?.warRoles.dps.main} />;
-        case 'tank': return <Shield size={12} color={theme.custom?.warRoles.tank.main} />;
-        case 'healer': return <Heart size={12} color={theme.custom?.warRoles.heal.main} />;
+        case 'lead': return <Crown size={12} color={theme.custom?.warRoles.lead.main || theme.palette.warning.main} />;
+        case 'dmg': return <Swords size={12} color={theme.custom?.warRoles.dps.main || theme.palette.error.main} />;
+        case 'tank': return <Shield size={12} color={theme.custom?.warRoles.tank.main || theme.palette.primary.main} />;
+        case 'healer': return <Heart size={12} color={theme.custom?.warRoles.heal.main || theme.palette.success.main} />;
         case 'support': return <Sparkles size={12} color="#a855f7" />;
         default: return null;
      }
@@ -763,10 +782,11 @@ function DraggableMemberCard({ member, selected, onClick, onDoubleClick, onKick,
 
   return (
     <Card
-      ref={setNodeRef} 
-      {...listeners} 
+      ref={setNodeRef}
+      {...listeners}
       {...attributes}
-      onClick={(e) => onClick(member.id, e)} 
+      aria-label={`${member.username}${role ? `, ${role}` : ''}`}
+      onClick={(e) => onClick(member.id, e)}
       onDoubleClick={(e) => onDoubleClick(member.id, e)}
       sx={{
           position: 'relative',
@@ -824,10 +844,10 @@ function DraggableMemberCard({ member, selected, onClick, onDoubleClick, onKick,
               <Box sx={{
                   px: 1, py: 0.25, borderRadius: 4,
                   fontSize: '0.6rem', fontWeight: 700, fontFamily: 'monospace',
-                  bgcolor: theme.custom?.warRoles.lead.bg,
-                  color: theme.custom?.warRoles.lead.text,
+                  bgcolor: theme.custom?.warRoles.lead.bg || alpha(theme.palette.warning.main, 0.1),
+                  color: theme.custom?.warRoles.lead.text || theme.palette.warning.contrastText,
                   border: 1,
-                  borderColor: alpha(theme.custom?.warRoles.lead.main as string, 0.3)
+                  borderColor: alpha(theme.custom?.warRoles.lead.main || theme.palette.warning.main, 0.3)
               }}>
                   {formatPower(member.power)}
               </Box>
@@ -928,7 +948,7 @@ function DroppableTeam({
       if (sortMode === 'power') list = list.sort((a: any, b: any) => b.power - a.power);
       else if (sortMode === 'class') list = list.sort((a: any, b: any) => (a.classes?.[0] || 'z').localeCompare(b.classes?.[0] || 'z'));
       return list;
-  }, [team.members.map((m: any) => m.user_id).join(','), members.length, sortMode]);  // Stable: member IDs + count + sort
+  }, [team.members, members, sortMode]);
 
   return (
     <Box 
@@ -1041,7 +1061,7 @@ function AddMemberModal({ open, onClose, members, currentParticipants, onAdd }: 
                   }}
                >
                   <Stack direction="row" spacing={1.5} alignItems="center">
-                     <Avatar src={m.avatar_url} variant="rounded" sx={{ width: 32, height: 32 }} />
+                     <Avatar src={m.avatar_url} alt={m.username} variant="rounded" sx={{ width: 32, height: 32 }} />
                      <Box>
                         <Typography variant="body2" fontWeight={700} dangerouslySetInnerHTML={sanitizeHtml(m.username)} />
                         <Typography variant="caption" color="text.secondary" fontFamily="monospace">{formatPower(m.power)}</Typography>
@@ -1068,9 +1088,10 @@ function MemberDetailModal({ userId, members, onClose }: any) {
              <IconButton onClick={onClose} sx={{ position: 'absolute', top: 8, right: 8, color: 'white' }}><X size={20} /></IconButton>
           </Box>
           <Box sx={{ px: 3, pb: 3, mt: -5 }}>
-             <Avatar 
-                src={member.avatar_url} 
-                variant="rounded" 
+             <Avatar
+                src={member.avatar_url}
+                alt={member.username}
+                variant="rounded"
                 sx={{ width: 80, height: 80, border: '4px solid', borderColor: 'background.paper', boxShadow: 3, mb: 2 }} 
              />
              <Typography variant="h5" fontWeight={900} fontStyle="italic" textTransform="uppercase" gutterBottom dangerouslySetInnerHTML={sanitizeHtml(member.username)} />

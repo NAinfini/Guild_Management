@@ -8,6 +8,7 @@
 import type { Env } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 // ============================================================
 // Types
@@ -58,7 +59,7 @@ export const onRequestPost = createEndpoint<UpdateWarResultResponse, UpdateWarRe
       .first<{ war_id: string; updated_at_utc: string }>();
 
     if (!war) {
-      throw new Error('War history not found');
+      throw new NotFoundError('War history');
     }
 
     const warId = war.war_id;

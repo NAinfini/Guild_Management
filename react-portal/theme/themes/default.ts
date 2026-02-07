@@ -316,8 +316,9 @@ export const defaultTheme: ThemeOptions = {
           fontWeight: 700,
         },
         filled: ({ theme }) => ({
-          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.dark, 0.3)})`,
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.85)}, ${alpha(theme.palette.primary.dark, 0.95)})`,
+          border: `1px solid ${alpha('#ffffff', 0.5)}`,
+          color: theme.palette.primary.contrastText,
         }),
       },
     },

@@ -6,6 +6,7 @@
 import type { PagesFunction, Env, Event } from '../../lib/types';
 import { successResponse, errorResponse, etagFromTimestamp } from '../../lib/utils';
 import { withOptionalAuth } from '../../lib/middleware';
+import { DB_TABLES, EVENT_COLUMNS } from '../../lib/db-schema';
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   return withOptionalAuth(context, async (authContext) => {
@@ -17,7 +18,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       const type = url.searchParams.get('type'); // Filter by event type
       const includeArchived = url.searchParams.get('includeArchived') === 'true';
 
-      let query = 'SELECT * FROM events WHERE 1=1';
+      let query = `SELECT * FROM ${DB_TABLES.events} WHERE 1=1`;
       const params: any[] = [];
 
       if (!includeArchived) {
@@ -37,7 +38,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       let participationMap: Record<string, boolean> = {};
       if (user) {
         const participations = await env.DB
-          .prepare('SELECT event_id FROM event_participants WHERE user_id = ?')
+          .prepare(`
+            SELECT DISTINCT et.event_id
+            FROM ${DB_TABLES.teamMembers} tm
+            INNER JOIN ${DB_TABLES.eventTeams} et ON et.team_id = tm.team_id
+            WHERE tm.user_id = ?
+          `)
           .bind(user.user_id)
           .all<{ event_id: string }>();
 
@@ -51,7 +57,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       const eventsWithData = await Promise.all(
         (result.results || []).map(async (event) => {
           const countResult = await env.DB
-            .prepare('SELECT COUNT(*) as count FROM event_participants WHERE event_id = ?')
+            .prepare(`
+              SELECT COUNT(DISTINCT tm.user_id) as count
+              FROM ${DB_TABLES.teamMembers} tm
+              INNER JOIN ${DB_TABLES.eventTeams} et ON et.team_id = tm.team_id
+              WHERE et.event_id = ?
+            `)
             .bind(event.event_id)
             .first<{ count: number }>();
 

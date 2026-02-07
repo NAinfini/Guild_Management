@@ -21,10 +21,11 @@ import { useUIStore } from '../../store';
 import { useThemeController, ThemeMode } from '../../theme/ThemeController';
 
 const themeOptions: { key: ThemeMode; label: string; descKey: string; swatch: string }[] = [
-  { key: 'default', label: 'settings.theme_default', descKey: 'settings.theme_default_desc', swatch: '#4f46e5' },
-  { key: 'chineseInk', label: 'settings.theme_chinese_ink', descKey: 'settings.theme_chinese_ink_desc', swatch: '#0f172a' },
-  { key: 'darkGold', label: 'settings.theme_dark_gold', descKey: 'settings.theme_dark_gold_desc', swatch: '#d97706' },
-  { key: 'neonSpectral', label: 'settings.theme_neon', descKey: 'settings.theme_neon_desc', swatch: '#0ea5e9' },
+  { key: 'chinese-ink', label: 'settings.theme_chinese_ink', descKey: 'settings.theme_chinese_ink_desc', swatch: '#8b7355' },
+  { key: 'dark-gold', label: 'settings.theme_dark_gold', descKey: 'settings.theme_dark_gold_desc', swatch: '#d4af37' },
+  { key: 'neon-spectral', label: 'settings.theme_neon', descKey: 'settings.theme_neon_desc', swatch: '#00d9ff' },
+  { key: 'redgold', label: 'settings.theme_red_gold', descKey: 'settings.theme_red_gold_desc', swatch: '#d4af37' },
+  { key: 'softpink', label: 'settings.theme_soft_pink', descKey: 'settings.theme_soft_pink_desc', swatch: '#ec4899' },
 ];
 
 const languageOptions = [

@@ -11,11 +11,12 @@ export interface LoginPayload {
 }
 
 export interface AuthUser {
-  userId: string;
+  user_id: string;
   username: string;
-  wechatName: string | null;
+  wechat_name: string | null;
   role: 'member' | 'moderator' | 'admin';
   power: number;
+  is_active?: number;
 }
 
 export interface LoginResponse {
@@ -24,7 +25,8 @@ export interface LoginResponse {
 }
 
 export interface SessionResponse {
-  user: AuthUser;
+  user: AuthUser | null;
+  csrfToken?: string | null;
 }
 
 export const authAPI = {

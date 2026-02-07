@@ -1,9 +1,11 @@
-// Use environment variable if set, otherwise default to /api
-// This works for both local development and production
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
-
 // Enable debug logging in development
 const IS_DEV = import.meta.env.DEV;
+
+// In dev, default to real backend origin instead of localhost relative /api.
+// Can be overridden via VITE_API_BASE_URL.
+const DEV_API_ORIGIN = import.meta.env.VITE_DEV_API_ORIGIN || 'https://guild-management.na-infini.workers.dev';
+const DEFAULT_API_BASE = IS_DEV ? `${DEV_API_ORIGIN}/api` : '/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE;
 
 // Import toast for error notifications
 import { toast } from './toast';
@@ -22,8 +24,8 @@ export class APIError extends Error {
   }
 }
 
-// ETag cache for conditional requests (HTTP caching)
-const etagCache = new Map<string, string>();
+// Response cache for conditional requests (HTTP caching)
+const responseCache = new Map<string, { etag: string, data: any }>();
 
 // Get CSRF token from auth store
 function getCSRFToken(): string | null {
@@ -48,36 +50,28 @@ async function request<T>(
   }
 
   const requestUrl = url.toString();
-  
-  if (IS_DEV) {
-    console.log(`[API] ${method} ${requestUrl}`);
-    if (body) console.log('[API] Request body:', body);
-  }
 
-  // Build headers
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  // Build headers.
+  // Avoid forcing Content-Type on GET/no-body requests to reduce CORS preflight issues.
+  const headers: Record<string, string> = {};
+  if (body !== undefined && body !== null) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   // Add CSRF token for mutations (POST, PUT, PATCH, DELETE)
   if (method !== 'GET') {
     const csrfToken = getCSRFToken();
     if (csrfToken) {
       headers['X-CSRF-Token'] = csrfToken;
-      if (IS_DEV) {
-        console.log(`[API] Adding CSRF token: ${csrfToken.substring(0, 8)}...`);
-      }
+
     }
   }
 
   // Add ETag for GET requests (conditional request)
   if (method === 'GET') {
-    const cachedETag = etagCache.get(requestUrl);
-    if (cachedETag) {
-      headers['If-None-Match'] = cachedETag;
-      if (IS_DEV) {
-        console.log(`[API] Adding If-None-Match: ${cachedETag}`);
-      }
+    const cached = responseCache.get(requestUrl);
+    if (cached?.etag) {
+      headers['If-None-Match'] = cached.etag;
     }
   }
 
@@ -90,29 +84,17 @@ async function request<T>(
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    if (IS_DEV) {
-      console.log(`[API] ${method} ${requestUrl} - Status: ${resp.status}`);
-    }
+
 
     // Handle 304 Not Modified for GET requests
     if (resp.status === 304 && method === 'GET') {
-      if (IS_DEV) {
-        console.log(`[API] ${method} ${requestUrl} - 304 Not Modified (using cache)`);
+      const cached = responseCache.get(requestUrl);
+      if (cached?.data) {
+        return cached.data as T;
       }
-      // Return empty object - TanStack Query will use its cached data
-      return {} as T;
     }
 
-    // Store ETag for future requests
-    if (method === 'GET') {
-      const etag = resp.headers.get('ETag');
-      if (etag) {
-        etagCache.set(requestUrl, etag);
-        if (IS_DEV) {
-          console.log(`[API] Stored ETag: ${etag}`);
-        }
-      }
-    }
+
 
     // Handle non-OK responses
     if (!resp.ok) {
@@ -164,19 +146,13 @@ async function request<T>(
       );
     }
 
-    const data = (await resp.json()) as T;
-    
-    if (IS_DEV) {
-      console.log(`[API] ${method} ${requestUrl} - Response:`, data);
-    }
-    
+    const rawData = await resp.json();
+
     // Unwrap worker response envelope: { success, data, error?, meta? }
     // If success: true, return data; if success: false, throw error
-    if (typeof data === 'object' && data !== null && 'success' in data) {
-      const envelope = data as { success: boolean; data?: T; error?: { message: string } };
-      if (envelope.success && envelope.data !== undefined) {
-        return envelope.data;
-      }
+    let finalData: T;
+    if (typeof rawData === 'object' && rawData !== null && 'success' in rawData) {
+      const envelope = rawData as { success: boolean; data?: T; error?: { message: string } };
       if (!envelope.success && envelope.error) {
         throw new APIError(
           envelope.error.message || 'Request failed',
@@ -184,11 +160,20 @@ async function request<T>(
           requestUrl
         );
       }
-      // Fallback: if success is true but no data, return empty object
-      return {} as T;
+      finalData = (envelope.data !== undefined ? envelope.data : {}) as T;
+    } else {
+      finalData = rawData as T;
     }
-    
-    return data;
+
+    // Store ETag and unwrapped data for 304 cache
+    if (method === 'GET') {
+      const etag = resp.headers.get('ETag');
+      if (etag) {
+        responseCache.set(requestUrl, { etag, data: finalData });
+      }
+    }
+
+    return finalData;
   } catch (error) {
     if (error instanceof APIError) {
       throw error;
@@ -287,7 +272,7 @@ export const api = {
     
     // We don't use apiRequestWithRetry here because fetch handles FormData Content-Type automatically
     // and we don't want to JSON.stringify FormData.
-    const url = new URL(`${API_BASE}${path}`, window.location.origin);
+    const url = new URL(path.startsWith('http') ? path : `${API_BASE}${path}`, window.location.origin);
     const headers: Record<string, string> = {};
     
     const csrfToken = getCSRFToken();

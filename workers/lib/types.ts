@@ -10,6 +10,7 @@ export interface Env {
   DB: D1Database;
   BUCKET: R2Bucket;
   ENVIRONMENT: string;
+  ALLOWED_ORIGINS?: string;
   ASSETS: Fetcher;
   CONNECTIONS: DurableObjectNamespace;
 }
@@ -222,11 +223,10 @@ export interface Event {
   start_at_utc: string;
   end_at_utc: string | null;
   capacity: number | null;
-  min_level: number;
-  max_participants: number;
   is_pinned: 0 | 1;
   is_archived: 0 | 1;
   signup_locked: 0 | 1;
+  deleted_at_utc: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at_utc: string;
@@ -319,4 +319,3 @@ export interface EventContext<TEnv = Env, TParams extends string = any, TData = 
   next: (input?: Request | string, init?: RequestInit) => Promise<Response>;
   waitUntil: (promise: Promise<unknown>) => void;
 }
-

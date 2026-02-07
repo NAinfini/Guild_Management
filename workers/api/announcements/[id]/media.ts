@@ -10,6 +10,7 @@
 import type { Env } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog, generateId } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 interface AttachMediaRequest {
   media_ids: string[];
@@ -49,7 +50,7 @@ export const onRequestPost = createEndpoint<{ message: string; attachments: Anno
       .first();
 
     if (!announcement) {
-      throw new Error('Announcement not found');
+      throw new NotFoundError('Announcement');
     }
 
     // Get current attachment count
@@ -161,7 +162,7 @@ export const onRequestPut = createEndpoint<{ message: string; attachments: Annou
       .first();
 
     if (!announcement) {
-      throw new Error('Announcement not found');
+      throw new NotFoundError('Announcement');
     }
 
     // Get current attachments

@@ -8,6 +8,7 @@
 
 import { createEndpoint } from '../../../../../lib/endpoint-factory';
 import { utcNow, createAuditLog } from '../../../../../lib/utils';
+import { NotFoundError } from '../../../../../lib/errors';
 
 interface SetAvatarResponse {
   message: string;
@@ -43,7 +44,7 @@ export const onRequestPost = createEndpoint<SetAvatarResponse>({
       .first();
 
     if (!member) {
-      throw new Error('Member not found');
+      throw new NotFoundError('Member');
     }
 
     // Check if media exists and belongs to this member

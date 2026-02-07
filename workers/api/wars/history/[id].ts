@@ -9,6 +9,7 @@
 import type { Env } from '../../../lib/types';
 import { createEndpoint } from '../../../lib/endpoint-factory';
 import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../../lib/utils';
+import { NotFoundError } from '../../../lib/errors';
 
 // ============================================================
 // Types
@@ -51,7 +52,7 @@ export const onRequestGet = createEndpoint<WarHistoryResponse>({
       .first();
 
     if (!war) {
-      throw new Error('War history not found');
+      throw new NotFoundError('War history');
     }
 
     return { war };
@@ -81,7 +82,7 @@ export const onRequestPut = createEndpoint<WarHistoryResponse, UpdateWarStatsBod
       .first<{ updated_at_utc: string }>();
 
     if (!war) {
-      throw new Error('War history not found');
+      throw new NotFoundError('War history');
     }
 
     // ETag validation

@@ -5,6 +5,7 @@
 
 import { createEndpoint } from '../../lib/endpoint-factory';
 import { generateId, utcNow } from '../../lib/utils';
+import { NotFoundError } from '../../lib/errors';
 
 interface ApiKey {
   key_id: string;
@@ -152,7 +153,7 @@ export const onRequestDelete = createEndpoint<{ message: string }, BatchDeleteQu
     ).bind(keyId, user!.user_id).run();
     
     if (result.meta.changes === 0) {
-      throw new Error('API key not found');
+      throw new NotFoundError('API key');
     }
     
     return { message: 'API key deactivated' };
