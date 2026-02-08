@@ -8,6 +8,7 @@ import { useAuthStore } from '../../../store';
 import { apiDirect, APIError } from '../../../lib/api-client';
 import { typedAPI } from '../../../lib/api/api-builder';
 import type { LoginResponse, SessionResponse } from '../../../lib/api-types';
+import { canAccessAdminArea, canManageMemberRoles } from '../../../lib/permissions';
 
 interface LoginCredentials {
   username: string;
@@ -123,8 +124,8 @@ export function useAuth() {
   return {
     user,
     isAuthenticated,
-    isAdmin: user?.role === 'admin',
-    isModerator: user?.role === 'moderator' || user?.role === 'admin',
+    isAdmin: canManageMemberRoles(user?.role),
+    isModerator: canAccessAdminArea(user?.role),
     isLoading: useAuthStore((state) => state.isLoading),
     error: useAuthStore((state) => state.error),
     login,

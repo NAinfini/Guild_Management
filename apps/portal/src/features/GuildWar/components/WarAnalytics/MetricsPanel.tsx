@@ -21,6 +21,7 @@ import {
   Divider,
 } from '@mui/material';
 import { BarChart3, TrendingUp, Award, Target } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
 import { METRICS, formatMetricName, formatNumber, formatCompactNumber } from './types';
 import type { MemberStats, MetricType, AggregationType } from './types';
@@ -35,9 +36,11 @@ interface MetricsPanelProps {
     memberStats: MemberStats[];
     [key: string]: any;
   };
+  canCopy?: boolean;
 }
 
-export function MetricsPanel({ analyticsData }: MetricsPanelProps) {
+export function MetricsPanel({ analyticsData, canCopy = true }: MetricsPanelProps) {
+  const { t } = useTranslation();
   const { filters, updateFilters } = useAnalytics();
 
   const handleMetricChange = (metric: MetricType) => {
@@ -56,17 +59,17 @@ export function MetricsPanel({ analyticsData }: MetricsPanelProps) {
           <Typography variant="subtitle2" fontWeight={700} mb={2}>
             <Stack direction="row" alignItems="center" gap={1}>
               <BarChart3 size={18} />
-              Metrics
+              {t('guild_war.analytics_metrics')}
             </Stack>
           </Typography>
 
           {/* Primary Metric */}
           <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-            <InputLabel>Primary Metric</InputLabel>
+            <InputLabel>{t('guild_war.analytics_primary_metric')}</InputLabel>
             <Select
               value={filters.primaryMetric}
               onChange={(e) => handleMetricChange(e.target.value as MetricType)}
-              label="Primary Metric"
+              label={t('guild_war.analytics_primary_metric')}
             >
               {Object.keys(METRICS).map((metric) => (
                 <MenuItem key={metric} value={metric}>
@@ -79,16 +82,16 @@ export function MetricsPanel({ analyticsData }: MetricsPanelProps) {
           {/* Aggregation (for Rankings mode) */}
           {filters.mode === 'rankings' && (
             <FormControl fullWidth size="small">
-              <InputLabel>Aggregation</InputLabel>
+              <InputLabel>{t('guild_war.analytics_aggregation')}</InputLabel>
               <Select
                 value={filters.aggregation}
                 onChange={(e) => handleAggregationChange(e.target.value as AggregationType)}
-                label="Aggregation"
+                label={t('guild_war.analytics_aggregation')}
               >
-                <MenuItem value="total">Total</MenuItem>
-                <MenuItem value="average">Average</MenuItem>
-                <MenuItem value="best">Best</MenuItem>
-                <MenuItem value="median">Median</MenuItem>
+                <MenuItem value="total">{t('common.total')}</MenuItem>
+                <MenuItem value="average">{t('common.average')}</MenuItem>
+                <MenuItem value="best">{t('common.best')}</MenuItem>
+                <MenuItem value="median">{t('common.median')}</MenuItem>
               </Select>
             </FormControl>
           )}
@@ -101,7 +104,7 @@ export function MetricsPanel({ analyticsData }: MetricsPanelProps) {
       <Divider sx={{ my: 2 }} />
 
       {/* Share Button */}
-      <ShareButton />
+      <ShareButton disabled={!canCopy} />
     </Box>
   );
 }

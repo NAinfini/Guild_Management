@@ -35,7 +35,8 @@ import {
   Shield, 
   Coins, 
   ExternalLink,
-  TowerControl,
+  ChevronLeft,
+  ChevronRight,
   RefreshCcw,
   CheckCircle2
 } from 'lucide-react';
@@ -45,7 +46,7 @@ import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useMobileOptimizations, useLocaleDate } from '../../hooks';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from '@tanstack/react-router';
-import { Announcement, Event, User } from '../../types';
+import { Announcement, Event, User, WarHistoryEntry } from '../../types';
 import { formatDistanceToNow, isAfter, isBefore, addHours, addDays, isSameDay } from 'date-fns';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useWarHistory } from '../../features/GuildWar/hooks/useWars';
@@ -55,6 +56,69 @@ import { MarkdownContent } from '../../components/MarkdownContent';
 import { useMembers, useEvents, useAnnouncements } from '../../hooks/useServerState';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { ErrorState } from '../../components/ErrorState';
+import { canAccessAdminArea, canCopyEventSignup, getEffectiveRole } from '../../lib/permissions';
+
+export type DashboardLastSeenState = {
+  events: string;
+  announcements: string;
+};
+
+export function applyNotificationSeen(
+  previous: DashboardLastSeenState,
+  noteType: 'event' | 'announcement',
+  now: string
+): DashboardLastSeenState {
+  if (noteType === 'event') {
+    return { ...previous, events: now };
+  }
+  if (noteType === 'announcement') {
+    return { ...previous, announcements: now };
+  }
+  return previous;
+}
+
+export function getLatestCompletedWar(
+  warHistory: WarHistoryEntry[] | undefined,
+  nowIso: string = new Date().toISOString(),
+  guildWarEvents?: Event[],
+): WarHistoryEntry | undefined {
+  return getRecentCompletedWars(warHistory, guildWarEvents, 1, nowIso)[0];
+}
+
+export function getWarEventTime(war: WarHistoryEntry, guildWarEvents?: Event[]): string {
+  if (!Array.isArray(guildWarEvents) || guildWarEvents.length === 0) {
+    return war.date;
+  }
+  const linkedGuildWar = guildWarEvents.find(
+    (event) => event.type === 'guild_war' && event.id === war.event_id,
+  );
+  return linkedGuildWar?.start_time || war.date;
+}
+
+export function getRecentCompletedWars(
+  warHistory: WarHistoryEntry[] | undefined,
+  guildWarEvents: Event[] | undefined,
+  limit: number = 4,
+  nowIso: string = new Date().toISOString(),
+): WarHistoryEntry[] {
+  const nowTime = new Date(nowIso).getTime();
+  if (!Array.isArray(warHistory) || warHistory.length === 0) {
+    return [];
+  }
+
+  return warHistory
+    .filter((war) => {
+      if (!war || war.result === 'pending') return false;
+      const warTime = new Date(getWarEventTime(war, guildWarEvents)).getTime();
+      return Number.isFinite(warTime) && warTime <= nowTime;
+    })
+    .sort((a, b) => {
+      const bTime = new Date(getWarEventTime(b, guildWarEvents)).getTime();
+      const aTime = new Date(getWarEventTime(a, guildWarEvents)).getTime();
+      return bTime - aTime;
+    })
+    .slice(0, Math.max(1, limit));
+}
 
 export function Dashboard() {
   const { t } = useTranslation();
@@ -81,7 +145,7 @@ export function Dashboard() {
     setPageTitle(t('nav.dashboard'));
   }, [setPageTitle, t]);
 
-  const effectiveRole = viewRole || user?.role;
+  const effectiveRole = getEffectiveRole(user?.role, viewRole);
 
   // --- PERSISTENCE: Notification Logic ---
   const [lastSeen, setLastSeen] = useState(() => ({
@@ -98,6 +162,17 @@ export function Dashboard() {
     storage.set(STORAGE_KEYS.EVENTS_LAST_SEEN, now);
     storage.set(STORAGE_KEYS.ANNOUNCEMENTS_LAST_SEEN, now);
   }, []);
+
+  const handleNotificationClick = useCallback(
+    (note: { type: 'event' | 'announcement'; path: string }) => {
+      const now = new Date().toISOString();
+      setLastSeen((prev) => applyNotificationSeen(prev, note.type, now));
+      if (note.type === 'event') storage.set(STORAGE_KEYS.EVENTS_LAST_SEEN, now);
+      if (note.type === 'announcement') storage.set(STORAGE_KEYS.ANNOUNCEMENTS_LAST_SEEN, now);
+      navigate({ to: note.path as any });
+    },
+    [navigate]
+  );
 
   const handleRetry = () => {
     refetchMembers();
@@ -125,15 +200,6 @@ export function Dashboard() {
     filterFn: upcomingFilterFn,
     sortFn: upcomingSortFn,
   }).slice(0, 3);
-
-  // Pinned / Featured strip
-  const pinnedEvents = useMemo(() => {
-    if (!events || events.length === 0) return [];
-    return events
-      .filter(e => e.is_pinned && !e.is_archived)
-      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-      .slice(0, 4);
-  }, [events]);
 
   const notifications = useMemo(() => {
     const list: { id: string; title: string; type: 'event' | 'announcement'; time: string; path: string; isNew: boolean }[] = [];
@@ -287,89 +353,6 @@ export function Dashboard() {
               </Link>
             </Stack>
 
-            {pinnedEvents.length > 0 && (
-              <Card 
-                variant="outlined" 
-                sx={{ 
-                  borderRadius: 'var(--radiusCard)', 
-                  borderColor: 'var(--divider)',
-                  background: 'var(--surface1)',
-                  px: { xs: 2, sm: 3 }, 
-                  py: { xs: 1.5, sm: 2 },
-                  position: 'relative',
-                  overflow: 'hidden',
-                  border: 'var(--stroke) solid var(--divider)',
-                  boxShadow: 'var(--shadow2)',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(135deg, var(--accent1) 0%, transparent 100%)',
-                    opacity: 0.1,
-                    pointerEvents: 'none',
-                  }
-                }}
-              >
-                <DecorativeGlyph icon={CalendarDays} color={alpha(theme.palette.secondary.main, 0.35)} size={140} opacity={0.12} right={-10} top={-20} />
-                <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: { xs: 1, sm: 1.5 }, flexWrap: 'wrap' }}>
-                  <Chip 
-                    size="small" 
-                    label={t('dashboard.featured_events')}
-                    sx={{ fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase' }}
-                    icon={<TowerControl size={14} />}
-                  />
-                </Stack>
-                <Stack direction="row" spacing={1.5} sx={{ 
-                    overflowX: 'auto', 
-                    pb: 0.5,
-                    '&::-webkit-scrollbar': { display: 'none' },
-                    msOverflowStyle: 'none',  /* IE and Edge */
-                    scrollbarWidth: 'none',  /* Firefox */
-                }}>
-                  {pinnedEvents.map(event => (
-                    <Box
-                      key={event.id}
-                      onClick={() => navigate({ to: '/events' as any })}
-                      sx={{
-                        minWidth: 180,
-                        px: 1.5,
-                        py: 1,
-                        borderRadius: 2,
-                        border: `1px solid ${alpha(theme.palette.secondary.main, 0.4)}`,
-                        bgcolor: alpha(theme.palette.background.paper, 0.8),
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          borderColor: theme.palette.secondary.main,
-                          boxShadow: `0 10px 24px ${alpha(theme.palette.secondary.main, 0.15)}`,
-                          transform: 'translateY(-2px)'
-                        }
-                      }}
-                    >
-                      <Stack spacing={0.5}>
-                        <Stack direction="row" alignItems="center" spacing={0.75}>
-                          <Chip
-                            size="small"
-                            label={event.type === 'guild_war' ? t('events.filter_guild') : t('events.title')}
-                            sx={{ height: 22, fontSize: '0.65rem', fontWeight: 800 }}
-                          />
-                        </Stack>
-                        <Typography variant="subtitle2" fontWeight={900} noWrap>
-                          {event.title}
-                        </Typography>
-                        <Stack direction="row" spacing={0.75} alignItems="center">
-                          <Clock size={14} color={theme.palette.text.secondary} />
-                          <Typography variant="caption" color="text.secondary" fontWeight={700}>
-                            {formatDistanceToNow(new Date(event.start_time), { addSuffix: true })}
-                          </Typography>
-                        </Stack>
-                      </Stack>
-                    </Box>
-                  ))}
-                </Stack>
-              </Card>
-            )}
-
             <Stack spacing={{ xs: 2, sm: 2.5 }}>
               {upcomingEvents.map(event => (
                 <EventCard
@@ -379,6 +362,7 @@ export function Dashboard() {
                   onCopy={() => handleCopySignup(event)}
                   isConflicted={hasConflict(event)}
                   formatDateLocalized={formatDateLocalized}
+                  canCopy={canCopyEventSignup(effectiveRole)}
                 />
               ))}
               {upcomingEvents.length === 0 && (
@@ -386,7 +370,7 @@ export function Dashboard() {
                   icon={CalendarDays}
                   message={t('dashboard.no_events')}
                   action={
-                    (effectiveRole !== 'member' && effectiveRole !== 'external') ? (
+                    canAccessAdminArea(effectiveRole) ? (
                       <Button
                         variant="outlined"
                         size="small"
@@ -439,7 +423,7 @@ export function Dashboard() {
                   {notifications.map(note => (
                     <Box 
                       key={note.id} 
-                      onClick={() => navigate({ to: note.path as any })}
+                      onClick={() => handleNotificationClick(note)}
                       sx={{ 
                         p: 2, 
                         display: 'flex', 
@@ -479,7 +463,7 @@ export function Dashboard() {
           </Card>
 
           {/* Last Guild War Section */}
-          <LastWarStats formatDateLocalized={formatDateLocalized} />
+          <LastWarStats formatDateLocalized={formatDateLocalized} guildWarEvents={events} />
 
         </Stack>
       </Box>
@@ -621,7 +605,7 @@ function MyScheduleStrip({ events, userId, formatDate }: { events: Event[], user
   );
 }
 
-function EventCard({ event, user, onCopy, isConflicted, formatDateLocalized }: { event: any; user: any; onCopy: () => void; isConflicted: boolean; formatDateLocalized: (date: string) => string }) {
+function EventCard({ event, user, onCopy, isConflicted, formatDateLocalized, canCopy }: { event: any; user: any; onCopy: () => void; isConflicted: boolean; formatDateLocalized: (date: string) => string; canCopy: boolean }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const isJoined = user && event.participants?.some((p: any) => p.id === user.id);
@@ -668,11 +652,13 @@ function EventCard({ event, user, onCopy, isConflicted, formatDateLocalized }: {
                           {t('common.details')}
                       </Button>
                    </Link>
-                   <Tooltip title={t('dashboard.copy_roster')}>
-                      <IconButton size="small" onClick={onCopy} sx={{ bgcolor: 'action.hover', borderRadius: 2 }}>
-                         <Copy size={14} />
-                      </IconButton>
-                   </Tooltip>
+                   {canCopy && (
+                     <Tooltip title={t('dashboard.copy_roster')}>
+                        <IconButton size="small" onClick={onCopy} sx={{ bgcolor: 'action.hover', borderRadius: 2 }}>
+                           <Copy size={14} />
+                        </IconButton>
+                     </Tooltip>
+                   )}
                    <Typography
                      variant="overline"
                      sx={{
@@ -707,12 +693,32 @@ function EventCard({ event, user, onCopy, isConflicted, formatDateLocalized }: {
   );
 }
 
-function LastWarStats({ formatDateLocalized }: { formatDateLocalized: (date: string) => string }) {
+function LastWarStats({
+  formatDateLocalized,
+  guildWarEvents,
+}: {
+  formatDateLocalized: (date: string) => string;
+  guildWarEvents: Event[];
+}) {
     const { t } = useTranslation();
     const theme = useTheme();
     const { data: warHistory = [], isLoading: isLoadingHistory } = useWarHistory();
-    
-    const latestWar = useMemo(() => warHistory[0], [warHistory]);
+
+    const recentWars = useMemo(
+      () => getRecentCompletedWars(warHistory, guildWarEvents, 4),
+      [warHistory, guildWarEvents],
+    );
+    const [selectedWarIndex, setSelectedWarIndex] = useState(0);
+
+    useEffect(() => {
+      setSelectedWarIndex((previous) => {
+        if (recentWars.length === 0) return 0;
+        if (previous >= recentWars.length) return 0;
+        return previous;
+      });
+    }, [recentWars]);
+
+    const latestWar = recentWars[selectedWarIndex];
     
     const { data: warStats, isLoading: isLoadingStats } = useQuery({
         queryKey: ['warStats', latestWar?.id],
@@ -770,9 +776,42 @@ function LastWarStats({ formatDateLocalized }: { formatDateLocalized: (date: str
             <DecorativeGlyph icon={Swords} color={theme.palette.primary.main} size={180} opacity={0.05} right={-20} top={-20} />
             <CardHeader 
                 title={
-                    <Stack direction="row" alignItems="center" gap={1}>
-                        <Swords size={16} color="var(--accent0)" />
-                        <Typography variant="overline" fontWeight={900} letterSpacing="0.15em" color="var(--text1)">{t('dashboard.latest_conflict')}</Typography>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+                        <Stack direction="row" alignItems="center" gap={1}>
+                          <Swords size={16} color="var(--accent0)" />
+                          <Typography variant="overline" fontWeight={900} letterSpacing="0.15em" color="var(--text1)">
+                            {t('dashboard.latest_conflict')}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" alignItems="center" spacing={0.5}>
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              setSelectedWarIndex((previous) =>
+                                recentWars.length > 0
+                                  ? (previous - 1 + recentWars.length) % recentWars.length
+                                  : 0,
+                              )
+                            }
+                            disabled={recentWars.length <= 1}
+                          >
+                            <ChevronLeft size={16} />
+                          </IconButton>
+                          <Typography variant="caption" fontWeight={800} color="text.secondary">
+                            {recentWars.length === 0 ? '0/0' : `${selectedWarIndex + 1}/${recentWars.length}`}
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              setSelectedWarIndex((previous) =>
+                                recentWars.length > 0 ? (previous + 1) % recentWars.length : 0,
+                              )
+                            }
+                            disabled={recentWars.length <= 1}
+                          >
+                            <ChevronRight size={16} />
+                          </IconButton>
+                        </Stack>
                     </Stack>
                 }
                 sx={{ p: 3, pb: 1 }}
@@ -790,7 +829,7 @@ function LastWarStats({ formatDateLocalized }: { formatDateLocalized: (date: str
                             />
                         </Stack>
                         <Typography variant="caption" color="text.disabled" fontWeight={700}>
-                            {formatDateLocalized(latestWar.date)}
+                            {formatDateLocalized(getWarEventTime(latestWar, guildWarEvents))}
                         </Typography>
                     </Box>
 

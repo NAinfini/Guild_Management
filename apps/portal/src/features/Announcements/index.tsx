@@ -37,7 +37,6 @@ import {
   Calendar,
   Image as ImageIcon,
   MoreVertical,
-  CheckCircle2,
   Play,
   Paperclip
 } from 'lucide-react';
@@ -61,6 +60,15 @@ import {
 import { MarkdownRenderer } from '../../components/MarkdownRenderer';
 import { useLastSeen } from '../../hooks/useLastSeen';
 import { PageFilterBar, type FilterOption } from '../../components/PageFilterBar';
+import { STORAGE_KEYS } from '../../lib/storage';
+import {
+  canArchiveAnnouncement,
+  canCreateAnnouncement,
+  canDeleteAnnouncement,
+  canEditAnnouncement,
+  canPinAnnouncement,
+  getEffectiveRole,
+} from '../../lib/permissions';
 
 type FilterType = 'all' | 'pinned' | 'archived';
 
@@ -112,13 +120,19 @@ export function Announcements() {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Announcement | null>(null);
-  const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  const effectiveRole = viewRole || user?.role;
-  const isAdmin = effectiveRole === 'admin' || effectiveRole === 'moderator';
-  const { lastSeen, markAsSeen, hasNewContent } = useLastSeen('last_seen_announcements_at');
+  const effectiveRole = getEffectiveRole(user?.role, viewRole);
+  const canCreate = canCreateAnnouncement(effectiveRole);
+  const canEdit = canEditAnnouncement(effectiveRole);
+  const canDelete = canDeleteAnnouncement(effectiveRole);
+  const canPin = canPinAnnouncement(effectiveRole);
+  const canArchive = canArchiveAnnouncement(effectiveRole);
+  const { markAsSeen, hasNewContent } = useLastSeen(
+    STORAGE_KEYS.ANNOUNCEMENTS_LAST_SEEN,
+    'last_seen_announcements_at'
+  );
 
   useEffect(() => {
     setPageTitle(t('nav.announcements'));
@@ -149,19 +163,13 @@ export function Announcements() {
     return () => markAsSeen();
   }, [markAsSeen]);
 
-  const handleMarkAllAsRead = () => {
-    setIsMarkingAllAsRead(true);
-    markAsSeen();
-    setTimeout(() => setIsMarkingAllAsRead(false), 500);
-  };
-
   const openDeleteConfirm = (id: string) => {
     setDeleteTargetId(id);
     setDeleteConfirmOpen(true);
   };
 
   const confirmDelete = () => {
-    if (!deleteTargetId) return;
+    if (!canDelete || !deleteTargetId) return;
     deleteAnnouncement(deleteTargetId);
     setDeleteConfirmOpen(false);
     setDeleteTargetId(null);
@@ -200,17 +208,7 @@ export function Announcements() {
         isLoading={isLoading}
         extraActions={
           <Stack direction="row" spacing={1}>
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<CheckCircle2 size={16} />}
-              onClick={handleMarkAllAsRead}
-              disabled={isMarkingAllAsRead}
-              sx={{ fontWeight: 900, borderRadius: 2 }}
-            >
-              {isMarkingAllAsRead ? t('common.loading') : t('common.mark_all_read')}
-            </Button>
-            {isAdmin && (
+            {canCreate && (
               <Button
                 variant="contained"
                 size="small"
@@ -373,23 +371,31 @@ export function Announcements() {
                )}
             </DialogContent>
 
-            {isAdmin && (
+            {(canEdit || canPin || canArchive || canDelete) && (
                 <DialogActions sx={{ p: 3, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
-                   <Button startIcon={<Edit size={16} />} onClick={() => { setEditTarget(selectedAnnouncement); setIsEditorOpen(true); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{t('announcements.edit')}</Button>
-                   <Button startIcon={<Pin size={16} />} onClick={() => { togglePinAnnouncement(selectedAnnouncement.id, !selectedAnnouncement.is_pinned); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{selectedAnnouncement.is_pinned ? t('announcements.unpin') : t('announcements.pin')}</Button>
-                   <Button startIcon={<Archive size={16} />} onClick={() => { archiveAnnouncement(selectedAnnouncement.id, !selectedAnnouncement.is_archived); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{selectedAnnouncement.is_archived ? t('announcements.restore') : t('announcements.archive')}</Button>
-                   <Button
-                     startIcon={<Trash2 size={16} />}
-                     color="error"
-                     onClick={() => {
-                       openDeleteConfirm(selectedAnnouncement.id);
-                       setSelectedAnnouncement(null);
-                     }}
-                     sx={{ fontWeight: 900 }}
-                     disabled={!online}
-                   >
-                     {t('announcements.delete')}
-                   </Button>
+                   {canEdit && (
+                     <Button startIcon={<Edit size={16} />} onClick={() => { setEditTarget(selectedAnnouncement); setIsEditorOpen(true); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{t('announcements.edit')}</Button>
+                   )}
+                   {canPin && (
+                     <Button startIcon={<Pin size={16} />} onClick={() => { togglePinAnnouncement(selectedAnnouncement.id, !selectedAnnouncement.is_pinned); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{selectedAnnouncement.is_pinned ? t('announcements.unpin') : t('announcements.pin')}</Button>
+                   )}
+                   {canArchive && (
+                     <Button startIcon={<Archive size={16} />} onClick={() => { archiveAnnouncement(selectedAnnouncement.id, !selectedAnnouncement.is_archived); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{selectedAnnouncement.is_archived ? t('announcements.restore') : t('announcements.archive')}</Button>
+                   )}
+                   {canDelete && (
+                     <Button
+                       startIcon={<Trash2 size={16} />}
+                       color="error"
+                       onClick={() => {
+                         openDeleteConfirm(selectedAnnouncement.id);
+                         setSelectedAnnouncement(null);
+                       }}
+                       sx={{ fontWeight: 900 }}
+                       disabled={!online}
+                     >
+                       {t('announcements.delete')}
+                     </Button>
+                   )}
                 </DialogActions>
              )}
          </Dialog>

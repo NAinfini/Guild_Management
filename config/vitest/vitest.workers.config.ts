@@ -4,6 +4,6 @@ export default defineConfig({
   test: {
     globals: true,
     passWithNoTests: true,
-    include: ['apps/worker/src/**/*.test.ts'],
+    include: ['apps/worker/tests/**/*.test.ts'],
   },
 });

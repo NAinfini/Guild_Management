@@ -34,7 +34,7 @@ import {
   Copy, 
   Lock, 
   Pin, 
-  Archive, 
+  Archive,
   CopyPlus, 
   Trash2, 
   UserPlus, 
@@ -65,7 +65,21 @@ import { MarkdownContent } from '../../components/MarkdownContent';
 import { Skeleton } from '@mui/material';
 import { CardGridSkeleton } from '../../components/SkeletonLoaders';
 import { PageFilterBar, type FilterOption } from '../../components/PageFilterBar';
-import { storage } from '../../lib/storage';
+import { storage, STORAGE_KEYS } from '../../lib/storage';
+import { filterEventsByCategory, type EventFilter } from './Events.filtering';
+import { getVisibleParticipants } from './Events.participants';
+import {
+  canArchiveEvent,
+  canCreateEvent,
+  canCopyEventSignup,
+  canDeleteEvent,
+  canEditEvent,
+  canJoinEvents,
+  canLockEvent,
+  canManageEventParticipants,
+  canPinEvent,
+  getEffectiveRole,
+} from '../../lib/permissions';
 import {
   useEvents,
   useMembers,
@@ -77,7 +91,19 @@ import {
   useDeleteEvent
 } from '../../hooks/useServerState';
 
-type EventFilter = 'all' | 'weekly_mission' | 'guild_war' | 'other';
+export function isArchivedEventFilter(filter: EventFilter): boolean {
+  return filter === 'archived';
+}
+
+export function getEventFilterCategories(t: (key: string) => string): FilterOption[] {
+  return [
+    { value: 'all', label: t('events.filter_all') },
+    { value: 'weekly_mission', label: t('events.filter_weekly') },
+    { value: 'guild_war', label: t('events.filter_guild') },
+    { value: 'other', label: t('events.filter_other') },
+    { value: 'archived', label: t('events.filter_archived') },
+  ];
+}
 
 export function Events() {
   const { user, viewRole } = useAuthStore();
@@ -91,12 +117,12 @@ export function Events() {
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [showArchived, setShowArchived] = useState(false);
+  const includeArchived = isArchivedEventFilter(filter);
 
   // ✅ TanStack Query: Server state with automatic caching and refetching
   const { data: events = [], isLoading: isLoadingEvents } = useEvents({ 
-    includeArchived: showArchived,
-    type: filter === 'all' ? undefined : filter,
+    includeArchived,
+    type: filter === 'all' || filter === 'archived' ? undefined : filter,
     search,
     startDate,
     endDate
@@ -144,33 +170,44 @@ export function Events() {
   const [kickDialog, setKickDialog] = useState<{ eventId: string; userId: string; username: string } | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<string | null>(null); // Event ID
 
-  const effectiveRole = viewRole || user?.role;
-  const isAdmin = effectiveRole === 'admin' || effectiveRole === 'moderator';
+  const effectiveRole = getEffectiveRole(user?.role, viewRole);
+  const canCreate = canCreateEvent(effectiveRole);
+  const canJoin = canJoinEvents(effectiveRole);
+  const canCopy = canCopyEventSignup(effectiveRole);
+  const canEdit = canEditEvent(effectiveRole);
+  const canDelete = canDeleteEvent(effectiveRole);
+  const canPin = canPinEvent(effectiveRole);
+  const canLock = canLockEvent(effectiveRole);
+  const canArchive = canArchiveEvent(effectiveRole);
+  const canManageParticipants = canManageEventParticipants(effectiveRole);
   
-  const lastSeenKey = 'last_seen_events_at';
-  const lastSeen = storage.get<string>(lastSeenKey, new Date(0).toISOString());
+  const lastSeenKey = STORAGE_KEYS.EVENTS_LAST_SEEN;
+  const lastSeen = storage.get<string>(
+    lastSeenKey,
+    storage.get<string>('last_seen_events_at', new Date(0).toISOString())
+  );
+
+  useEffect(() => {
+    storage.set(lastSeenKey, lastSeen);
+    storage.remove('last_seen_events_at');
+  }, [lastSeen, lastSeenKey]);
 
   const eventSortFn = useMemo(
     () => (a: any, b: any) => {
-      if (!showArchived && a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+      if (!includeArchived && a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
       return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
     },
-    [showArchived]
+    [includeArchived]
   );
 
   const filteredEvents = useFilteredList({
-    items: events,
+    items: filterEventsByCategory(events, filter),
     searchText: '',
     searchFields: [],
     sortFn: eventSortFn,
   });
 
-  const categories: FilterOption[] = [
-    { value: 'all', label: t('events.filter_all') },
-    { value: 'weekly_mission', label: t('events.filter_weekly') },
-    { value: 'guild_war', label: t('events.filter_guild') },
-    { value: 'other', label: t('events.filter_other') },
-  ];
+  const categories: FilterOption[] = getEventFilterCategories(t);
 
   const getConflictingEvent = (event: Event) => {
     if (!user) return undefined;
@@ -188,6 +225,7 @@ export function Events() {
 
   // Handle join with conflict check
   const handleJoin = (event: Event) => {
+    if (!canJoin) return;
     const conflict = getConflictingEvent(event);
     if (conflict) {
       setConflictDialog({ event, conflictingEvent: conflict });
@@ -197,7 +235,7 @@ export function Events() {
   };
 
   const confirmJoinWithConflict = () => {
-    if (conflictDialog && user) {
+    if (canJoin && conflictDialog && user) {
       joinEvent(conflictDialog.event.id, user.id);
       setConflictDialog(null);
     }
@@ -211,14 +249,14 @@ export function Events() {
   };
 
   const confirmKick = () => {
-    if (kickDialog) {
+    if (canManageParticipants && kickDialog) {
       leaveEvent(kickDialog.eventId, kickDialog.userId);
       setKickDialog(null);
     }
   };
 
   const confirmDelete = () => {
-    if (deleteDialog) {
+    if (canDelete && deleteDialog) {
       deleteEvent(deleteDialog);
       setDeleteDialog(null);
     }
@@ -249,16 +287,7 @@ export function Events() {
         isLoading={isLoading}
         extraActions={
           <Stack direction="row" spacing={1}>
-            <Button
-              variant={showArchived ? "contained" : "outlined"}
-              size="small"
-              onClick={() => setShowArchived(!showArchived)}
-              startIcon={<Archive size={14} />}
-              sx={{ fontWeight: 900, borderRadius: 2 }}
-            >
-              {showArchived ? t('events.active_archive') : t('events.historical_data')}
-            </Button>
-            {isAdmin && (
+            {canCreate && (
               <EnhancedButton
                 size="small"
                 onClick={() => setAddMemberModalOpen(null)}
@@ -286,9 +315,16 @@ export function Events() {
                 key={event.id} 
                 event={event} 
                 user={user}
-                isAdmin={isAdmin}
                 isUpdated={isUpdated}
                 conflict={conflict}
+                canJoin={canJoin}
+                canCopy={canCopy}
+                canManageParticipants={canManageParticipants}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                canPin={canPin}
+                canLock={canLock}
+                canArchive={canArchive}
                 onJoin={() => handleJoin(event)}
                 onLeave={() => setWithdrawDialog(event.id)}
                 onKick={(userId: string, username: string) => setKickDialog({ eventId: event.id, userId, username })}
@@ -503,7 +539,7 @@ function AddMemberModal({ open, onClose, members, currentParticipants, currentUs
                ))}
                {availableMembers.length === 0 && (
                   <Typography variant="caption" display="block" textAlign="center" color="text.disabled" sx={{ py: 4 }}>
-                      NO OPERATIVES FOUND
+                      {t('events.no_operations')}
                   </Typography>
                )}
             </List>
@@ -512,7 +548,28 @@ function AddMemberModal({ open, onClose, members, currentParticipants, currentUs
    );
 }
 
-function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin, onLeave, onKick, onAdd, onToggleArchive, onTogglePin, onToggleLock, onDelete }: any) {
+function EventOperationCard({
+  event,
+  user,
+  isUpdated,
+  conflict,
+  canJoin,
+  canCopy,
+  canManageParticipants,
+  canEdit,
+  canDelete,
+  canPin,
+  canLock,
+  canArchive,
+  onJoin,
+  onLeave,
+  onKick,
+  onAdd,
+  onToggleArchive,
+  onTogglePin,
+  onToggleLock,
+  onDelete,
+}: any) {
   const { t } = useTranslation();
   const { timezoneOffset } = useUIStore();
   const theme = useTheme();
@@ -521,6 +578,7 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
   
   const isJoined = user && event.participants?.some((p: any) => p.id === user.id);
   const isFull = event.capacity && (event.participants?.length || 0) >= event.capacity;
+  const [showAllParticipants, setShowAllParticipants] = useState(false);
   
   const totalPower = event.participants?.reduce((acc: number, p: User) => acc + (p.power || 0), 0) || 0;
   const glyphIcon = event.type === 'guild_war' ? Swords : CalendarDays;
@@ -535,6 +593,11 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
     const text = `${event.title} Roster:\n${names}`;
     navigator.clipboard.writeText(text);
   };
+
+  const { visibleParticipants, hiddenCount } = getVisibleParticipants(
+    event.participants,
+    showAllParticipants,
+  );
   
   return (
     <Card sx={{ 
@@ -584,15 +647,17 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                   </Stack>
                   
                   <Stack direction="row" flexWrap="wrap" gap={2} alignItems="center">
-                      <Tooltip title="Copy Roster">
-                        <IconButton 
-                            size="small" 
-                            onClick={handleCopyRoster} 
-                            sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
-                        >
-                            <Copy size={14} />
-                        </IconButton>
-                      </Tooltip>
+                      {canCopy && (
+                        <Tooltip title={t('dashboard.copy_roster')}>
+                          <IconButton 
+                              size="small" 
+                              onClick={handleCopyRoster} 
+                              sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
+                          >
+                              <Copy size={14} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
 
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1, py: 0.5, bgcolor: 'background.default', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
                           <Zap size={12} color={theme.palette.primary.main} />
@@ -632,7 +697,7 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                    gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, 
                    gap: 1.5 
                }} data-testid="participant-grid">
-                  {event.participants?.map((p: User) => {
+                  {visibleParticipants.map((p: User) => {
                      const primaryClassRaw = p.classes?.[0] || '';
                      const cardBaseColor = getClassBaseColor(primaryClassRaw);
                      const pillBaseColor = cardBaseColor;
@@ -656,7 +721,7 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                         <Stack spacing={1} overflow="hidden">
                            <Stack direction="row" alignItems="center" justifyContent="space-between">
                                <Typography variant="body2" noWrap sx={{ fontWeight: 800 }}>{p.username}</Typography>
-                               {isAdmin && (
+                               {canManageParticipants && (
                                   <IconButton 
                                       size="small" 
                                       onClick={(e) => { e.stopPropagation(); onKick(p.id, p.username); }}
@@ -699,7 +764,24 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                      </Box>
                   )})}
                   
-                  {isAdmin && (
+                  {hiddenCount > 0 && !showAllParticipants && (
+                     <Button
+                        variant="outlined"
+                        onClick={() => setShowAllParticipants(true)}
+                        sx={{
+                            borderStyle: 'dashed',
+                            borderRadius: 2,
+                            color: 'text.secondary',
+                            borderColor: 'divider',
+                            minHeight: 80,
+                            fontWeight: 900,
+                        }}
+                     >
+                         +{hiddenCount}
+                     </Button>
+                  )}
+
+                  {canManageParticipants && (
                      <Button 
                         variant="outlined" 
                         onClick={onAdd}
@@ -731,7 +813,7 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                     pt: { xs: 3, md: 0 } 
                 }}
             >
-               {user && !event.is_archived && (
+               {user && canJoin && !event.is_archived && (
                  <Button 
                     fullWidth 
                     size="large"
@@ -745,56 +827,80 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                     {isJoined ? t('events.withdraw') : t('events.enlist')}
                  </Button>
                )}
-               {isAdmin && (
+               {(canEdit || canPin || canLock || canArchive || canDelete) && (
                    <Stack direction="row" spacing={1} justifyContent="center">
-                       <Tooltip title={t('common.edit')}>
-                        <IconButton size="small" sx={{ bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
-                           <Edit size={16} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={event.is_pinned ? t('common.unpin') : t('common.pin')}>
-                        <IconButton 
-                          size="small" 
-                          onClick={onTogglePin}
-                          sx={{ 
-                              bgcolor: event.is_pinned ? alpha(theme.palette.primary.main, 0.2) : 'action.hover',
-                              border: '1px solid',
-                              borderColor: event.is_pinned ? alpha(theme.palette.primary.main, 0.5) : 'divider',
-                              color: event.is_pinned ? theme.palette.primary.light : 'text.secondary'
-                          }}
-                        >
-                           <Pin size={16} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={event.is_locked ? t('common.unlock') : t('common.lock')}>
-                        <IconButton 
-                          size="small" 
-                          onClick={onToggleLock}
-                          sx={{ 
-                              bgcolor: event.is_locked ? alpha(theme.palette.error.main, 0.2) : 'action.hover',
-                              border: '1px solid',
-                              borderColor: event.is_locked ? alpha(theme.palette.error.main, 0.5) : 'divider',
-                              color: event.is_locked ? theme.palette.error.light : 'text.secondary'
-                          }}
-                        >
-                           {event.is_locked ? <Lock size={16} /> : <LockOpen size={16} />}
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={t('common.delete')}>
-                        <IconButton 
-                          size="small" 
-                          onClick={onDelete}
-                          sx={{ 
-                              bgcolor: alpha(theme.palette.error.main, 0.05), 
-                              border: '1px solid',
-                              borderColor: alpha(theme.palette.error.main, 0.2),
-                              color: 'error.main',
-                              '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.1), borderColor: 'error.main' } 
-                          }}
-                        >
-                           <Trash2 size={16} />
-                        </IconButton>
-                      </Tooltip>
+                       {canEdit && (
+                         <Tooltip title={t('common.edit')}>
+                          <IconButton size="small" sx={{ bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
+                             <Edit size={16} />
+                          </IconButton>
+                        </Tooltip>
+                       )}
+                      {canPin && (
+                        <Tooltip title={event.is_pinned ? t('common.unpin') : t('common.pin')}>
+                          <IconButton 
+                            size="small" 
+                            onClick={onTogglePin}
+                            sx={{ 
+                                bgcolor: event.is_pinned ? alpha(theme.palette.primary.main, 0.2) : 'action.hover',
+                                border: '1px solid',
+                                borderColor: event.is_pinned ? alpha(theme.palette.primary.main, 0.5) : 'divider',
+                                color: event.is_pinned ? theme.palette.primary.light : 'text.secondary'
+                            }}
+                          >
+                             <Pin size={16} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {canLock && (
+                        <Tooltip title={event.is_locked ? t('common.unlock') : t('common.lock')}>
+                          <IconButton 
+                            size="small" 
+                            onClick={onToggleLock}
+                            sx={{ 
+                                bgcolor: event.is_locked ? alpha(theme.palette.error.main, 0.2) : 'action.hover',
+                                border: '1px solid',
+                                borderColor: event.is_locked ? alpha(theme.palette.error.main, 0.5) : 'divider',
+                                color: event.is_locked ? theme.palette.error.light : 'text.secondary'
+                            }}
+                          >
+                             {event.is_locked ? <Lock size={16} /> : <LockOpen size={16} />}
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {canArchive && (
+                        <Tooltip title={event.is_archived ? t('announcements.restore') : t('announcements.archive')}>
+                          <IconButton 
+                            size="small" 
+                            onClick={onToggleArchive}
+                            sx={{ 
+                                bgcolor: event.is_archived ? alpha(theme.palette.warning.main, 0.18) : 'action.hover',
+                                border: '1px solid',
+                                borderColor: event.is_archived ? alpha(theme.palette.warning.main, 0.5) : 'divider',
+                                color: event.is_archived ? theme.palette.warning.main : 'text.secondary'
+                            }}
+                          >
+                             <Archive size={16} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {canDelete && (
+                        <Tooltip title={t('common.delete')}>
+                          <IconButton 
+                            size="small" 
+                            onClick={onDelete}
+                            sx={{ 
+                                bgcolor: alpha(theme.palette.error.main, 0.05), 
+                                border: '1px solid',
+                                borderColor: alpha(theme.palette.error.main, 0.2),
+                                color: 'error.main',
+                                '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.1), borderColor: 'error.main' } 
+                            }}
+                          >
+                             <Trash2 size={16} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                    </Stack>
                )}
             </Stack>

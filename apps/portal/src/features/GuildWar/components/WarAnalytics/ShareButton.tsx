@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { Button, Snackbar, Alert } from '@mui/material';
 import { Share2, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
 import { generateAnalyticsSnapshot, copyToClipboard } from './utils';
 import type { WarSummary, MemberStats } from './types';
@@ -21,36 +22,34 @@ interface ShareButtonProps {
     memberStats: MemberStats[];
     [key: string]: any;
   };
+  disabled?: boolean;
 }
 
-export function ShareButton({ wars = [], analyticsData }: ShareButtonProps) {
-  const { filters, playerMode, compareMode, rankingsMode } = useAnalytics();
+export function ShareButton({ wars = [], analyticsData, disabled = false }: ShareButtonProps) {
+  const { t } = useTranslation();
+  const { filters, compareMode, rankingsMode, teamsMode } = useAnalytics();
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(false);
 
   // Check if there's data to share
   const hasSelection =
     filters.selectedWars.length > 0 &&
-    (filters.mode === 'player'
-      ? playerMode.selectedUserId !== null
-      : filters.mode === 'compare'
+    (filters.mode === 'compare'
       ? compareMode.selectedUserIds.length > 0
       : filters.mode === 'rankings'
       ? true
+      : filters.mode === 'teams'
+      ? teamsMode.selectedTeamIds.length > 0
       : false);
 
   const handleShare = async () => {
-    if (!hasSelection || !analyticsData) return;
+    if (disabled || !hasSelection || !analyticsData) return;
 
     try {
       // Prepare data for snapshot
       const data: any = {};
 
-      if (filters.mode === 'player' && playerMode.selectedUserId) {
-        data.selectedUser = analyticsData.memberStats.find(
-          (m) => m.user_id === playerMode.selectedUserId
-        );
-      } else if (filters.mode === 'compare') {
+      if (filters.mode === 'compare') {
         data.members = analyticsData.memberStats.filter((m) =>
           compareMode.selectedUserIds.includes(m.user_id)
         );
@@ -67,6 +66,10 @@ export function ShareButton({ wars = [], analyticsData }: ShareButtonProps) {
             class: m.class,
             value: (m[metricKey] as number) || 0,
           }));
+      } else if (filters.mode === 'teams') {
+        data.teams = (analyticsData.teamStats || []).filter((row: any) =>
+          teamsMode.selectedTeamIds.includes(row.team_id)
+        );
       }
 
       // Generate snapshot text
@@ -101,10 +104,12 @@ export function ShareButton({ wars = [], analyticsData }: ShareButtonProps) {
         fullWidth
         startIcon={copied ? <Check size={16} /> : <Share2 size={16} />}
         onClick={handleShare}
-        disabled={!hasSelection || copied}
+        disabled={disabled || !hasSelection || copied}
         color={copied ? 'success' : 'primary'}
       >
-        {copied ? 'Copied!' : 'Share Snapshot'}
+        {copied
+          ? t('common.copied')
+          : t('guild_war.analytics_share_snapshot')}
       </Button>
 
       {/* Success Snackbar */}
@@ -115,7 +120,7 @@ export function ShareButton({ wars = [], analyticsData }: ShareButtonProps) {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert severity="success" variant="filled">
-          Analytics snapshot copied to clipboard!
+          {t('guild_war.analytics_snapshot_copied')}
         </Alert>
       </Snackbar>
 
@@ -127,7 +132,7 @@ export function ShareButton({ wars = [], analyticsData }: ShareButtonProps) {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert severity="error" variant="filled">
-          Failed to copy snapshot. Please try again.
+          {t('guild_war.analytics_snapshot_copy_failed')}
         </Alert>
       </Snackbar>
     </>

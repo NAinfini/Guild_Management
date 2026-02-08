@@ -57,7 +57,6 @@ import {
   Calendar,
   X,
   Swords,
-  Volume2,
   Save,
   Video,
   Music,
@@ -78,6 +77,7 @@ import { Navigate } from '@tanstack/react-router';
 import { useMembers, useAuditLogs, useUpdateMember } from '../../hooks/useServerState';
 import { cn, formatDateTime, getClassColor, formatPower, sanitizeHtml, getOptimizedMediaUrl, formatClassDisplayName } from '../../lib/utils';
 import { PROGRESSION_CATEGORIES, clampLevel } from '../../lib/progression';
+import { mediaAPI, membersAPI } from '../../lib/api';
 import { User, AuditLogEntry, Role, ClassType, ProgressionData, Announcement, Event } from '../../types';
 import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -86,6 +86,12 @@ import { HealthStatus } from '../../components/HealthStatus';
 import { MediaUpload } from '../../components/MediaUpload';
 import { MediaReorder } from '../../components/MediaReorder';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
+import {
+  canAccessAdminArea,
+  canManageMemberActivation,
+  canManageMemberRoles,
+  getEffectiveRole,
+} from '../../lib/permissions';
 
 type AdminTab = 'members' | 'audit' | 'status';
 
@@ -173,14 +179,14 @@ export function Admin() {
   if (!isLoading && members.length === 0) {
     return (
       <Box sx={{ p: { xs: 2, sm: 3 }, textAlign: 'center' }}>
-        <Typography variant="h6" fontWeight={900}>{t('admin.empty_title', { defaultValue: 'No members yet' })}</Typography>
-        <Typography variant="body2" color="text.secondary">{t('admin.empty_hint', { defaultValue: 'Invite members to manage roles and audits.' })}</Typography>
+        <Typography variant="h6" fontWeight={900}>{t('admin.empty_title')}</Typography>
+        <Typography variant="body2" color="text.secondary">{t('admin.empty_hint')}</Typography>
       </Box>
     );
   }
 
-  const effectiveRole = viewRole || user?.role;
-  const isAdmin = effectiveRole === 'admin' || effectiveRole === 'moderator';
+  const effectiveRole = getEffectiveRole(user?.role, viewRole);
+  const isAdmin = canAccessAdminArea(effectiveRole);
 
   if (!user || !isAdmin) {
     return <Navigate to="/" />;
@@ -225,7 +231,7 @@ export function Admin() {
 // Wrapped variant for route protection (admin/moderator only)
 export function AdminProtected() {
   return (
-    <ProtectedRoute allowedRoles={['admin', 'moderator']}>
+    <ProtectedRoute allowedRoles={['admin', 'moderator']} permissionControl="access_admin_area">
       <Admin />
     </ProtectedRoute>
   );
@@ -789,6 +795,14 @@ function MemberProfileEditor({ member, onUpdate, canEdit }: { member: User, onUp
 function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: Partial<User>) => void }) {
    const { t } = useTranslation();
    const [media, setMedia] = useState(member.media || []);
+   const [audioUrl, setAudioUrl] = useState((member.media || []).find((m) => m.type === 'audio')?.url || member.audio_url || '');
+   const [uploadingAudio, setUploadingAudio] = useState(false);
+   const audioInputRef = React.useRef<HTMLInputElement | null>(null);
+
+   useEffect(() => {
+      setMedia(member.media || []);
+      setAudioUrl((member.media || []).find((m) => m.type === 'audio')?.url || member.audio_url || '');
+   }, [member]);
 
    const handleUpload = (file: File) => {
       const url = URL.createObjectURL(file);
@@ -812,17 +826,68 @@ function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: 
       onUpdate({ media: next as any });
    };
 
+   const handleAudioUpload = async (file: File) => {
+      setUploadingAudio(true);
+      try {
+         let uploadFile = file;
+         try {
+            const { convertToOpus } = await import('../../lib/media-conversion');
+            uploadFile = await convertToOpus(file);
+         } catch {
+            uploadFile = file;
+         }
+
+         await mediaAPI.uploadMemberAudio(member.id, uploadFile);
+         const refreshed = await membersAPI.get(member.id);
+         const nextMedia = refreshed.media || [];
+         const nextAudio = nextMedia.find((item) => item.type === 'audio')?.url || refreshed.audio_url || '';
+         setMedia(nextMedia);
+         setAudioUrl(nextAudio);
+         onUpdate({
+            media: nextMedia,
+            media_counts: refreshed.media_counts,
+            audio_url: nextAudio,
+         });
+      } finally {
+         setUploadingAudio(false);
+      }
+   };
+
    return (
       <Stack spacing={4}>
          <MediaUpload label={t('admin.tab_media')} onSelect={handleUpload} />
          <MediaReorder items={media as any} onReorder={handleReorder} onDelete={handleDelete} />
-         <TextField 
-            label={t('settings.audio_settings')} 
-            defaultValue={member.audio_url} 
-            fullWidth 
-            onBlur={(e) => onUpdate({ audio_url: e.target.value })}
-            InputProps={{ startAdornment: <InputAdornment position="start"><Volume2 size={16} /></InputAdornment> }} 
+         <input
+            ref={audioInputRef}
+            type="file"
+            accept="audio/*"
+            hidden
+            onChange={(e) => {
+               const file = e.target.files?.[0];
+               if (file) {
+                  void handleAudioUpload(file);
+               }
+            }}
          />
+         <Stack spacing={1.5}>
+            <Button
+               variant="outlined"
+               startIcon={<Upload size={16} />}
+               onClick={() => audioInputRef.current?.click()}
+               disabled={uploadingAudio}
+               sx={{ alignSelf: 'flex-start', fontWeight: 800 }}
+            >
+               {uploadingAudio ? t('common.loading') : t('media.choose_file')}
+            </Button>
+            {audioUrl && (
+               <Box
+                  component="audio"
+                  controls
+                  src={getOptimizedMediaUrl(audioUrl, 'audio')}
+                  sx={{ width: '100%' }}
+               />
+            )}
+         </Stack>
       </Stack>
    )
 }
@@ -830,8 +895,8 @@ function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: 
 function MemberAdminActions({ member, onUpdate, currentUser }: { member: User, onUpdate: (u: Partial<User>) => void, currentUser: User }) {
    const { t } = useTranslation();
    const [password, setPassword] = useState('');
-   const canManageRole = currentUser.role === 'admin' && currentUser.id !== member.id;
-   const canDeactivate = currentUser.role === 'admin' && currentUser.id !== member.id;
+   const canManageRole = canManageMemberRoles(currentUser.role) && currentUser.id !== member.id;
+   const canDeactivate = canManageMemberActivation(currentUser.role) && currentUser.id !== member.id;
    const [pendingRole, setPendingRole] = useState<Role | null>(null);
    const online = typeof navigator !== 'undefined' ? navigator.onLine : true;
 

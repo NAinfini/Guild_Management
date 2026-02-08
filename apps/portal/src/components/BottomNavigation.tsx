@@ -18,6 +18,7 @@ import {
   UserCog
 } from 'lucide-react';
 import { useAuthStore } from '../store';
+import { canAccessAdminArea, getEffectiveRole } from '../lib/permissions';
 import {
   Drawer,
   Paper,
@@ -40,8 +41,8 @@ export function BottomNavigation() {
   const theme = useTheme();
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const prefersReducedMotion = useReducedMotion();
-  const effectiveRole = viewRole || user?.role;
-  const canSeeAdmin = effectiveRole === 'admin' || effectiveRole === 'moderator';
+  const effectiveRole = getEffectiveRole(user?.role, viewRole);
+  const canSeeAdmin = canAccessAdminArea(effectiveRole);
 
   const mainNav = [
     { label: t('nav.dashboard'), href: '/', icon: LayoutDashboard },

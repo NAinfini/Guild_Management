@@ -53,6 +53,29 @@ export const mediaAPI = {
     return api.upload<UploadedMediaResponse>('/upload/audio', file);
   },
 
+  uploadMemberMedia: async (
+    memberId: string,
+    file: File,
+    kind: 'image' | 'audio' = 'image',
+    isAvatar: boolean = false
+  ) => {
+    return api.upload<{
+      media_id: string;
+      user_id: string;
+      kind: 'image' | 'audio' | 'video_url';
+      is_avatar: boolean;
+      sort_order: number;
+      url: string;
+    }>(`/members/${memberId}/media`, file, {
+      kind,
+      is_avatar: String(isAvatar),
+    });
+  },
+
+  uploadMemberAudio: async (memberId: string, file: File) => {
+    return mediaAPI.uploadMemberMedia(memberId, file, 'audio');
+  },
+
   addVideoUrl: async (memberId: string, url: string, title?: string) => {
     return api.post<VideoUrlResponse>(`/members/${memberId}/video-urls`, { url, title });
   },

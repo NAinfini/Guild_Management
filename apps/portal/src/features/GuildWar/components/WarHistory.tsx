@@ -1,13 +1,27 @@
 import React, { useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader, Typography, Stack, Chip, Box, TextField, InputAdornment, Button, Skeleton } from '@mui/material';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  Stack,
+  Chip,
+  Box,
+  TextField,
+  InputAdornment,
+  Button,
+} from '@mui/material';
 import { CardGridSkeleton } from '../../../components/SkeletonLoaders';
 import { useWarHistory } from '../hooks/useWars';
 import { WarHistoryDetail } from './WarHistoryDetail';
 import { WarHistoryPieCharts } from './WarHistoryPieCharts';
 import { formatDateTime } from '../../../lib/utils';
-import { Search, Filter, AlertTriangle } from 'lucide-react';
+import { Search, Filter, AlertTriangle, Coins, Milestone, TowerControl } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { buildWarCardMetrics } from './WarHistory.utils';
 
 export function WarHistory() {
+  const { t } = useTranslation();
   const { data = [], isLoading } = useWarHistory();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -31,30 +45,45 @@ export function WarHistory() {
   return (
     <Stack spacing={3}>
       <Card>
-        <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <CardContent
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1fr auto' },
+            gap: 1.5,
+            alignItems: 'center',
+          }}
+        >
           <TextField
             size="small"
-            placeholder="Search wars"
+            placeholder={t('guild_war.history_search_placeholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             InputProps={{ startAdornment: <InputAdornment position="start"><Search size={14} /></InputAdornment> }}
+            fullWidth
           />
           <TextField
             size="small"
             type="date"
-            label="From"
+            label={t('common.date_from')}
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
+            InputLabelProps={{ shrink: true }}
           />
           <TextField
             size="small"
             type="date"
-            label="To"
+            label={t('common.date_to')}
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
+            InputLabelProps={{ shrink: true }}
           />
-          <Button size="small" startIcon={<Filter size={14} />} onClick={() => { setDateFrom(''); setDateTo(''); setQuery(''); }}>
-            Clear
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<Filter size={14} />}
+            onClick={() => { setDateFrom(''); setDateTo(''); setQuery(''); }}
+          >
+            {t('common.clear_filters')}
           </Button>
         </CardContent>
       </Card>
@@ -62,10 +91,11 @@ export function WarHistory() {
       <WarHistoryPieCharts data={filtered} />
 
       <Card>
-        <CardHeader title="Recent Wars" />
+        <CardHeader title={t('guild_war.historical_archives')} />
         <CardContent>
           <Stack spacing={2}>
             {filtered.map((war) => {
+              const metrics = buildWarCardMetrics(war as any);
               const missingMembers = war.member_stats?.filter((m) =>
                 ['damage', 'healing', 'building_damage', 'credits', 'kills', 'deaths', 'assists', 'damage_taken'].some(
                   (k) => (m as any)[k] === null || (m as any)[k] === undefined,
@@ -99,11 +129,30 @@ export function WarHistory() {
                   {formatDateTime(war.date)}
                 </Typography>
                 <Stack direction="row" spacing={1} mt={1} flexWrap="wrap">
-                  {war.score !== null && war.score !== undefined && <Chip label={`Score ${war.score}`} size="small" />}
-                  <Chip label={war.result} size="small" color={war.result === 'victory' ? 'success' : war.result === 'draw' ? 'warning' : 'error'} />
+                  <Chip
+                    label={t(`dashboard.${war.result}`)}
+                    size="small"
+                    color={war.result === 'victory' ? 'success' : war.result === 'draw' ? 'warning' : 'error'}
+                  />
+                  <Chip label={`KDA ${metrics.kills}/${metrics.deaths}/${metrics.assists}`} size="small" />
+                  <Chip
+                    label={`${t('common.credits')} ${metrics.credits.toLocaleString()}`}
+                    size="small"
+                    icon={<Coins size={12} />}
+                  />
+                  <Chip
+                    label={`${t('dashboard.distance')} ${metrics.distance.toLocaleString()}`}
+                    size="small"
+                    icon={<Milestone size={12} />}
+                  />
+                  <Chip
+                    label={`${t('dashboard.towers')} ${metrics.towers}`}
+                    size="small"
+                    icon={<TowerControl size={12} />}
+                  />
                   {missingMembers > 0 && (
                     <Chip
-                      label={`${missingMembers} incomplete`}
+                      label={t('guild_war.history_incomplete_stats', { count: missingMembers })}
                       size="small"
                       color="warning"
                       icon={<AlertTriangle size={12} />}

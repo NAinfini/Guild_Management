@@ -7,6 +7,7 @@
 export const STORAGE_KEYS = {
   ANNOUNCEMENTS_LAST_SEEN: 'baiye_announcements_last_seen',
   EVENTS_LAST_SEEN: 'baiye_events_last_seen',
+  MEMBERS_LAST_SEEN: 'baiye_members_last_seen',
   ROSTER_FILTERS: 'baiye_roster_filters',
   ROSTER_FILTERS_LEGACY: 'roster_filters',
   ROSTER_FILTER_PRESETS: 'roster_filter_presets',

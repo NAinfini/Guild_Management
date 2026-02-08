@@ -1,23 +1,25 @@
 import React from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, Typography, useTheme, Stack, Chip, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 type WarHistoryChartProps = {
-  data: Array<{ name: string; score: number | null; enemy: number | null }>;
-  metric?: 'score' | 'kills' | 'credits';
-  onMetricChange?: (metric: 'score' | 'kills' | 'credits') => void;
+  data: Array<{ name: string; kills: number | null; credits: number | null; distance: number | null; towers: number | null }>;
+  metric?: 'kills' | 'credits' | 'distance' | 'towers';
+  onMetricChange?: (metric: 'kills' | 'credits' | 'distance' | 'towers') => void;
   missingCount?: number;
 };
 
 export function WarHistoryChart({ data, metric = 'kills', onMetricChange, missingCount = 0 }: WarHistoryChartProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const primary = theme.palette.primary.main;
-  const enemy = theme.palette.error.main;
 
   const labelMap: Record<string, string> = {
-    score: 'Score',
-    kills: 'Kills',
-    credits: 'Credits',
+    kills: t('guild_war.history_metric_kills'),
+    credits: t('guild_war.history_metric_credits'),
+    distance: t('guild_war.history_metric_distance'),
+    towers: t('guild_war.history_metric_towers'),
   };
 
   return (
@@ -39,7 +41,7 @@ export function WarHistoryChart({ data, metric = 'kills', onMetricChange, missin
         action={
           onMetricChange && (
             <FormControl size="small">
-              <InputLabel id="metric-select-label">Metric</InputLabel>
+                <InputLabel id="metric-select-label">Metric</InputLabel>
               <Select
                 labelId="metric-select-label"
                 value={metric}
@@ -47,9 +49,10 @@ export function WarHistoryChart({ data, metric = 'kills', onMetricChange, missin
                 onChange={(e) => onMetricChange(e.target.value as any)}
                 sx={{ minWidth: 120 }}
               >
-                <MenuItem value="score">Score</MenuItem>
-                <MenuItem value="kills">Kills</MenuItem>
-                <MenuItem value="credits">Credits</MenuItem>
+                <MenuItem value="kills">{t('guild_war.history_metric_kills')}</MenuItem>
+                <MenuItem value="credits">{t('guild_war.history_metric_credits')}</MenuItem>
+                <MenuItem value="distance">{t('guild_war.history_metric_distance')}</MenuItem>
+                <MenuItem value="towers">{t('guild_war.history_metric_towers')}</MenuItem>
               </Select>
             </FormControl>
           )
@@ -61,24 +64,20 @@ export function WarHistoryChart({ data, metric = 'kills', onMetricChange, missin
             <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <Tooltip
+              cursor={false}
+              isAnimationActive={false}
+              position={{ x: 12, y: 12 }}
+              wrapperStyle={{ pointerEvents: 'none' }}
+            />
             <Line
               type="monotone"
-              dataKey="score"
-              name="Alliance"
+              dataKey={metric}
+              name={labelMap[metric]}
               stroke={primary}
               strokeWidth={2}
               connectNulls={false}
               strokeDasharray="0"
-            />
-            <Line
-              type="monotone"
-              dataKey="enemy"
-              name="Enemy"
-              stroke={enemy}
-              strokeWidth={2}
-              connectNulls={false}
-              strokeDasharray="4 4"
             />
           </LineChart>
         </ResponsiveContainer>

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   Box,
   Stack,
@@ -94,6 +94,8 @@ export function PageFilterBar({
         p: 2, 
         bgcolor: alpha(theme.palette.background.paper, 0.8),
         backdropFilter: 'blur(8px)',
+        position: 'relative',
+        overflow: 'visible',
         borderRadius: 4,
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
         boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.1)}`,
@@ -195,7 +197,7 @@ export function PageFilterBar({
                         }}
                         sx={{ width: 140 }}
                     />
-                    <Typography variant="caption" color="text.secondary">—</Typography>
+                    <Typography variant="caption" color="text.secondary">-</Typography>
                     <TextField
                         type="date"
                         size="small"
@@ -239,3 +241,4 @@ export function PageFilterBar({
     </Box>
   );
 }
+

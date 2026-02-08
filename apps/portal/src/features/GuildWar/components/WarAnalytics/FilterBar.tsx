@@ -28,7 +28,8 @@ import {
   TextField,
   InputAdornment,
 } from '@mui/material';
-import { Calendar, ChevronDown, Search, X, Filter } from 'lucide-react';
+import { Calendar, ChevronDown, Search, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
 import { PageFilterBar } from '../../../../components/PageFilterBar';
 import { DATE_RANGE_PRESETS } from './types';
@@ -44,6 +45,7 @@ interface FilterBarProps {
 }
 
 export function FilterBar({ wars, isLoading = false }: FilterBarProps) {
+  const { t } = useTranslation();
   const { filters, updateFilters } = useAnalytics();
   const [dateRangePreset, setDateRangePreset] = useState('30d');
 
@@ -57,7 +59,6 @@ export function FilterBar({ wars, isLoading = false }: FilterBarProps) {
   };
 
   const selectedWarsCount = filters.selectedWars.length;
-  const totalWarsCount = wars?.length || 0;
 
   return (
     <PageFilterBar
@@ -88,8 +89,8 @@ export function FilterBar({ wars, isLoading = false }: FilterBarProps) {
               />
             }
             label={
-              <Typography variant="body2" sx={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
-                Participated
+                <Typography variant="body2" sx={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
+                {t('guild_war.analytics_participated_only')}
               </Typography>
             }
             sx={{ ml: 1 }}
@@ -143,6 +144,7 @@ interface WarMultiSelectorProps {
 }
 
 function WarMultiSelector({ wars, selected, onChange, isLoading }: WarMultiSelectorProps) {
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -188,7 +190,9 @@ function WarMultiSelector({ wars, selected, onChange, isLoading }: WarMultiSelec
         disabled={isLoading}
         sx={{ minWidth: 150 }}
       >
-        {selected.length > 0 ? `${selected.length} wars` : 'Select wars'}
+        {selected.length > 0
+          ? t('guild_war.analytics_wars_count', { count: selected.length })
+          : t('guild_war.analytics_select_wars')}
       </Button>
 
       <Popover
@@ -214,7 +218,7 @@ function WarMultiSelector({ wars, selected, onChange, isLoading }: WarMultiSelec
           <TextField
             fullWidth
             size="small"
-            placeholder="Search wars..."
+            placeholder={t('guild_war.analytics_search_wars')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
@@ -237,10 +241,10 @@ function WarMultiSelector({ wars, selected, onChange, isLoading }: WarMultiSelec
           {/* Actions */}
           <Stack direction="row" spacing={1} mb={1}>
             <Button size="small" onClick={handleSelectAll} disabled={filteredWars.length === 0}>
-              Select All
+              {t('common.all')}
             </Button>
             <Button size="small" onClick={handleClearAll} disabled={selected.length === 0}>
-              Clear
+              {t('common.clear')}
             </Button>
             <Chip
               label={`${selected.length} / ${wars.length}`}
@@ -255,8 +259,12 @@ function WarMultiSelector({ wars, selected, onChange, isLoading }: WarMultiSelec
           {filteredWars.length === 0 ? (
             <ListItem>
               <ListItemText
-                primary="No wars found"
-                secondary={searchQuery ? 'Try a different search' : 'No wars available'}
+                primary={t('guild_war.analytics_no_wars_found')}
+                secondary={
+                  searchQuery
+                    ? t('guild_war.analytics_try_different_search')
+                    : t('guild_war.analytics_no_wars_available')
+                }
                 sx={{ textAlign: 'center' }}
               />
             </ListItem>

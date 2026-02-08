@@ -53,6 +53,7 @@ import type { RosterFilterState } from '../../hooks/useFilterPresets';
 import { useMembers } from '../../hooks/useServerState';
 import { CardGridSkeleton } from '../../components/SkeletonLoaders';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
+import { membersAPI } from '../../lib/api';
 
 // Helper to determine active status based on availability
 function getAvailabilityStatus(member: User): 'active' | 'inactive' | 'unknown' {
@@ -110,6 +111,33 @@ const DEFAULT_ROSTER_FILTERS: RosterFilterState = {
   status: 'all',
   hasMedia: false,
 };
+
+export async function resolveRosterHoverAudioUrl(
+  member: User,
+  cache: Map<string, string | null>,
+  getMemberDetail: (memberId: string) => Promise<User>
+): Promise<string | null> {
+  if (member.audio_url) {
+    return member.audio_url;
+  }
+
+  if (cache.has(member.id)) {
+    return cache.get(member.id) || null;
+  }
+
+  try {
+    const detail = await getMemberDetail(member.id);
+    const resolved =
+      detail.media?.find((item) => item.type === 'audio')?.url ||
+      detail.audio_url ||
+      null;
+    cache.set(member.id, resolved);
+    return resolved;
+  } catch {
+    cache.set(member.id, null);
+    return null;
+  }
+}
 
 function useGlobalAudio() {
   const { audioSettings } = useUIStore();
@@ -173,6 +201,8 @@ export function Roster() {
   const [sort, setSort] = useState<'power' | 'name' | 'class'>('power');
   const [selectedMember, setSelectedMember] = useState<User | null>(null);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
+  const audioUrlCacheRef = useRef<Map<string, string | null>>(new Map());
+  const hoveredMemberIdRef = useRef<string | null>(null);
   
   // Advanced filter state
   const [filters, setFilters] = useState<RosterFilterState>(() => {
@@ -247,10 +277,10 @@ export function Roster() {
     return (
       <Box sx={{ p: { xs: 2, sm: 3 }, textAlign: 'center' }}>
         <Typography variant="h6" fontWeight={900} gutterBottom>
-          {t('roster.empty_title', { defaultValue: 'No members yet' })}
+          {t('roster.empty_title')}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {t('roster.empty_hint', { defaultValue: 'Invite members or import roster data to get started.' })}
+          {t('roster.empty_hint')}
         </Typography>
       </Box>
     );
@@ -264,18 +294,43 @@ export function Roster() {
     (filters.powerRange[0] > 0 || filters.powerRange[1] < 999999999 ? 1 : 0)
   ) > 0;
 
+  const resolveMemberAudioUrl = useCallback(async (member: User): Promise<string | null> => {
+    return resolveRosterHoverAudioUrl(member, audioUrlCacheRef.current, membersAPI.get);
+  }, []);
+
+  const handleMemberHover = useCallback(
+    async (member: User) => {
+      hoveredMemberIdRef.current = member.id;
+      const audioUrl = await resolveMemberAudioUrl(member);
+      if (!audioUrl) return;
+
+      if (hoveredMemberIdRef.current === member.id) {
+        audioController.playOnHover(getOptimizedMediaUrl(audioUrl, 'audio'), member.id);
+      }
+    },
+    [audioController, resolveMemberAudioUrl]
+  );
+
+  const handleMemberLeave = useCallback(
+    (memberId: string) => {
+      if (hoveredMemberIdRef.current === memberId) {
+        hoveredMemberIdRef.current = null;
+      }
+      audioController.stop();
+    },
+    [audioController]
+  );
+
   return (
     <Box sx={{
       p: { xs: 0, sm: 1, md: 2, lg: 4 },
-      height: { xs: 'auto', md: 'calc(100vh - 80px)' },
-      pb: { xs: 2, md: 0 }
+      pb: { xs: 2, md: 0 },
     }}>
       <Paper sx={{
-        height: { xs: 'auto', md: '100%' },
+        minHeight: { xs: 'auto', md: 420 },
         display: 'flex',
         flexDirection: 'column',
         borderRadius: { xs: 0, sm: 2, md: 4 },
-        overflow: 'hidden',
         border: { xs: 0, sm: 1 },
         borderColor: 'divider'
       }}>
@@ -329,7 +384,6 @@ export function Roster() {
         {/* Scrollable Content Area */}
         <Box sx={{
           flex: 1,
-          overflow: 'auto',
           p: { xs: 1.5, sm: 2, md: 3 },
           bgcolor: 'background.default',
         }}>
@@ -354,6 +408,8 @@ export function Roster() {
                     member={member}
                     onClick={() => setSelectedMember(member)}
                     audio={audioController}
+                    onHoverAudio={handleMemberHover}
+                    onLeaveAudio={handleMemberLeave}
                   />
                 ))}
               </Box>
@@ -370,7 +426,7 @@ export function Roster() {
                       disabled={page <= 1}
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                     >
-                      {t('common.prev', { defaultValue: 'Previous' })}
+                      {t('common.prev')}
                     </Button>
                     <Button
                       size="small"
@@ -378,7 +434,7 @@ export function Roster() {
                       disabled={page >= totalPages}
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     >
-                      {t('common.next', { defaultValue: 'Next' })}
+                      {t('common.next')}
                     </Button>
                   </Stack>
                 </Stack>
@@ -387,7 +443,7 @@ export function Roster() {
           ) : (
             <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.5, gap: 2 }}>
                 <Users size={48} strokeWidth={1} />
-                <Typography variant="h6" fontWeight={700}>No members found</Typography>
+                <Typography variant="h6" fontWeight={700}>{t('roster.empty_title')}</Typography>
             </Box>
           )}
         </Box>
@@ -399,6 +455,7 @@ export function Roster() {
             member={selectedMember} 
             onClose={() => {
               setSelectedMember(null);
+              hoveredMemberIdRef.current = null;
               audioController.stop();
             }} 
             audio={audioController}
@@ -409,7 +466,19 @@ export function Roster() {
   );
 }
 
-function RosterCard({ member, onClick, audio }: { member: User, onClick: () => void, audio: ReturnType<typeof useGlobalAudio> }) {
+function RosterCard({
+  member,
+  onClick,
+  audio,
+  onHoverAudio,
+  onLeaveAudio,
+}: {
+  member: User;
+  onClick: () => void;
+  audio: ReturnType<typeof useGlobalAudio>;
+  onHoverAudio: (member: User) => void;
+  onLeaveAudio: (memberId: string) => void;
+}) {
   const { t } = useTranslation();
   const theme = useTheme();
   const isPlaying = audio.activeId === member.id;
@@ -418,9 +487,9 @@ function RosterCard({ member, onClick, audio }: { member: User, onClick: () => v
     <Card 
       onClick={onClick}
       onMouseEnter={() => {
-         if (member.audio_url) audio.playOnHover(getOptimizedMediaUrl(member.audio_url, 'audio'), member.id);
+         onHoverAudio(member);
       }}
-      onMouseLeave={() => audio.stop()}
+      onMouseLeave={() => onLeaveAudio(member.id)}
       sx={{
           borderRadius: 2,
           position: 'relative',
@@ -578,7 +647,7 @@ function ProfileModal({ member, onClose, audio }: { member: User, onClose: () =>
       return [] as any[];
    }, [member]);
 
-   const activeItem = mediaList[activeIndex];
+   const activeItem = mediaList.length > 0 ? mediaList[activeIndex] : null;
 
    const handleNext = (e?: React.MouseEvent) => {
       e?.stopPropagation();
@@ -591,11 +660,6 @@ function ProfileModal({ member, onClose, audio }: { member: User, onClose: () =>
       if (mediaList.length === 0) return;
       setActiveIndex((prev) => (prev - 1 + mediaList.length) % mediaList.length);
    };
-
-   // Don't render if no media or activeItem is invalid
-   if (mediaList.length === 0 || !activeItem) {
-      return null;
-   }
 
    return (
       <Dialog 
@@ -698,43 +762,78 @@ function ProfileModal({ member, onClose, audio }: { member: User, onClose: () =>
 
                {/* Gallery */}
                <Box sx={{ flex: 1, position: 'relative', bgcolor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                   <IconButton onClick={handlePrev} sx={{ position: 'absolute', left: 20, zIndex: 20, color: 'white', bgcolor: 'rgba(0,0,0,0.3)' }}><ChevronLeft /></IconButton>
-                   
-                   <motion.div
-                     key={activeIndex}
-                     initial={{ opacity: 0, scale: 0.98 }}
-                     animate={{ opacity: 1, scale: 1 }}
-                     transition={{ duration: 0.4 }}
-                     style={{ maxWidth: '100%', maxHeight: '100%', position: 'relative', display: 'flex', justifyContent: 'center' }}
+                   <IconButton
+                     onClick={handlePrev}
+                     disabled={mediaList.length === 0}
+                     sx={{ position: 'absolute', left: 20, zIndex: 20, color: 'white', bgcolor: 'rgba(0,0,0,0.3)' }}
                    >
-                     <img 
-                        src={getOptimizedMediaUrl(activeItem.url || activeItem.thumbnail, activeItem.type)} 
-                        style={{ maxWidth: '100%', maxHeight: '65vh', objectFit: 'contain', borderRadius: 8, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }} 
-                        alt="" 
-                     />
-                     {activeItem.type === 'video' && (
-                        <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                           <Box sx={{ width: 80, height: 80, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
-                              <Play size={32} fill="white" color="white" style={{ marginLeft: 4 }} />
-                           </Box>
-                        </Box>
-                     )}
-                   </motion.div>
+                     <ChevronLeft />
+                   </IconButton>
 
-                   <IconButton onClick={handleNext} sx={{ position: 'absolute', right: 20, zIndex: 20, color: 'white', bgcolor: 'rgba(0,0,0,0.3)' }}><ChevronRight /></IconButton>
-                   
-                   <Button 
-                      onClick={() => setShowThumbnails(!showThumbnails)}
-                      startIcon={showThumbnails ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-                      sx={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', borderRadius: 10, bgcolor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.65rem', fontWeight: 900, backdropFilter: 'blur(4px)', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}
+                   {activeItem ? (
+                     <motion.div
+                       key={activeIndex}
+                       initial={{ opacity: 0, scale: 0.98 }}
+                       animate={{ opacity: 1, scale: 1 }}
+                       transition={{ duration: 0.4 }}
+                       style={{ maxWidth: '100%', maxHeight: '100%', position: 'relative', display: 'flex', justifyContent: 'center' }}
+                     >
+                       <img
+                         src={getOptimizedMediaUrl(activeItem.url || activeItem.thumbnail, activeItem.type)}
+                         style={{ maxWidth: '100%', maxHeight: '65vh', objectFit: 'contain', borderRadius: 8, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}
+                         alt=""
+                       />
+                       {activeItem.type === 'video' && (
+                         <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                           <Box sx={{ width: 80, height: 80, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
+                             <Play size={32} fill="white" color="white" style={{ marginLeft: 4 }} />
+                           </Box>
+                         </Box>
+                       )}
+                     </motion.div>
+                   ) : (
+                     <Box
+                       sx={{
+                         width: 'min(640px, 90%)',
+                         minHeight: 240,
+                         borderRadius: 3,
+                         border: '1px dashed rgba(255,255,255,0.25)',
+                         bgcolor: 'rgba(0,0,0,0.25)',
+                         display: 'flex',
+                         alignItems: 'center',
+                         justifyContent: 'center',
+                         textAlign: 'center',
+                         px: 3,
+                       }}
+                     >
+                       <Typography variant="body2" color="rgba(255,255,255,0.8)" fontWeight={700}>
+                         {t('gallery.empty')}
+                       </Typography>
+                     </Box>
+                   )}
+
+                   <IconButton
+                     onClick={handleNext}
+                     disabled={mediaList.length === 0}
+                     sx={{ position: 'absolute', right: 20, zIndex: 20, color: 'white', bgcolor: 'rgba(0,0,0,0.3)' }}
                    >
-                      {activeIndex + 1} / {mediaList.length}
-                   </Button>
+                     <ChevronRight />
+                   </IconButton>
+
+                   {mediaList.length > 0 && (
+                     <Button
+                       onClick={() => setShowThumbnails(!showThumbnails)}
+                       startIcon={showThumbnails ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                       sx={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', borderRadius: 10, bgcolor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.65rem', fontWeight: 900, backdropFilter: 'blur(4px)', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}
+                     >
+                       {activeIndex + 1} / {mediaList.length}
+                     </Button>
+                   )}
                </Box>
 
                {/* Thumbnails */}
                <AnimatePresence>
-                   {showThumbnails && (
+                   {showThumbnails && mediaList.length > 0 && (
                        <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: '7rem', opacity: 1 }}

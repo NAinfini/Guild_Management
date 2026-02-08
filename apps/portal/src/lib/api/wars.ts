@@ -35,13 +35,15 @@ export const mapHistoryToDomain = (dto: WarHistoryDTO): WarHistoryEntry => ({
         kills: dto.our_kills || 0,
         towers: dto.our_towers || 0,
         base_hp: dto.our_base_hp || 0,
-        credits: dto.our_credits || 0
+        credits: dto.our_credits || 0,
+        distance: dto.our_distance || 0,
     },
     enemy_stats: {
         kills: dto.enemy_kills || 0,
         towers: dto.enemy_towers || 0,
         base_hp: dto.enemy_base_hp || 0,
-        credits: dto.enemy_credits || 0
+        credits: dto.enemy_credits || 0,
+        distance: dto.enemy_distance || 0,
     },
     updated_at: dto.updated_at_utc,
     notes: dto.notes || undefined,
@@ -214,8 +216,22 @@ export const warsAPI = {
   },
 
   // Analytics
-  getAnalytics: async (params?: { userId?: string; startDate?: string; endDate?: string }) => {
-    return api.get<AnalyticsResponseDTO>('/wars/analytics', params as any);
+  getAnalytics: async (params?: {
+    userId?: string;
+    startDate?: string;
+    endDate?: string;
+    warIds?: number[];
+    userIds?: number[];
+    teamIds?: number[];
+    mode?: 'compare' | 'rankings' | 'teams';
+    metric?: string;
+    aggregation?: 'total' | 'average' | 'best' | 'median';
+    limit?: number;
+    cursor?: string;
+    includePerWar?: boolean;
+  }) => {
+    const query = serializeAnalyticsQuery(params);
+    return api.get<AnalyticsResponseDTO>('/wars/analytics', query as any);
   },
 
   getWarsList: async (params?: { startDate?: string; endDate?: string; limit?: number }): Promise<any[]> => {
@@ -239,11 +255,58 @@ export const warsAPI = {
       }));
   },
 
-  getAnalyticsData: async (params?: any): Promise<{ memberStats: any[]; perWarStats: any[] }> => {
-    const response = await api.get<AnalyticsResponseDTO>('/wars/analytics', params);
+  getAnalyticsData: async (params?: {
+    startDate?: string;
+    endDate?: string;
+    warIds?: number[];
+    userIds?: number[];
+    teamIds?: number[];
+    mode?: 'compare' | 'rankings' | 'teams';
+    metric?: string;
+    aggregation?: 'total' | 'average' | 'best' | 'median';
+    limit?: number;
+    cursor?: string;
+    includePerWar?: boolean;
+  }): Promise<{ memberStats: any[]; perWarStats: any[]; teamStats: any[]; meta?: any }> => {
+    const query = serializeAnalyticsQuery(params);
+    const response = await api.get<AnalyticsResponseDTO>('/wars/analytics', query as any);
     return {
       memberStats: response.memberStats || [],
       perWarStats: response.perWarStats || [],
+      teamStats: (response as any).teamStats || [],
+      meta: (response as any).meta,
     };
   },
 };
+
+function serializeAnalyticsQuery(params?: {
+  userId?: string;
+  startDate?: string;
+  endDate?: string;
+  warIds?: number[];
+  userIds?: number[];
+  teamIds?: number[];
+  mode?: 'compare' | 'rankings' | 'teams';
+  metric?: string;
+  aggregation?: 'total' | 'average' | 'best' | 'median';
+  limit?: number;
+  cursor?: string;
+  includePerWar?: boolean;
+}) {
+  if (!params) return undefined;
+
+  return {
+    userId: params.userId,
+    startDate: params.startDate,
+    endDate: params.endDate,
+    warIds: params.warIds?.length ? params.warIds.join(',') : undefined,
+    userIds: params.userIds?.length ? params.userIds.join(',') : undefined,
+    teamIds: params.teamIds?.length ? params.teamIds.join(',') : undefined,
+    mode: params.mode,
+    metric: params.metric,
+    aggregation: params.aggregation,
+    limit: params.limit,
+    cursor: params.cursor,
+    includePerWar: params.includePerWar === undefined ? undefined : params.includePerWar ? '1' : '0',
+  };
+}

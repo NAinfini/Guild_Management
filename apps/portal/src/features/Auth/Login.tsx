@@ -39,6 +39,13 @@ export function Login() {
 
   const returnTo = (search as any).returnTo || '/';
 
+  const translateError = (errorKey?: string | null) => {
+    if (!errorKey) return t('login.error_fail');
+    const key = `errors.${errorKey}` as const;
+    const translated = t(key);
+    return translated === key ? t('errors.INTERNAL_ERROR') : translated;
+  };
+
   // Basic inline validation
   const usernameError = submitted && !username;
   const passwordError = submitted && !password;
@@ -67,9 +74,7 @@ export function Login() {
       window.location.href = returnTo || '/';
     } else {
       // Map server error code to translation key if possible
-      const errorKey = result.error;
-      const translatedError = errorKey ? t(`errors.${errorKey}`, { defaultValue: errorKey }) : t('login.error_fail');
-      setLocalError(translatedError);
+      setLocalError(translateError(result.error));
     }
   };
 
@@ -132,7 +137,7 @@ export function Login() {
             <CardContent sx={{ p: 4, pt: 4 }}>
                {(error || localError) && (
                  <Alert severity="error" icon={<AlertCircle size={18} />} sx={{ mb: 3, borderRadius: 2 }}>
-                    {localError || (error ? t(`errors.${error}`, { defaultValue: error }) : '')}
+                    {localError || translateError(error)}
                  </Alert>
                )}
 

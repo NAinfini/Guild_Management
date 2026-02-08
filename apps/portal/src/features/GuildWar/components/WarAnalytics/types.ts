@@ -56,7 +56,7 @@ export interface AnalyticsFilters {
 }
 
 export const DEFAULT_FILTERS: AnalyticsFilters = {
-  mode: 'player',
+  mode: 'compare',
   selectedWars: [],
   participationOnly: true,
   primaryMetric: 'damage',

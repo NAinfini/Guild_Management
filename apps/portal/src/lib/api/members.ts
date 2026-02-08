@@ -18,8 +18,9 @@ export interface MemberDTO {
   power: number;
   is_active: number; // 0 or 1
   title_html: string | null;
-  classes: string | null; // Comma separated or JSON? assuming JSON or array from API wrapper
-  media_counts: { images: number; video: number; audio: number } | string;
+  classes: string[] | string | null;
+  media_counts: { images?: number; videos?: number; video?: number; audio?: number } | string;
+  media_count?: number;
   created_at_utc: string;
   updated_at_utc: string;
   last_seen_utc?: string;
@@ -56,7 +57,7 @@ export const mapToDomain = (dto: MemberDTO): User => {
   // Parse classes
   let classList: ClassType[] = [];
   if (Array.isArray(dto.classes)) {
-    classList = dto.classes;
+    classList = dto.classes as ClassType[];
   } else if (typeof dto.classes === 'string') {
      try {
          classList = JSON.parse(dto.classes);
@@ -67,13 +68,23 @@ export const mapToDomain = (dto: MemberDTO): User => {
   }
 
   // Parse media counts
-  let counts = { images: 0, videos: 0, audio: 0 };
+  const counts = { images: 0, videos: 0, audio: 0 };
   if (typeof dto.media_counts === 'object' && dto.media_counts !== null) {
-      counts = { ...counts, ...dto.media_counts } as any;
+    const mediaCounts = dto.media_counts as { images?: number; videos?: number; video?: number; audio?: number };
+    counts.images = mediaCounts.images ?? counts.images;
+    counts.videos = mediaCounts.videos ?? mediaCounts.video ?? counts.videos;
+    counts.audio = mediaCounts.audio ?? counts.audio;
   } else if (typeof dto.media_counts === 'string') {
-      try {
-          counts = JSON.parse(dto.media_counts);
-      } catch (e) {}
+    try {
+      const parsed = JSON.parse(dto.media_counts) as { images?: number; videos?: number; video?: number; audio?: number };
+      counts.images = parsed.images ?? counts.images;
+      counts.videos = parsed.videos ?? parsed.video ?? counts.videos;
+      counts.audio = parsed.audio ?? counts.audio;
+    } catch {
+      // Ignore invalid serialized counts.
+    }
+  } else if (typeof dto.media_count === 'number') {
+    counts.images = dto.media_count;
   }
 
   return {
@@ -91,7 +102,7 @@ export const mapToDomain = (dto: MemberDTO): User => {
     created_at: dto.created_at_utc,
     updated_at: dto.updated_at_utc,
     last_seen: dto.last_seen_utc,
-    media_counts: counts
+    media_counts: counts,
   };
 };
 
@@ -132,6 +143,35 @@ export const membersAPI = {
       const classes = Array.isArray(response.classes)
         ? response.classes.map((c: any) => c.class_code).filter(Boolean)
         : [];
+      const mediaRows = Array.isArray(response.media) ? response.media : [];
+      const media = mediaRows.map((item: any) => {
+        const kind = item.kind as 'image' | 'audio' | 'video_url' | undefined;
+        const isVideo = kind === 'video_url';
+        const isAudio = kind === 'audio';
+        const resolvedUrl = item.r2_key
+          ? `/api/media/${encodeURIComponent(item.r2_key)}`
+          : item.url || '';
+
+        return {
+          id: item.media_id,
+          url: resolvedUrl,
+          type: isVideo ? ('video' as const) : isAudio ? ('audio' as const) : ('image' as const),
+          thumbnail: isVideo ? item.url : undefined,
+          hash: item.media_id,
+        };
+      });
+
+      const mediaCounts = media.reduce(
+        (acc: { images: number; videos: number; audio: number }, item: { type: 'image' | 'video' | 'audio' }) => {
+          if (item.type === 'image') acc.images += 1;
+          if (item.type === 'video') acc.videos += 1;
+          if (item.type === 'audio') acc.audio += 1;
+          return acc;
+        },
+        { images: 0, videos: 0, audio: 0 }
+      );
+      const firstAudio = media.find((item: { type: 'image' | 'video' | 'audio'; url: string }) => item.type === 'audio');
+
       const detailDto: MemberDTO = {
         ...response.user,
         classes,
@@ -139,9 +179,14 @@ export const membersAPI = {
         bio_text: response.profile?.bio_text,
         vacation_start_at_utc: response.profile?.vacation_start_at_utc,
         vacation_end_at_utc: response.profile?.vacation_end_at_utc,
-        media_counts: { images: 0, videos: 0, audio: 0 } as any,
+        media_counts: mediaCounts,
       };
-      return mapToDomain(detailDto);
+      const mapped = mapToDomain(detailDto);
+      return {
+        ...mapped,
+        media,
+        audio_url: firstAudio?.url,
+      };
     }
 
     throw new Error('Failed to load member profile');

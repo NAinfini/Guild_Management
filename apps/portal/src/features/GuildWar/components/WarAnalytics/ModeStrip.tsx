@@ -1,15 +1,14 @@
 /**
  * War Analytics - Mode Strip Component
  *
- * Tab strip for switching between 4 analytics modes:
- * - Player: Single member timeline
+ * Tab strip for switching between analytics modes:
  * - Compare: Multi-member comparison
  * - Rankings: Top N performers
  * - Teams: Team aggregates
  */
 
 import { Tabs, Tab, Box, Chip } from '@mui/material';
-import { User, Users, Trophy, Shield } from 'lucide-react';
+import { Users, Trophy, Shield } from 'lucide-react';
 import { useAnalytics } from './AnalyticsContext';
 import type { AnalyticsMode } from './types';
 
@@ -25,12 +24,6 @@ interface ModeConfig {
 }
 
 const MODES: ModeConfig[] = [
-  {
-    id: 'player',
-    label: 'Player',
-    icon: User,
-    description: 'Analyze one member across multiple wars',
-  },
   {
     id: 'compare',
     label: 'Compare',
@@ -56,7 +49,7 @@ const MODES: ModeConfig[] = [
 // ============================================================================
 
 export function ModeStrip() {
-  const { filters, updateFilters, playerMode, compareMode, teamsMode } = useAnalytics();
+  const { filters, updateFilters, compareMode, teamsMode } = useAnalytics();
 
   const handleModeChange = (_event: React.SyntheticEvent, newMode: AnalyticsMode) => {
     updateFilters({ mode: newMode });
@@ -65,8 +58,6 @@ export function ModeStrip() {
   // Get badge count for each mode
   const getBadgeCount = (mode: AnalyticsMode): number | undefined => {
     switch (mode) {
-      case 'player':
-        return playerMode.selectedUserId ? 1 : undefined;
       case 'compare':
         return compareMode.selectedUserIds.length || undefined;
       case 'rankings':

@@ -17,7 +17,7 @@ export const onRequestGet = createEndpoint<Response, any, any>({
   auth: 'none', // Public access usually, or optional? Public for media.
   
   handler: async ({ env, params }) => {
-    const key = params.key;
+    const key = decodeURIComponent(params.key);
 
     const object = await env.BUCKET.get(key);
 

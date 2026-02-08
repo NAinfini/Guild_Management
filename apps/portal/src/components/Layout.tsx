@@ -6,6 +6,7 @@ import { useAuth } from '../hooks';
 import { useThemeController } from '../theme/ThemeController';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { canAccessAdminArea, getEffectiveRole } from '../lib/permissions';
 import { 
   LayoutDashboard, 
   CalendarDays, 
@@ -76,9 +77,9 @@ export function Layout() {
   const [themeMenuAnchor, setThemeMenuAnchor] = useState<null | HTMLElement>(null);
   const [langMenuAnchor, setLangMenuAnchor] = useState<null | HTMLElement>(null);
 
-  const effectiveRole = viewRole || user?.role;
-  const canSeeAdmin = effectiveRole === 'admin' || effectiveRole === 'moderator';
-  const hasPrivileges = user?.role === 'admin' || user?.role === 'moderator';
+  const effectiveRole = getEffectiveRole(user?.role, viewRole);
+  const canSeeAdmin = canAccessAdminArea(effectiveRole);
+  const hasPrivileges = canAccessAdminArea(user?.role);
 
   const handleLogout = () => {
     logout();
@@ -128,7 +129,7 @@ export function Layout() {
             borderRadius: 'var(--radiusInput)',
             boxShadow: 'var(--shadow1)'
          }}>
-            BaiYe Portal
+            {t('common.app_name')}
          </Typography>
          {isMobile && (
            <IconButton onClick={closeSidebar} size="small" aria-label="Close sidebar">
@@ -235,7 +236,7 @@ export function Layout() {
             </Box>
         )}
         <Typography variant="caption" display="block" align="center" sx={{ opacity: 0.4, fontWeight: 900, letterSpacing: '0.2em' }}>
-            System v4.2.0-PRD
+            {t('common.system_version')}
         </Typography>
       </Box>
     </Box>
@@ -243,7 +244,7 @@ export function Layout() {
 
   return (
     <>
-    <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', height: '100vh', overflow: 'visible' }}>
       {/* Mobile Sidebar (Drawer) */}
       {isMobile && (
         <Drawer
@@ -344,7 +345,7 @@ export function Layout() {
                       endIcon={
                         <Avatar
                           src={user?.avatar_url}
-                          alt={user?.username || 'Guest'}
+                          alt={user?.username || t('common.guest')}
                           sx={{
                              width: { xs: 28, sm: 32 },
                              height: { xs: 28, sm: 32 },
@@ -367,7 +368,9 @@ export function Layout() {
                       }}
                    >
                      <Box sx={{ textAlign: 'right', display: { xs: 'none', md: 'block' } }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800, lineHeight: 1, fontSize: { sm: '0.8rem', md: '0.875rem' } }}>{user?.username || 'Guest'}</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, lineHeight: 1, fontSize: { sm: '0.8rem', md: '0.875rem' } }}>
+                          {user?.username || t('common.guest')}
+                        </Typography>
                      </Box>
                    </Button>
                    <Menu
@@ -380,15 +383,15 @@ export function Layout() {
                       {user ? (
                          [
                             <Box key="header" sx={{ px: 2, py: 1 }}>
-                              <Typography variant="overline" sx={{ fontWeight: 900, color: 'text.disabled' }}>{t('nav.operative_account')}</Typography>
+                              <Typography variant="overline" sx={{ fontWeight: 900, color: 'text.disabled' }}>{t('nav.account')}</Typography>
                             </Box>,
                             <MenuItem key="profile" component={Link} to="/profile" onClick={() => setUserMenuAnchor(null)}>
                                <ListItemIcon><UserCog size={16} /></ListItemIcon>
-                               <ListItemText primary={t('nav.identity_dossier')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
+                               <ListItemText primary={t('nav.profile')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
                             </MenuItem>,
                             <MenuItem key="settings" component={Link} to="/settings" onClick={() => setUserMenuAnchor(null)}>
                                <ListItemIcon><Settings size={16} /></ListItemIcon>
-                               <ListItemText primary={t('nav.terminal_config')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
+                               <ListItemText primary={t('nav.settings')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
                             </MenuItem>
                          ]
                       ) : (
@@ -410,7 +413,7 @@ export function Layout() {
                       {/* Language Submenu Trigger */}
                       <MenuItem onClick={(e) => { e.stopPropagation(); setLangMenuAnchor(e.currentTarget); }}>
                           <ListItemIcon><Languages size={16} /></ListItemIcon>
-                          <ListItemText primary={`${t('settings.language')} / 语言`} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
+                          <ListItemText primary={t('settings.language')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
                           <ChevronDown size={14} />
                       </MenuItem>
 
@@ -418,7 +421,7 @@ export function Layout() {
                            <Divider key="logout-div" sx={{ my: 1 }} />,
                            <MenuItem key="logout" onClick={handleLogout} sx={{ color: 'error.main' }}>
                               <ListItemIcon><LogOut size={16} color="var(--mui-palette-error-main)"/></ListItemIcon>
-                              <ListItemText primary={t('nav.sever_connection')} primaryTypographyProps={{ variant: 'body2', fontWeight: 700 }} />
+                              <ListItemText primary={t('account.logout')} primaryTypographyProps={{ variant: 'body2', fontWeight: 700 }} />
                            </MenuItem>
                       ]}
                    </Menu>
@@ -465,8 +468,11 @@ export function Layout() {
              p: { xs: mobile.spacing.page, sm: mobile.spacing.page, md: 3, lg: 4 },
              pb: { xs: 'calc(96px + env(safe-area-inset-bottom))', lg: 4 },
              overflowY: 'auto',
+             overflowX: 'visible',
              bgcolor: 'transparent',
-             WebkitOverflowScrolling: 'touch'
+             WebkitOverflowScrolling: 'touch',
+             position: 'relative',
+             isolation: 'isolate',
           }}
           className="custom-scrollbar"
         >

@@ -114,9 +114,45 @@ export interface AnalyticsPerWarStatDTO {
   credits: number;
 }
 
+export interface AnalyticsTeamStatDTO {
+  team_id: string;
+  team_name: string;
+  war_id: string;
+  war_date: string;
+  total_kills: number;
+  total_damage: number;
+  total_healing: number;
+  total_credits: number;
+  member_count: number;
+}
+
+export interface AnalyticsMetaDTO {
+  nextCursor: string | null;
+  hasMore: boolean;
+  totalWars: number;
+  totalRows: number;
+  samplingApplied: boolean;
+}
+
+export interface AnalyticsQueryDTO {
+  userId?: string;
+  startDate?: string;
+  endDate?: string;
+  warIds?: string;
+  userIds?: string;
+  teamIds?: string;
+  mode?: 'compare' | 'rankings' | 'teams';
+  metric?: string;
+  aggregation?: 'total' | 'average' | 'best' | 'median';
+  limit?: number;
+  cursor?: string;
+  includePerWar?: '0' | '1';
+}
+
 export interface AnalyticsResponseDTO {
   memberStats: AnalyticsMemberStatDTO[];
   perWarStats: AnalyticsPerWarStatDTO[];
+  teamStats?: AnalyticsTeamStatDTO[];
   rankings: {
     byKills: AnalyticsMemberStatDTO[];
     byDamage: AnalyticsMemberStatDTO[];
@@ -124,6 +160,7 @@ export interface AnalyticsResponseDTO {
     byCredits: AnalyticsMemberStatDTO[];
   };
   warResults: { result: string; count: number }[];
+  meta?: AnalyticsMetaDTO;
 }
 
 // ============================================================================

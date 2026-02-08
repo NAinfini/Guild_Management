@@ -44,7 +44,6 @@ import {
   Shield, 
   ChevronDown, 
   Search, 
-  GripVertical, 
   History as HistoryIcon, 
   Trash2, 
   Edit3,
@@ -63,16 +62,30 @@ import { User, WarTeam } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { useEvents, useMembers, useJoinEvent, useLeaveEvent } from '../../hooks/useServerState';
 import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent, useSensors, useSensor, PointerSensor, KeyboardSensor } from '@dnd-kit/core';
+import { snapCenterToCursor } from '@dnd-kit/modifiers';
 import { useWarHistory, useWarTeams, useMovePoolToTeam, useMoveTeamToPool, useMoveTeamToTeam, useKickFromTeam, useKickFromPool } from './hooks/useWars';
 // 2026-02-06T13:26:16Z
 import { Skeleton, useMediaQuery } from '@mui/material';
 import { CardGridSkeleton } from '../../components/SkeletonLoaders';
 import { useOnline } from '../../hooks/useOnline';
+import {
+  canCopyGuildWarAnalytics,
+  canManageGuildWarActive,
+  canViewGuildWarMemberDetail,
+  canViewGuildWarAnalytics,
+  getEffectiveRole,
+} from '../../lib/permissions';
+import {
+  nextGuildWarSortState,
+  sortGuildWarMembers,
+  type GuildWarSortState,
+} from './GuildWar.sorting';
 
 type Tab = 'active' | 'history' | 'analytics';
 
 export function GuildWar() {
   const [activeTab, setActiveTab] = useState<Tab>('active');
+  const { user, viewRole } = useAuthStore();
 
   // ✅ TanStack Query: Server state
   const { data: events = [], isLoading } = useEvents();
@@ -82,6 +95,11 @@ export function GuildWar() {
   const theme = useTheme();
   const online = useOnline();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const effectiveRole = getEffectiveRole(user?.role, viewRole);
+  const canManageActive = canManageGuildWarActive(effectiveRole);
+  const canViewMemberDetail = canViewGuildWarMemberDetail(effectiveRole);
+  const canViewAnalytics = canViewGuildWarAnalytics(effectiveRole);
+  const canCopyAnalytics = canCopyGuildWarAnalytics(effectiveRole);
 
   useEffect(() => {
     setPageTitle(t('nav.guild_war'));
@@ -202,9 +220,15 @@ export function GuildWar() {
       </Box>
 
       <Box sx={{ flex: 1 }}>
-        {activeTab === 'active' && <ActiveWarManagement warId={selectedWarId} />}
+        {activeTab === 'active' && (
+          <ActiveWarManagement
+            warId={selectedWarId}
+            canManageActive={canManageActive}
+            canViewMemberDetail={canViewMemberDetail}
+          />
+        )}
         {activeTab === 'history' && <WarHistory />}
-        {activeTab === 'analytics' && <WarAnalytics />}
+        {activeTab === 'analytics' && canViewAnalytics && <WarAnalytics canCopy={canCopyAnalytics} />}
       </Box>
     </Box>
   );
@@ -212,7 +236,15 @@ export function GuildWar() {
 
 type LastAction = { desc: string; undo: () => void; expiry: number; }
 
-function ActiveWarManagement({ warId }: { warId: string }) {
+function ActiveWarManagement({
+  warId,
+  canManageActive,
+  canViewMemberDetail,
+}: {
+  warId: string;
+  canManageActive: boolean;
+  canViewMemberDetail: boolean;
+}) {
   // ✅ TanStack Query: Server state and mutations
   const { data: events = [] } = useEvents();
   const { data: members = [] } = useMembers();
@@ -247,14 +279,14 @@ function ActiveWarManagement({ warId }: { warId: string }) {
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [memberDetailId, setMemberDetailId] = useState<string | null>(null);
-  const [poolSort, setPoolSort] = useState<'power' | 'class'>('power');
-  const [teamSort, setTeamSort] = useState<'power' | 'class'>('power');
+  const [poolSort, setPoolSort] = useState<GuildWarSortState>({ field: 'power', direction: 'desc' });
+  const [teamSort, setTeamSort] = useState<GuildWarSortState>({ field: 'power', direction: 'desc' });
   const [conflictOpen, setConflictOpen] = useState(false);
   const [kickPoolConfirmUserId, setKickPoolConfirmUserId] = useState<string | null>(null);
 
   // DnD sensors: pointer (mouse/touch) + keyboard (Space to grab, Arrow keys to move)
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
     useSensor(KeyboardSensor),
   );
 
@@ -301,10 +333,8 @@ function ActiveWarManagement({ warId }: { warId: string }) {
 
   const poolMembers = useMemo(() => {
     const source = pool.length > 0 ? pool : activeWar?.participants || [];
-    let list = source.filter(p => !assignedUserIds.has(p.id));
-    if (poolSort === 'power') list = list.sort((a, b) => b.power - a.power);
-    else if (poolSort === 'class') list = list.sort((a, b) => (a.classes?.[0] || 'z').localeCompare(b.classes?.[0] || 'z'));
-    return list;
+    const list = source.filter(p => !assignedUserIds.has(p.id));
+    return sortGuildWarMembers(list, poolSort);
   }, [pool, activeWar?.participants, assignedUserIds, poolSort]);
 
   // Guard: Return early AFTER all hooks
@@ -321,6 +351,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
   if (isLoadingTeams) return <ActiveWarSkeleton />;
 
   const toggleSelection = (id: string, multi: boolean) => {
+    if (!canManageActive) return;
     const newSet = new Set(multi ? selectedIds : []);
     if (newSet.has(id)) newSet.delete(id); else newSet.add(id);
     setSelectedIds(newSet);
@@ -333,7 +364,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
 
   const handleMemberDoubleClick = (id: string, e: React.MouseEvent) => {
      e.stopPropagation();
-     setMemberDetailId(id);
+     if (canViewMemberDetail) setMemberDetailId(id);
   };
 
   const handleConflict = (err: any) => {
@@ -343,13 +374,14 @@ function ActiveWarManagement({ warId }: { warId: string }) {
   };
 
   const handleDragStart = (event: DragStartEvent) => {
+    if (!canManageActive || !online) return;
     const id = event.active.id as string;
     setActiveDragId(id);
     if (!selectedIds.has(id)) setSelectedIds(new Set([id]));
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
-    if (!online) return;
+    if (!canManageActive || !online) return;
     const { active, over } = event;
     setActiveDragId(null);
     if (!over) return;
@@ -444,11 +476,12 @@ function ActiveWarManagement({ warId }: { warId: string }) {
   };
 
   const handleKickFromPool = async (userId: string) => {
-      if (!online) return;
+      if (!canManageActive || !online) return;
       setKickPoolConfirmUserId(userId);
   };
 
   const confirmKickFromPool = async () => {
+      if (!canManageActive) return;
       if (!kickPoolConfirmUserId) return;
       try {
         await kickFromPool.mutateAsync({ warId, userId: kickPoolConfirmUserId });
@@ -460,7 +493,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
   };
 
   const handleKickFromTeam = async (userId: string) => {
-      if (!online) return;
+      if (!canManageActive || !online) return;
       // Optimistic
       const prevTeams = teams;
       const targetTeam = teams.find(t => t.members.find(m => m.user_id === userId));
@@ -478,7 +511,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
   };
 
   const handleAssignRole = (teamId: string, role: string) => {
-     if (!online) return;
+     if (!canManageActive || !online) return;
      setTeams(prev => prev.map(t => {
         if (t.id !== teamId) return t;
         return { ...t, members: t.members.map(m => selectedIds.has(m.user_id) ? { ...m, role_tag: role } : m) };
@@ -512,9 +545,9 @@ function ActiveWarManagement({ warId }: { warId: string }) {
             members: t.members.map(m => members.find(mm => mm.id === m.user_id) || { id: m.user_id, username: m.user_id, role: 'member', power: 0, classes: [], active_status: 'active' })
           }))}
           unassignedMembers={pool}
-          disabled={!online}
+          disabled={!online || !canManageActive}
           onAssign={async (userId, teamId) => {
-            if (!online) return;
+            if (!online || !canManageActive) return;
             try {
               if (teamId) {
                 // Determine source
@@ -540,7 +573,7 @@ function ActiveWarManagement({ warId }: { warId: string }) {
            onClose={() => setAddMemberModalOpen(false)} 
            members={members} 
            currentParticipants={activeWar.participants || []}
-           onAdd={(userId: string) => { if (!online) return; joinEvent(activeWar.id, userId); }}
+           onAdd={(userId: string) => { if (!online || !canManageActive) return; joinEvent(activeWar.id, userId); }}
         />
       </Stack>
     );
@@ -552,46 +585,69 @@ function ActiveWarManagement({ warId }: { warId: string }) {
         <Grid container spacing={3} sx={{ flex: 1, minHeight: 0 }}>
             {/* LEFT COLUMN: POOL */}
             <Grid size={{ xs: 12, md: 3 }} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Paper sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, mb: 2, bgcolor: 'background.paper' }}>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Users size={16} className="text-muted-foreground" />
-                      </Box>
-                      <Box>
+                <DroppablePool id="pool_droppable">
+                  <Box
+                    sx={{
+                      borderRadius: 3,
+                      border: '2px solid',
+                      borderColor: 'divider',
+                      bgcolor: alpha(theme.palette.background.paper, 0.4),
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'action.hover', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+                      <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Box sx={{ width: 4, height: 24, borderRadius: 1, bgcolor: 'primary.main' }} />
+                        <Box>
                           <Typography variant="subtitle2" fontWeight={800} textTransform="uppercase">{t('guild_war.reserves')}</Typography>
                           <Typography variant="caption" fontFamily="monospace" color="text.secondary">{t('guild_war.operatives_count', { count: poolMembers.length })}</Typography>
-                      </Box>
-                  </Stack>
-                  <Stack direction="row" spacing={0.5}>
-                       <ToggleButtonGroup size="small" value={poolSort} exclusive onChange={(_, v) => v && setPoolSort(v)} sx={{ height: 28 }}>
-                          <ToggleButton value="power" sx={{ fontSize: '0.5rem', px: 1 }}>{t('guild_war.sort_pwr')}</ToggleButton>
-                          <ToggleButton value="class" sx={{ fontSize: '0.5rem', px: 1 }}>{t('guild_war.sort_cls')}</ToggleButton>
-                       </ToggleButtonGroup>
-                       <IconButton size="small" onClick={() => setAddMemberModalOpen(true)}><Plus size={16} /></IconButton>
-                  </Stack>
-                </Paper>
+                        </Box>
+                      </Stack>
+                      <Stack direction="row" spacing={0.5}>
+                        <ToggleButtonGroup size="small" value={poolSort.field} exclusive sx={{ height: 28 }}>
+                          <ToggleButton
+                            value="power"
+                            onClick={() => setPoolSort((prev) => nextGuildWarSortState(prev, 'power'))}
+                            sx={{ fontSize: '0.5rem', px: 1 }}
+                          >
+                            {t('guild_war.sort_pwr')} {poolSort.field === 'power' ? poolSort.direction.toUpperCase() : ''}
+                          </ToggleButton>
+                          <ToggleButton
+                            value="class"
+                            onClick={() => setPoolSort((prev) => nextGuildWarSortState(prev, 'class'))}
+                            sx={{ fontSize: '0.5rem', px: 1 }}
+                          >
+                            {t('guild_war.sort_cls')} {poolSort.field === 'class' ? poolSort.direction.toUpperCase() : ''}
+                          </ToggleButton>
+                        </ToggleButtonGroup>
+                        {canManageActive && (
+                          <IconButton size="small" onClick={() => setAddMemberModalOpen(true)}><Plus size={16} /></IconButton>
+                        )}
+                      </Stack>
+                    </Box>
 
-                <Box sx={{ flex: 1, overflowY: 'auto' }}>
-                    <DroppablePool id="pool_droppable">
-                        <Stack spacing={1} sx={{ minHeight: 200 }}>
-                            {poolMembers.map(member => (
-                            <DraggableMemberCard 
-                                key={member.id} 
-                                member={member} 
-                                selected={selectedIds.has(member.id)}
-                                onClick={handleMemberClick}
-                                onDoubleClick={handleMemberDoubleClick}
-                                onKick={() => handleKickFromPool(member.id)}
-                            />
-                            ))}
-                            {poolMembers.length === 0 && (
-                            <Box sx={{ py: 4, textAlign: 'center', border: '2px dashed', borderColor: 'divider', borderRadius: 2 }}>
-                                <Typography variant="caption" fontWeight={900} color="text.disabled" textTransform="uppercase">{t('guild_war.empty_pool')}</Typography>
-                            </Box>
-                            )}
-                        </Stack>
-                    </DroppablePool>
-                </Box>
+                    <Box sx={{ p: 2, minHeight: 120, display: 'grid', gridTemplateColumns: '1fr', gap: 1.5, flex: 1, overflowY: 'auto' }}>
+                      {poolMembers.map(member => (
+                        <DraggableMemberCard
+                          key={member.id}
+                          member={member}
+                          selected={selectedIds.has(member.id)}
+                          onClick={handleMemberClick}
+                          onDoubleClick={handleMemberDoubleClick}
+                          onKick={() => handleKickFromPool(member.id)}
+                          canManage={canManageActive}
+                        />
+                      ))}
+                      {poolMembers.length === 0 && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
+                          <Typography variant="caption" fontWeight={900} color="text.disabled" textTransform="uppercase">{t('guild_war.empty_pool')}</Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                </DroppablePool>
             </Grid>
 
             {/* RIGHT COLUMN: TEAMS BOARD */}
@@ -603,38 +659,53 @@ function ActiveWarManagement({ warId }: { warId: string }) {
                         <Tooltip title={t('guild_war.squad_controls_hint')}><Typography variant="caption" color="text.secondary" sx={{ textDecoration: 'underline', cursor: 'pointer' }}>{t('guild_war.squad_controls_hint')}</Typography></Tooltip>
                     </Stack>
                     
-                    <ToggleButtonGroup size="small" value={teamSort} exclusive onChange={(_, v) => v && setTeamSort(v)} sx={{ height: 28 }}>
-                        <ToggleButton value="power" sx={{ fontSize: '0.5rem', px: 1 }}>{t('guild_war.sort_pwr')}</ToggleButton>
-                        <ToggleButton value="class" sx={{ fontSize: '0.5rem', px: 1 }}>{t('guild_war.sort_cls')}</ToggleButton>
+                    <ToggleButtonGroup size="small" value={teamSort.field} exclusive sx={{ height: 28 }}>
+                        <ToggleButton
+                          value="power"
+                          onClick={() => setTeamSort((prev) => nextGuildWarSortState(prev, 'power'))}
+                          sx={{ fontSize: '0.5rem', px: 1 }}
+                        >
+                          {t('guild_war.sort_pwr')} {teamSort.field === 'power' ? teamSort.direction.toUpperCase() : ''}
+                        </ToggleButton>
+                        <ToggleButton
+                          value="class"
+                          onClick={() => setTeamSort((prev) => nextGuildWarSortState(prev, 'class'))}
+                          sx={{ fontSize: '0.5rem', px: 1 }}
+                        >
+                          {t('guild_war.sort_cls')} {teamSort.field === 'class' ? teamSort.direction.toUpperCase() : ''}
+                        </ToggleButton>
                     </ToggleButtonGroup>
                 </Box>
 
                 <Box sx={{ flex: 1, overflowY: 'auto', pr: 1, pb: 2 }}>
                     <Stack spacing={2}>
                         {teams.map(team => (
-                            <DroppableTeam 
-                                key={team.id} 
-                                team={team} 
-                                members={members} 
-                                selectedIds={selectedIds}
-                                onMemberClick={handleMemberClick}
-                                onMemberDoubleClick={handleMemberDoubleClick}
-                                onMemberKick={handleKickFromTeam}
-                                onAssignRole={(role: string) => handleAssignRole(team.id, role)}
-                                sortMode={teamSort}
-                            />
-                        ))}
-                        
-                        <Button 
-                            variant="outlined" 
-                            fullWidth 
-                            startIcon={<Plus size={16} />}
-                            sx={{ borderStyle: 'dashed', height: 48, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}
-                        >
-                            {t('guild_war.new_squad')}
-                        </Button>
-                    </Stack>
-                </Box>
+	                            <DroppableTeam 
+	                                key={team.id} 
+	                                team={team} 
+	                                members={members} 
+	                                selectedIds={selectedIds}
+	                                onMemberClick={handleMemberClick}
+	                                onMemberDoubleClick={handleMemberDoubleClick}
+	                                onMemberKick={handleKickFromTeam}
+	                                onAssignRole={(role: string) => handleAssignRole(team.id, role)}
+	                                sortState={teamSort}
+	                                canManage={canManageActive}
+	                            />
+	                        ))}
+	                        
+	                        {canManageActive && (
+	                          <Button 
+	                              variant="outlined" 
+	                              fullWidth 
+	                              startIcon={<Plus size={16} />}
+	                              sx={{ borderStyle: 'dashed', height: 48, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}
+	                          >
+	                              {t('guild_war.new_squad')}
+	                          </Button>
+	                        )}
+	                    </Stack>
+	                </Box>
 
             </Grid>
         </Grid>
@@ -687,34 +758,53 @@ function ActiveWarManagement({ warId }: { warId: string }) {
 
       </Box>
 
-      <DragOverlay>
-         {activeDragId ? (
-            <Paper sx={{ width: 220, opacity: 0.9, transform: 'rotate(2deg)', borderRadius: 2 }}>
-               <MemberCardOverlay id={activeDragId} members={members} count={selectedIds.size} />
-            </Paper>
-         ) : null}
-      </DragOverlay>
+	      <DragOverlay modifiers={[snapCenterToCursor]}>
+	         {activeDragId ? (
+	            <Paper sx={{ width: 220, opacity: 0.98, borderRadius: 2 }}>
+	               <MemberCardOverlay id={activeDragId} members={members} count={selectedIds.size} />
+	            </Paper>
+	         ) : null}
+	      </DragOverlay>
 
-      <AddMemberModal 
-         open={addMemberModalOpen}
-         onClose={() => setAddMemberModalOpen(false)} 
-         members={members} 
-         currentParticipants={activeWar.participants || []}
-         onAdd={(userId: string) => { if (!online) return; joinEvent(activeWar.id, userId); }}
-      />
+	      <AddMemberModal 
+	         open={addMemberModalOpen}
+	         onClose={() => setAddMemberModalOpen(false)} 
+	         members={members} 
+	         currentParticipants={activeWar.participants || []}
+	         onAdd={(userId: string) => { if (!online || !canManageActive) return; joinEvent(activeWar.id, userId); }}
+	      />
 
-      <MemberDetailModal 
-         userId={memberDetailId} 
-         members={members} 
-         onClose={() => setMemberDetailId(null)} 
-      />
+      {canViewMemberDetail && (
+        <MemberDetailModal
+          userId={memberDetailId}
+          members={members}
+          onClose={() => setMemberDetailId(null)}
+        />
+      )}
     </DndContext>
   );
 }
 
-function DraggableMemberCard({ member, selected, onClick, onDoubleClick, onKick, role }: { member: User, selected?: boolean, onClick: (id: string, e: React.MouseEvent) => void, onDoubleClick: (id: string, e: React.MouseEvent) => void, onKick: () => void, role?: string }) {
+function DraggableMemberCard({
+  member,
+  selected,
+  onClick,
+  onDoubleClick,
+  onKick,
+  role,
+  canManage = true,
+}: {
+  member: User;
+  selected?: boolean;
+  onClick: (id: string, e: React.MouseEvent) => void;
+  onDoubleClick: (id: string, e: React.MouseEvent) => void;
+  onKick: () => void;
+  role?: string;
+  canManage?: boolean;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: member.id,
+    disabled: !canManage,
     attributes: { roleDescription: 'draggable member' },
   });
   const theme = useTheme();
@@ -733,8 +823,8 @@ function DraggableMemberCard({ member, selected, onClick, onDoubleClick, onKick,
   return (
     <Card
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
+      {...(canManage ? listeners : {})}
+      {...(canManage ? attributes : {})}
       aria-label={`${member.username}${role ? `, ${role}` : ''}`}
       onClick={(e) => onClick(member.id, e)}
       onDoubleClick={(e) => onDoubleClick(member.id, e)}
@@ -744,7 +834,7 @@ function DraggableMemberCard({ member, selected, onClick, onDoubleClick, onKick,
           alignItems: 'center',
           justifyContent: 'space-between',
           p: 1.5,
-          cursor: 'grab',
+          cursor: canManage ? 'grab' : 'default',
           opacity: isDragging ? 0.3 : 1,
           border: '1px solid',
           borderRadius: 2,
@@ -757,7 +847,7 @@ function DraggableMemberCard({ member, selected, onClick, onDoubleClick, onKick,
              return alpha(getClassBaseColor(member.classes?.[0]), 0.12);
           })(),
           transition: 'all 0.2s',
-          '&:active': { cursor: 'grabbing' },
+          '&:active': canManage ? { cursor: 'grabbing', transform: 'scale(0.98)' } : undefined,
           '&:hover': { borderColor: theme.palette.primary.main, boxShadow: 1 }
       }}
     >
@@ -793,28 +883,29 @@ function DraggableMemberCard({ member, selected, onClick, onDoubleClick, onKick,
           </Stack>
        </Box>
        
-       <Stack direction="row" alignItems="center" spacing={1}>
-          <IconButton 
-             size="small"
-             onPointerDown={(e) => e.stopPropagation()}
-             onClick={(e) => { e.stopPropagation(); onKick(); }}
-             sx={{ 
-                 p: 0.5, 
-                 color: 'error.main', 
-                 '&:hover': { bgcolor: 'error.light', color: 'error.contrastText' }
-             }}
-          >
-             <Trash2 size={12} />
-          </IconButton>
-       </Stack>
-       
-       {selected && <GripVertical size={14} style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', color: theme.palette.primary.main }} />}
-    </Card>
-  );
+	       {canManage && (
+	         <Stack direction="row" alignItems="center" spacing={1}>
+	            <IconButton 
+	               size="small"
+	               onPointerDown={(e) => e.stopPropagation()}
+	               onClick={(e) => { e.stopPropagation(); onKick(); }}
+	               sx={{ 
+	                   p: 0.5, 
+	                   color: 'error.main', 
+	                   '&:hover': { bgcolor: 'error.light', color: 'error.contrastText' }
+	               }}
+	            >
+	               <Trash2 size={12} />
+	            </IconButton>
+	         </Stack>
+	       )}
+	    </Card>
+	  );
 }
 
 function MemberCardOverlay({ id, members, count }: { id: string, members: User[], count: number }) {
    const member = members.find(m => m.id === id);
+   const theme = useTheme();
    if (!member) return null;
    
    return (
@@ -829,14 +920,53 @@ function MemberCardOverlay({ id, members, count }: { id: string, members: User[]
                {count}
             </Box>
          )}
-         <Card sx={{ p: 1.5, border: '1px solid', borderColor: 'primary.main', boxShadow: 4 }}>
-             <Typography variant="body2" fontWeight={700} noWrap>{member.username}</Typography>
-             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', fontSize: '0.6rem', fontFamily: 'monospace' }}>
-                 <Zap size={10} /> {formatPower(member.power)}
-             </Box>
-         </Card>
-      </Box>
-   )
+	         <Card
+	           sx={{
+	             p: 1.5,
+	             border: '1px solid',
+	             borderColor: alpha(getClassBaseColor(member.classes?.[0]), 0.5),
+	             bgcolor: alpha(getClassBaseColor(member.classes?.[0]), 0.14),
+	             boxShadow: 6,
+	           }}
+	         >
+	           <Typography variant="body2" fontWeight={700} noWrap sx={{ mb: 0.5 }}>
+	             {member.username}
+	           </Typography>
+	           <Stack direction="row" spacing={1} alignItems="center">
+	             {member.classes && member.classes.length > 0 && (
+	               <Box
+	                 sx={{
+	                   px: 0.8,
+	                   py: 0.2,
+	                   borderRadius: 4,
+	                   fontSize: '0.55rem',
+	                   fontWeight: 900,
+	                   textTransform: 'uppercase',
+	                   bgcolor: getClassBaseColor(member.classes[0]),
+	                   color: '#fff',
+	                 }}
+	               >
+	                 {formatClassDisplayName(member.classes[0])}
+	               </Box>
+	             )}
+	             <Box
+	               sx={{
+	                 px: 1,
+	                 py: 0.2,
+	                 borderRadius: 4,
+	                 fontSize: '0.6rem',
+	                 fontWeight: 700,
+	                 fontFamily: 'monospace',
+	                 bgcolor: theme.custom?.warRoles.lead.bg || alpha(theme.palette.warning.main, 0.1),
+	                 color: theme.custom?.warRoles.lead.text || theme.palette.warning.contrastText,
+	               }}
+	             >
+	               {formatPower(member.power)}
+	             </Box>
+	           </Stack>
+	         </Card>
+	      </Box>
+	   )
 }
 
 function DroppablePool({ id, children }: { id: string, children: React.ReactNode }) {
@@ -867,7 +997,8 @@ function DroppableTeam({
     onMemberDoubleClick, 
     onMemberKick, 
     onAssignRole,
-    sortMode 
+    sortState,
+    canManage,
 }: any) {
   const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id: team.id });
@@ -884,10 +1015,8 @@ function DroppableTeam({
          role_tag: tm.role_tag
       })).filter((m: any) => m.id) as any[];
 
-      if (sortMode === 'power') list = list.sort((a: any, b: any) => b.power - a.power);
-      else if (sortMode === 'class') list = list.sort((a: any, b: any) => (a.classes?.[0] || 'z').localeCompare(b.classes?.[0] || 'z'));
-      return list;
-  }, [team.members, members, sortMode]);
+      return sortGuildWarMembers(list, sortState);
+  }, [team.members, members, sortState]);
 
   return (
     <Box 
@@ -914,22 +1043,29 @@ function DroppableTeam({
                 variant="standard" 
                 defaultValue={team.name} 
                 placeholder={t('guild_war.squad_name_placeholder')}
+                disabled={!canManage}
                 InputProps={{ disableUnderline: true, sx: { fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' } }}
              />
           </Stack>
           
           <Stack direction="row" alignItems="center" spacing={1}>
-             <Box sx={{ display: 'flex', gap: 0.5, p: 0.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-                <IconButton size="small" onClick={() => onAssignRole('lead')} sx={{ p: 0.5, color: theme.custom?.warRoles.lead.main }}><Crown size={14} /></IconButton>
-                <IconButton size="small" onClick={() => onAssignRole('dmg')} sx={{ p: 0.5, color: theme.custom?.warRoles.dps.main }}><Swords size={14} /></IconButton>
-                <IconButton size="small" onClick={() => onAssignRole('tank')} sx={{ p: 0.5, color: theme.custom?.warRoles.tank.main }}><Shield size={14} /></IconButton>
-                <IconButton size="small" onClick={() => onAssignRole('healer')} sx={{ p: 0.5, color: theme.custom?.warRoles.heal.main }}><Heart size={14} /></IconButton>
-             </Box>
+             {canManage && (
+               <Box sx={{ display: 'flex', gap: 0.5, p: 0.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                  <IconButton size="small" onClick={() => onAssignRole('lead')} sx={{ p: 0.5, color: theme.custom?.warRoles.lead.main }}><Crown size={14} /></IconButton>
+                  <IconButton size="small" onClick={() => onAssignRole('dmg')} sx={{ p: 0.5, color: theme.custom?.warRoles.dps.main }}><Swords size={14} /></IconButton>
+                  <IconButton size="small" onClick={() => onAssignRole('tank')} sx={{ p: 0.5, color: theme.custom?.warRoles.tank.main }}><Shield size={14} /></IconButton>
+                  <IconButton size="small" onClick={() => onAssignRole('healer')} sx={{ p: 0.5, color: theme.custom?.warRoles.heal.main }}><Heart size={14} /></IconButton>
+               </Box>
+             )}
 
              <Chip icon={<Zap size={12} />} label={formatPower(totalPower)} size="small" variant="outlined" sx={{ height: 24, '& .MuiChip-label': { fontSize: '0.6rem', fontFamily: 'monospace' } }} />
              <Chip icon={<Users size={12} />} label={team.members.length} size="small" variant="outlined" sx={{ height: 24, '& .MuiChip-label': { fontSize: '0.6rem', fontFamily: 'monospace' } }} />
-             <IconButton size="small"><Edit3 size={14} /></IconButton>
-             <IconButton size="small" color="error"><Trash2 size={14} /></IconButton>
+             {canManage && (
+               <>
+                 <IconButton size="small"><Edit3 size={14} /></IconButton>
+                 <IconButton size="small" color="error"><Trash2 size={14} /></IconButton>
+               </>
+             )}
           </Stack>
        </Box>
        
@@ -949,6 +1085,7 @@ function DroppableTeam({
                 onDoubleClick={onMemberDoubleClick}
                 onKick={() => onMemberKick(member.id)}
                 role={member.role_tag}
+                canManage={canManage}
              />
           ))}
           {teamMembers.length === 0 && (
@@ -965,7 +1102,7 @@ function WarHistory() {
   return <WarHistoryView />;
 }
 
-const WarAnalytics = () => <WarAnalyticsMain />;
+const WarAnalytics = ({ canCopy }: { canCopy: boolean }) => <WarAnalyticsMain canCopy={canCopy} />;
 
 function AddMemberModal({ open, onClose, members, currentParticipants, onAdd }: any) {
   const { t } = useTranslation();

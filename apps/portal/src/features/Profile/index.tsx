@@ -19,8 +19,7 @@ import {
   Alert,
   Avatar,
   Tab,
-  Tabs,
-  InputAdornment
+  Tabs
 } from '@mui/material';
 import { 
   User as UserIcon, 
@@ -35,7 +34,6 @@ import {
   Trash2, 
   Image as ImageIcon, 
   Video, 
-  Volume2, 
   Save,
   ShieldCheck,
   AlertTriangle,
@@ -52,9 +50,10 @@ import { useAuthStore, useUIStore } from '../../store';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { useUpdateMember } from '../../hooks/useServerState';
-import { authAPI } from '../../lib/api';
+import { authAPI, mediaAPI, membersAPI } from '../../lib/api';
 import { User, DayAvailability, ProgressionData, ClassType } from '../../types';
 import { useForm, Controller } from 'react-hook-form';
+import { convertToOpus } from '../../lib/media-conversion';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -134,11 +133,15 @@ const getClassMeta = (classId: string, t: any) => {
 
 export function Profile() {
   const { user, logout, isLoading } = useAuth();
+  const setAuthUser = useAuthStore(state => state.setUser);
 
   // ✅ TanStack Query: Mutations for profile updates
   const updateMemberMutation = useUpdateMember();
   const updateMember = async (id: string, data: any) => {
-    await updateMemberMutation.mutateAsync({ id, data });
+    const updated = await updateMemberMutation.mutateAsync({ id, data });
+    if (updated && user?.id === id) {
+      setAuthUser({ ...(user as any), ...(updated as any) });
+    }
   };
   const changePassword = async (_userId: string, current: string, next: string) => {
     await authAPI.changePassword({ currentPassword: current, newPassword: next });
@@ -318,9 +321,14 @@ function CompletionStatus({ user }: { user: User }) {
 
 function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, updates: Partial<User>) => void }) {
   const { t } = useTranslation();
+  const setAuthUser = useAuthStore(state => state.setUser);
   const [mediaList, setMediaList] = useState(user.media || []);
-  const [audioUrl, setAudioUrl] = useState(user.audio_url || '');
+  const [audioUrl, setAudioUrl] = useState(
+    (user.media || []).find((item) => item.type === 'audio')?.url || user.audio_url || ''
+  );
+  const [audioUploading, setAudioUploading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const audioInputRef = React.useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -329,6 +337,11 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty]);
+
+  useEffect(() => {
+    setMediaList(user.media || []);
+    setAudioUrl((user.media || []).find((item) => item.type === 'audio')?.url || user.audio_url || '');
+  }, [user]);
 
   const handleAddMedia = () => {
     const url = prompt(t('profile.prompt_media_url'));
@@ -353,6 +366,34 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
     };
     await onUpdate(user.id, { media: mediaList, audio_url: audioUrl, media_counts: counts });
     setIsDirty(false);
+  };
+
+  const refreshMemberMedia = async () => {
+    const refreshed = await membersAPI.get(user.id);
+    setMediaList(refreshed.media || []);
+    const nextAudio = (refreshed.media || []).find((item) => item.type === 'audio')?.url || refreshed.audio_url || '';
+    setAudioUrl(nextAudio);
+    const current = useAuthStore.getState().user;
+    if (current?.id === user.id) {
+      setAuthUser({ ...(current as any), ...(refreshed as any) });
+    }
+  };
+
+  const handleAudioSelected = async (file: File) => {
+    setAudioUploading(true);
+    try {
+      let uploadFile = file;
+      try {
+        uploadFile = await convertToOpus(file);
+      } catch {
+        uploadFile = file;
+      }
+      await mediaAPI.uploadAudio(uploadFile);
+      await refreshMemberMedia();
+      setIsDirty(false);
+    } finally {
+      setAudioUploading(false);
+    }
   };
 
   return (
@@ -404,15 +445,37 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
                <Typography variant="overline" color="text.secondary" fontWeight={900} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <Music size={14} /> {t('profile.audio_identity')}
                </Typography>
-               <TextField 
-                  fullWidth 
-                  value={audioUrl}
-                  onChange={(e) => { setAudioUrl(e.target.value); setIsDirty(true); }}
-                  placeholder={t('profile.placeholder_audio_url')}
-                  InputProps={{
-                      startAdornment: <InputAdornment position="start"><Volume2 size={16} /></InputAdornment>,
-                  }}
+               <input
+                 ref={audioInputRef}
+                 type="file"
+                 accept="audio/*"
+                 hidden
+                 onChange={(e) => {
+                   const file = e.target.files?.[0];
+                   if (file) {
+                     void handleAudioSelected(file);
+                   }
+                 }}
                />
+               <Stack spacing={1.5}>
+                 <Button
+                   variant="outlined"
+                   startIcon={<Upload size={16} />}
+                   onClick={() => audioInputRef.current?.click()}
+                   disabled={audioUploading}
+                   sx={{ alignSelf: 'flex-start', fontWeight: 800 }}
+                 >
+                   {audioUploading ? t('common.loading') : t('media.choose_file')}
+                 </Button>
+                 {audioUrl && (
+                   <Box
+                     component="audio"
+                     controls
+                     src={getOptimizedMediaUrl(audioUrl, 'audio')}
+                     sx={{ width: '100%' }}
+                   />
+                 )}
+               </Stack>
            </Box>
         </CardContent>
       </Card>

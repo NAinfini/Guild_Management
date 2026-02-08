@@ -368,10 +368,22 @@ export function useAnalyticsData(params?: {
   endDate?: string;
   warIds?: number[];
   userIds?: number[];
+  teamIds?: number[];
+  mode?: 'compare' | 'rankings' | 'teams';
+  metric?: string;
+  aggregation?: 'total' | 'average' | 'best' | 'median';
+  limit?: number;
+  cursor?: string;
+  includePerWar?: boolean;
 }) {
   return useQuery({
     queryKey: queryKeys.wars.analyticsData(params),
-    queryFn: () => warsAPI.getAnalyticsData(params),
+    queryFn: () =>
+      warsAPI.getAnalyticsData({
+        includePerWar: true,
+        limit: 200,
+        ...params,
+      }),
     enabled: !!(params?.warIds && params.warIds.length > 0), // Only fetch when wars selected
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

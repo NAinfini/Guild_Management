@@ -17,9 +17,11 @@ import { mapToDomain as mapEvent } from '../lib/api/events';
 import { mapToDomain as mapAnnouncement } from '../lib/api/announcements';
 import { mapHistoryToDomain as mapWar } from '../lib/api/wars';
 import { useAuthStore } from '../store';
+import { useUIStore } from '../store';
 import type { WebSocketMessage } from '@guild/shared-api/contracts';
 
 export function useWebSocket() {
+  const setPushConnected = useUIStore(state => state.setPushConnected);
   const [isConnected, setIsConnected] = useState(false);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
@@ -171,6 +173,7 @@ export function useWebSocket() {
 
       ws.onopen = () => {
         setIsConnected(true);
+        setPushConnected(true);
         setReconnectAttempts(0);
 
         // Subscribe to all entities by default
@@ -191,6 +194,7 @@ export function useWebSocket() {
 
       ws.onclose = () => {
         setIsConnected(false);
+        setPushConnected(false);
         wsRef.current = null;
         const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
         reconnectTimeoutRef.current = setTimeout(() => {
@@ -204,13 +208,14 @@ export function useWebSocket() {
     } catch (error) {
       console.error('[WebSocket] Connection error:', error);
     }
-  }, [reconnectAttempts, handleMessage]);
+  }, [reconnectAttempts, handleMessage, setPushConnected]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
     if (wsRef.current) wsRef.current.close();
     setIsConnected(false);
-  }, []);
+    setPushConnected(false);
+  }, [setPushConnected]);
 
   /**
    * Update entity subscription. Sends subscribe message to DO.

@@ -24,6 +24,7 @@ import {
   Alert,
 } from '@mui/material';
 import { User, TrendingUp, Award } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
 import type { MemberStats, MetricType } from './types';
 import { formatMetricName, formatNumber, formatCompactNumber } from './types';
@@ -38,6 +39,7 @@ interface PlayerSelectorProps {
 }
 
 export function PlayerSelector({ members, isLoading = false }: PlayerSelectorProps) {
+  const { t } = useTranslation();
   const { playerMode, updatePlayerMode, filters } = useAnalytics();
 
   const selectedMember = members.find((m) => m.user_id === playerMode.selectedUserId);
@@ -62,7 +64,7 @@ export function PlayerSelector({ members, isLoading = false }: PlayerSelectorPro
           <Typography variant="subtitle2" fontWeight={700} mb={2}>
             <Stack direction="row" alignItems="center" gap={1}>
               <User size={18} />
-              Select Member
+              {t('guild_war.analytics_select_member')}
             </Stack>
           </Typography>
 
@@ -75,7 +77,7 @@ export function PlayerSelector({ members, isLoading = false }: PlayerSelectorPro
             renderInput={(params) => (
               <TextField
                 {...params}
-                placeholder="Search by username..."
+                placeholder={t('guild_war.analytics_search_by_username')}
                 size="small"
               />
             )}
@@ -96,17 +98,17 @@ export function PlayerSelector({ members, isLoading = false }: PlayerSelectorPro
                     <Stack direction="row" spacing={0.5} alignItems="center">
                       <Chip label={member.class} size="small" sx={{ height: 18, fontSize: '0.625rem' }} />
                       <Typography variant="caption" color="text.secondary">
-                        {member.wars_participated} wars
+                        {t('guild_war.analytics_wars_count', { count: member.wars_participated })}
                       </Typography>
                     </Stack>
                   </Box>
                   <Typography variant="caption" color="text.secondary" fontFamily="monospace">
-                    {formatCompactNumber(member.total_damage)} dmg
+                    {`${formatCompactNumber(member.total_damage)} ${t('guild_war.analytics_dmg_short')}`}
                   </Typography>
                 </Stack>
               </Box>
             )}
-            noOptionsText="No members found"
+            noOptionsText={t('roster.empty_title')}
           />
         </CardContent>
       </Card>

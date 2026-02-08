@@ -58,6 +58,12 @@ const GlobalScrollbar = () => (
         scrollbarWidth: 'thin',
         scrollbarColor: `${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'} transparent`,
       },
+      '.MuiButtonBase-root, .MuiChip-root, .MuiToggleButton-root': {
+        position: 'relative',
+      },
+      '.MuiButtonBase-root:hover, .MuiChip-root:hover, .MuiToggleButton-root:hover': {
+        zIndex: 2,
+      },
     })}
   />
 );

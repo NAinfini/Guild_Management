@@ -30,6 +30,7 @@ import {
 } from '@mui/material';
 import { Users, Search, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAnalytics, useSelectionLimits } from './AnalyticsContext';
 import { formatCompactNumber, getClassTint } from './types';
 import type { MemberStats } from './types';
@@ -44,6 +45,7 @@ interface CompareSelectorProps {
 }
 
 export function CompareSelector({ members, isLoading = false }: CompareSelectorProps) {
+  const { t } = useTranslation();
   const { compareMode, toggleUserSelection } = useAnalytics();
   const { showSoftWarning, reachedHardCap, selectedCount, softCap, hardCap } = useSelectionLimits();
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,19 +102,25 @@ export function CompareSelector({ members, isLoading = false }: CompareSelectorP
           <Typography variant="subtitle2" fontWeight={700} mb={2}>
             <Stack direction="row" alignItems="center" gap={1}>
               <Users size={18} />
-              Select Members
+              {t('guild_war.analytics_select_members')}
             </Stack>
           </Typography>
 
           {/* Preset Buttons */}
           <Stack spacing={1} mb={2}>
             <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={700}>
-              Quick Presets
+              {t('guild_war.analytics_quick_presets')}
             </Typography>
             <ButtonGroup size="small" fullWidth>
-              <Button onClick={() => handlePreset('damage')}>Top 5 Damage</Button>
-              <Button onClick={() => handlePreset('healing')}>Top 5 Heals</Button>
-              <Button onClick={() => handlePreset('credits')}>Top 5 Credits</Button>
+              <Button onClick={() => handlePreset('damage')}>
+                {t('guild_war.analytics_top_damage')}
+              </Button>
+              <Button onClick={() => handlePreset('healing')}>
+                {t('guild_war.analytics_top_heals')}
+              </Button>
+              <Button onClick={() => handlePreset('credits')}>
+                {t('guild_war.analytics_top_credits')}
+              </Button>
             </ButtonGroup>
           </Stack>
 
@@ -120,7 +128,7 @@ export function CompareSelector({ members, isLoading = false }: CompareSelectorP
           <TextField
             fullWidth
             size="small"
-            placeholder="Search members..."
+            placeholder={t('common.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
@@ -137,15 +145,15 @@ export function CompareSelector({ members, isLoading = false }: CompareSelectorP
           <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
             <ButtonGroup size="small">
               <Button onClick={handleSelectAll} disabled={reachedHardCap}>
-                All
+                {t('common.all')}
               </Button>
               <Button onClick={handleClear} disabled={selectedCount === 0}>
-                Clear
+                {t('common.clear')}
               </Button>
-              <Button onClick={handleInvert}>Invert</Button>
+              <Button onClick={handleInvert}>{t('common.invert')}</Button>
             </ButtonGroup>
             <Chip
-              label={`${selectedCount} selected`}
+              label={t('guild_war.analytics_selected_count', { count: selectedCount })}
               size="small"
               color={showSoftWarning ? 'warning' : 'default'}
             />
@@ -156,15 +164,13 @@ export function CompareSelector({ members, isLoading = false }: CompareSelectorP
       {/* Warning Messages */}
       {showSoftWarning && !reachedHardCap && (
         <Alert severity="warning" sx={{ mb: 2 }} icon={<AlertTriangle size={20} />}>
-          You've selected {selectedCount} members. Consider using Rankings mode for better
-          performance with large selections.
+          {t('guild_war.analytics_soft_limit_warning', { count: selectedCount })}
         </Alert>
       )}
 
       {reachedHardCap && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          Maximum {hardCap} members can be selected. Please remove some members or use Rankings
-          mode.
+          {t('guild_war.analytics_hard_limit_warning', { count: hardCap })}
         </Alert>
       )}
 
@@ -174,8 +180,12 @@ export function CompareSelector({ members, isLoading = false }: CompareSelectorP
           {filteredMembers.length === 0 ? (
             <ListItem>
               <ListItemText
-                primary="No members found"
-                secondary={searchQuery ? 'Try a different search' : 'No members available'}
+                primary={t('roster.empty_title')}
+                secondary={
+                  searchQuery
+                    ? t('guild_war.analytics_try_different_search')
+                    : t('guild_war.analytics_no_members_available')
+                }
                 sx={{ textAlign: 'center', py: 4 }}
               />
             </ListItem>
@@ -226,10 +236,19 @@ export function CompareSelector({ members, isLoading = false }: CompareSelectorP
                           {member.username}
                         </Typography>
                         {isFocused && (
-                          <Chip label="Focused" size="small" color="primary" sx={{ height: 16, fontSize: '0.625rem' }} />
+                          <Chip
+                            label={t('guild_war.analytics_focused')}
+                            size="small"
+                            color="primary"
+                            sx={{ height: 16, fontSize: '0.625rem' }}
+                          />
                         )}
                         {isHidden && (
-                          <Chip label="Hidden" size="small" sx={{ height: 16, fontSize: '0.625rem' }} />
+                          <Chip
+                            label={t('guild_war.analytics_hidden')}
+                            size="small"
+                            sx={{ height: 16, fontSize: '0.625rem' }}
+                          />
                         )}
                       </Stack>
                     }
@@ -237,10 +256,10 @@ export function CompareSelector({ members, isLoading = false }: CompareSelectorP
                       <Stack direction="row" spacing={1} alignItems="center">
                         <Chip label={member.class} size="small" sx={{ height: 18, fontSize: '0.625rem' }} />
                         <Typography variant="caption" color="text.secondary">
-                          {member.wars_participated} wars
+                          {t('guild_war.analytics_wars_count', { count: member.wars_participated })}
                         </Typography>
                         <Typography variant="caption" color="text.secondary" fontFamily="monospace">
-                          {formatCompactNumber(member.total_damage)} dmg
+                          {`${formatCompactNumber(member.total_damage)} ${t('guild_war.analytics_dmg_short')}`}
                         </Typography>
                       </Stack>
                     }
@@ -256,7 +275,8 @@ export function CompareSelector({ members, isLoading = false }: CompareSelectorP
       {selectedCount > 0 && (
         <Box sx={{ mt: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
           <Typography variant="caption" color="text.secondary">
-            <strong>Tip:</strong> Click legend items to focus members. Alt+Click to hide/show series.
+            <strong>{t('common.tip')}:</strong>{' '}
+            {t('guild_war.analytics_compare_tip')}
           </Typography>
         </Box>
       )}

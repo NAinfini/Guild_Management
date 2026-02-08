@@ -28,6 +28,11 @@ import { useAuthStore, useUIStore } from '../../store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { galleryAPI, type GalleryImage } from '../../lib/api/gallery';
 import { api } from '../../lib/api-client';
+import {
+  canDeleteGalleryMedia,
+  canUploadGalleryMedia,
+  getEffectiveRole,
+} from '../../lib/permissions';
 
 export function Gallery() {
   const { t } = useTranslation();
@@ -37,8 +42,9 @@ export function Gallery() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const effectiveRole = viewRole || user?.role;
-  const isAdmin = effectiveRole === 'admin' || effectiveRole === 'moderator';
+  const effectiveRole = getEffectiveRole(user?.role, viewRole);
+  const canUpload = canUploadGalleryMedia(effectiveRole);
+  const canDelete = canDeleteGalleryMedia(effectiveRole);
 
   useEffect(() => {
     setPageTitle(t('nav.gallery'));
@@ -120,11 +126,13 @@ export function Gallery() {
   const [previewImage, setPreviewImage] = useState<GalleryImage | null>(null);
 
   const handleDelete = (id: string) => {
+    if (!canDelete) return;
     deleteMutation.mutate(id);
     setDeleteDialog(null);
   };
 
   const handleFiles = (files: File[]) => {
+    if (!canUpload) return;
     if (files.length > 0) {
       files.forEach(file => {
         uploadMutation.mutate(file);
@@ -133,6 +141,7 @@ export function Gallery() {
   };
 
   const processAndUploadFiles = async (files: File[]) => {
+      if (!canUpload) return;
       const newFiles: File[] = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -193,7 +202,7 @@ export function Gallery() {
         onEndDateChange={setEndDate}
         resultsCount={totalItems}
         isLoading={isLoading}
-        extraActions={isAdmin && (
+        extraActions={canUpload && (
           <Button
             variant="contained"
             size="small"
@@ -236,7 +245,7 @@ export function Gallery() {
                   }}
                 >
                   {/* Admin Delete Button */}
-                  {isAdmin && (
+                  {canDelete && (
                     <IconButton
                       className="delete-btn"
                       size="small"

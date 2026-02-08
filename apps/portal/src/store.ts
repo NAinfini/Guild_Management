@@ -28,6 +28,8 @@ interface UIState {
   setPageTitle: (title: string) => void;
   timezoneOffset: number;
   setTimezoneOffset: (offset: number) => void;
+  pushConnected: boolean;
+  setPushConnected: (connected: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -50,6 +52,8 @@ export const useUIStore = create<UIState>((set, get) => ({
     storage.set(STORAGE_KEYS.TIMEZONE_OFFSET, offset);
     set({ timezoneOffset: offset });
   },
+  pushConnected: false,
+  setPushConnected: (connected) => set({ pushConnected: connected }),
 }));
 
 // ============================================================================

@@ -12,22 +12,111 @@
  * - Shared state across components
  */
 
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { membersAPI, eventsAPI, announcementsAPI, adminAPI } from '../lib/api';
 import { queryKeys } from '../lib/queryKeys';
 import { User } from '../types';
-import { useAuthStore } from '../store';
+import { useAuthStore, useUIStore } from '../store';
+
+type PollingOptions = {
+  enabled?: boolean;
+  intervalMs?: number | false;
+  fallbackOnly?: boolean;
+  visibleOnly?: boolean;
+};
+
+type PollingRuntimeState = {
+  pushConnected: boolean;
+  isVisible: boolean;
+  random?: () => number;
+};
+
+const MEMBERS_DEFAULT_POLLING: PollingOptions = {
+  enabled: true,
+  intervalMs: 10 * 60 * 1000,
+  fallbackOnly: false,
+  visibleOnly: true,
+};
+
+const EVENTS_DEFAULT_POLLING: PollingOptions = {
+  enabled: true,
+  intervalMs: 90 * 1000,
+  fallbackOnly: true,
+  visibleOnly: true,
+};
+
+const ANNOUNCEMENTS_DEFAULT_POLLING: PollingOptions = {
+  enabled: true,
+  intervalMs: 10 * 60 * 1000,
+  fallbackOnly: false,
+  visibleOnly: true,
+};
+
+function usePageVisible(): boolean {
+  const [isVisible, setIsVisible] = useState(() =>
+    typeof document === 'undefined' ? true : document.visibilityState !== 'hidden'
+  );
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const onVisibilityChange = () => setIsVisible(document.visibilityState !== 'hidden');
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, []);
+
+  return isVisible;
+}
+
+export function computePollingInterval(options: PollingOptions, runtime: PollingRuntimeState): number | false {
+  const enabled = options.enabled !== false;
+  const intervalMs = options.intervalMs;
+  const fallbackOnly = options.fallbackOnly === true;
+  const visibleOnly = options.visibleOnly !== false;
+
+  if (!enabled) return false;
+  if (!intervalMs) return false;
+  if (visibleOnly && !runtime.isVisible) return false;
+  if (fallbackOnly && runtime.pushConnected) return false;
+
+  const randomFn = runtime.random ?? Math.random;
+  const min = intervalMs * 0.9;
+  const max = intervalMs * 1.1;
+  return Math.floor(min + randomFn() * (max - min));
+}
+
+function usePollingInterval(options: PollingOptions): number | false {
+  const pushConnected = useUIStore(state => state.pushConnected);
+  const isVisible = usePageVisible();
+  const enabled = options.enabled !== false;
+  const intervalMs = options.intervalMs;
+  const fallbackOnly = options.fallbackOnly === true;
+  const visibleOnly = options.visibleOnly !== false;
+
+  return useMemo(() => {
+    return computePollingInterval(
+      { enabled, intervalMs, fallbackOnly, visibleOnly },
+      { pushConnected, isVisible }
+    );
+  }, [enabled, intervalMs, fallbackOnly, visibleOnly, isVisible, pushConnected]);
+}
 
 // ============================================================================
 // MEMBERS
 // ============================================================================
 
-export function useMembers(options?: { includeInactive?: boolean }) {
+export function useMembers(options?: { includeInactive?: boolean; polling?: PollingOptions }) {
+  const polling = options?.polling ?? MEMBERS_DEFAULT_POLLING;
+  const queryOptions = { includeInactive: options?.includeInactive };
+  const refetchInterval = usePollingInterval(polling);
+
   return useQuery({
-    queryKey: queryKeys.members.list(options),
-    queryFn: () => membersAPI.list(options),
+    queryKey: queryKeys.members.list(queryOptions),
+    queryFn: () => membersAPI.list(queryOptions),
     staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
+    refetchInterval,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -41,8 +130,13 @@ export function useMember(id: string) {
 }
 
 export function useUpdateMember() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => membersAPI.updateProfile(id, data),
+    onSuccess: (updatedMember, variables) => {
+      queryClient.setQueryData(queryKeys.members.detail(variables.id), updatedMember);
+      queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+    },
   });
 }
 
@@ -50,12 +144,24 @@ export function useUpdateMember() {
 // EVENTS
 // ============================================================================
 
-export function useEvents(options?: { type?: string; includeArchived?: boolean; search?: string; startDate?: string; endDate?: string }) {
+export function useEvents(options?: { type?: string; includeArchived?: boolean; search?: string; startDate?: string; endDate?: string; polling?: PollingOptions }) {
+  const polling = options?.polling ?? EVENTS_DEFAULT_POLLING;
+  const queryOptions = {
+    type: options?.type,
+    includeArchived: options?.includeArchived,
+    search: options?.search,
+    startDate: options?.startDate,
+    endDate: options?.endDate,
+  };
+  const refetchInterval = usePollingInterval(polling);
+
   return useQuery({
-    queryKey: queryKeys.events.list(options),
-    queryFn: () => eventsAPI.list(options),
+    queryKey: queryKeys.events.list(queryOptions),
+    queryFn: () => eventsAPI.list(queryOptions),
     staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
+    refetchInterval,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -140,12 +246,23 @@ export function useLeaveEvent() {
 // ANNOUNCEMENTS
 // ============================================================================
 
-export function useAnnouncements(options?: { includeArchived?: boolean; search?: string; startDate?: string; endDate?: string }) {
+export function useAnnouncements(options?: { includeArchived?: boolean; search?: string; startDate?: string; endDate?: string; polling?: PollingOptions }) {
+  const polling = options?.polling ?? ANNOUNCEMENTS_DEFAULT_POLLING;
+  const queryOptions = {
+    includeArchived: options?.includeArchived,
+    search: options?.search,
+    startDate: options?.startDate,
+    endDate: options?.endDate,
+  };
+  const refetchInterval = usePollingInterval(polling);
+
   return useQuery({
-    queryKey: queryKeys.announcements.list(options),
-    queryFn: () => announcementsAPI.list(options),
+    queryKey: queryKeys.announcements.list(queryOptions),
+    queryFn: () => announcementsAPI.list(queryOptions),
     staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
+    refetchInterval,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 }
 

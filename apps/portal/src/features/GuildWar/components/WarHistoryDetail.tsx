@@ -1,8 +1,10 @@
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, Typography, Stack, Chip, Box, Table, TableHead, TableRow, TableCell, TableBody, Divider, IconButton, Tooltip } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, Typography, Stack, Chip, Box, Table, TableHead, TableRow, TableCell, TableBody, Divider, Tooltip } from '@mui/material';
 import { formatDateTime } from '../../../lib/utils';
 import { WarHistoryEntry } from '../../../types';
 import { AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { buildWarCardMetrics } from './WarHistory.utils';
 
 type WarHistoryDetailProps = {
   war: WarHistoryEntry | null;
@@ -12,7 +14,9 @@ type WarHistoryDetailProps = {
 };
 
 export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: WarHistoryDetailProps) {
+  const { t } = useTranslation();
   if (!war) return null;
+  const metrics = buildWarCardMetrics(war);
 
   // Calculate missing stats per member
   const memberStatsWithMissing = war.member_stats?.map((m) => {
@@ -34,7 +38,7 @@ export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: War
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="h6" fontWeight={800}>{war.title}</Typography>
           {totalMissingCount > 0 && (
-            <Tooltip title={`${totalMissingCount} missing stats across ${memberStatsWithMissing.filter(m => m.hasMissing).length} members`}>
+            <Tooltip title={t('guild_war.history_missing_across_members', { count: totalMissingCount, members: memberStatsWithMissing.filter(m => m.hasMissing).length })}>
               <Box sx={{ display: 'flex', alignItems: 'center', color: 'warning.main' }}>
                 <AlertTriangle size={18} />
               </Box>
@@ -48,15 +52,18 @@ export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: War
             {formatDateTime(war.date, timezoneOffset)}
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap">
-            {war.score !== null && war.score !== undefined && <Chip label={`Score: ${war.score}`} size="small" />}
             <Chip
-              label={war.result}
+              label={t(`dashboard.${war.result}`)}
               size="small"
               color={war.result === 'victory' ? 'success' : war.result === 'draw' ? 'warning' : 'error'}
             />
+            <Chip label={`KDA ${metrics.kills}/${metrics.deaths}/${metrics.assists}`} size="small" />
+            <Chip label={`${t('common.credits')}: ${metrics.credits.toLocaleString()}`} size="small" />
+            <Chip label={`${t('dashboard.distance')}: ${metrics.distance.toLocaleString()}`} size="small" />
+            <Chip label={`${t('dashboard.towers')}: ${metrics.towers}`} size="small" />
             {totalMissingCount > 0 && (
               <Chip
-                label={`${totalMissingCount} missing stats`}
+                label={t('guild_war.history_missing_stats_total', { count: totalMissingCount })}
                 color="warning"
                 size="small"
                 icon={<AlertTriangle size={14} />}
@@ -66,20 +73,20 @@ export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: War
           {war.notes && <Typography variant="body2">{war.notes}</Typography>}
 
           <Divider />
-          <Typography variant="subtitle2" fontWeight={800}>Member Performance</Typography>
+          <Typography variant="subtitle2" fontWeight={800}>{t('guild_war.member_performance')}</Typography>
           <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
             <Table size="small" sx={{ '& .MuiTableCell-root': { fontSize: '0.75rem' } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Member</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>{t('nav.roster')}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>K</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>D</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>A</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Dmg</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Heal</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Build</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Credits</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Dmg Taken</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>{t('common.damage')}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>{t('common.healing')}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>{t('guild_war.history_metric_building_damage')}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>{t('common.credits')}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>{t('guild_war.history_metric_damage_taken')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -94,7 +101,7 @@ export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: War
                     <TableCell sx={{ fontWeight: m.hasMissing ? 600 : 400 }}>
                       <Stack direction="row" alignItems="center" spacing={0.5}>
                         {m.hasMissing && (
-                          <Tooltip title={`Missing: ${m.missingFields.join(', ')}`}>
+                          <Tooltip title={t('guild_war.history_missing_fields', { fields: m.missingFields.join(', ') })}>
                             <Box sx={{ display: 'flex', color: 'warning.main' }}>
                               <AlertTriangle size={12} />
                             </Box>
@@ -118,7 +125,7 @@ export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: War
           </Box>
 
           <Divider />
-          <Typography variant="subtitle2" fontWeight={800}>Teams Snapshot</Typography>
+          <Typography variant="subtitle2" fontWeight={800}>{t('guild_war.teams_snapshot')}</Typography>
           <Stack spacing={1}>
             {war.teams_snapshot?.map((team) => (
               <Stack key={team.id} direction="row" spacing={1} flexWrap="wrap">

@@ -26,7 +26,7 @@ export interface ProgressionData {
 export interface UserMedia {
   id: string;
   url: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'audio';
   thumbnail?: string;
   hash: string;
 }

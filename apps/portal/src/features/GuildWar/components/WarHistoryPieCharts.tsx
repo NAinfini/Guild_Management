@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, Typography, Box, Stack, Chip, useTheme, alpha } from '@mui/material';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { Card, CardContent, CardHeader, Typography, Box, Stack, Chip, useTheme } from '@mui/material';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Trophy, Users, Swords } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface WarData {
   id: string;
@@ -47,6 +48,7 @@ interface WarHistoryPieChartsProps {
 }
 
 export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
 
   // 1. Win/Loss/Draw Distribution
@@ -56,11 +58,11 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
     const draws = data.filter(w => w.result === 'draw').length;
 
     return [
-      { name: 'Victories', value: victories, color: theme.palette.success.main },
-      { name: 'Defeats', value: defeats, color: theme.palette.error.main },
-      { name: 'Draws', value: draws, color: theme.palette.warning.main },
+      { name: t('guild_war.history_victories'), value: victories, color: theme.palette.success.main },
+      { name: t('guild_war.history_defeats'), value: defeats, color: theme.palette.error.main },
+      { name: t('guild_war.history_draws'), value: draws, color: theme.palette.warning.main },
     ].filter(item => item.value > 0);
-  }, [data, theme]);
+  }, [data, t, theme]);
 
   // 2. Participation Distribution
   const participationData = useMemo(() => {
@@ -87,12 +89,12 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
     const rare = members.filter(m => m.count / totalWars < 0.2).length;
 
     return [
-      { name: 'High (80-100%)', value: high, color: theme.palette.success.dark },
-      { name: 'Medium (50-79%)', value: medium, color: theme.palette.success.light },
-      { name: 'Low (20-49%)', value: low, color: theme.palette.warning.main },
-      { name: 'Rare (<20%)', value: rare, color: theme.palette.error.light },
+      { name: t('guild_war.history_participation_high'), value: high, color: theme.palette.success.dark },
+      { name: t('guild_war.history_participation_medium'), value: medium, color: theme.palette.success.light },
+      { name: t('guild_war.history_participation_low'), value: low, color: theme.palette.warning.main },
+      { name: t('guild_war.history_participation_rare'), value: rare, color: theme.palette.error.light },
     ].filter(item => item.value > 0);
-  }, [data, theme]);
+  }, [data, t, theme]);
 
   // 3. Combat Role Distribution
   const combatRoleData = useMemo(() => {
@@ -152,12 +154,12 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
     });
 
     return [
-      { name: 'DPS', value: dps, color: theme.palette.error.main },
-      { name: 'Tank', value: tank, color: theme.palette.info.main },
-      { name: 'Support', value: support, color: theme.palette.success.main },
-      { name: 'Balanced', value: balanced, color: theme.palette.warning.main },
+      { name: t('guild_war.history_role_dps'), value: dps, color: theme.palette.error.main },
+      { name: t('guild_war.history_role_tank'), value: tank, color: theme.palette.info.main },
+      { name: t('guild_war.history_role_support'), value: support, color: theme.palette.success.main },
+      { name: t('guild_war.history_role_balanced'), value: balanced, color: theme.palette.warning.main },
     ].filter(item => item.value > 0);
-  }, [data, theme]);
+  }, [data, t, theme]);
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -221,7 +223,7 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
               height: '100%',
               color: 'text.secondary'
             }}>
-              <Typography variant="caption">No data available</Typography>
+              <Typography variant="caption">{t('common.no_intel')}</Typography>
             </Box>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -240,7 +242,13 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={false}
+                  isAnimationActive={false}
+                  position={{ x: 12, y: 12 }}
+                  wrapperStyle={{ pointerEvents: 'none' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -262,21 +270,21 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
     }}>
       {renderPieChart(
         winLossData,
-        'Win/Loss Distribution',
+        t('guild_war.history_win_loss_distribution'),
         <Trophy size={16} />,
-        'Total Wars'
+        t('guild_war.history_total_wars')
       )}
       {renderPieChart(
         participationData,
-        'Participation Tiers',
+        t('guild_war.history_participation_tiers'),
         <Users size={16} />,
-        'Total Members'
+        t('guild_war.history_total_members')
       )}
       {renderPieChart(
         combatRoleData,
-        'Combat Roles',
+        t('guild_war.history_combat_roles'),
         <Swords size={16} />,
-        'Total Members'
+        t('guild_war.history_total_members')
       )}
     </Box>
   );

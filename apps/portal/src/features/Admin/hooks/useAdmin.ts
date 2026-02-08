@@ -24,7 +24,7 @@ export function useHealthStatus() {
   return useQuery({
     queryKey: ['health'],
     queryFn: () => adminAPI.getHealth(),
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -32,7 +32,7 @@ export function useD1Health() {
   return useQuery({
     queryKey: ['health', 'd1'],
     queryFn: () => adminAPI.getD1Health(),
-    refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -40,6 +40,6 @@ export function useR2Health() {
   return useQuery({
     queryKey: ['health', 'r2'],
     queryFn: () => adminAPI.getR2Health(),
-    refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   });
 }

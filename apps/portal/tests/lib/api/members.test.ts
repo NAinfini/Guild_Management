@@ -5,7 +5,7 @@ const { updateMock, getMock } = vi.hoisted(() => ({
   getMock: vi.fn(),
 }));
 
-vi.mock('./api-builder', () => ({
+vi.mock('@/lib/api/api-builder', () => ({
   typedAPI: {
     members: {
       update: updateMock,
@@ -14,7 +14,7 @@ vi.mock('./api-builder', () => ({
   },
 }));
 
-import { membersAPI } from './members';
+import { membersAPI } from '@/lib/api/members';
 
 describe('membersAPI.updateProfile', () => {
   beforeEach(() => {

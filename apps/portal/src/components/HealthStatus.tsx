@@ -3,17 +3,19 @@
  * Displays system health metrics
  */
 
-import { Box, Card, CardContent, Typography, Grid, Chip, Stack, Alert, Skeleton } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, Chip, Stack, Alert, Skeleton, Button } from '@mui/material';
 import { CardGridSkeleton } from './SkeletonLoaders';
 import { Activity, Database, HardDrive, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useHealthStatus, useD1Health, useR2Health } from '../hooks';
 import { useTranslation } from 'react-i18next';
 
-function HealthCard({ title, icon, status, details }: {
+function HealthCard({ title, icon, status, details, onRetry, loading }: {
   title: string;
   icon: React.ReactNode;
   status: 'healthy' | 'degraded' | 'down';
   details?: string;
+  onRetry?: () => void;
+  loading?: boolean;
 }) {
   const { t } = useTranslation();
 
@@ -50,6 +52,11 @@ function HealthCard({ title, icon, status, details }: {
               {details}
             </Typography>
           )}
+          {onRetry && (
+            <Button size="small" variant="outlined" onClick={onRetry} disabled={loading}>
+              {loading ? t('common.loading') : t('common.retry')}
+            </Button>
+          )}
         </Stack>
       </CardContent>
     </Card>
@@ -58,9 +65,9 @@ function HealthCard({ title, icon, status, details }: {
 
 export function HealthStatus() {
   const { t } = useTranslation();
-  const { data: health, isLoading: healthLoading, error: healthError } = useHealthStatus();
-  const { data: d1Health, isLoading: d1Loading } = useD1Health();
-  const { data: r2Health, isLoading: r2Loading } = useR2Health();
+  const { data: health, isLoading: healthLoading, error: healthError, refetch: refetchHealth, isFetching: fetchingHealth } = useHealthStatus();
+  const { data: d1Health, isLoading: d1Loading, refetch: refetchD1, isFetching: fetchingD1 } = useD1Health();
+  const { data: r2Health, isLoading: r2Loading, refetch: refetchR2, isFetching: fetchingR2 } = useR2Health();
 
   if (healthLoading || d1Loading || r2Loading) {
     return (
@@ -89,9 +96,23 @@ export function HealthStatus() {
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight={700} mb={3}>
-        {t('admin.site_status')}
-      </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h5" fontWeight={700}>
+          {t('admin.site_status')}
+        </Typography>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => {
+            void refetchHealth();
+            void refetchD1();
+            void refetchR2();
+          }}
+          disabled={fetchingHealth || fetchingD1 || fetchingR2}
+        >
+          {t('common.retry')}
+        </Button>
+      </Stack>
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 4 }}>
@@ -100,6 +121,8 @@ export function HealthStatus() {
             icon={<Activity size={24} />}
             status={mapStatus(health?.status)}
             details={`${t('admin.last_checked')}: ${health?.timestamp ? new Date(health.timestamp).toLocaleTimeString() : t('common.recently')}`}
+            onRetry={() => void refetchHealth()}
+            loading={fetchingHealth}
           />
         </Grid>
 
@@ -109,6 +132,8 @@ export function HealthStatus() {
             icon={<Database size={24} />}
             status={mapStatus(d1Health?.status)}
             details={d1Health?.status === 'ok' ? t('admin.conn_online') : (d1Health?.error || t('admin.checking_conn'))}
+            onRetry={() => void refetchD1()}
+            loading={fetchingD1}
           />
         </Grid>
 
@@ -118,6 +143,8 @@ export function HealthStatus() {
             icon={<HardDrive size={24} />}
             status={mapStatus(r2Health?.status)}
             details={r2Health?.status === 'ok' ? t('admin.storage_accessible') : (r2Health?.error || t('admin.checking_conn'))}
+            onRetry={() => void refetchR2()}
+            loading={fetchingR2}
           />
         </Grid>
       </Grid>

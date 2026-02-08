@@ -17,7 +17,7 @@ export default defineConfig({
     environment: 'jsdom',
     passWithNoTests: true,
     setupFiles: path.resolve(repoRoot, 'apps/portal/tests/setupTests.ts'),
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['tests/**/*.{test,spec}.{ts,tsx}'],
     css: true,
   },
 });
