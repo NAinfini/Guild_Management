@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { motion, useReducedMotion } from 'motion/react';
 import { 
   LayoutDashboard, 
   CalendarDays, 
@@ -38,6 +39,7 @@ export function BottomNavigation() {
   const [moreOpen, setMoreOpen] = useState(false);
   const theme = useTheme();
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const prefersReducedMotion = useReducedMotion();
   const effectiveRole = viewRole || user?.role;
   const canSeeAdmin = effectiveRole === 'admin' || effectiveRole === 'moderator';
 
@@ -84,61 +86,81 @@ export function BottomNavigation() {
           height: { xs: 60, sm: 64 },
           px: { xs: 0.5, sm: 1 }
         }}>
-          {mainNav.map((item) => {
+          {mainNav.map((item, index) => {
             const active = isActive(item.href);
             return (
-             <ButtonBase
+              <motion.div
                 key={item.href}
-                component={Link}
-                to={item.href}
-                aria-label={item.label}
-                aria-current={active ? 'page' : undefined}
-                sx={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  minWidth: { xs: 60, sm: 70 },
-                  color: active ? 'primary.main' : 'text.secondary',
-                  transition: 'all 0.2s',
-                  borderRadius: 2,
-                  '&:active': {
-                    transform: 'scale(0.95)',
-                    bgcolor: 'action.hover'
-                  }
-                }}
-             >
-                <Box sx={{
-                    p: { xs: 0.75, sm: 1 },
-                    borderRadius: 3,
-                    bgcolor: active ? 'action.selected' : 'transparent',
-                    mb: { xs: 0.25, sm: 0.5 }
-                }}>
-                    <item.icon size={isSmallMobile ? 18 : 20} />
-                </Box>
-                <Typography
-                  variant="caption"
+                style={{ flex: 1, height: '100%' }}
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+                animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+                transition={
+                  prefersReducedMotion
+                    ? undefined
+                    : { duration: 0.25, delay: Math.min(index * 0.03, 0.12), ease: [0.22, 1, 0.36, 1] }
+                }
+                whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
+              >
+                <ButtonBase
+                  component={Link}
+                  to={item.href}
+                  aria-label={item.label}
+                  aria-current={active ? 'page' : undefined}
                   sx={{
-                    fontSize: { xs: '0.55rem', sm: '0.6rem' },
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    lineHeight: 1,
-                    display: { xs: 'none', sm: 'block' }
+                    width: '100%',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    minWidth: { xs: 60, sm: 70 },
+                    color: active ? 'primary.main' : 'text.secondary',
+                    transition: 'all 0.2s',
+                    borderRadius: 2,
+                    '&:active': {
+                      bgcolor: 'action.hover'
+                    }
                   }}
                 >
-                    {item.label}
-                </Typography>
-             </ButtonBase>
+                  <Box sx={{
+                      p: { xs: 0.75, sm: 1 },
+                      borderRadius: 3,
+                      bgcolor: active ? 'action.selected' : 'transparent',
+                      mb: { xs: 0.25, sm: 0.5 }
+                  }}>
+                      <item.icon size={isSmallMobile ? 18 : 20} />
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: { xs: '0.55rem', sm: '0.6rem' },
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em',
+                      lineHeight: 1,
+                      display: { xs: 'none', sm: 'block' }
+                    }}
+                  >
+                      {item.label}
+                  </Typography>
+                </ButtonBase>
+              </motion.div>
             );
           })}
 
-          <ButtonBase
-             onClick={() => setMoreOpen(true)}
-             aria-label={t('common.more')}
-             sx={{
+          <motion.div
+            style={{ flex: 1, height: '100%' }}
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+            animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={prefersReducedMotion ? undefined : { duration: 0.25, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
+          >
+            <ButtonBase
+              onClick={() => setMoreOpen(true)}
+              aria-label={t('common.more')}
+              sx={{
+                width: '100%',
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
@@ -149,33 +171,33 @@ export function BottomNavigation() {
                 color: moreOpen ? 'primary.main' : 'text.secondary',
                 borderRadius: 2,
                 '&:active': {
-                  transform: 'scale(0.95)',
                   bgcolor: 'action.hover'
                 }
-             }}
-          >
-             <Box sx={{
-                 p: { xs: 0.75, sm: 1 },
-                 borderRadius: 3,
-                 bgcolor: moreOpen ? 'action.selected' : 'transparent',
-                 mb: { xs: 0.25, sm: 0.5 }
-             }}>
-                 <MoreHorizontal size={isSmallMobile ? 18 : 20} />
-             </Box>
-             <Typography
-               variant="caption"
-               sx={{
-                 fontSize: { xs: '0.55rem', sm: '0.6rem' },
-                 fontWeight: 900,
-                 textTransform: 'uppercase',
-                 letterSpacing: '0.1em',
-                 lineHeight: 1,
-                 display: { xs: 'none', sm: 'block' }
-               }}
-             >
-                {t('common.more')}
-             </Typography>
-          </ButtonBase>
+              }}
+            >
+              <Box sx={{
+                  p: { xs: 0.75, sm: 1 },
+                  borderRadius: 3,
+                  bgcolor: moreOpen ? 'action.selected' : 'transparent',
+                  mb: { xs: 0.25, sm: 0.5 }
+              }}>
+                  <MoreHorizontal size={isSmallMobile ? 18 : 20} />
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: { xs: '0.55rem', sm: '0.6rem' },
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  lineHeight: 1,
+                  display: { xs: 'none', sm: 'block' }
+                }}
+              >
+                 {t('common.more')}
+              </Typography>
+            </ButtonBase>
+          </motion.div>
         </Box>
       </Paper>
 
@@ -236,47 +258,56 @@ export function BottomNavigation() {
               gap: { xs: 1.5, sm: 2 },
               mb: { xs: 2, sm: 3 }
             }}>
-                {moreItems.map(item => (
-                   <ButtonBase
-                      key={item.href}
-                      component={Link}
-                      to={item.href}
-                      onClick={() => setMoreOpen(false)}
-                      sx={{
-                          flexDirection: 'column',
-                          gap: { xs: 1, sm: 1.5 },
-                          p: { xs: 1.5, sm: 2 },
-                          borderRadius: { xs: 3, sm: 4 },
-                          bgcolor: 'action.hover',
-                          border: theme.custom?.cardBorder,
-                          aspectRatio: '1/1',
-                          minHeight: { xs: 80, sm: 100 },
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                              borderColor: 'primary.main',
-                              bgcolor: 'action.selected',
-                              boxShadow: theme.custom?.glow
-                          },
-                          '&:active': {
-                              transform: 'scale(0.95)'
-                          }
-                      }}
-                   >
-                      <item.icon size={isSmallMobile ? 24 : 28} style={{ color: theme.palette.text.secondary }} />
-                      <Typography
-                        variant="caption"
-                        align="center"
-                        sx={{
-                          fontSize: { xs: '0.55rem', sm: '0.6rem' },
-                          fontWeight: 900,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.1em',
-                          lineHeight: 1.2
-                        }}
-                      >
-                          {item.label}
-                      </Typography>
-                   </ButtonBase>
+                {moreItems.map((item, index) => (
+                  <motion.div
+                    key={item.href}
+                    initial={prefersReducedMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}
+                    animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+                    transition={prefersReducedMotion ? undefined : { duration: 0.22, delay: Math.min(index * 0.035, 0.14), ease: [0.22, 1, 0.36, 1] }}
+                    whileHover={prefersReducedMotion ? undefined : { y: -2 }}
+                    whileTap={prefersReducedMotion ? undefined : { scale: 0.97 }}
+                  >
+                    <ButtonBase
+                       component={Link}
+                       to={item.href}
+                       onClick={() => setMoreOpen(false)}
+                       sx={{
+                           width: '100%',
+                           flexDirection: 'column',
+                           gap: { xs: 1, sm: 1.5 },
+                           p: { xs: 1.5, sm: 2 },
+                           borderRadius: { xs: 3, sm: 4 },
+                           bgcolor: 'action.hover',
+                           border: theme.custom?.cardBorder,
+                           aspectRatio: '1/1',
+                           minHeight: { xs: 80, sm: 100 },
+                           transition: 'all 0.2s',
+                           '&:hover': {
+                               borderColor: 'primary.main',
+                               bgcolor: 'action.selected',
+                               boxShadow: theme.custom?.glow
+                           },
+                           '&:active': {
+                               transform: 'scale(0.95)'
+                           }
+                       }}
+                    >
+                       <item.icon size={isSmallMobile ? 24 : 28} style={{ color: theme.palette.text.secondary }} />
+                       <Typography
+                         variant="caption"
+                         align="center"
+                         sx={{
+                           fontSize: { xs: '0.55rem', sm: '0.6rem' },
+                           fontWeight: 900,
+                           textTransform: 'uppercase',
+                           letterSpacing: '0.1em',
+                           lineHeight: 1.2
+                         }}
+                       >
+                           {item.label}
+                       </Typography>
+                    </ButtonBase>
+                  </motion.div>
                 ))}
             </Box>
 

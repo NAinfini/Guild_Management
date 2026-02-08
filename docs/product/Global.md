@@ -20,7 +20,7 @@
 | Server state | TanStack Query (ETag-friendly caching) |
 | Forms | react-hook-form + zod |
 | Drag & drop | dnd-kit |
-| Animation | framer-motion |
+| Animation | motion |
 | i18n | i18next + react-i18next |
 | Dates | date-fns |
 | Sanitization | DOMPurify |

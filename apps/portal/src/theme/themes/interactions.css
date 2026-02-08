@@ -7,6 +7,119 @@
   will-change: transform, box-shadow, filter;
 }
 
+/* Unified control motion layer */
+:root {
+  --control-fast: 160ms;
+  --control-medium: 220ms;
+  --control-slow: 320ms;
+  --control-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:is(
+  .MuiButton-root,
+  .MuiIconButton-root,
+  .MuiButtonBase-root,
+  .MuiMenuItem-root,
+  .MuiListItemButton-root,
+  .MuiTab-root,
+  .MuiToggleButton-root,
+  .MuiChip-root,
+  .MuiPaginationItem-root
+) {
+  transition:
+    transform var(--control-fast) var(--control-ease),
+    box-shadow var(--control-medium) var(--control-ease),
+    filter var(--control-medium) var(--control-ease),
+    opacity var(--control-fast) var(--control-ease);
+}
+
+:is(
+  .MuiButton-root,
+  .MuiIconButton-root,
+  .MuiMenuItem-root,
+  .MuiListItemButton-root,
+  .MuiTab-root,
+  .MuiToggleButton-root,
+  .MuiChip-root,
+  .MuiPaginationItem-root
+):active:not(.Mui-disabled) {
+  transform: scale(0.97);
+}
+
+:is(
+  .MuiOutlinedInput-root,
+  .MuiFilledInput-root,
+  .MuiInputBase-root,
+  .MuiInputLabel-root,
+  .MuiFormHelperText-root,
+  .MuiSelect-select,
+  .MuiAutocomplete-root .MuiOutlinedInput-root
+) {
+  transition:
+    transform var(--control-fast) var(--control-ease),
+    box-shadow var(--control-medium) var(--control-ease),
+    border-color var(--control-medium) var(--control-ease),
+    background-color var(--control-medium) var(--control-ease);
+}
+
+:is(
+  .MuiOutlinedInput-root,
+  .MuiFilledInput-root,
+  .MuiInputBase-root,
+  .MuiAutocomplete-root .MuiOutlinedInput-root
+):hover:not(.Mui-disabled) {
+  transform: translateY(-1px);
+}
+
+:is(
+  .MuiOutlinedInput-root,
+  .MuiFilledInput-root,
+  .MuiInputBase-root,
+  .MuiAutocomplete-root .MuiOutlinedInput-root
+).Mui-focused {
+  transform: translateY(-1px);
+}
+
+.MuiSwitch-thumb,
+.MuiSwitch-track,
+.MuiCheckbox-root,
+.MuiRadio-root,
+.MuiSlider-thumb,
+.MuiSlider-track,
+.MuiSlider-rail,
+.MuiTabs-indicator {
+  transition:
+    transform var(--control-fast) var(--control-ease),
+    width var(--control-medium) var(--control-ease),
+    left var(--control-medium) var(--control-ease),
+    background-color var(--control-medium) var(--control-ease),
+    box-shadow var(--control-medium) var(--control-ease);
+}
+
+.MuiSwitch-switchBase:active .MuiSwitch-thumb,
+.MuiCheckbox-root:active,
+.MuiRadio-root:active {
+  transform: scale(0.9);
+}
+
+.MuiSwitch-switchBase.Mui-checked .MuiSwitch-thumb,
+.MuiCheckbox-root.Mui-checked,
+.MuiRadio-root.Mui-checked {
+  animation: controlPop var(--control-medium) var(--control-ease);
+}
+
+.MuiSlider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.MuiSlider-thumb.Mui-active {
+  transform: scale(1.16);
+}
+
+.MuiTab-root:hover:not(.Mui-disabled) {
+  transform: translateY(-1px);
+}
+
 /* Page enter transitions by theme */
 html[data-theme] #main-content > *,
 .theme-scope[data-theme] #main-content > * {
@@ -190,6 +303,11 @@ html[data-theme="softPink"] ::selection,
   45% { filter: brightness(1.08); }
   100% { filter: brightness(1); }
 }
+@keyframes controlPop {
+  0% { transform: scale(0.88); }
+  65% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   html[data-theme] #main-content > *,
@@ -201,5 +319,36 @@ html[data-theme="softPink"] ::selection,
     transform: none !important;
     animation: none !important;
     filter: none !important;
+  }
+
+  :is(
+    .MuiButton-root,
+    .MuiIconButton-root,
+    .MuiButtonBase-root,
+    .MuiMenuItem-root,
+    .MuiListItemButton-root,
+    .MuiTab-root,
+    .MuiToggleButton-root,
+    .MuiChip-root,
+    .MuiPaginationItem-root,
+    .MuiOutlinedInput-root,
+    .MuiFilledInput-root,
+    .MuiInputBase-root,
+    .MuiInputLabel-root,
+    .MuiFormHelperText-root,
+    .MuiSelect-select,
+    .MuiAutocomplete-root .MuiOutlinedInput-root,
+    .MuiSwitch-thumb,
+    .MuiSwitch-track,
+    .MuiCheckbox-root,
+    .MuiRadio-root,
+    .MuiSlider-thumb,
+    .MuiSlider-track,
+    .MuiSlider-rail,
+    .MuiTabs-indicator
+  ) {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }

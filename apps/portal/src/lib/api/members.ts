@@ -148,13 +148,27 @@ export const membersAPI = {
   },
 
   updateProfile: async (id: string, data: UpdateProfileData): Promise<User> => {
+    const input = data as UpdateProfileData & Record<string, any>;
     const payload: any = {};
-    if (data.titleHtml !== undefined) payload.title_html = data.titleHtml;
-    if (data.bioText !== undefined) payload.bio_text = data.bioText;
-    if (data.power !== undefined) payload.power = data.power;
-    if (data.vacationStart !== undefined) payload.vacation_start = data.vacationStart;
-    if (data.vacationEnd !== undefined) payload.vacation_end = data.vacationEnd;
-    if (data.wechatName !== undefined) payload.wechat_name = data.wechatName;
+    if (input.titleHtml !== undefined) payload.title_html = input.titleHtml;
+    if (input.title_html !== undefined) payload.title_html = input.title_html;
+
+    if (input.bioText !== undefined) payload.bio_text = input.bioText;
+    if (input.bio_text !== undefined) payload.bio_text = input.bio_text;
+    if (input.bio !== undefined) payload.bio_text = input.bio;
+
+    if (input.power !== undefined) payload.power = input.power;
+
+    if (input.vacationStart !== undefined) payload.vacation_start = input.vacationStart;
+    if (input.vacation_start !== undefined) payload.vacation_start = input.vacation_start;
+    if (input.vacationStartAtUtc !== undefined) payload.vacation_start = input.vacationStartAtUtc;
+
+    if (input.vacationEnd !== undefined) payload.vacation_end = input.vacationEnd;
+    if (input.vacation_end !== undefined) payload.vacation_end = input.vacation_end;
+    if (input.vacationEndAtUtc !== undefined) payload.vacation_end = input.vacationEndAtUtc;
+
+    if (input.wechatName !== undefined) payload.wechat_name = input.wechatName;
+    if (input.wechat_name !== undefined) payload.wechat_name = input.wechat_name;
 
     await typedAPI.members.update<any>({ params: { id }, body: payload });
     return membersAPI.getProfile(id);

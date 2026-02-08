@@ -1,10 +1,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, Outlet, useNavigate } from '@tanstack/react-router';
+import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 import { useAuthStore, useUIStore } from '../store';
 import { useAuth } from '../hooks';
 import { useThemeController } from '../theme/ThemeController';
 import { useTranslation } from 'react-i18next';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { 
   LayoutDashboard, 
   CalendarDays, 
@@ -55,6 +56,7 @@ import { OfflineBanner } from './OfflineBanner';
 import { useMobileOptimizations } from '../hooks';
 
 const DRAWER_WIDTH = 260;
+const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 
 export function Layout() {
   const { user, logout, isAdmin } = useAuth();
@@ -68,6 +70,8 @@ export function Layout() {
   
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefersReducedMotion = useReducedMotion();
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [themeMenuAnchor, setThemeMenuAnchor] = useState<null | HTMLElement>(null);
   const [langMenuAnchor, setLangMenuAnchor] = useState<null | HTMLElement>(null);
@@ -134,54 +138,64 @@ export function Layout() {
       </Box>
 
       <List sx={{ flex: 1, px: 2, py: 1 }} className="custom-scrollbar">
-        {navItems.map((item) => (
-          <ListItemButton
+        {navItems.map((item, index) => (
+          <motion.div
             key={item.href}
-            component={Link}
-            to={item.href}
-            onClick={closeSidebar}
-            aria-label={item.label}
-            activeOptions={{ exact: false }}
-            activeProps={{ 
-              'aria-current': 'page',
-              style: { 
-                background: `var(--nav-active-bg)`,
-                opacity: 1,
-                color: 'var(--text0)',
-                borderRight: 'var(--stroke) solid var(--accent1)',
-              } 
-            }}
-            sx={{
-              mb: 0.5,
-              borderRadius: 'var(--radiusBtn)',
-              border: '1px solid transparent',
-              '&:hover': {
-                backgroundColor: 'var(--surface2)',
-                borderColor: 'var(--accent0)',
-                boxShadow: 'var(--glow)',
-                transform: 'translateX(4px)',
-              },
-              '&:focus-visible': {
-                outline: `2px solid ${theme.palette.primary.main}`,
-                outlineOffset: 2,
-              },
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}
+            initial={prefersReducedMotion ? false : { opacity: 0, x: -14 }}
+            animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
+            transition={
+              prefersReducedMotion
+                ? undefined
+                : { duration: 0.26, delay: Math.min(index * 0.04, 0.24), ease: MOTION_EASE }
+            }
           >
-            <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-              <item.icon size={18} />
-            </ListItemIcon>
-            <ListItemText 
-              primary={item.label} 
-              primaryTypographyProps={{ 
-                variant: 'body2', 
-                fontWeight: 700, 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.1em',
-                fontSize: '0.7rem'
-              }} 
-            />
-          </ListItemButton>
+            <ListItemButton
+              component={Link}
+              to={item.href}
+              onClick={closeSidebar}
+              aria-label={item.label}
+              activeOptions={{ exact: false }}
+              activeProps={{ 
+                'aria-current': 'page',
+                style: { 
+                  background: `var(--nav-active-bg)`,
+                  opacity: 1,
+                  color: 'var(--text0)',
+                  borderRight: 'var(--stroke) solid var(--accent1)',
+                } 
+              }}
+              sx={{
+                mb: 0.5,
+                borderRadius: 'var(--radiusBtn)',
+                border: '1px solid transparent',
+                '&:hover': {
+                  backgroundColor: 'var(--surface2)',
+                  borderColor: 'var(--accent0)',
+                  boxShadow: 'var(--glow)',
+                  transform: 'translateX(4px)',
+                },
+                '&:focus-visible': {
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: 2,
+                },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+                <item.icon size={18} />
+              </ListItemIcon>
+              <ListItemText 
+                primary={item.label} 
+                primaryTypographyProps={{ 
+                  variant: 'body2', 
+                  fontWeight: 700, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.1em',
+                  fontSize: '0.7rem'
+                }} 
+              />
+            </ListItemButton>
+          </motion.div>
         ))}
       </List>
 
@@ -296,20 +310,31 @@ export function Layout() {
               </IconButton>
             )}
 
-            <Typography
-              variant={isSmallMobile ? "subtitle1" : "h6"}
-              noWrap
-              component="div"
-              sx={{
-                flexGrow: 1,
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: { xs: '0.05em', sm: '0.1em' },
-                fontSize: { xs: '0.9rem', sm: '1rem', md: '1.25rem' }
-              }}
-            >
-              {pageTitle}
-            </Typography>
+            <Box sx={{ flexGrow: 1, minWidth: 0, overflow: 'hidden' }}>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={pageTitle}
+                  initial={prefersReducedMotion ? false : { opacity: 0, y: 8, filter: 'blur(4px)' }}
+                  animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={prefersReducedMotion ? undefined : { opacity: 0, y: -6, filter: 'blur(3px)' }}
+                  transition={prefersReducedMotion ? undefined : { duration: 0.22, ease: MOTION_EASE }}
+                >
+                  <Typography
+                    variant={isSmallMobile ? "subtitle1" : "h6"}
+                    noWrap
+                    component="div"
+                    sx={{
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                      letterSpacing: { xs: '0.05em', sm: '0.1em' },
+                      fontSize: { xs: '0.9rem', sm: '1rem', md: '1.25rem' }
+                    }}
+                  >
+                    {pageTitle}
+                  </Typography>
+                </motion.div>
+              </AnimatePresence>
+            </Box>
 
             <Stack direction="row" alignItems="center" spacing={{ xs: 0.5, sm: 1, md: 2 }}>
                   <>
@@ -445,7 +470,18 @@ export function Layout() {
           }}
           className="custom-scrollbar"
         >
-           <Outlet />
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={location.pathname}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 14, filter: 'blur(5px)' }}
+              animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8, filter: 'blur(4px)' }}
+              transition={prefersReducedMotion ? undefined : { duration: 0.28, ease: MOTION_EASE }}
+              style={{ minHeight: '100%' }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </Box>
 
         <Box sx={{ display: { lg: 'none' } }}>

@@ -51,6 +51,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useWarHistory } from '../../features/GuildWar/hooks/useWars';
 import { warsAPI } from '../../lib/api';
 import { DecorativeGlyph } from '../../components/DecorativeGlyph';
+import { MarkdownContent } from '../../components/MarkdownContent';
 import { useMembers, useEvents, useAnnouncements } from '../../hooks/useServerState';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { ErrorState } from '../../components/ErrorState';
@@ -692,9 +693,13 @@ function EventCard({ event, user, onCopy, isConflicted, formatDateLocalized }: {
                 <Typography variant="h5" sx={{ fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase' }}>
                    {event.title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: '90%', mt: 0.5 }}>
-                   {event.description}
-                </Typography>
+                <MarkdownContent
+                  content={event.description}
+                  maxLines={2}
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: '90%', mt: 0.5 }}
+                />
              </Box>
           </Stack>
        </CardContent>

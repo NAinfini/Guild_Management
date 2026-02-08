@@ -61,6 +61,7 @@ import { useMobileOptimizations, useOnline } from '../../hooks';
 import { BottomSheetDialog } from '../../components/BottomSheetDialog';
 import { DecorativeGlyph } from '../../components/DecorativeGlyph';
 import { EnhancedButton } from '../../components/EnhancedButton';
+import { MarkdownContent } from '../../components/MarkdownContent';
 import { Skeleton } from '@mui/material';
 import { CardGridSkeleton } from '../../components/SkeletonLoaders';
 import { PageFilterBar, type FilterOption } from '../../components/PageFilterBar';
@@ -618,9 +619,12 @@ function EventOperationCard({ event, user, isAdmin, isUpdated, conflict, onJoin,
                   <Typography variant="h5" sx={{ fontWeight: 900, textTransform: 'uppercase', fontStyle: 'italic', mb: 1 }}>
                       {event.title}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {event.description}
-                  </Typography>
+                  <MarkdownContent
+                    content={event.description}
+                    maxLines={2}
+                    variant="body2"
+                    color="text.secondary"
+                  />
                </Box>
                
                <Box sx={{ 

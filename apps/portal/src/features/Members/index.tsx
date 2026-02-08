@@ -43,11 +43,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { User } from '../../types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn, getClassColor, formatPower, sanitizeHtml, getOptimizedMediaUrl, getAvatarInitial } from '../../lib/utils';
 import { formatDistanceToNow, isWithinInterval } from 'date-fns';
 import { Skeleton } from '@mui/material';
 import { RosterFilterPanel } from './components/RosterFilterPanel';
+import { MarkdownContent } from '../../components/MarkdownContent';
 import type { RosterFilterState } from '../../hooks/useFilterPresets';
 import { useMembers } from '../../hooks/useServerState';
 import { CardGridSkeleton } from '../../components/SkeletonLoaders';
@@ -680,9 +681,17 @@ function ProfileModal({ member, onClose, audio }: { member: User, onClose: () =>
                               </Stack>
                           </Stack>
                           
-                          <Typography variant="caption" color="rgba(255,255,255,0.6)" sx={{ display: 'block', mt: 2, maxWidth: 600 }}>
-                              {member.bio || t('roster.no_bio')}
-                          </Typography>
+                          <MarkdownContent
+                            content={member.bio}
+                            fallback={t('roster.no_bio')}
+                            variant="caption"
+                            color="rgba(255,255,255,0.68)"
+                            sx={{
+                              mt: 2,
+                              maxWidth: 600,
+                              '& a': { color: '#93c5fd' },
+                            }}
+                          />
                       </Box>
                   </Stack>
                </Box>

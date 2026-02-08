@@ -9,7 +9,7 @@
 import type { Env, User, MemberProfile } from '../../core/types';
 import { createEndpoint } from '../../core/endpoint-factory';
 import { broadcastUpdate } from '../../core/broadcast';
-import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch } from '../../core/utils';
+import { utcNow, createAuditLog, etagFromTimestamp, assertIfMatch, sanitizeHtml } from '../../core/utils';
 import { NotFoundError } from '../../core/errors';
 import { DB_TABLES } from '../../core/db-schema';
 
@@ -19,8 +19,16 @@ import { DB_TABLES } from '../../core/db-schema';
 
 interface UpdateProfileBody {
   wechatName?: string;
-  gameName?: string;
-  // Add other profile fields as needed
+  wechat_name?: string;
+  power?: number;
+  titleHtml?: string;
+  title_html?: string;
+  bioText?: string;
+  bio_text?: string;
+  vacationStart?: string | null;
+  vacation_start?: string | null;
+  vacationEnd?: string | null;
+  vacation_end?: string | null;
 }
 
 interface MemberResponse {
@@ -150,39 +158,77 @@ export const onRequestPut = createEndpoint<{ message: string; profile: any }, Up
     const pre = assertIfMatch(request, currentEtag);
     if (pre) return pre;
 
-    const { wechatName, gameName } = body;
+    const wechatName = body.wechat_name ?? body.wechatName;
+    const power = body.power;
+    const titleHtmlInput = body.title_html ?? body.titleHtml;
+    const bioText = body.bio_text ?? body.bioText;
+    const vacationStart = body.vacation_start ?? body.vacationStart;
+    const vacationEnd = body.vacation_end ?? body.vacationEnd;
     const now = utcNow();
 
-    // Update user table fields
-    if (wechatName !== undefined || gameName !== undefined) {
-      const updates: string[] = [];
-      const values: any[] = [];
-
-      if (wechatName !== undefined) {
-        updates.push('wechat_name = ?');
-        values.push(wechatName);
-      }
-      // Assuming game_name is same as username or stored in profile?
-      // Based on previous code, username is separate. 
-      // Profile likely has other fields.
-      // For now, updating wechat_name which is on users table.
-      
-      if (updates.length > 0) {
-        updates.push('updated_at_utc = ?');
-        values.push(now, userId);
-        
-        await env.DB
-          .prepare(`UPDATE ${DB_TABLES.users} SET ${updates.join(', ')} WHERE user_id = ?`)
-          .bind(...values)
-          .run();
-      }
+    // Update user table fields (wechat + power)
+    const userUpdates: string[] = [];
+    const userValues: any[] = [];
+    if (wechatName !== undefined) {
+      userUpdates.push('wechat_name = ?');
+      userValues.push(wechatName);
+    }
+    if (power !== undefined) {
+      userUpdates.push('power = ?');
+      userValues.push(power);
+    }
+    if (userUpdates.length > 0) {
+      userUpdates.push('updated_at_utc = ?');
+      userValues.push(now, userId);
+      await env.DB
+        .prepare(`UPDATE ${DB_TABLES.users} SET ${userUpdates.join(', ')} WHERE user_id = ?`)
+        .bind(...userValues)
+        .run();
     }
 
-    // Upsert member_profiles
-    // Note: This matches the previous logic assuming profile fields are passed in body
-    // Simplified here for brevity, assuming wechatName was the main one shown in snippets.
-    // If there are other profile fields, they would go here.
+    // Upsert profile fields (title/bio/vacation)
+    if (
+      titleHtmlInput !== undefined ||
+      bioText !== undefined ||
+      vacationStart !== undefined ||
+      vacationEnd !== undefined
+    ) {
+      const existingProfile = await env.DB
+        .prepare(`SELECT * FROM ${DB_TABLES.memberProfiles} WHERE user_id = ?`)
+        .bind(userId)
+        .first<MemberProfile>();
 
+      const nextTitleHtml =
+        titleHtmlInput !== undefined
+          ? sanitizeHtml(titleHtmlInput)
+          : existingProfile?.title_html ?? null;
+      const nextBioText = bioText !== undefined ? bioText : existingProfile?.bio_text ?? null;
+      const nextVacationStart =
+        vacationStart !== undefined ? vacationStart : existingProfile?.vacation_start_at_utc ?? null;
+      const nextVacationEnd =
+        vacationEnd !== undefined ? vacationEnd : existingProfile?.vacation_end_at_utc ?? null;
+
+      await env.DB
+        .prepare(`
+          INSERT INTO ${DB_TABLES.memberProfiles}
+            (user_id, title_html, bio_text, vacation_start_at_utc, vacation_end_at_utc, created_at_utc, updated_at_utc)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(user_id) DO UPDATE SET
+            title_html = excluded.title_html,
+            bio_text = excluded.bio_text,
+            vacation_start_at_utc = excluded.vacation_start_at_utc,
+            vacation_end_at_utc = excluded.vacation_end_at_utc,
+            updated_at_utc = excluded.updated_at_utc
+        `)
+        .bind(userId, nextTitleHtml, nextBioText, nextVacationStart, nextVacationEnd, now, now)
+        .run();
+
+      // Touch users.updated_at_utc so list/poll etags reflect profile changes.
+      await env.DB
+        .prepare(`UPDATE ${DB_TABLES.users} SET updated_at_utc = ? WHERE user_id = ?`)
+        .bind(now, userId)
+        .run();
+    }
     await createAuditLog(
       env.DB,
       'member',
