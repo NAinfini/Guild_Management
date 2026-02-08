@@ -194,7 +194,7 @@ export default {
     }
 
     // For non-API routes, serve static assets
-    // The "single-page-application" mode in wrangler.toml automatically
+    // The "single-page-application" mode in wrangler config automatically
     // serves index.html for non-asset routes, so we just pass through
     return env.ASSETS.fetch(request);
   },

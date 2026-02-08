@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --config ../../config/wrangler/wrangler.toml",
-    "deploy": "wrangler deploy --config ../../config/wrangler/wrangler.toml",
+    "dev": "wrangler dev --config ../../wrangler.jsonc",
+    "deploy": "wrangler deploy --config ../../wrangler.jsonc",
     "test": "vitest --config ../../config/vitest/vitest.workers.config.ts"
   },
   "dependencies": {
