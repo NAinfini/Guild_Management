@@ -1,3 +1,4 @@
+
 /**
  * War Analytics - Table Fallback Component
  *
@@ -5,22 +6,23 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18next from 'i18next';
+import { formatNumber } from './utils';
+import { ArrowUpward, ArrowDownward, UnfoldMore, Search, ErrorOutline } from '@mui/icons-material';
+import { cn } from '../../../../lib/utils'; // Assuming this utility exists
+
+import { Input } from '@/components/input/Input';
+import { Button } from '@/components/button';
 import {
-  Box,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  TableSortLabel,
-  TextField,
-  InputAdornment,
-  Typography,
-  Paper,
-} from '@mui/material';
-import { Search } from 'lucide-react';
-import { formatNumber } from './utils';
+} from '@/components/data-display/Table';
+import { Card } from '@/components/layout/Card';
 
 // ============================================================================
 // Types
@@ -54,6 +56,7 @@ export function TableFallback({
   searchable = true,
   searchPlaceholder = 'Search...',
 }: TableFallbackProps) {
+  const { t } = useTranslation();
   const [order, setOrder] = useState<Order>('desc');
   const [orderBy, setOrderBy] = useState<string>(defaultOrderBy || columns[0]?.id || '');
   const [searchQuery, setSearchQuery] = useState('');
@@ -105,92 +108,110 @@ export function TableFallback({
 
   if (data.length === 0) {
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography variant="body2" color="text.secondary">
-          No data available
-        </Typography>
-      </Box>
+      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border m-4">
+        <ErrorOutline className="w-8 h-8 mb-2 opacity-20" />
+        <p className="text-sm font-medium">{t('guild_war.analytics_table_no_data')}</p>
+      </div>
     );
   }
 
   return (
-    <Box>
+    <div className="space-y-4">
       {/* Search */}
       {searchable && (
-        <TextField
-          fullWidth
-          size="small"
-          placeholder={searchPlaceholder}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search size={16} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 2 }}
-        />
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder={searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       )}
 
       {/* Table */}
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
+      <div className="rounded-md border border-border">
+        <Table>
+          <TableHeader>
             <TableRow>
               {columns.map((column) => (
-                <TableCell
-                  key={column.id}
-                  align={column.numeric ? 'right' : 'left'}
-                  sortDirection={orderBy === column.id ? order : false}
+                <TableHead 
+                  key={column.id} 
+                  className={cn(
+                    "whitespace-nowrap",
+                    column.numeric ? "text-right" : "text-left"
+                  )}
                 >
-                  <TableSortLabel
-                    active={orderBy === column.id}
-                    direction={orderBy === column.id ? order : 'asc'}
+                  <Button
+                    variant="ghost" 
+                    size="sm" 
+                    className={cn(
+                        "-ml-3 h-8 data-[state=open]:bg-accent hover:bg-transparent px-3",
+                        column.numeric && "flex-row-reverse -mr-3 ml-0"
+                    )}
                     onClick={() => handleRequestSort(column.id)}
                   >
-                    {column.label}
-                  </TableSortLabel>
-                </TableCell>
+                    <span>{column.label}</span>
+                    {orderBy === column.id ? (
+                        order === 'desc' ? (
+                            <ArrowDownward className="ml-2 h-3 w-3" />
+                        ) : (
+                            <ArrowUpward className="ml-2 h-3 w-3" />
+                        )
+                    ) : (
+                        <UnfoldMore className="ml-2 h-3 w-3 opacity-30 group-hover:opacity-100" />
+                    )}
+                  </Button>
+                </TableHead>
               ))}
             </TableRow>
-          </TableHead>
+          </TableHeader>
           <TableBody>
-            {processedData.map((row, index) => (
-              <TableRow key={index} hover>
-                {columns.map((column) => {
-                  const value = row[column.id];
-                  const formatted = column.format
-                    ? column.format(value)
-                    : value !== null && value !== undefined
-                    ? value
-                    : 'N/A';
-
-                  return (
-                    <TableCell key={column.id} align={column.numeric ? 'right' : 'left'}>
-                      <Typography
-                        variant="body2"
-                        fontFamily={column.numeric ? 'monospace' : 'inherit'}
-                      >
-                        {formatted}
-                      </Typography>
+            {processedData.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                        {t('common.no_results')}
                     </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
+                </TableRow>
+            ) : (
+                processedData.map((row, index) => (
+                <TableRow key={index} className="hover:bg-muted/50">
+                    {columns.map((column) => {
+                    const value = row[column.id];
+                    const formatted = column.format
+                        ? column.format(value)
+                        : value !== null && value !== undefined
+                        ? value
+                        : t('common.unknown');
+
+                    return (
+                        <TableCell 
+                            key={column.id} 
+                            className={cn(
+                                "py-2",
+                                column.numeric ? "text-right font-mono" : "text-left",
+                                column.numeric && "tabular-nums"
+                            )}
+                        >
+                            {formatted}
+                        </TableCell>
+                    );
+                    })}
+                </TableRow>
+                ))
+            )}
           </TableBody>
         </Table>
-      </TableContainer>
+      </div>
 
       {/* Results count */}
-      <Box sx={{ mt: 1, textAlign: 'center' }}>
-        <Typography variant="caption" color="text.secondary">
-          Showing {processedData.length} of {data.length} rows
-        </Typography>
-      </Box>
-    </Box>
+      <div className="mt-2 text-center">
+        <p className="text-xs text-muted-foreground">
+          {t('guild_war.analytics_table_rows', { shown: processedData.length, total: data.length })}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -200,41 +221,41 @@ export function TableFallback({
 
 export function createTimelineColumns(): Column[] {
   return [
-    { id: 'war_date', label: 'Date' },
-    { id: 'war_title', label: 'War' },
+    { id: 'war_date', label: i18next.t('guild_war.analytics_table_date') },
+    { id: 'war_title', label: i18next.t('guild_war.analytics_table_war') },
     {
       id: 'value',
-      label: 'Value',
+      label: i18next.t('guild_war.analytics_table_value'),
       numeric: true,
-      format: (value) => (value !== null ? formatNumber(value) : 'Missing'),
+      format: (value) => (value !== null ? formatNumber(value) : i18next.t('guild_war.analytics_missing')),
     },
   ];
 }
 
 export function createCompareColumns(userIds: number[], userNames: Record<number, string>): Column[] {
   return [
-    { id: 'war_date', label: 'Date' },
-    { id: 'war_title', label: 'War' },
+    { id: 'war_date', label: i18next.t('guild_war.analytics_table_date') },
+    { id: 'war_title', label: i18next.t('guild_war.analytics_table_war') },
     ...userIds.map((id) => ({
       id: `user_${id}`,
-      label: userNames[id] || `User ${id}`,
+      label: userNames[id] || i18next.t('guild_war.analytics_user_fallback', { id }),
       numeric: true,
-      format: (value: any) => (value !== null && value !== undefined ? formatNumber(value) : 'Missing'),
+      format: (value: any) => (value !== null && value !== undefined ? formatNumber(value) : i18next.t('guild_war.analytics_missing')),
     })),
   ];
 }
 
 export function createRankingsColumns(): Column[] {
   return [
-    { id: 'rank', label: 'Rank', numeric: true },
-    { id: 'username', label: 'Member' },
-    { id: 'class', label: 'Class' },
+    { id: 'rank', label: i18next.t('guild_war.analytics_table_rank'), numeric: true },
+    { id: 'username', label: i18next.t('guild_war.analytics_table_member') },
+    { id: 'class', label: i18next.t('guild_war.analytics_table_class') },
     {
       id: 'value',
-      label: 'Value',
+      label: i18next.t('guild_war.analytics_table_value'),
       numeric: true,
       format: formatNumber,
     },
-    { id: 'wars_participated', label: 'Wars', numeric: true },
+    { id: 'wars_participated', label: i18next.t('guild_war.analytics_table_wars'), numeric: true },
   ];
 }

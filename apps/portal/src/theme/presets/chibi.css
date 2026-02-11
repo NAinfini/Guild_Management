@@ -1,0 +1,93 @@
+.theme-chibi {
+  /* Typography */
+  --theme-font-display: 'Fredoka', sans-serif;
+  --theme-font-body: 'Fredoka', sans-serif;
+  --theme-letter-spacing: 0em;
+
+  /* Structure - Differentiated border radius */
+  --theme-border-width: 3px;
+  --theme-border-radius-sm: 10px; /* Small elements (buttons, badges) */
+  --theme-border-radius-md: 14px; /* Medium elements (cards) */
+  --theme-border-radius-lg: 10px; /* Large panels */
+  --theme-border-radius: 14px; /* Default fallback */
+  --theme-border-style: solid;
+
+  /* Depth & Shadows */
+  --theme-shadow-sm: 0 4px 0 rgba(0,0,0,0.1);
+  --theme-shadow-md: 0 6px 0 rgba(0,0,0,0.15);
+  --theme-shadow-lg: 0 8px 0 rgba(0,0,0,0.2);
+
+  /* Motion */
+  --theme-duration: 0.3s;
+  --theme-easing: cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy */
+  --theme-motion-fast: 180ms;
+  --theme-motion-medium: 280ms;
+  --theme-motion-slow: 360ms;
+  --theme-motion-easing: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --theme-motion-hover-lift: -2px;
+  --theme-motion-card-lift: -1px;
+  --theme-motion-input-lift: -1px;
+  --theme-motion-press-y: 1px;
+  --theme-motion-press-scale: 0.975;
+
+  /* Component token overrides */
+  --cmp-button-radius: 12px;
+  --cmp-card-radius: 14px;
+  --cmp-input-radius: 12px;
+  --cmp-chip-border: color-mix(in srgb, var(--sys-interactive-accent) 42%, transparent);
+  --cmp-nav-item-hover-bg: color-mix(in srgb, var(--sys-interactive-accent) 18%, transparent);
+  --cmp-nav-item-active-bg: color-mix(in srgb, var(--sys-interactive-accent) 26%, transparent);
+  --cmp-dialog-radius: 16px;
+}
+
+/* Component-targeted soft playful behavior */
+.theme-chibi :is(
+  .ui-button,
+  .ui-chip,
+  .ui-nav,
+  .control[data-ui="button"],
+  .control[data-ui="chip"],
+  .control[data-ui="nav"]
+) {
+  border-radius: var(--theme-border-radius-sm);
+  font-family: var(--theme-font-body);
+  box-shadow: var(--theme-shadow-sm);
+}
+
+.theme-chibi :is(.ui-card, .ui-table, .ui-dialog) {
+  border-radius: var(--theme-border-radius-md);
+  box-shadow: var(--theme-shadow-sm);
+}
+
+.theme-chibi :is(.ui-input) {
+  border-radius: var(--theme-border-radius-md);
+}
+
+.theme-chibi :is(
+  .ui-button,
+  .ui-chip,
+  .ui-nav,
+  .control[data-ui="button"],
+  .control[data-ui="chip"],
+  .control[data-ui="nav"]
+):hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--theme-shadow-md);
+}
+
+.theme-chibi :is(.ui-card, .ui-table):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--theme-shadow-md);
+}
+
+.theme-chibi :is(
+  .ui-button,
+  .ui-chip,
+  .ui-nav,
+  .control[data-ui="button"],
+  .control[data-ui="chip"],
+  .control[data-ui="nav"]
+):active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: var(--theme-shadow-sm);
+}

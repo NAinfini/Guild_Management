@@ -19,6 +19,9 @@ interface UIState {
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   closeSidebar: () => void;
+  sidebarCollapsed: boolean;
+  toggleSidebarCollapsed: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
   audioSettings: AudioSettings;
   setAudioSettings: (settings: Partial<AudioSettings>) => void;
   undoBuffer: any | null;
@@ -36,6 +39,17 @@ export const useUIStore = create<UIState>((set, get) => ({
   sidebarOpen: false,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   closeSidebar: () => set({ sidebarOpen: false }),
+  sidebarCollapsed: storage.get<boolean>(STORAGE_KEYS.SIDEBAR_COLLAPSED, false),
+  toggleSidebarCollapsed: () =>
+    set((state) => {
+      const next = !state.sidebarCollapsed;
+      storage.set(STORAGE_KEYS.SIDEBAR_COLLAPSED, next);
+      return { sidebarCollapsed: next };
+    }),
+  setSidebarCollapsed: (collapsed) => {
+    storage.set(STORAGE_KEYS.SIDEBAR_COLLAPSED, collapsed);
+    set({ sidebarCollapsed: collapsed });
+  },
   audioSettings: getSavedAudioSettings(),
   setAudioSettings: (updates) => {
     const next = { ...get().audioSettings, ...updates };

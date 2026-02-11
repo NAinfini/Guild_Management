@@ -31,6 +31,7 @@ import * as membersByIdUsername from '../api/members/[id]/username';
 import * as membersByIdToggleActive from '../api/members/[id]/toggle-active';
 import * as membersByIdResetPassword from '../api/members/[id]/reset-password';
 import * as membersByIdMedia from '../api/members/[id]/media';
+import * as membersByIdMediaById from '../api/members/[id]/media/[mediaId]';
 import * as membersByIdMediaSetAvatar from '../api/members/[id]/media/[mediaId]/set-avatar';
 import * as membersByIdMediaReorder from '../api/members/[id]/media/reorder';
 import * as membersByIdVideoUrls from '../api/members/[id]/video-urls';
@@ -68,6 +69,7 @@ import * as warsById from '../api/wars/[id]';
 import * as warsLatest from '../api/wars/latest';
 import * as warsHistory from '../api/wars/history';
 import * as warsAnalytics from '../api/wars/analytics';
+import * as warsAnalyticsFormulaPresets from '../api/wars/analytics-formula-presets';
 import * as warsHistoryById from '../api/wars/history/[id]';
 import * as warsHistoryByIdMemberStats from '../api/wars/history/[id]/member-stats';
 import * as warsByIdTeamsIndex from '../api/wars/[id]/teams/index';
@@ -153,6 +155,7 @@ const ROUTE_MAP: Record<string, RouteHandler> = {
   '/members/:id/username': membersByIdUsername,
   '/members/:id/toggle-active': membersByIdToggleActive,
   '/members/:id/reset-password': membersByIdResetPassword,
+  '/members/:id/media/:mediaId': membersByIdMediaById,
   '/members/:id/media': membersByIdMedia,
   '/members/:id/:action': membersByIdAction,
   '/members/:id': membersById,
@@ -188,6 +191,7 @@ const ROUTE_MAP: Record<string, RouteHandler> = {
   '/wars/latest': warsLatest,
   '/wars/history': warsHistory,
   '/wars/analytics': warsAnalytics,
+  '/wars/analytics-formula-presets': warsAnalyticsFormulaPresets,
   '/wars/history/:id/member-stats': warsHistoryByIdMemberStats,
   '/wars/history/:id': warsHistoryById,
   '/wars/:id/teams/:teamId': warsByIdTeamsById,

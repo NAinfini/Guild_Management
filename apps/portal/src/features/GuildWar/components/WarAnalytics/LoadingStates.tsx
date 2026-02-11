@@ -1,10 +1,11 @@
+
 /**
  * War Analytics - Loading States & Skeletons
  *
  * Reusable loading skeletons for different components
  */
 
-import { Box, Skeleton, Stack, Card, CardContent } from '@mui/material';
+import { Skeleton, Card, CardContent, Button } from '@/components';
 
 // ============================================================================
 // Chart Loading Skeleton
@@ -12,20 +13,20 @@ import { Box, Skeleton, Stack, Card, CardContent } from '@mui/material';
 
 export function ChartLoadingSkeleton() {
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-3">
       {/* Title */}
-      <Skeleton variant="text" width="60%" height={40} sx={{ mb: 2 }} />
+      <Skeleton className="w-3/5 h-10 mb-2" />
 
       {/* Chart area */}
-      <Skeleton variant="rectangular" width="100%" height={300} sx={{ mb: 2, borderRadius: 1 }} />
+      <Skeleton className="w-full h-[300px] mb-2 rounded-sm" />
 
       {/* Legend */}
-      <Stack direction="row" spacing={2} justifyContent="center">
-        <Skeleton variant="rectangular" width="25%" height={30} />
-        <Skeleton variant="rectangular" width="25%" height={30} />
-        <Skeleton variant="rectangular" width="25%" height={30} />
-      </Stack>
-    </Box>
+      <div className="flex justify-center gap-2">
+        <Skeleton className="w-1/4 h-[30px]" />
+        <Skeleton className="w-1/4 h-[30px]" />
+        <Skeleton className="w-1/4 h-[30px]" />
+      </div>
+    </div>
   );
 }
 
@@ -35,25 +36,25 @@ export function ChartLoadingSkeleton() {
 
 export function TableLoadingSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <Box sx={{ p: 2 }}>
+    <div className="p-2">
       {/* Header */}
-      <Stack direction="row" spacing={2} mb={2}>
-        <Skeleton variant="rectangular" width="25%" height={40} />
-        <Skeleton variant="rectangular" width="25%" height={40} />
-        <Skeleton variant="rectangular" width="25%" height={40} />
-        <Skeleton variant="rectangular" width="25%" height={40} />
-      </Stack>
+      <div className="flex gap-2 mb-2">
+        <Skeleton className="w-1/4 h-10" />
+        <Skeleton className="w-1/4 h-10" />
+        <Skeleton className="w-1/4 h-10" />
+        <Skeleton className="w-1/4 h-10" />
+      </div>
 
       {/* Rows */}
       {Array.from({ length: rows }).map((_, index) => (
-        <Stack key={index} direction="row" spacing={2} mb={1}>
-          <Skeleton variant="text" width="25%" height={30} />
-          <Skeleton variant="text" width="25%" height={30} />
-          <Skeleton variant="text" width="25%" height={30} />
-          <Skeleton variant="text" width="25%" height={30} />
-        </Stack>
+        <div key={index} className="flex gap-2 mb-1">
+          <Skeleton className="w-1/4 h-[30px]" />
+          <Skeleton className="w-1/4 h-[30px]" />
+          <Skeleton className="w-1/4 h-[30px]" />
+          <Skeleton className="w-1/4 h-[30px]" />
+        </div>
       ))}
-    </Box>
+    </div>
   );
 }
 
@@ -64,12 +65,10 @@ export function TableLoadingSkeleton({ rows = 5 }: { rows?: number }) {
 export function CardLoadingSkeleton() {
   return (
     <Card>
-      <CardContent>
-        <Stack spacing={2}>
-          <Skeleton variant="text" width="40%" height={24} />
-          <Skeleton variant="text" width="80%" height={40} />
-          <Skeleton variant="text" width="60%" height={20} />
-        </Stack>
+      <CardContent className="space-y-2">
+        <Skeleton className="w-2/5 h-6" />
+        <Skeleton className="w-4/5 h-10" />
+        <Skeleton className="w-3/5 h-5" />
       </CardContent>
     </Card>
   );
@@ -81,21 +80,21 @@ export function CardLoadingSkeleton() {
 
 export function ListLoadingSkeleton({ items = 5 }: { items?: number }) {
   return (
-    <Stack spacing={1}>
+    <div className="space-y-1">
       {Array.from({ length: items }).map((_, index) => (
         <Card key={index}>
           <CardContent>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Skeleton variant="circular" width={40} height={40} />
-              <Box flex={1}>
-                <Skeleton variant="text" width="60%" height={24} />
-                <Skeleton variant="text" width="40%" height={20} />
-              </Box>
-            </Stack>
+            <div className="flex items-center gap-2">
+              <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="w-3/5 h-6" />
+                <Skeleton className="w-2/5 h-5" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       ))}
-    </Stack>
+    </div>
   );
 }
 
@@ -105,39 +104,62 @@ export function ListLoadingSkeleton({ items = 5 }: { items?: number }) {
 
 export function FullPageLoading() {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-        p: 2,
-        height: '100%',
-      }}
-    >
+    <div className="flex flex-col gap-2 p-2 h-full">
       {/* Header */}
-      <Skeleton variant="rectangular" width="100%" height={60} />
+      <Skeleton className="w-full h-[60px]" />
 
       {/* Content */}
-      <Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
+      <div className="flex gap-2 flex-1">
         {/* Left panel */}
-        <Box sx={{ width: '25%' }}>
+        <div className="w-[25%]">
           <CardLoadingSkeleton />
-        </Box>
+        </div>
 
         {/* Center panel */}
-        <Box sx={{ flex: 1 }}>
+        <div className="flex-1">
           <ChartLoadingSkeleton />
-        </Box>
+        </div>
 
         {/* Right panel */}
-        <Box sx={{ width: '25%' }}>
-          <Stack spacing={2}>
-            <CardLoadingSkeleton />
-            <CardLoadingSkeleton />
-            <CardLoadingSkeleton />
-          </Stack>
-        </Box>
-      </Box>
-    </Box>
+        <div className="w-[25%] space-y-2">
+          <CardLoadingSkeleton />
+          <CardLoadingSkeleton />
+          <CardLoadingSkeleton />
+        </div>
+      </div>
+    </div>
+  );
+}// ============================================================================
+// Loading Panel (Shorthand)
+// ============================================================================
+
+export const LoadingPanel = FullPageLoading;
+
+// ============================================================================
+// Error Panel
+// ============================================================================
+
+
+
+// Actually, let's use MUI icons for migration consistency
+import { ErrorOutline, Refresh } from '@mui/icons-material';
+
+export function ErrorPanel({ error, retry }: { error: any; retry?: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center p-8 text-center h-full min-h-[400px]">
+      <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+        <ErrorOutline className="w-8 h-8 text-destructive" />
+      </div>
+      <h3 className="text-xl font-bold mb-2">Something went wrong</h3>
+      <p className="text-muted-foreground mb-6 max-w-md">
+        {error?.message || 'An unexpected error occurred while loading analytics data.'}
+      </p>
+      {retry && (
+        <Button onClick={retry} variant="outline" className="gap-2">
+          <Refresh className="w-4 h-4" />
+          Retry
+        </Button>
+      )}
+    </div>
   );
 }

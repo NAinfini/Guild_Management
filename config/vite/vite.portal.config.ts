@@ -42,7 +42,6 @@ export default defineConfig({
           'tanstack-query': ['@tanstack/react-query'],
           'tanstack-router': ['@tanstack/react-router'],
           animation: ['motion/react'],
-          icons: ['lucide-react'],
           'date-utils': ['date-fns'],
           i18n: ['react-i18next', 'i18next'],
           state: ['zustand'],

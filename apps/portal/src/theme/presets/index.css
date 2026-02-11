@@ -1,0 +1,21 @@
+/**
+ * Theme Styles - Individual Theme Files
+ *
+ * Each theme has its own CSS file for better maintainability.
+ * Import order: base interactions → individual themes
+ */
+
+/* Base interaction styles (shared across all themes) */
+@import './_interactions-base.css';
+
+/* Theme-specific visual effects (animations, transitions) */
+@import '../effects.css';
+
+/* Individual theme visual styles */
+@import './neo-brutalism.css';
+@import './steampunk.css';
+@import './cyberpunk.css';
+@import './post-apocalyptic.css';
+@import './chibi.css';
+@import './royal.css';
+@import './minimalistic.css';

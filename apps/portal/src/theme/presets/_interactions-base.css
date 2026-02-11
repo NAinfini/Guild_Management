@@ -1,0 +1,105 @@
+/* -------------------------------------------------------------------------- */
+/*                  COMPONENT-TARGETED INTERACTION SIGNATURES                 */
+/* -------------------------------------------------------------------------- */
+
+:root {
+  --theme-motion-fast: 150ms;
+  --theme-motion-medium: 220ms;
+  --theme-motion-slow: 300ms;
+  --theme-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  --theme-motion-hover-lift: -1px;
+  --theme-motion-card-lift: -1px;
+  --theme-motion-input-lift: -0.5px;
+  --theme-motion-press-y: 1px;
+  --theme-motion-press-scale: 0.985;
+  --theme-motion-intensity: 1;
+
+  --theme-motion-fast-effective: calc(var(--theme-motion-fast) * var(--theme-motion-intensity));
+  --theme-motion-medium-effective: calc(var(--theme-motion-medium) * var(--theme-motion-intensity));
+  --theme-motion-slow-effective: calc(var(--theme-motion-slow) * var(--theme-motion-intensity));
+  --theme-motion-hover-lift-effective: calc(var(--theme-motion-hover-lift) * var(--theme-motion-intensity));
+  --theme-motion-card-lift-effective: calc(var(--theme-motion-card-lift) * var(--theme-motion-intensity));
+  --theme-motion-input-lift-effective: calc(var(--theme-motion-input-lift) * var(--theme-motion-intensity));
+  --theme-motion-press-y-effective: calc(var(--theme-motion-press-y) * var(--theme-motion-intensity));
+  --theme-motion-press-scale-effective: var(--theme-motion-press-scale);
+
+  --control-fast: var(--theme-motion-fast-effective, var(--theme-motion-fast, 150ms));
+  --control-medium: var(--theme-motion-medium-effective, var(--theme-motion-medium, 220ms));
+  --control-slow: var(--theme-motion-slow-effective, var(--theme-motion-slow, 300ms));
+  --control-ease: var(--theme-motion-easing, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+/* Buttons / chips */
+:is(.ui-button, .ui-chip, .control[data-ui="button"], .control[data-ui="chip"], .control) {
+  transition:
+    transform var(--control-fast) var(--control-ease),
+    box-shadow var(--control-medium) var(--control-ease),
+    border-color var(--control-fast) var(--control-ease),
+    background-color var(--control-fast) var(--control-ease),
+    color var(--control-fast) var(--control-ease);
+}
+
+:is(.ui-button, .ui-chip, .control[data-ui="button"], .control[data-ui="chip"]):hover:not(:disabled) {
+  transform: translateY(var(--theme-motion-hover-lift-effective, var(--theme-motion-hover-lift, -1px)));
+}
+
+:is(.ui-button, .ui-chip, .control[data-ui="button"], .control[data-ui="chip"]):active:not(:disabled) {
+  transform: translateY(var(--theme-motion-press-y-effective, var(--theme-motion-press-y, 1px))) scale(var(--theme-motion-press-scale-effective, var(--theme-motion-press-scale, 0.985)));
+}
+
+/* Card / dialog */
+:is(.ui-card, .ui-dialog, .control[data-ui="card"], .control[data-ui="dialog"]) {
+  transition:
+    transform var(--control-fast) var(--control-ease),
+    box-shadow var(--control-medium) var(--control-ease),
+    border-color var(--control-fast) var(--control-ease),
+    background-color var(--control-fast) var(--control-ease);
+}
+
+:is(.ui-card, .ui-dialog):hover {
+  transform: translateY(var(--theme-motion-card-lift-effective, var(--theme-motion-card-lift, -1px)));
+}
+
+/* Inputs */
+:is(.ui-input, .control[data-ui="input"]) {
+  transition:
+    transform var(--control-fast) var(--control-ease),
+    box-shadow var(--control-medium) var(--control-ease),
+    border-color var(--control-fast) var(--control-ease),
+    background-color var(--control-fast) var(--control-ease),
+    color var(--control-fast) var(--control-ease);
+}
+
+:is(.ui-input, .control[data-ui="input"]):hover:not(.Mui-disabled):not(:disabled) {
+  transform: translateY(var(--theme-motion-input-lift-effective, var(--theme-motion-input-lift, -0.5px)));
+}
+
+/* Tables */
+:is(.ui-table, .control[data-ui="table"]) {
+  transition:
+    border-color var(--control-fast) var(--control-ease),
+    background-color var(--control-fast) var(--control-ease),
+    color var(--control-fast) var(--control-ease);
+}
+
+/* Nav */
+:is(.ui-nav, .control[data-ui="nav"]) {
+  transition:
+    transform var(--control-fast) var(--control-ease),
+    box-shadow var(--control-medium) var(--control-ease),
+    border-color var(--control-fast) var(--control-ease),
+    background-color var(--control-fast) var(--control-ease);
+}
+
+:is(.ui-nav, .control[data-ui="nav"]):hover:not(:disabled) {
+  transform: translateY(var(--theme-motion-hover-lift-effective, var(--theme-motion-hover-lift, -1px)));
+}
+
+/* Accessibility: reduce motion for users requesting it */
+@media (prefers-reduced-motion: reduce) {
+  :is(.ui-button, .ui-card, .ui-input, .ui-chip, .ui-nav, .ui-table, .ui-dialog, .control) {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    transform: none !important;
+  }
+}

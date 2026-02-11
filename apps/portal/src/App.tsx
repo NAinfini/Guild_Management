@@ -2,8 +2,9 @@ import React from 'react';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { SessionInitializer } from './components/SessionInitializer';
-import { ToastContainer } from './components/ToastContainer';
+import { SessionInitializer } from '@/features/Auth/components/SessionInitializer';
+import { ToastContainer } from '@/components/feedback/ToastContainer';
+import { ThemeControllerProvider } from '@/theme/ThemeController';
 
 
 // Import the generated route tree
@@ -20,14 +21,16 @@ declare module '@tanstack/react-router' {
 }
 
 function App() {
-  // ✅ No more manual fetchData() - TanStack Query handles all server state
+  // �?No more manual fetchData() - TanStack Query handles all server state
   // Components will automatically fetch data when they mount using useMembers(), useEvents(), etc.
 
   return (
     <>
       <SessionInitializer>
-        <RouterProvider router={router} />
-        <ToastContainer />
+        <ThemeControllerProvider>
+          <RouterProvider router={router} />
+          <ToastContainer />
+        </ThemeControllerProvider>
       </SessionInitializer>
       <ReactQueryDevtools initialIsOpen={false} />
     </>

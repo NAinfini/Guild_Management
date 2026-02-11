@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
+  CardActionArea,
   CardContent, 
   Typography, 
   Box, 
   Stack, 
-  Grid,
   useTheme,
   alpha,
   Dialog,
@@ -15,20 +15,17 @@ import {
   IconButton
 } from '@mui/material';
 import { 
-  Wrench, 
-  Palette, 
-  Calculator, 
-  Swords, 
-  Download,
-  ArrowRight,
-  X
-} from 'lucide-react';
+  Build, 
+  DashboardCustomize,
+  ArrowForward,
+  Close
+} from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { StyleBuilder } from './components/StyleBuilder';
-import { ThemeShowcase } from './components/ThemeShowcase';
-import { useUIStore } from '../../store';
 
+import { NexusControlStudio } from './components/NexusControlStudio';
+import { useUIStore } from '../../store';
 interface Tool {
   id: string;
   title: string;
@@ -51,18 +48,19 @@ export function Tools() {
 
   const tools: Tool[] = [
     {
-      id: 'theme-lab',
-      title: t('tools.theme_lab_title'),
-      description: t('tools.theme_lab_subtitle'),
-      icon: Palette,
-      color: theme.palette.secondary.main,
+      id: 'nexus-controls',
+      title: t('tools.nexus_controls_title'),
+      description: t('tools.nexus_controls_subtitle'),
+      icon: DashboardCustomize,
+      color: theme.palette.info.main,
       type: 'modal'
     },
+
     {
       id: 'style-builder',
       title: t('tools.builder_title'),
       description: t('tools.builder_subtitle'),
-      icon: Wrench,
+      icon: Build,
       color: theme.palette.primary.main,
       type: 'modal'
     }
@@ -78,6 +76,9 @@ export function Tools() {
     }
   };
 
+  const toolCardRadius = 'var(--cmp-card-radius)';
+  const toolIconRadius = 'clamp(4px, calc(var(--cmp-card-radius) * 0.6), 12px)';
+
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 10, px: { xs: 2, sm: 4 } }}>
 
@@ -89,11 +90,9 @@ export function Tools() {
          {tools.map(tool => (
             <Card 
                key={tool.id}
-               onClick={() => handleToolClick(tool)}
                sx={{ 
                   height: '100%',
-                  cursor: 'pointer', 
-                  borderRadius: 5, 
+                  borderRadius: toolCardRadius,
                   border: `1px solid ${theme.palette.divider}`,
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   padding: 0,
@@ -114,35 +113,41 @@ export function Tools() {
                   }
                }}
             >
-               <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <Box 
-                     className="tool-icon"
-                     sx={{ 
-                        width: 56, height: 56, borderRadius: 3, 
-                        bgcolor: alpha(tool.color, 0.1), 
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                        color: 'text.secondary', mb: 3,
-                        transition: 'all 0.3s'
-                     }}
-                  >
-                     <tool.icon size={28} />
-                  </Box>
-                  
-                  <Typography variant="h5" fontWeight={900} textTransform="uppercase" gutterBottom>
-                     {tool.title}
-                  </Typography>
-                  
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 4, flex: 1, lineHeight: 1.6 }}>
-                     {tool.description}
-                  </Typography>
+              <CardActionArea
+                onClick={() => handleToolClick(tool)}
+                aria-label={`${tool.title}: ${tool.description}`}
+                sx={{ height: '100%', p: 0 }}
+              >
+                <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <Box 
+                       className="tool-icon"
+                       sx={{ 
+                          width: 56, height: 56, borderRadius: toolIconRadius, 
+                          bgcolor: alpha(tool.color, 0.1), 
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                          color: 'text.secondary', mb: 3,
+                          transition: 'all 0.3s'
+                       }}
+                    >
+                       <tool.icon sx={{ fontSize: 28 }} />
+                    </Box>
+                    
+                    <Typography variant="h5" fontWeight={900} textTransform="uppercase" gutterBottom>
+                       {tool.title}
+                    </Typography>
+                    
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 4, flex: 1, lineHeight: 1.6 }}>
+                       {tool.description}
+                    </Typography>
 
-                  <Stack direction="row" alignItems="center" spacing={1} sx={{ color: tool.color }}>
-                     <Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.1em">
-                         {tool.type === 'modal' ? t('tools.open_tool') : t('tools.go_to_page')}
-                     </Typography>
-                     <ArrowRight className="tool-arrow" size={14} style={{ transition: 'all 0.3s', opacity: 0.5 }} />
-                  </Stack>
-               </CardContent>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ color: tool.color }}>
+                       <Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.1em">
+                           {tool.type === 'modal' ? t('tools.open_tool') : t('tools.go_to_page')}
+                       </Typography>
+                       <ArrowForward className="tool-arrow" sx={{ fontSize: 14, transition: 'all 0.3s', opacity: 0.5 }} />
+                    </Stack>
+                 </CardContent>
+              </CardActionArea>
             </Card>
          ))}
       </Box>
@@ -151,31 +156,35 @@ export function Tools() {
       <Dialog 
         open={!!selectedTool} 
         onClose={() => setSelectedTool(null)}
-        maxWidth="lg"
+        maxWidth="xl"
         fullWidth
+        aria-labelledby="tools-dialog-title"
+        fullScreen={false}
         PaperProps={{
           sx: { 
-            borderRadius: 6, 
+            borderRadius: 'var(--cmp-dialog-radius)', 
             bgcolor: 'background.paper',
             backgroundImage: 'none',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            maxHeight: '90vh'
           }
         }}
       >
-        <DialogTitle sx={{ p: 4, pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <DialogTitle id="tools-dialog-title" sx={{ p: 4, pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
            <Typography variant="h4" component="span" fontWeight={900} textTransform="uppercase" fontStyle="italic">
               {selectedTool?.title}
            </Typography>
-           <IconButton onClick={() => setSelectedTool(null)} sx={{ color: 'text.secondary' }}>
-              <X size={24} />
+           <IconButton aria-label={t('common.cancel')} onClick={() => setSelectedTool(null)} sx={{ color: 'text.secondary' }}>
+               <Close sx={{ fontSize: 24 }} />
            </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ p: 4, pt: 2 }}>
-           {selectedTool?.id === 'theme-lab' && <ThemeShowcase />}
+        <DialogContent sx={{ p: 4, pt: 2, overflowX: 'hidden' }}>
+           {selectedTool?.id === 'nexus-controls' && <NexusControlStudio />}
+
            {selectedTool?.id === 'style-builder' && <StyleBuilder />}
-           {selectedTool?.id !== 'style-builder' && selectedTool?.id !== 'theme-lab' && (
+           {selectedTool?.id !== 'style-builder' && selectedTool?.id !== 'nexus-controls' && (
               <Box sx={{ py: 10, textAlign: 'center', opacity: 0.5 }}>
-                 <Wrench size={48} style={{ margin: '0 auto', marginBottom: 16 }} />
+                 <Build sx={{ fontSize: 48, margin: '0 auto', mb: 2 }} />
                   <Typography variant="h6" fontWeight={800}>{t('tools.coming_soon')}</Typography>
                   <Typography variant="caption" textTransform="uppercase">{t('tools.under_development')}</Typography>
               </Box>

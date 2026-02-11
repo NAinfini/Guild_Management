@@ -1,33 +1,17 @@
-/**
- * War Analytics - Rankings Filters Component
- *
- * Filter controls for Rankings Mode:
- * - Class filter (multi-select)
- * - Min participation threshold
- * - Top N selector
- */
 
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Slider,
-  Stack,
-  Chip,
-  SelectChangeEvent,
-  OutlinedInput,
-} from '@mui/material';
-import { Trophy, Filter } from 'lucide-react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
-
-// ============================================================================
-// Main Component
-// ============================================================================
+import { Card, CardContent } from '@/components/layout/Card';
+import { Select, SelectItem } from '@/components/input/Select';
+import { Slider } from '@/components/input/Slider';
+import { Badge } from '@/components/data-display/Badge';
+import { Label } from '@/components/input/Label';
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import CloseIcon from "@mui/icons-material/Close";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import { cn } from '../../../../lib/utils';
+import { SelectChangeEvent, alpha, useTheme } from '@mui/material';
 
 interface RankingsFiltersProps {
   availableClasses?: string[];
@@ -38,17 +22,14 @@ export function RankingsFilters({
   availableClasses = ['DPS', 'Tank', 'Healer', 'Support'],
   maxWars = 50,
 }: RankingsFiltersProps) {
+  const { t } = useTranslation();
   const { rankingsMode, updateRankingsMode } = useAnalytics();
 
-  const handleClassFilterChange = (event: SelectChangeEvent<string[]>) => {
+  const handleClassFilterChange = (event: any) => {
     const value = event.target.value;
     updateRankingsMode({
-      classFilter: typeof value === 'string' ? value.split(',') : value,
+      classFilter: typeof value === 'string' ? value.split(',') : value as string[],
     });
-  };
-
-  const handleTopNChange = (event: SelectChangeEvent) => {
-    updateRankingsMode({ topN: parseInt(event.target.value) });
   };
 
   const handleMinParticipationChange = (_event: Event, value: number | number[]) => {
@@ -56,129 +37,120 @@ export function RankingsFilters({
   };
 
   return (
-    <Box>
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="subtitle2" fontWeight={700} mb={2}>
-            <Stack direction="row" alignItems="center" gap={1}>
-              <Trophy size={18} />
-              Rankings Filters
-            </Stack>
-          </Typography>
-
-          {/* Top N Selector */}
-          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-            <InputLabel>Show Top N</InputLabel>
-            <Select
-              value={rankingsMode.topN.toString()}
-              onChange={handleTopNChange}
-              label="Show Top N"
-            >
-              <MenuItem value="5">Top 5</MenuItem>
-              <MenuItem value="10">Top 10</MenuItem>
-              <MenuItem value="20">Top 20</MenuItem>
-              <MenuItem value="50">Top 50</MenuItem>
-            </Select>
-          </FormControl>
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <EmojiEventsIcon sx={{ fontSize: 20, color: "primary.main" }} />
+            <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+              {t('guild_war.analytics_rankings_filters')}
+            </span>
+          </div>
 
           {/* Class Filter */}
-          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-            <InputLabel>Filter by Class</InputLabel>
+          <div className="space-y-2">
+            <Label className="text-xs uppercase font-bold text-muted-foreground">
+              {t('guild_war.analytics_filter_by_class')}
+            </Label>
             <Select
               multiple
               value={rankingsMode.classFilter}
               onChange={handleClassFilterChange}
-              input={<OutlinedInput label="Filter by Class" />}
-              renderValue={(selected) =>
+              renderValue={(selected: any) =>
                 selected.length === 0 ? (
-                  <em>All Classes</em>
+                  <span className="flex items-center gap-1 text-muted-foreground not-italic">
+                    <FilterListIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+                    {t('guild_war.analytics_all_classes')}
+                  </span>
                 ) : (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} size="small" />
+                  <div className="flex flex-wrap gap-1">
+                    {selected.map((value: string) => (
+                      <Badge key={value} variant="secondary" className="px-1.5 py-0 text-[10px] uppercase">
+                        {value}
+                      </Badge>
                     ))}
-                  </Box>
+                  </div>
                 )
               }
             >
               {availableClasses.map((className) => (
-                <MenuItem key={className} value={className}>
+                <SelectItem key={className} value={className}>
                   {className}
-                </MenuItem>
+                </SelectItem>
               ))}
             </Select>
-          </FormControl>
+          </div>
 
           {/* Min Participation Slider */}
-          <Box sx={{ px: 1 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-              <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={700}>
-                Min Wars Participated
-              </Typography>
-              <Chip
-                label={rankingsMode.minParticipation}
-                size="small"
-                color="primary"
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase font-bold text-muted-foreground">
+                {t('guild_war.analytics_min_wars_participated')}
+              </Label>
+              <Badge variant="default" className="font-mono">
+                {rankingsMode.minParticipation}
+              </Badge>
+            </div>
+            <div className="px-1">
+              <Slider
+                value={rankingsMode.minParticipation}
+                onChange={handleMinParticipationChange}
+                min={1}
+                max={Math.min(maxWars, 20)}
+                step={1}
               />
-            </Stack>
-            <Slider
-              value={rankingsMode.minParticipation}
-              onChange={handleMinParticipationChange}
-              min={1}
-              max={Math.min(maxWars, 20)}
-              marks={[
-                { value: 1, label: '1' },
-                { value: 5, label: '5' },
-                { value: 10, label: '10' },
-                { value: Math.min(maxWars, 20), label: `${Math.min(maxWars, 20)}` },
-              ]}
-              valueLabelDisplay="auto"
-              size="small"
-            />
-          </Box>
+              <div className="flex justify-between mt-1 text-[10px] text-muted-foreground font-mono">
+                <span>1</span>
+                <span>{Math.min(maxWars, 20)}</span>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* Active Filters Summary */}
       {(rankingsMode.classFilter.length > 0 || rankingsMode.minParticipation > 1) && (
         <Card>
-          <CardContent>
-            <Stack direction="row" alignItems="center" gap={1} mb={1}>
-              <Filter size={16} />
-              <Typography variant="caption" textTransform="uppercase" fontWeight={700}>
-                Active Filters
-              </Typography>
-            </Stack>
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <FilterListIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {t('guild_war.analytics_active_filters')}
+              </span>
+            </div>
 
-            <Stack direction="row" flexWrap="wrap" gap={1}>
+            <div className="flex flex-wrap gap-2">
               {rankingsMode.classFilter.length > 0 && (
-                <Chip
-                  label={`Classes: ${rankingsMode.classFilter.join(', ')}`}
-                  size="small"
-                  variant="outlined"
-                  onDelete={() => updateRankingsMode({ classFilter: [] })}
-                />
+                <Badge 
+                  variant="outline" 
+                  className="gap-1 pl-2 pr-1 py-1 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors cursor-pointer group"
+                  onClick={() => updateRankingsMode({ classFilter: [] })}
+                >
+                  {t('guild_war.analytics_classes')}: {rankingsMode.classFilter.join(', ')}
+                  <CloseIcon sx={{ fontSize: 12, opacity: 0.5, "&:hover": { opacity: 1 } }} />
+                </Badge>
               )}
               {rankingsMode.minParticipation > 1 && (
-                <Chip
-                  label={`Min ${rankingsMode.minParticipation} wars`}
-                  size="small"
-                  variant="outlined"
-                  onDelete={() => updateRankingsMode({ minParticipation: 1 })}
-                />
+                <Badge 
+                  variant="outline"
+                  className="gap-1 pl-2 pr-1 py-1 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors cursor-pointer group"
+                  onClick={() => updateRankingsMode({ minParticipation: 1 })}
+                >
+                  {t('guild_war.analytics_min_wars_label', { count: rankingsMode.minParticipation })}
+                  <CloseIcon sx={{ fontSize: 12, opacity: 0.5, "&:hover": { opacity: 1 } }} />
+                </Badge>
               )}
-            </Stack>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Info Box */}
-      <Box sx={{ mt: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
-        <Typography variant="caption" color="text.secondary">
-          <strong>Tip:</strong> Rankings show the top performers based on the selected metric.
-          Adjust filters to focus on specific classes or participation levels.
-        </Typography>
-      </Box>
-    </Box>
+      <div className="mt-2 p-3 bg-muted/50 rounded-lg border border-border/50">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          <strong className="text-foreground font-bold uppercase">{t('common.tip')}:</strong> {t('guild_war.analytics_rankings_tip')}
+        </p>
+      </div>
+    </div>
   );
 }

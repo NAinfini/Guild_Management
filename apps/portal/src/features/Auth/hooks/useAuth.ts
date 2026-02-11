@@ -7,7 +7,7 @@ import { useCallback } from 'react';
 import { useAuthStore } from '../../../store';
 import { apiDirect, APIError } from '../../../lib/api-client';
 import { typedAPI } from '../../../lib/api/api-builder';
-import type { LoginResponse, SessionResponse } from '../../../lib/api-types';
+import type { LoginResponse, SessionResponse } from '../../../lib/api/auth';
 import { canAccessAdminArea, canManageMemberRoles } from '../../../lib/permissions';
 
 interface LoginCredentials {

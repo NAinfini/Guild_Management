@@ -22,8 +22,12 @@ import {
   MenuItem,
   Alert,
 } from '@mui/material';
-import { TableSkeleton } from '../../../components/SkeletonLoaders';
-import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { TableSkeleton } from '@/components';
+import {
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  Refresh as RefreshIcon,
+} from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useAuditLogs } from '../../../hooks';
 import { formatDateTime } from '../../../lib/utils';
@@ -83,7 +87,7 @@ export function AuditLogs() {
         <Button
           variant="outlined"
           size="small"
-          startIcon={<RefreshCw size={16} />}
+          startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
           onClick={() => refetch()}
           disabled={isLoading}
         >
@@ -168,7 +172,7 @@ export function AuditLogs() {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, borderTop: 1, borderColor: 'divider' }}>
                 <Button
                   size="small"
-                  startIcon={<ChevronLeft size={16} />}
+                  startIcon={<ChevronLeftIcon sx={{ fontSize: 16 }} />}
                   onClick={handlePrevious}
                   disabled={!cursor}
                 >
@@ -181,7 +185,7 @@ export function AuditLogs() {
 
                 <Button
                   size="small"
-                  endIcon={<ChevronRight size={16} />}
+                  endIcon={<ChevronRightIcon sx={{ fontSize: 16 }} />}
                   onClick={handleNext}
                   disabled={!data?.nextCursor}
                 >

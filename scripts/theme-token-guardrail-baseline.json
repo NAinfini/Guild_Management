@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "generatedAt": "2026-02-11T05:45:57.354Z",
+  "pattern": "text-(red|blue|green|yellow|white)|bg-(black|white|red|blue|green|yellow)|border-(red|blue|green|white)",
+  "baselineDirs": [],
+  "counts": {}
+}

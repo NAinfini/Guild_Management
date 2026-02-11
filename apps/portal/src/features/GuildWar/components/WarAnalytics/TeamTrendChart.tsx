@@ -1,84 +1,100 @@
-import { useMemo } from 'react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
-import { Box, Alert } from '@mui/material';
+import React, { useMemo } from 'react';
+import { LineChart } from '@mui/x-charts/LineChart';
+import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
-import { transformForTeams, formatWarDateShort, formatNumber } from './utils';
+import { TrendingUp, ErrorOutline } from '@mui/icons-material';
+import { transformForTeams, formatNumber, formatWarDateShort } from './utils';
 import { getUserColor } from './types';
 import type { TeamStats, WarSummary } from './types';
+import { Alert, AlertDescription } from '@/components/feedback/Alert';
 
 interface TeamTrendChartProps {
   teamStats: TeamStats[];
   wars: WarSummary[];
+  onSelectWar?: (params: { warId: number | string; teamId: number }) => void;
 }
 
-export function TeamTrendChart({ teamStats, wars }: TeamTrendChartProps) {
-  const { filters, teamsMode } = useAnalytics();
+export const TeamTrendChart = ({ teamStats, wars, onSelectWar }: TeamTrendChartProps) => {
+  const { t } = useTranslation();
+  const { teamsMode, filters } = useAnalytics();
+  const { selectedTeamIds } = teamsMode;
+  const metric = filters.primaryMetric;
+  const showTotal = filters.aggregation === 'total';
 
-  const chartData = useMemo(
-    () =>
-      transformForTeams(
-        teamStats,
-        wars,
-        teamsMode.selectedTeamIds,
-        filters.primaryMetric,
-        teamsMode.showTotal
-      ),
-    [teamStats, wars, teamsMode.selectedTeamIds, teamsMode.showTotal, filters.primaryMetric]
-  );
+  const chartData = useMemo(() => {
+    return transformForTeams(teamStats, wars, selectedTeamIds, metric, showTotal);
+  }, [teamStats, wars, selectedTeamIds, metric, showTotal]);
 
-  const selectedTeams = useMemo(() => {
-    const teamById = new Map<number, string>();
-    for (const entry of teamStats) {
-      if (!teamById.has(entry.team_id)) {
-        teamById.set(entry.team_id, entry.team_name);
-      }
-    }
-    return teamsMode.selectedTeamIds.map((teamId) => ({
-      teamId,
-      teamName: teamById.get(teamId) ?? `Team ${teamId}`,
-    }));
-  }, [teamStats, teamsMode.selectedTeamIds]);
-
-  if (teamsMode.selectedTeamIds.length === 0) {
-    return <Alert severity="info">Select teams from the left panel to compare.</Alert>;
+  if (selectedTeamIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[300px] border-2 border-dashed border-border/50 rounded-xl bg-muted/10">
+        <TrendingUp className="w-8 h-8 text-muted-foreground/30 mb-2" />
+        <p className="text-sm text-muted-foreground">{t('guild_war.analytics_select_team_to_compare')}</p>
+      </div>
+    );
   }
 
   if (chartData.length === 0) {
-    return <Alert severity="info">No team data available for the selected wars.</Alert>;
+    return (
+      <div className="bg-card border border-border/50 rounded-xl p-4">
+        <Alert variant="default">
+          <ErrorOutline className="h-4 w-4" />
+          <AlertDescription>{t('guild_war.analytics_no_team_data')}</AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   return (
-    <Box>
-      <ResponsiveContainer width="100%" height={420}>
-        <LineChart data={chartData} margin={{ top: 10, right: 24, left: 12, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="4 4" />
-          <XAxis dataKey="war_date" tickFormatter={formatWarDateShort} tickMargin={8} />
-          <YAxis tickFormatter={(value) => formatNumber(value)} />
-          <Tooltip />
-          <Legend />
-          {selectedTeams.map((team) => (
-            <Line
-              key={team.teamId}
-              type="monotone"
-              dataKey={`team_${team.teamId}`}
-              name={team.teamName}
-              stroke={getUserColor(team.teamId)}
-              strokeWidth={2.5}
-              connectNulls={false}
-            />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
-    </Box>
-  );
-}
+    <div className="bg-card border border-border/50 rounded-xl p-6 h-[400px]">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <TrendingUp className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm uppercase tracking-wider">{t('guild_war.analytics_team_trends')}</h3>
+            <p className="text-xs text-muted-foreground">Historical performance by Tactical Squad</p>
+          </div>
+        </div>
+      </div>
 
+      <div className="h-[300px] w-full">
+        <LineChart
+          xAxis={[{ 
+            scaleType: 'point', 
+            data: chartData.map(d => formatWarDateShort(d.war_date)),
+            tickLabelStyle: {
+              fontSize: 10,
+              fill: 'hsl(var(--muted-foreground))'
+            }
+          }]}
+          series={selectedTeamIds.map(id => ({
+            data: chartData.map(d => (d[`team_${id}`] as number) ?? null),
+            label: `Team ${id}`,
+            color: getUserColor(id),
+            showMark: true,
+            area: true,
+            valueFormatter: (value: number | null) => formatNumber(value ?? 0)
+          }))}
+          yAxis={[{
+             tickLabelStyle: {
+              fontSize: 10,
+              fill: 'hsl(var(--muted-foreground))'
+            },
+            valueFormatter: (value: number | null) => formatNumber(value ?? 0)
+          }]}
+          grid={{ horizontal: true }}
+          sx={{
+            '.MuiAreaElement-root': {
+              fillOpacity: 0.1,
+            },
+            '.MuiLineElement-root': {
+              strokeWidth: 3,
+            }
+          }}
+        />
+      </div>
+    </div>
+  );
+};

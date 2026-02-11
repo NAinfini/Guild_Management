@@ -1,11 +1,18 @@
 import { api } from '../api-client';
+import { typedAPI } from './api-builder';
+import { normalizeUtcDateTime } from './date';
 import type { WarTeam, WarHistoryEntry, WarMemberStat } from '../../types';
 import type { 
   WarTeamDTO, 
   WarHistoryDTO, 
   WarMemberStatDTO, 
   ActiveWarDTO,
-  AnalyticsResponseDTO 
+  AnalyticsQueryDTO,
+  AnalyticsResponseDTO,
+  AnalyticsFormulaPresetDTO,
+  AnalyticsFormulaPresetListResponseDTO,
+  CreateAnalyticsFormulaPresetBodyDTO,
+  CreateAnalyticsFormulaPresetResponseDTO,
 } from '@guild/shared-api/contracts';
 
 // ============================================================================
@@ -26,11 +33,14 @@ const mapTeamToDomain = (dto: WarTeamDTO): WarTeam => ({
 export const mapHistoryToDomain = (dto: WarHistoryDTO): WarHistoryEntry => ({
     id: dto.war_id,
     event_id: dto.event_id,
-    date: dto.war_date,
+    date: normalizeUtcDateTime(dto.war_date) || dto.war_date,
     title: dto.title,
     result: dto.result === 'win' ? 'victory' : dto.result === 'loss' ? 'defeat' : dto.result === 'unknown' ? 'pending' : dto.result,
     score: dto.our_kills || 0,
     enemy_score: dto.enemy_kills || 0,
+    opponent_name: dto.title.replace(/^vs\s+/i, ''),
+    total_stars: dto.our_towers || 0,
+    total_attacks: Math.max(1, (dto as any).total_attacks || (dto.our_kills ? Math.ceil(dto.our_kills / 3) : 1)),
     own_stats: {
         kills: dto.our_kills || 0,
         towers: dto.our_towers || 0,
@@ -45,11 +55,40 @@ export const mapHistoryToDomain = (dto: WarHistoryDTO): WarHistoryEntry => ({
         credits: dto.enemy_credits || 0,
         distance: dto.enemy_distance || 0,
     },
-    updated_at: dto.updated_at_utc,
+    updated_at: normalizeUtcDateTime(dto.updated_at_utc) || dto.updated_at_utc,
     notes: dto.notes || undefined,
-    teams_snapshot: [],
+    teams_snapshot: Array.isArray((dto as any).teams_snapshot)
+      ? (dto as any).teams_snapshot.map((team: any) => ({
+          id: team.id || team.team_id,
+          name: team.name || team.team_name || '',
+          note: team.note || undefined,
+          is_locked: !!team.is_locked,
+          members: Array.isArray(team.members)
+            ? team.members.map((member: any) => ({
+                user_id: member.user_id,
+                role_tag: member.role_tag || undefined,
+                username: member.username || undefined,
+              }))
+            : [],
+        }))
+      : [],
     pool_snapshot: [],
-    member_stats: []
+    member_stats: Array.isArray((dto as any).member_stats)
+      ? (dto as any).member_stats.map((m: any) => ({
+          id: m.user_id,
+          username: m.username,
+          class: m.class_code as any,
+          kills: m.kills ?? 0,
+          deaths: m.deaths ?? 0,
+          assists: m.assists ?? 0,
+          damage: m.damage ?? 0,
+          healing: m.healing ?? 0,
+          building_damage: m.building_damage ?? 0,
+          damage_taken: m.damage_taken ?? 0,
+          credits: m.credits ?? 0,
+          note: m.note || undefined,
+        }))
+      : [],
 });
 
 const mapStatsToDomain = (dto: WarMemberStatDTO): WarMemberStat => ({
@@ -74,22 +113,11 @@ const mapStatsToDomain = (dto: WarMemberStatDTO): WarMemberStat => ({
 export const warsAPI = {
   // Latest Wars
   getLatest: async (): Promise<ActiveWarDTO[]> => {
-    return api.get<ActiveWarDTO[]>('/wars/latest');
+    return typedAPI.wars.latest<ActiveWarDTO[]>();
   },
   
   getActiveTeams: async (warId: string): Promise<{ teams: WarTeam[]; pool: any[]; etag?: string }> => {
-    // Note: Backend endpoint /wars/:id returns { war: { ...teams... } } usually? 
-    // But getActiveTeams seems to call /wars/:id/teams which is handled by... ?
-    // Checking endpoints.ts: createTeam is /wars/:id/teams. 
-    // apps/worker/src/api/wars/[id].ts usually handles the generic GET.
-    // If there is no specific /teams endpoint, this might be legacy call?
-    // Let's assume the legacy route exists or is handled. 
-    // Wait, I saw apps/worker/src/api/wars/index.ts. I did not see a separate teams file.
-    // However, apps/worker/src/api/wars/[id].ts includes teams in its GET response.
-    // Maybe we should just use getWar? 
-    // API previously called `/wars/${warId}/teams`.
-    // I will preserve the signature but type the return.
-    const response = await api.get<{ teams: WarTeamDTO[]; pool: any[] }>(`/wars/${warId}/teams`);
+    const response = await typedAPI.wars.getTeams<{ teams: WarTeamDTO[]; pool: any[] }>({ params: { id: warId } });
     const etag = (response as any)._responseHeaders?.['etag'];
     return {
       teams: (response.teams || []).map(mapTeamToDomain),
@@ -99,7 +127,10 @@ export const warsAPI = {
   },
 
   createTeam: async (warId: string, name: string, note?: string): Promise<WarTeam> => {
-    const response = await api.post<{ team: WarTeamDTO }>(`/wars/${warId}/teams`, { name, note });
+    const response = await typedAPI.wars.createTeam<{ team: WarTeamDTO }>({
+      params: { id: warId },
+      body: { name, note },
+    });
     return mapTeamToDomain(response.team);
   },
 
@@ -108,49 +139,57 @@ export const warsAPI = {
     const payload: any = { ...data };
     if (data.isLocked !== undefined) payload.is_locked = data.isLocked ? 1 : 0;
     
-    const response = await api.put<{ team: WarTeamDTO }>(`/wars/${warId}/teams/${teamId}`, payload);
+    const response = await typedAPI.wars.updateTeam<{ team: WarTeamDTO }>({
+      params: { id: warId, teamId },
+      body: payload,
+    });
     return mapTeamToDomain(response.team);
   },
 
   deleteTeam: async (warId: string, teamId: string): Promise<void> => {
-    await api.delete(`/wars/${warId}/teams/${teamId}`);
+    await typedAPI.wars.deleteTeam({ params: { id: warId, teamId } });
   },
 
   // Assignments
   movePoolToTeam: async (warId: string, moves: any): Promise<void> => { 
       // keeping 'any' for input params for now as strict typing there requires more DTO work
       const payload = Array.isArray(moves) ? { moves } : moves;
-      await api.post(`/wars/${warId}/pool-to-team`, payload);
+      await typedAPI.wars.poolToTeam({ params: { id: warId }, body: payload });
   },
   
   // ... (keep move methods similar) ...
 
   moveTeamToPool: async (warId: string, userIds: string[] | string): Promise<void> => {
     const payload = Array.isArray(userIds) ? { userIds } : { userId: userIds };
-    await api.post(`/wars/${warId}/team-to-pool`, payload);
+    await typedAPI.wars.teamToPool({ params: { id: warId }, body: payload });
   },
 
   moveTeamToTeam: async (warId: string, moves: any): Promise<void> => {
     const payload = Array.isArray(moves) ? { moves } : moves;
-    await api.post(`/wars/${warId}/team-to-team`, payload);
+    await typedAPI.wars.teamToTeam({ params: { id: warId }, body: payload });
   },
 
   kickFromTeam: async (warId: string, kicks: any): Promise<void> => {
     const payload = Array.isArray(kicks) ? { kicks } : kicks;
-    await api.post(`/wars/${warId}/kick-from-team`, payload);
+    await typedAPI.wars.kickFromTeam({ params: { id: warId }, body: payload });
   },
 
   kickFromPool: async (warId: string, userIds: string[] | string): Promise<void> => {
     const payload = Array.isArray(userIds) ? { userIds } : { userId: userIds };
-    await api.post(`/wars/${warId}/kick-from-pool`, payload);
+    await typedAPI.wars.kickFromPool({ params: { id: warId }, body: payload });
   },
 
   // War History
   getHistory: async (params?: { limit?: number; offset?: number }): Promise<WarHistoryEntry[]> => {
     // API returns array directly according to apps/worker/src/api/wars/history.ts
-    const response = await api.get<WarHistoryDTO[] | { wars: WarHistoryDTO[] }>('/wars/history', params as any);
+    const response = await typedAPI.wars.historyList<WarHistoryDTO[] | { wars: WarHistoryDTO[] }>({ query: params as any });
     const list = Array.isArray(response) ? response : response.wars || [];
     return list.map(mapHistoryToDomain);
+  },
+
+  getHistoryById: async (warId: string): Promise<WarHistoryEntry> => {
+    const response = await typedAPI.wars.historyGet<{ war: WarHistoryDTO }>({ params: { id: warId } });
+    return mapHistoryToDomain(response.war);
   },
 
   createHistory: async (data: Partial<WarHistoryEntry>): Promise<WarHistoryEntry> => {
@@ -166,7 +205,7 @@ export const warsAPI = {
         ourKills: data.own_stats?.kills,
         // ... map rest if needed
     };
-    const response = await api.post<{ war: WarHistoryDTO }>('/wars/history', payload);
+    const response = await typedAPI.wars.historyCreate<{ war: WarHistoryDTO }>({ body: payload });
     return mapHistoryToDomain(response.war);
   },
 
@@ -189,19 +228,26 @@ export const warsAPI = {
       notes: data.notes,
       result: result,
     };
-    const response = await api.put<{ war: WarHistoryDTO }>(`/wars/history/${warId}`, payload, { headers: ifMatch ? { 'If-Match': ifMatch } : undefined } as any);
+    const response = await api.put<{ war: WarHistoryDTO }>(
+      `/wars/history/${warId}`,
+      payload,
+      undefined,
+      { headers: ifMatch ? { 'If-Match': ifMatch } : undefined }
+    );
     return mapHistoryToDomain(response.war);
   },
 
   // Member StatsDTO
   getMemberStats: async (warId: string): Promise<WarMemberStat[]> => {
-    const response = await api.get<{ stats: WarMemberStatDTO[] }>(`/wars/history/${warId}/member-stats`);
+    const response = await typedAPI.wars.historyMemberStats<{ stats: WarMemberStatDTO[] }>({ params: { id: warId } });
     return (response.stats || []).map(mapStatsToDomain);
   },
 
   updateMemberStats: async (warId: string, data: WarMemberStat, ifMatch?: string): Promise<void> => {
     // Map domain -> DTO params
-    await api.put(`/wars/history/${warId}/member-stats`, {
+    await api.put(
+      `/wars/history/${warId}/member-stats`,
+      {
       userId: data.id,
       kills: data.kills,
       deaths: data.deaths,
@@ -212,36 +258,26 @@ export const warsAPI = {
       damageTaken: data.damage_taken,
       credits: data.credits,
       note: data.note,
-    }, { headers: ifMatch ? { 'If-Match': ifMatch } : undefined } as any);
+      },
+      undefined,
+      { headers: ifMatch ? { 'If-Match': ifMatch } : undefined }
+    );
   },
 
   // Analytics
-  getAnalytics: async (params?: {
-    userId?: string;
-    startDate?: string;
-    endDate?: string;
-    warIds?: number[];
-    userIds?: number[];
-    teamIds?: number[];
-    mode?: 'compare' | 'rankings' | 'teams';
-    metric?: string;
-    aggregation?: 'total' | 'average' | 'best' | 'median';
-    limit?: number;
-    cursor?: string;
-    includePerWar?: boolean;
-  }) => {
+  getAnalytics: async (params?: AnalyticsRequestParams) => {
     const query = serializeAnalyticsQuery(params);
-    return api.get<AnalyticsResponseDTO>('/wars/analytics', query as any);
+    return typedAPI.wars.analytics<AnalyticsResponseDTO>({ query: query as any });
   },
 
   getWarsList: async (params?: { startDate?: string; endDate?: string; limit?: number }): Promise<any[]> => {
       // Re-using getHistory 
-      const response = await api.get<WarHistoryDTO[] | { wars: WarHistoryDTO[] }>('/wars/history', params as any);
+      const response = await typedAPI.wars.historyList<WarHistoryDTO[] | { wars: WarHistoryDTO[] }>({ query: params as any });
       const list = Array.isArray(response) ? response : response.wars || [];
       
       return list.map((war) => ({
         war_id: parseInt(war.war_id) || war.war_id, // Handle if string
-        war_date: war.war_date,
+        war_date: normalizeUtcDateTime(war.war_date) || war.war_date,
         title: war.title,
         result: war.result === 'victory' || war.result === 'win' ? 'win' :
                 war.result === 'defeat' || war.result === 'loss' ? 'loss' :
@@ -255,21 +291,9 @@ export const warsAPI = {
       }));
   },
 
-  getAnalyticsData: async (params?: {
-    startDate?: string;
-    endDate?: string;
-    warIds?: number[];
-    userIds?: number[];
-    teamIds?: number[];
-    mode?: 'compare' | 'rankings' | 'teams';
-    metric?: string;
-    aggregation?: 'total' | 'average' | 'best' | 'median';
-    limit?: number;
-    cursor?: string;
-    includePerWar?: boolean;
-  }): Promise<{ memberStats: any[]; perWarStats: any[]; teamStats: any[]; meta?: any }> => {
+  getAnalyticsData: async (params?: AnalyticsRequestParams): Promise<{ memberStats: any[]; perWarStats: any[]; teamStats: any[]; meta?: any }> => {
     const query = serializeAnalyticsQuery(params);
-    const response = await api.get<AnalyticsResponseDTO>('/wars/analytics', query as any);
+    const response = await typedAPI.wars.analytics<AnalyticsResponseDTO>({ query: query as any });
     return {
       memberStats: response.memberStats || [],
       perWarStats: response.perWarStats || [],
@@ -277,36 +301,94 @@ export const warsAPI = {
       meta: (response as any).meta,
     };
   },
+
+  getAnalyticsFormulaPresets: async (): Promise<AnalyticsFormulaPresetDTO[]> => {
+    const response = await typedAPI.wars.analyticsFormulaPresets<AnalyticsFormulaPresetListResponseDTO>();
+    return response.presets || [];
+  },
+
+  createAnalyticsFormulaPreset: async (payload: {
+    name: string;
+    weights: {
+      kda: number;
+      towers: number;
+      distance: number;
+    };
+    isDefault?: boolean;
+  }): Promise<AnalyticsFormulaPresetDTO> => {
+    const body: CreateAnalyticsFormulaPresetBodyDTO = {
+      name: payload.name,
+      kdaWeight: payload.weights.kda,
+      towerWeight: payload.weights.towers,
+      distanceWeight: payload.weights.distance,
+      isDefault: payload.isDefault ? 1 : 0,
+    };
+    const response = await typedAPI.wars.createAnalyticsFormulaPreset<CreateAnalyticsFormulaPresetResponseDTO>({
+      body,
+    });
+    return response.preset;
+  },
+
+  deleteAnalyticsFormulaPreset: async (presetId: string): Promise<void> => {
+    await typedAPI.wars.deleteAnalyticsFormulaPreset({ query: { id: presetId } });
+  },
 };
 
-function serializeAnalyticsQuery(params?: {
+type AnalyticsRequestParams = {
   userId?: string;
   startDate?: string;
   endDate?: string;
-  warIds?: number[];
-  userIds?: number[];
-  teamIds?: number[];
-  mode?: 'compare' | 'rankings' | 'teams';
-  metric?: string;
-  aggregation?: 'total' | 'average' | 'best' | 'median';
+  warIds?: Array<number | string>;
+  userIds?: Array<number | string>;
+  teamIds?: Array<number | string>;
+  mode?: AnalyticsQueryDTO['mode'];
+  metric?: AnalyticsQueryDTO['metric'];
+  aggregation?: AnalyticsQueryDTO['aggregation'];
   limit?: number;
   cursor?: string;
   includePerWar?: boolean;
-}) {
+  participationOnly?: boolean;
+  opponentNormalized?: boolean;
+  normalizationWeights?: {
+    kda: number;
+    towers: number;
+    distance: number;
+  };
+};
+
+function serializeIdList(values?: Array<number | string>): string | undefined {
+  if (!values || values.length === 0) {
+    return undefined;
+  }
+
+  const normalized = [...new Set(values.map((value) => String(value).trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+  return normalized.length > 0 ? normalized.join(',') : undefined;
+}
+
+function serializeAnalyticsQuery(params?: AnalyticsRequestParams) {
   if (!params) return undefined;
 
-  return {
+  const query: AnalyticsQueryDTO = {
     userId: params.userId,
     startDate: params.startDate,
     endDate: params.endDate,
-    warIds: params.warIds?.length ? params.warIds.join(',') : undefined,
-    userIds: params.userIds?.length ? params.userIds.join(',') : undefined,
-    teamIds: params.teamIds?.length ? params.teamIds.join(',') : undefined,
+    warIds: serializeIdList(params.warIds),
+    userIds: serializeIdList(params.userIds),
+    teamIds: serializeIdList(params.teamIds),
     mode: params.mode,
     metric: params.metric,
     aggregation: params.aggregation,
     limit: params.limit,
     cursor: params.cursor,
     includePerWar: params.includePerWar === undefined ? undefined : params.includePerWar ? '1' : '0',
+    participationOnly: params.participationOnly === undefined ? undefined : params.participationOnly ? '1' : '0',
+    opponentNormalized: params.opponentNormalized === undefined ? undefined : params.opponentNormalized ? '1' : '0',
+    normalizationKdaWeight: params.normalizationWeights?.kda,
+    normalizationTowerWeight: params.normalizationWeights?.towers,
+    normalizationDistanceWeight: params.normalizationWeights?.distance,
   };
+
+  return query;
 }

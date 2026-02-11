@@ -4,6 +4,7 @@
  */
 
 import { typedAPI } from './api-builder';
+import { normalizeUtcDateTime } from './date';
 import type { Announcement } from '../../types';
 
 // ============================================================================
@@ -41,8 +42,8 @@ export const mapToDomain = (dto: AnnouncementDTO): Announcement => {
     title: dto.title,
     content_html: dto.body_html || '',
     author_id: dto.author_id,
-    created_at: dto.created_at_utc,
-    updated_at: dto.updated_at_utc,
+    created_at: normalizeUtcDateTime(dto.created_at_utc) || dto.created_at_utc,
+    updated_at: normalizeUtcDateTime(dto.updated_at_utc) || dto.updated_at_utc,
     is_pinned: !!dto.is_pinned,
     is_archived: !!dto.is_archived,
     media_urls: Array.isArray(media) ? media : media ? JSON.parse(media) : [],

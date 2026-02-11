@@ -1,3 +1,4 @@
+
 /**
  * War Analytics - Share Button Component
  *
@@ -5,12 +6,13 @@
  */
 
 import { useState } from 'react';
-import { Button, Snackbar, Alert } from '@mui/material';
-import { Share2, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
 import { generateAnalyticsSnapshot, copyToClipboard } from './utils';
 import type { WarSummary, MemberStats } from './types';
+import { Button } from '@/components/button';
+import { toast } from '@/lib/toast';
+import { Share, ContentCopy, Check } from '@mui/icons-material';
 
 // ============================================================================
 // Main Component
@@ -29,7 +31,7 @@ export function ShareButton({ wars = [], analyticsData, disabled = false }: Shar
   const { t } = useTranslation();
   const { filters, compareMode, rankingsMode, teamsMode } = useAnalytics();
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Check if there's data to share
   const hasSelection =
@@ -45,6 +47,7 @@ export function ShareButton({ wars = [], analyticsData, disabled = false }: Shar
   const handleShare = async () => {
     if (disabled || !hasSelection || !analyticsData) return;
 
+    setLoading(true);
     try {
       // Prepare data for snapshot
       const data: any = {};
@@ -85,56 +88,37 @@ export function ShareButton({ wars = [], analyticsData, disabled = false }: Shar
 
       if (success) {
         setCopied(true);
+        toast.success(`${t('guild_war.analytics_snapshot_copied')} ${t('guild_war.analytics_snapshot_ready_paste')}`);
         setTimeout(() => setCopied(false), 3000);
       } else {
-        setError(true);
-        setTimeout(() => setError(false), 3000);
+        toast.error(t('guild_war.analytics_snapshot_copy_failed'));
       }
     } catch (err) {
       console.error('Failed to generate snapshot:', err);
-      setError(true);
-      setTimeout(() => setError(false), 3000);
+      toast.error(t('guild_war.analytics_snapshot_copy_failed'));
+    } finally {
+        setLoading(false);
     }
   };
 
   return (
-    <>
-      <Button
-        variant="outlined"
-        fullWidth
-        startIcon={copied ? <Check size={16} /> : <Share2 size={16} />}
-        onClick={handleShare}
-        disabled={disabled || !hasSelection || copied}
-        color={copied ? 'success' : 'primary'}
-      >
-        {copied
-          ? t('common.copied')
-          : t('guild_war.analytics_share_snapshot')}
-      </Button>
-
-      {/* Success Snackbar */}
-      <Snackbar
-        open={copied}
-        autoHideDuration={3000}
-        onClose={() => setCopied(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="success" variant="filled">
-          {t('guild_war.analytics_snapshot_copied')}
-        </Alert>
-      </Snackbar>
-
-      {/* Error Snackbar */}
-      <Snackbar
-        open={error}
-        autoHideDuration={3000}
-        onClose={() => setError(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="error" variant="filled">
-          {t('guild_war.analytics_snapshot_copy_failed')}
-        </Alert>
-      </Snackbar>
-    </>
+    <Button
+      variant="outline"
+      className="w-full gap-2 transition-all duration-200"
+      onClick={handleShare}
+      disabled={disabled || !hasSelection || copied || loading}
+    >
+      {copied ? (
+        <>
+            <Check className="w-4 h-4" sx={{ color: 'var(--color-status-success)' }} />
+            <span className="font-medium" style={{ color: 'var(--color-status-success-fg)' }}>{t('common.copied')}</span>
+        </>
+      ) : (
+        <>
+            <Share className="w-4 h-4" />
+            <span>{t('guild_war.analytics_share_snapshot')}</span>
+        </>
+      )}
+    </Button>
   );
 }

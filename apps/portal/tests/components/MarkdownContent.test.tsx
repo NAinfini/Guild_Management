@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MarkdownContent } from '@/components/MarkdownContent';
+import { MarkdownContent } from '@/components/data-display/MarkdownContent';
 
 describe('MarkdownContent', () => {
   it('renders markdown formatting for rich descriptions', () => {

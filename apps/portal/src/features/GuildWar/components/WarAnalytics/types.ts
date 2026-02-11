@@ -1,8 +1,7 @@
 /**
  * War Analytics - Type Definitions
  *
- * Core types for the analytics system supporting four modes:
- * - Player: Single member across multiple wars
+ * Core types for the analytics system supporting three modes:
  * - Compare: Multiple members side-by-side
  * - Rankings: Top N performers
  * - Teams: Team comparison
@@ -12,7 +11,7 @@
 // Analytics Modes
 // ============================================================================
 
-export type AnalyticsMode = 'player' | 'compare' | 'rankings' | 'teams';
+export type AnalyticsMode = 'compare' | 'rankings' | 'teams';
 
 // ============================================================================
 // Metrics
@@ -29,6 +28,38 @@ export type MetricType =
   | 'kda';
 
 export type AggregationType = 'total' | 'average' | 'best' | 'median';
+
+export interface NormalizationWeights {
+  kda: number;
+  towers: number;
+  distance: number;
+}
+
+export interface NormalizationFormulaPreset {
+  id: string;
+  name: string;
+  version: number;
+  weights: NormalizationWeights;
+  createdAt: string;
+  createdBy?: string;
+  isDefault?: boolean;
+}
+
+export const DEFAULT_NORMALIZATION_WEIGHTS: NormalizationWeights = {
+  kda: 60,
+  towers: 15,
+  distance: 25,
+};
+
+export const DEFAULT_NORMALIZATION_FORMULA_PRESET: NormalizationFormulaPreset = {
+  id: 'default',
+  name: 'Default',
+  version: 1,
+  weights: DEFAULT_NORMALIZATION_WEIGHTS,
+  createdAt: '1970-01-01T00:00:00.000Z',
+  createdBy: 'system',
+  isDefault: true,
+};
 
 export const METRICS: Record<MetricType, { label: string; higherIsBetter: boolean }> = {
   damage: { label: 'Damage', higherIsBetter: true },
@@ -51,6 +82,8 @@ export interface AnalyticsFilters {
   startDate?: string; // ISO date string
   endDate?: string; // ISO date string
   participationOnly: boolean; // Only include wars where subject participated
+  opponentNormalized: boolean;
+  normalizationWeights: NormalizationWeights;
   primaryMetric: MetricType;
   aggregation: AggregationType;
 }
@@ -59,6 +92,8 @@ export const DEFAULT_FILTERS: AnalyticsFilters = {
   mode: 'compare',
   selectedWars: [],
   participationOnly: true,
+  opponentNormalized: false,
+  normalizationWeights: DEFAULT_NORMALIZATION_WEIGHTS,
   primaryMetric: 'damage',
   aggregation: 'total',
 };
@@ -67,26 +102,16 @@ export const DEFAULT_FILTERS: AnalyticsFilters = {
 // Mode-Specific State
 // ============================================================================
 
-export interface PlayerModeState {
-  selectedUserId: number | null;
-  secondaryMetric?: MetricType;
-  showMovingAverage: boolean;
-}
-
-export const DEFAULT_PLAYER_MODE: PlayerModeState = {
-  selectedUserId: null,
-  secondaryMetric: undefined,
-  showMovingAverage: false,
-};
-
 export interface CompareModeState {
   selectedUserIds: number[];
+  selectedMetrics: MetricType[];
   focusedUserId?: number; // Highlighted user (thicker line)
   hiddenUserIds: Set<number>; // Hidden series
 }
 
 export const DEFAULT_COMPARE_MODE: CompareModeState = {
   selectedUserIds: [],
+  selectedMetrics: ['damage'],
   focusedUserId: undefined,
   hiddenUserIds: new Set(),
 };
@@ -111,6 +136,20 @@ export interface TeamsModeState {
 export const DEFAULT_TEAMS_MODE: TeamsModeState = {
   selectedTeamIds: [],
   showTotal: true,
+};
+
+export interface AnalyticsDrilldownState {
+  selectedWarId?: string;
+  sourceMode?: AnalyticsMode;
+  selectedUserId?: number;
+  selectedTeamId?: number;
+}
+
+export const DEFAULT_DRILLDOWN_STATE: AnalyticsDrilldownState = {
+  selectedWarId: undefined,
+  sourceMode: undefined,
+  selectedUserId: undefined,
+  selectedTeamId: undefined,
 };
 
 // ============================================================================
@@ -186,6 +225,18 @@ export interface PerWarMemberStats {
   // Derived
   kda: number | null;
   note?: string;
+  raw_kills?: number;
+  raw_deaths?: number;
+  raw_assists?: number;
+  raw_damage?: number;
+  raw_healing?: number;
+  raw_building_damage?: number;
+  raw_credits?: number;
+  raw_kda?: number | null;
+  normalization_factor?: number;
+  enemy_strength_index?: number;
+  enemy_strength_tier?: 'weak' | 'normal' | 'strong';
+  formula_version?: string;
 }
 
 export interface RankingEntry {
@@ -222,6 +273,10 @@ export interface TeamStats {
   avg_kills: number;
   avg_deaths: number;
   avg_assists: number;
+  normalization_factor?: number;
+  enemy_strength_index?: number;
+  enemy_strength_tier?: 'weak' | 'normal' | 'strong';
+  formula_version?: string;
   [key: string]: any;
 }
 
@@ -242,7 +297,7 @@ export interface CompareDataPoint {
   war_id: number;
   war_date: string;
   war_title: string;
-  [key: `user_${number}`]: number | null; // Dynamic keys for each user
+  [key: string]: number | string | null; // Dynamic keys for each member/metric series
 }
 
 export interface RankingDataPoint {
@@ -367,8 +422,39 @@ export const COLOR_PALETTE = [
   '#a4de6c', '#d0ed57', '#83a6ed', '#8dd1e1', '#82ca9d',
 ];
 
-export function getUserColor(userId: number): string {
-  return COLOR_PALETTE[userId % COLOR_PALETTE.length];
+export const METRIC_LINE_COLORS: Record<MetricType, string> = {
+  damage: '#3b82f6',
+  healing: '#22c55e',
+  building_damage: '#a855f7',
+  credits: '#f59e0b',
+  kills: '#14b8a6',
+  deaths: '#ef4444',
+  assists: '#06b6d4',
+  kda: '#f97316',
+};
+
+function hashStringToInt(input: string): number {
+  let hash = 0;
+  for (let i = 0; i < input.length; i += 1) {
+    hash = (hash << 5) - hash + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+export function getUserColor(userId: number | string): string {
+  const seed = hashStringToInt(String(userId));
+  const hue = seed % 360;
+  return `hsl(${hue} 72% 54%)`;
+}
+
+export function getMemberMetricColor(userId: number | string, metric: MetricType): string {
+  const metricOrder: MetricType[] = ['damage', 'healing', 'building_damage', 'credits', 'kills', 'deaths', 'assists', 'kda'];
+  const metricIndex = Math.max(metricOrder.indexOf(metric), 0);
+  const seed = hashStringToInt(`${userId}-${metric}`);
+  const hue = (hashStringToInt(String(userId)) + metricIndex * 37 + seed % 29) % 360;
+  const lightness = 48 + (metricIndex % 3) * 7;
+  return `hsl(${hue} 74% ${lightness}%)`;
 }
 
 export const CLASS_TINTS: Record<string, string> = {
@@ -386,7 +472,17 @@ export function getClassTint(className: string): string {
 // ============================================================================
 
 export function formatMetricName(metric: MetricType): string {
-  return METRICS[metric]?.label || metric;
+  const keyMap: Record<MetricType, string> = {
+    damage: 'guild_war.analytics_metric_damage',
+    healing: 'guild_war.analytics_metric_healing',
+    building_damage: 'guild_war.analytics_metric_building_damage',
+    credits: 'guild_war.analytics_metric_credits',
+    kills: 'guild_war.analytics_metric_kills',
+    deaths: 'guild_war.analytics_metric_deaths',
+    assists: 'guild_war.analytics_metric_assists',
+    kda: 'guild_war.analytics_metric_kda',
+  };
+  return i18next.t(keyMap[metric]);
 }
 
 export function isMetricHigherBetter(metric: MetricType): boolean {
@@ -420,3 +516,4 @@ export function formatCompactNumber(value: number | null): string {
   }
   return value.toString();
 }
+import i18next from 'i18next';

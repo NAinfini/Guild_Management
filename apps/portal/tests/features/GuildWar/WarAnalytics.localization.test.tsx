@@ -22,7 +22,12 @@ vi.mock('@/hooks', () => ({
     data: {
       memberStats: [],
       perWarStats: [],
+      teamStats: [],
     },
+    isLoading: false,
+  }),
+  useWarHistoryDetail: () => ({
+    data: null,
     isLoading: false,
   }),
 }));
@@ -36,4 +41,3 @@ describe('WarAnalytics localization', () => {
     expect(screen.queryByText('Search wars...')).not.toBeInTheDocument();
   });
 });
-

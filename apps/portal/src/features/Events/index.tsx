@@ -1,70 +1,78 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useFilteredList } from '../../hooks/useFilteredList';
+
 import { 
-  Card, 
-  CardContent, 
-  Button, 
-  Chip, 
+
   Typography, 
   Box, 
-  Stack, 
-  IconButton, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions,
-  DialogContentText,
+  Stack,  
   TextField, 
   List, 
   ListItem, 
   ListItemText, 
   ListItemAvatar, 
-  Avatar, 
   InputAdornment, 
   useTheme,
   alpha,
-  Tooltip,
   ToggleButton,
   ToggleButtonGroup,
   Alert
 } from '@mui/material';
 import { 
-  Clock, 
-  Users, 
-  Copy, 
-  Lock, 
-  Pin, 
-  Archive,
-  CopyPlus, 
-  Trash2, 
-  UserPlus, 
-  UserMinus, 
-  AlertTriangle,
-  RefreshCw,
-  Check,
-  Zap,
-  Search,
-  X,
-  Plus,
-  LogOut,
-  Edit,
-  Swords,
-  CalendarDays,
-  Filter,
-  LockOpen
-} from 'lucide-react';
-import { formatDateTime, getClassBaseColor, getClassColor, cn, formatPower, formatClassDisplayName } from '../../lib/utils';
+  Tooltip, 
+  TooltipTrigger, 
+  TooltipContent, 
+  TooltipProvider,
+  Button,
+  Card, 
+  CardContent,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Avatar,
+  BottomSheetDialog, 
+  DecorativeGlyph, 
+  EnhancedButton, 
+  MarkdownContent, 
+  CardGridSkeleton, 
+  Badge, 
+  ScrollArea, 
+  PageFilterBar, 
+  type PageFilterOption 
+} from "@/components";
+import { 
+  AccessTime as AccessTimeIcon, 
+  Groups as GroupsIcon, 
+  ContentCopy as ContentCopyIcon, 
+  Lock as LockIcon, 
+  PushPin as PushPinIcon, 
+  Archive as ArchiveIcon,
+  LibraryAdd as LibraryAddIcon, 
+  Delete as DeleteIcon, 
+  PersonAdd as PersonAddIcon, 
+  PersonRemove as PersonRemoveIcon, 
+  ReportProblem as WarningIcon,
+  Refresh as RefreshIcon,
+  Check as CheckIcon,
+  FlashOn as FlashOnIcon,
+  Search as SearchIcon,
+  Close as CloseIcon,
+  Add as AddIcon,
+  Logout as LogoutIcon,
+  Edit as EditIcon,
+  MilitaryTech as MilitaryTechIcon,
+  CalendarToday as CalendarDaysIcon,
+  FilterList as FilterIcon,
+  LockOpen as LockOpenIcon
+} from '@mui/icons-material';
+import { formatDateTime, formatPower, formatClassDisplayName, getMemberCardAccentColors, getClassPillTone, cn } from '../../lib/utils';
 import { useAuthStore, useUIStore } from '../../store';
 import { useTranslation } from 'react-i18next';
-import { User, Event } from '../../types';
+import { User, Event, ClassType } from '../../types';
 import { useMobileOptimizations, useOnline } from '../../hooks';
-import { BottomSheetDialog } from '../../components/BottomSheetDialog';
-import { DecorativeGlyph } from '../../components/DecorativeGlyph';
-import { EnhancedButton } from '../../components/EnhancedButton';
-import { MarkdownContent } from '../../components/MarkdownContent';
-import { Skeleton } from '@mui/material';
-import { CardGridSkeleton } from '../../components/SkeletonLoaders';
-import { PageFilterBar, type FilterOption } from '../../components/PageFilterBar';
+
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { filterEventsByCategory, type EventFilter } from './Events.filtering';
 import { getVisibleParticipants } from './Events.participants';
@@ -90,12 +98,13 @@ import {
   useToggleLockEvent,
   useDeleteEvent
 } from '../../hooks/useServerState';
+import { useFilteredList } from '../../hooks/useFilteredList';
 
 export function isArchivedEventFilter(filter: EventFilter): boolean {
   return filter === 'archived';
 }
 
-export function getEventFilterCategories(t: (key: string) => string): FilterOption[] {
+export function getEventFilterCategories(t: (key: string) => string): PageFilterOption[] {
   return [
     { value: 'all', label: t('events.filter_all') },
     { value: 'weekly_mission', label: t('events.filter_weekly') },
@@ -103,6 +112,50 @@ export function getEventFilterCategories(t: (key: string) => string): FilterOpti
     { value: 'other', label: t('events.filter_other') },
     { value: 'archived', label: t('events.filter_archived') },
   ];
+}
+
+export function getEventTypeLabel(eventType: Event['type'], t: (key: string) => string): string {
+  switch (eventType) {
+    case 'weekly_mission':
+      return t('events.filter_weekly');
+    case 'guild_war':
+      return t('events.filter_guild');
+    case 'other':
+    default:
+      return t('events.filter_other');
+  }
+}
+
+export function getEventTypeFallbackTone(eventType: Event['type']) {
+  switch (eventType) {
+    case 'weekly_mission':
+      return { bg: 'info.main', text: 'info.contrastText', border: 'info.dark' } as const;
+    case 'guild_war':
+      return { bg: 'error.main', text: 'error.contrastText', border: 'error.dark' } as const;
+    case 'other':
+    default:
+      return { bg: 'secondary.main', text: 'secondary.contrastText', border: 'secondary.dark' } as const;
+  }
+}
+
+function buildMemberAccentGradient(accentColors: string[]): string {
+  const [first, second, third] = accentColors;
+  const opacity = 0.5;
+
+  if (third) {
+    // Three colors: diagonal sections with sharp cuts
+    return `
+      linear-gradient(135deg, ${alpha(first, opacity)} 0%, ${alpha(first, opacity)} 33.33%, transparent 33.33%),
+      linear-gradient(225deg, ${alpha(second, opacity)} 0%, ${alpha(second, opacity)} 33.33%, transparent 33.33%),
+      linear-gradient(315deg, ${alpha(third, opacity)} 0%, ${alpha(third, opacity)} 33.33%, transparent 33.33%)
+    `.replace(/\s+/g, ' ').trim();
+  }
+  if (second) {
+    // Two colors: diagonal split with sharp cut at 50%
+    return `linear-gradient(135deg, ${alpha(first, opacity)} 0%, ${alpha(first, opacity)} 50%, ${alpha(second, opacity)} 50%, ${alpha(second, opacity)} 100%)`;
+  }
+  // Single color
+  return alpha(first, opacity);
 }
 
 export function Events() {
@@ -207,7 +260,7 @@ export function Events() {
     sortFn: eventSortFn,
   });
 
-  const categories: FilterOption[] = getEventFilterCategories(t);
+  const categories: PageFilterOption[] = getEventFilterCategories(t);
 
   const getConflictingEvent = (event: Event) => {
     if (!user) return undefined;
@@ -287,16 +340,16 @@ export function Events() {
         isLoading={isLoading}
         extraActions={
           <Stack direction="row" spacing={1}>
-            {canCreate && (
-              <EnhancedButton
-                size="small"
+             {canCreate && (
+              <Button
+                size="sm"
                 onClick={() => setAddMemberModalOpen(null)}
-                startIcon={<Plus size={14} />}
                 disabled={!online}
-                sx={{ fontWeight: 900, borderRadius: 2 }}
+                className="font-black rounded-lg"
               >
+                <AddIcon sx={{ fontSize: 14 }} className="mr-2" />
                 {t('events.new_deployment')}
-              </EnhancedButton>
+              </Button>
             )}
           </Stack>
         }
@@ -347,7 +400,7 @@ export function Events() {
                 bgcolor: 'action.hover' 
             }}>
               <Box sx={{ p: 4, mb: 2, borderRadius: '50%', bgcolor: 'background.paper', display: 'inline-flex' }}>
-                  <Clock className="opacity-40" size={48} />
+                  <GroupsIcon sx={{ fontSize: 48, opacity: 0.2, mb: 2 }} />
               </Box>
               <Typography variant="overline" display="block" color="text.secondary" fontWeight={900} letterSpacing="0.2em">
                   {t('events.no_operations')}
@@ -371,19 +424,20 @@ export function Events() {
       {/* Conflict Confirmation Dialog */}
       <Dialog 
         open={!!conflictDialog} 
-        onClose={() => setConflictDialog(null)}
-        PaperProps={{ sx: { borderRadius: 4, border: `1px solid ${theme.palette.divider}` } }}
+        onOpenChange={(open: boolean) => !open && setConflictDialog(null)}
       >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AlertTriangle size={20} color={theme.palette.warning.main} />
-          <Typography variant="overline" fontWeight={900} letterSpacing="0.1em">
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+           <WarningIcon sx={{ fontSize: 20, color: theme.palette.warning.main }} />
+           <Typography variant="overline" fontWeight={900} letterSpacing="0.1em" component="span">
             {t('events.conflict_detected')}
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
+           </Typography>
+          </DialogTitle>
+          <DialogDescription>
             {t('events.conflict_warning')}
-          </DialogContentText>
+          </DialogDescription>
+          </DialogHeader>
           {conflictDialog && (
             <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
               <Typography variant="caption" color="text.secondary" fontWeight={900} letterSpacing="0.1em">
@@ -394,93 +448,96 @@ export function Events() {
               </Typography>
             </Box>
           )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setConflictDialog(null)} color="inherit">
+        <DialogFooter>
+          <Button onClick={() => setConflictDialog(null)} variant="ghost">
             {t('common.cancel')}
           </Button>
-          <Button onClick={confirmJoinWithConflict} variant="contained" color="warning">
+          <Button onClick={confirmJoinWithConflict} variant="default" className="bg-warning-main hover:bg-warning-dark text-warning-contrastText">
             {t('events.join_anyway')}
           </Button>
-        </DialogActions>
+        </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* Withdraw Confirmation Dialog */}
       <Dialog 
         open={!!withdrawDialog} 
-        onClose={() => setWithdrawDialog(null)}
-        PaperProps={{ sx: { borderRadius: 4, border: `1px solid ${theme.palette.divider}` } }}
+        onOpenChange={(open: boolean) => !open && setWithdrawDialog(null)}
       >
+        <DialogContent>
+        <DialogHeader>
         <DialogTitle>
-          <Typography variant="overline" fontWeight={900} letterSpacing="0.1em">
+          <Typography variant="overline" fontWeight={900} letterSpacing="0.1em" component="span">
             {t('events.withdraw_title')}
           </Typography>
         </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {t('events.withdraw_confirm')}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setWithdrawDialog(null)} color="inherit">
+        <DialogDescription>
+             {t('events.withdraw_confirm')}
+        </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={() => setWithdrawDialog(null)} variant="ghost">
             {t('common.cancel')}
           </Button>
-          <Button onClick={confirmWithdraw} variant="contained" color="error">
+          <Button onClick={confirmWithdraw} variant="destructive">
             {t('events.withdraw')}
           </Button>
-        </DialogActions>
+        </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* Kick Member Confirmation Dialog */}
       <Dialog 
         open={!!kickDialog} 
-        onClose={() => setKickDialog(null)}
-        PaperProps={{ sx: { borderRadius: 4, border: `1px solid ${theme.palette.divider}` } }}
+        onOpenChange={(open: boolean) => !open && setKickDialog(null)}
       >
+        <DialogContent>
+        <DialogHeader>
         <DialogTitle>
-          <Typography variant="overline" fontWeight={900} letterSpacing="0.1em">
+          <Typography variant="overline" fontWeight={900} letterSpacing="0.1em" component="span">
             {t('events.kick_title')}
           </Typography>
         </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
+        <DialogDescription>
             {t('events.kick_confirm_message', { username: kickDialog?.username || '' })}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setKickDialog(null)} color="inherit">
+        </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={() => setKickDialog(null)} variant="ghost">
             {t('common.cancel')}
           </Button>
-          <Button onClick={confirmKick} variant="contained" color="error">
+          <Button onClick={confirmKick} variant="destructive">
             {t('events.kick')}
           </Button>
-        </DialogActions>
+        </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* Delete Event Confirmation Dialog */}
       <Dialog 
         open={!!deleteDialog} 
-        onClose={() => setDeleteDialog(null)}
-        PaperProps={{ sx: { borderRadius: 4, border: `1px solid ${theme.palette.divider}` } }}
+        onOpenChange={(open: boolean) => !open && setDeleteDialog(null)}
       >
+        <DialogContent>
+        <DialogHeader>
         <DialogTitle>
-          <Typography variant="overline" fontWeight={900} letterSpacing="0.1em">
+          <Typography variant="overline" fontWeight={900} letterSpacing="0.1em" component="span">
             {t('events.delete_title')}
           </Typography>
         </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
+        <DialogDescription>
             {t('events.delete_confirm')}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeleteDialog(null)} color="inherit">
+        </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={() => setDeleteDialog(null)} variant="ghost">
             {t('common.cancel')}
           </Button>
-          <Button onClick={confirmDelete} variant="contained" color="error">
+          <Button onClick={confirmDelete} variant="destructive">
             {t('common.delete')}
           </Button>
-        </DialogActions>
+        </DialogFooter>
+        </DialogContent>
       </Dialog>
     </Box>
   );
@@ -512,19 +569,20 @@ function AddMemberModal({ open, onClose, members, currentParticipants, currentUs
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 InputProps={{
-                  startAdornment: <InputAdornment position="start"><Search size={16} /></InputAdornment>,
+                  startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16 }} /></InputAdornment>,
                   sx: { borderRadius: 2, fontSize: '0.85rem' }
                 }}
                 sx={{ mb: 2, mt: 1 }}
             />
-            <List sx={{ maxHeight: 300, overflow: 'auto', bgcolor: 'background.default', borderRadius: 2 }}>
+            <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+            <List sx={{ bgcolor: 'background.default', borderRadius: 2 }}>
                {availableMembers.map((m: User) => (
                   <ListItem 
                     key={m.id} 
                     secondaryAction={
-                        <IconButton edge="end" size="small" color="primary" onClick={() => onAdd(m.id)}>
-                            <Plus size={18} />
-                        </IconButton>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => onAdd(m.id)}>
+                              <AddIcon sx={{ fontSize: 18 }} />
+                          </Button>
                     }
                     sx={{ '&:hover': { bgcolor: 'action.hover' }, borderRadius: 1, mx: 1, width: 'auto' }}
                   >
@@ -543,6 +601,7 @@ function AddMemberModal({ open, onClose, members, currentParticipants, currentUs
                   </Typography>
                )}
             </List>
+            </ScrollArea>
          </Box>
       </BottomSheetDialog>
    );
@@ -581,10 +640,11 @@ function EventOperationCard({
   const [showAllParticipants, setShowAllParticipants] = useState(false);
   
   const totalPower = event.participants?.reduce((acc: number, p: User) => acc + (p.power || 0), 0) || 0;
-  const glyphIcon = event.type === 'guild_war' ? Swords : CalendarDays;
+  const glyphIcon = event.type === 'guild_war' ? MilitaryTechIcon : CalendarDaysIcon;
   const glyphColor = event.type === 'guild_war'
     ? alpha(theme.palette.primary.main, 0.5)
     : alpha(theme.palette.secondary.main, 0.5);
+  const eventTypeFallbackTone = getEventTypeFallbackTone(event.type);
 
   const handleCopyRoster = () => {
     const names = event.participants
@@ -598,6 +658,11 @@ function EventOperationCard({
     event.participants,
     showAllParticipants,
   );
+  const participantCount = event.participants?.length || 0;
+  const canToggleParticipants = participantCount > 10;
+  const showExpandControl = hiddenCount > 0 && !showAllParticipants;
+  const showCollapseControl = canToggleParticipants && showAllParticipants;
+  const showActionColumn = showExpandControl || showCollapseControl || canManageParticipants;
   
   return (
     <Card sx={{ 
@@ -608,32 +673,38 @@ function EventOperationCard({
         transition: 'all 0.3s'
     }}>
       <DecorativeGlyph icon={glyphIcon} color={glyphColor} size={190} opacity={0.06} right={-30} top={-30} />
-      <CardContent sx={{ p: 3 }}>
+      <CardContent className="p-6">
          <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
             
             <Box flex={1}>
                <Stack direction="row" flexWrap="wrap" alignItems="center" justifyContent="space-between" mb={2} gap={2}>
                   <Stack direction="row" alignItems="center" spacing={1}>
-                     <Chip
-                        label={event.type.replace('_', ' ')}
-                        size="small"
-                        variant="outlined"
+                     <Badge
+                        variant="outline"
                         sx={{
                           height: 20,
                           fontSize: '0.6rem',
                           fontWeight: 900,
                           textTransform: 'uppercase',
                           letterSpacing: '0.05em',
-                           bgcolor: theme.custom?.eventTypes?.[event.type as keyof typeof theme.custom.eventTypes]?.bg || 'rgba(0,0,0,0.1)',
-                           color: theme.custom?.eventTypes?.[event.type as keyof typeof theme.custom.eventTypes]?.text || theme.palette.text.primary,
-                           borderColor: theme.custom?.eventTypes?.[event.type as keyof typeof theme.custom.eventTypes]?.main || theme.palette.divider
+                          bgcolor:
+                            theme.custom?.eventTypes?.[event.type as keyof typeof theme.custom.eventTypes]?.bg
+                            || eventTypeFallbackTone.bg,
+                          color:
+                            theme.custom?.eventTypes?.[event.type as keyof typeof theme.custom.eventTypes]?.text
+                            || eventTypeFallbackTone.text,
+                          borderColor:
+                            theme.custom?.eventTypes?.[event.type as keyof typeof theme.custom.eventTypes]?.main
+                            || eventTypeFallbackTone.border,
                          }}
-                     />
-                     {event.is_pinned && <Pin size={14} style={{ color: theme.palette.primary.main }} />}
+                     >
+                        {getEventTypeLabel(event.type, t)}
+                     </Badge>
+                     {event.is_pinned && <PushPinIcon sx={{ fontSize: 14, color: theme.palette.primary.main }} />}
                      {isUpdated && (
-                        <Chip
-                            label={t('common.label_updated')}
-                            size="small"
+                        <Badge
+                            variant="outline"
+                            className="h-[18px] text-[0.55rem] font-black"
                             sx={{
                               height: 18,
                               fontSize: '0.55rem',
@@ -642,37 +713,40 @@ function EventOperationCard({
                               color: theme.custom?.chips?.updated?.text || theme.palette.text.secondary,
                               borderColor: theme.custom?.chips?.updated?.main || theme.palette.divider
                             }}
-                        />
+                        >
+                            {t('common.label_updated')}
+                        </Badge>
                      )}
                   </Stack>
                   
                   <Stack direction="row" flexWrap="wrap" gap={2} alignItems="center">
                       {canCopy && (
-                        <Tooltip title={t('dashboard.copy_roster')}>
-                          <IconButton 
-                              size="small" 
+                        <Tooltip content={t('dashboard.copy_roster')}>
+                          <Button 
+                              size="icon"
+                              variant="outline"
                               onClick={handleCopyRoster} 
-                              sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
+                              className="h-7 w-7 rounded-md bg-background border-border"
                           >
-                              <Copy size={14} />
-                          </IconButton>
+                              <ContentCopyIcon sx={{ fontSize: 14 }} />
+                          </Button>
                         </Tooltip>
                       )}
 
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1, py: 0.5, bgcolor: 'background.default', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-                          <Zap size={12} color={theme.palette.primary.main} />
+                          <FlashOnIcon sx={{ fontSize: 12, color: theme.palette.primary.main }} />
                           <Typography variant="caption" fontWeight={900}>{formatPower(totalPower)}</Typography>
                       </Box>
                       
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1, py: 0.5, bgcolor: 'background.default', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-                          <Users size={12} />
+                          <GroupsIcon sx={{ fontSize: 12 }} />
                           <Typography variant="caption" fontWeight={900} color={isFull ? 'error.main' : 'text.primary'}>
                               {event.participants?.length || 0} / {event.capacity || '∞'}
                           </Typography>
                       </Box>
 
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Clock size={12} />
+                          <AccessTimeIcon sx={{ fontSize: 12 }} />
                           <Typography variant="caption" fontWeight={900} textTransform="uppercase">
                               {formatDateTime(event.start_time, timezoneOffset)}
                           </Typography>
@@ -692,113 +766,136 @@ function EventOperationCard({
                   />
                </Box>
                
-               <Box sx={{ 
-                   display: 'grid', 
-                   gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }, 
-                   gap: 1.5 
-               }} data-testid="participant-grid">
-                  {visibleParticipants.map((p: User) => {
-                     const primaryClassRaw = p.classes?.[0] || '';
-                     const cardBaseColor = getClassBaseColor(primaryClassRaw);
-                     const pillBaseColor = cardBaseColor;
+               <Box
+                 sx={{
+                   display: 'grid',
+                   gridTemplateColumns: { xs: '1fr', md: showActionColumn ? '1fr auto' : '1fr' },
+                   gap: 1.5,
+                 }}
+               >
+                 <Box
+                   sx={{
+                     display: 'grid',
+                     gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(5, minmax(0, 1fr))' },
+                     gap: 1.5,
+                   }}
+                   data-testid="participant-grid"
+                 >
+                  {visibleParticipants.map((p) => {
+                     const participant = p as User;
+                     const primaryClass = participant.classes?.[0] as ClassType | undefined;
+                     const accentColors = getMemberCardAccentColors(participant.classes as ClassType[] | undefined, theme);
+                     const cardBaseColor = accentColors[0];
+                     const classTone = getClassPillTone(primaryClass, theme);
+                     const classLabel = primaryClass ? formatClassDisplayName(primaryClass) : t('common.unknown');
 
                      return (
-                     <Box 
-                        key={p.id} 
+                     <Box
+                        key={participant.id} 
                         sx={{ 
                             position: 'relative',
-                            p: 1.5, 
+                            p: 1.25,
+                            pr: 1,
                             borderRadius: 2, 
-                            bgcolor: alpha(cardBaseColor, 0.1),
+                            overflow: 'hidden',
+                            bgcolor: alpha(cardBaseColor, 0.24),
                             border: '1px solid', 
-                            borderColor: alpha(cardBaseColor, 0.35),
+                            borderColor: alpha(cardBaseColor, 0.42),
                             transition: 'all 0.2s',
+                            '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                inset: 0,
+                                background: buildMemberAccentGradient(accentColors),
+                                pointerEvents: 'none',
+                            },
                             '&:hover': {
-                                boxShadow: 1
+                                boxShadow: 1.5,
+                                transform: 'translateY(-1px)'
                             }
                         }}
                      >
-                        <Stack spacing={1} overflow="hidden">
-                           <Stack direction="row" alignItems="center" justifyContent="space-between">
-                               <Typography variant="body2" noWrap sx={{ fontWeight: 800 }}>{p.username}</Typography>
-                               {canManageParticipants && (
-                                  <IconButton 
-                                      size="small" 
-                                      onClick={(e) => { e.stopPropagation(); onKick(p.id, p.username); }}
-                                      sx={{ 
-                                          p: 0.5, 
-                                          color: 'text.secondary',
-                                          '&:hover': { color: 'error.main' }
-                                      }}
-                                  >
-                                      <LogOut size={12} />
-                                  </IconButton>
-                               )}
-                           </Stack>
-                           
-                           <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" gap={0.5}>
-                               {p.classes && p.classes.length > 0 && (
-                                  <Box sx={{
-                                      px: 1, py: 0.25, borderRadius: 4,
-                                      fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase',
-                                      bgcolor: alpha(pillBaseColor, 0.18),
-                                      color: theme.palette.getContrastText(pillBaseColor),
-                                      border: 1,
-                                      borderColor: alpha(pillBaseColor, 0.45)
-                                  }}>
-                                      {formatClassDisplayName(primaryClassRaw)}
-                                  </Box>
-                               )}
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1.2} sx={{ position: 'relative', zIndex: 1 }}>
+                           <Box sx={{ minWidth: 0, flex: 1 }}>
+                             <Typography variant="body2" noWrap sx={{ fontWeight: 900, color: 'common.white', mb: 0.5 }}>
+                               {participant.username}
+                             </Typography>
+                             <Stack direction="row" spacing={0.6} sx={{ alignItems: 'center', flexWrap: 'nowrap' }}>
                                <Box sx={{
-                                   px: 1, py: 0.25, borderRadius: 4,
-                                   fontSize: '0.6rem', fontWeight: 700, fontFamily: 'monospace',
-                                   bgcolor: theme.custom?.warRoles.lead.bg,
-                                   color: theme.custom?.warRoles.lead.text,
+                                   px: 1, py: 0.15, borderRadius: 6,
+                                   fontSize: '0.62rem', fontWeight: 900, lineHeight: 1.2,
+                                   bgcolor: classTone.bg,
+                                   color: classTone.text,
                                    border: 1,
-                                   borderColor: alpha(theme.custom?.warRoles.lead.main as string, 0.3)
+                                   borderColor: alpha(classTone.main, 0.55)
                                }}>
-                                   {formatPower(p.power)}
+                                   {classLabel}
+                               </Box>
+                               <Box sx={{
+                                   px: 1, py: 0.15, borderRadius: 6,
+                                   fontSize: '0.62rem', fontWeight: 800, lineHeight: 1.2, fontFamily: 'monospace',
+                                  bgcolor: alpha(theme.palette.primary.light, 0.14),
+                                  color: 'common.white',
+                                  border: 1,
+                                  borderColor: alpha(theme.palette.primary.light, 0.4),
+                                  flexShrink: 0,
+                               }}>
+                                   {formatPower(participant.power)}
                                 </Box>
-                           </Stack>
+                             </Stack>
+                           </Box>
+                           {canManageParticipants && (
+                             <Button 
+                                size="icon"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onKick(participant.id, participant.username);
+                                }}
+                                className="h-7 w-7 rounded-md bg-destructive/10 border-destructive/75 text-destructive hover:bg-destructive/20"
+                              >
+                                <LogoutIcon sx={{ fontSize: 12 }} />
+                              </Button>
+                           )}
                         </Stack>
                      </Box>
                   )})}
-                  
-                  {hiddenCount > 0 && !showAllParticipants && (
-                     <Button
-                        variant="outlined"
-                        onClick={() => setShowAllParticipants(true)}
-                        sx={{
-                            borderStyle: 'dashed',
-                            borderRadius: 2,
-                            color: 'text.secondary',
-                            borderColor: 'divider',
-                            minHeight: 80,
-                            fontWeight: 900,
-                        }}
-                     >
-                         +{hiddenCount}
-                     </Button>
-                  )}
+                 </Box>
 
-                  {canManageParticipants && (
-                     <Button 
-                        variant="outlined" 
-                        onClick={onAdd}
-                        sx={{ 
-                            borderStyle: 'dashed', 
-                            flexDirection: 'column', 
-                            gap: 0.5,
-                            borderRadius: 2,
-                            color: 'text.secondary',
-                            borderColor: 'divider',
-                            minHeight: 80
-                        }}
-                     >
-                         <Plus size={16} />
-                         <Typography variant="caption" fontWeight={900}>{t('events.add_operative')}</Typography>
-                     </Button>
-                  )}
+                 {showActionColumn && (
+                   <Stack sx={{ minWidth: { md: 92 } }} spacing={1}>
+                     {showExpandControl && (
+                       <Button
+                         variant="outline"
+                         onClick={() => setShowAllParticipants(true)}
+                         className="border-dashed rounded-lg text-muted-foreground border-border min-h-[80px] font-black"
+                       >
+                         {t('events.expand_members', { count: hiddenCount })}
+                       </Button>
+                     )}
+
+                     {showCollapseControl && (
+                       <Button
+                         variant="outline"
+                         onClick={() => setShowAllParticipants(false)}
+                         className="border-dashed rounded-lg text-muted-foreground border-border min-h-[80px] font-black"
+                       >
+                         {t('events.collapse_members')}
+                       </Button>
+                     )}
+
+                     {canManageParticipants && (
+                       <Button
+                          variant="outline"
+                          onClick={onAdd}
+                          className="border-dashed flex-col gap-1 rounded-lg text-muted-foreground border-border min-h-[80px] font-black"
+                       >
+                           <AddIcon sx={{ fontSize: 16 }} />
+                           <Typography variant="caption" fontWeight={900}>{t('events.add_operative')}</Typography>
+                       </Button>
+                     )}
+                   </Stack>
+                 )}
                </Box>
             </Box>
             
@@ -814,91 +911,72 @@ function EventOperationCard({
                 }}
             >
                {user && canJoin && !event.is_archived && (
-                 <Button 
-                    fullWidth 
-                    size="large"
-                    variant={isJoined ? "outlined" : "contained"}
-                    color={isJoined ? "error" : "primary"}
-                    onClick={isJoined ? onLeave : onJoin}
-                    disabled={!online || event.is_locked || (!isJoined && isFull)}
-                    startIcon={isJoined ? <UserMinus size={16} /> : <UserPlus size={16} />}
-                    sx={{ height: 56, fontWeight: 900, borderRadius: 3, letterSpacing: '0.1em' }}
-                 >
-                    {isJoined ? t('events.withdraw') : t('events.enlist')}
-                 </Button>
+                  <Button 
+                     className={cn("w-full h-14 font-black rounded-xl tracking-widest", isJoined ? "border-destructive text-destructive hover:bg-destructive/10" : "")}
+                     size="lg"
+                     variant={isJoined ? "outline" : "default"}
+                     onClick={isJoined ? onLeave : onJoin}
+                     disabled={!online || event.is_locked || (!isJoined && isFull)}
+                  >
+                     {isJoined ? <PersonRemoveIcon sx={{ fontSize: 18 }} className="mr-2" /> : <PersonAddIcon sx={{ fontSize: 18 }} className="mr-2" />}
+                     {isJoined ? t('events.withdraw') : t('events.enlist')}
+                  </Button>
                )}
                {(canEdit || canPin || canLock || canArchive || canDelete) && (
                    <Stack direction="row" spacing={1} justifyContent="center">
                        {canEdit && (
-                         <Tooltip title={t('common.edit')}>
-                          <IconButton size="small" sx={{ bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
-                             <Edit size={16} />
-                          </IconButton>
+                         <Tooltip content={t('common.edit')}>
+                          <Button size="icon" variant="outline" className="h-7 w-7 bg-accent/50 border-border">
+                             <EditIcon sx={{ fontSize: 16 }} />
+                          </Button>
                         </Tooltip>
                        )}
                       {canPin && (
-                        <Tooltip title={event.is_pinned ? t('common.unpin') : t('common.pin')}>
-                          <IconButton 
-                            size="small" 
-                            onClick={onTogglePin}
-                            sx={{ 
-                                bgcolor: event.is_pinned ? alpha(theme.palette.primary.main, 0.2) : 'action.hover',
-                                border: '1px solid',
-                                borderColor: event.is_pinned ? alpha(theme.palette.primary.main, 0.5) : 'divider',
-                                color: event.is_pinned ? theme.palette.primary.light : 'text.secondary'
-                            }}
-                          >
-                             <Pin size={16} />
-                          </IconButton>
+                        <Tooltip content={event.is_pinned ? t('common.unpin') : t('common.pin')}>
+                          <Button 
+                             size="icon" 
+                             variant="outline"
+                             onClick={onTogglePin}
+                             className={cn("h-7 w-7 border", event.is_pinned ? "bg-primary/20 border-primary/50 text-primary" : "bg-accent/50 border-border text-muted-foreground")}
+                           >
+                              <PushPinIcon sx={{ fontSize: 16 }} />
+                           </Button>
                         </Tooltip>
                       )}
                       {canLock && (
-                        <Tooltip title={event.is_locked ? t('common.unlock') : t('common.lock')}>
-                          <IconButton 
-                            size="small" 
-                            onClick={onToggleLock}
-                            sx={{ 
-                                bgcolor: event.is_locked ? alpha(theme.palette.error.main, 0.2) : 'action.hover',
-                                border: '1px solid',
-                                borderColor: event.is_locked ? alpha(theme.palette.error.main, 0.5) : 'divider',
-                                color: event.is_locked ? theme.palette.error.light : 'text.secondary'
-                            }}
-                          >
-                             {event.is_locked ? <Lock size={16} /> : <LockOpen size={16} />}
-                          </IconButton>
+                        <Tooltip content={event.is_locked ? t('common.unlock') : t('common.lock')}>
+                          <Button 
+                             size="icon" 
+                             variant="outline"
+                             onClick={onToggleLock}
+                             className={cn("h-7 w-7 border", event.is_locked ? "bg-destructive/20 border-destructive/50 text-destructive" : "bg-accent/50 border-border text-muted-foreground")}
+                           >
+                              {event.is_locked ? <LockIcon sx={{ fontSize: 16 }} /> : <LockOpenIcon sx={{ fontSize: 16 }} />}
+                           </Button>
                         </Tooltip>
                       )}
                       {canArchive && (
-                        <Tooltip title={event.is_archived ? t('announcements.restore') : t('announcements.archive')}>
-                          <IconButton 
-                            size="small" 
-                            onClick={onToggleArchive}
-                            sx={{ 
-                                bgcolor: event.is_archived ? alpha(theme.palette.warning.main, 0.18) : 'action.hover',
-                                border: '1px solid',
-                                borderColor: event.is_archived ? alpha(theme.palette.warning.main, 0.5) : 'divider',
-                                color: event.is_archived ? theme.palette.warning.main : 'text.secondary'
-                            }}
-                          >
-                             <Archive size={16} />
-                          </IconButton>
+                        <Tooltip content={event.is_archived ? t('announcements.restore') : t('announcements.archive')}>
+                          <Button 
+                             size="icon" 
+                             variant="outline"
+                             onClick={onToggleArchive}
+                             className={cn("h-7 w-7 border", event.is_archived ? "bg-warning-main/18 border-warning-main/50 text-warning-main" : "bg-accent/50 border-border text-muted-foreground")}
+                           >
+                              <ArchiveIcon sx={{ fontSize: 16 }} />
+                           </Button>
                         </Tooltip>
                       )}
                       {canDelete && (
-                        <Tooltip title={t('common.delete')}>
-                          <IconButton 
-                            size="small" 
-                            onClick={onDelete}
-                            sx={{ 
-                                bgcolor: alpha(theme.palette.error.main, 0.05), 
-                                border: '1px solid',
-                                borderColor: alpha(theme.palette.error.main, 0.2),
-                                color: 'error.main',
-                                '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.1), borderColor: 'error.main' } 
-                            }}
-                          >
-                             <Trash2 size={16} />
-                          </IconButton>
+                        <Tooltip content={t('common.delete')}>
+                          <Button 
+                             size="icon" 
+                             variant="outline"
+                             onClick={onDelete}
+                             className="h-7 w-7 bg-destructive/5 border-destructive/20 text-destructive hover:bg-destructive/10 hover:border-destructive"
+                           >
+                              <DeleteIcon sx={{ fontSize: 16 }} />
+                           </Button>
                         </Tooltip>
                       )}
                    </Stack>

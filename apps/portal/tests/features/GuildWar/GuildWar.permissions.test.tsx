@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canCopyGuildWarAnalytics,
+  canManageGuildWarFormula,
   canManageGuildWarActive,
   canViewGuildWarMemberDetail,
   canViewGuildWarAnalytics,
@@ -29,5 +30,12 @@ describe('Guild War permissions', () => {
     expect(canViewGuildWarMemberDetail('moderator')).toBe(true);
     expect(canViewGuildWarMemberDetail('member')).toBe(false);
     expect(canViewGuildWarMemberDetail('external')).toBe(false);
+  });
+
+  it('restricts analytics formula editor to admin only', () => {
+    expect(canManageGuildWarFormula('admin')).toBe(true);
+    expect(canManageGuildWarFormula('moderator')).toBe(false);
+    expect(canManageGuildWarFormula('member')).toBe(false);
+    expect(canManageGuildWarFormula('external')).toBe(false);
   });
 });

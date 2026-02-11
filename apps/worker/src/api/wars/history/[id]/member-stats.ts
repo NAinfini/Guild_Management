@@ -47,22 +47,50 @@ export const onRequestGet = createEndpoint<MemberStatsResponse>({
       throw notFoundResponse('War history');
     }
 
-    // Fetch stats with joins for username
-    // Note: We map to WarMemberStatDTO manually to ensure type safety
+    // Fetch rows for all war participants (event team members + existing stat rows).
+    // This prevents empty UI tables when stats have not been filled yet.
     const statsResult = await env.DB
       .prepare(`
-        SELECT 
-          wms.war_id, wms.user_id, wms.kills, wms.deaths, wms.assists, 
-          wms.damage, wms.healing, wms.building_damage, wms.damage_taken, 
-          wms.credits, wms.note, wms.created_at_utc, wms.updated_at_utc,
+        WITH participant_ids AS (
+          SELECT tm.user_id
+          FROM war_history wh
+          JOIN event_teams et ON et.event_id = wh.event_id
+          JOIN team_members tm ON tm.team_id = et.team_id
+          WHERE wh.war_id = ?
+          UNION
+          SELECT wms.user_id
+          FROM war_member_stats wms
+          WHERE wms.war_id = ?
+        )
+        SELECT
+          ? AS war_id,
+          p.user_id,
+          wms.kills,
+          wms.deaths,
+          wms.assists,
+          wms.damage,
+          wms.healing,
+          wms.building_damage,
+          wms.damage_taken,
+          wms.credits,
+          wms.note,
+          wms.created_at_utc,
+          wms.updated_at_utc,
           u.username,
-          (SELECT class_code FROM member_classes mc WHERE mc.user_id = u.user_id ORDER BY sort_order LIMIT 1) as class_code
-        FROM war_member_stats wms
-        JOIN users u ON wms.user_id = u.user_id
-        WHERE wms.war_id = ?
+          (
+            SELECT class_code
+            FROM member_classes mc
+            WHERE mc.user_id = u.user_id
+            ORDER BY sort_order
+            LIMIT 1
+          ) as class_code
+        FROM participant_ids p
+        JOIN users u ON u.user_id = p.user_id
+        LEFT JOIN war_member_stats wms
+          ON wms.war_id = ? AND wms.user_id = p.user_id
         ORDER BY u.username
       `)
-      .bind(warId)
+      .bind(warId, warId, warId, warId)
       .all<any>();
 
     const stats: WarMemberStatDTO[] = (statsResult.results || []).map(row => ({

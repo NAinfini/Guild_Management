@@ -3,7 +3,7 @@
  * Typed methods for admin operations with Domain Mapping
  */
 
-import { api } from '../api-client';
+import { typedAPI } from './api-builder';
 import type { AuditLogEntry } from '../../types';
 
 // ============================================================================
@@ -74,15 +74,9 @@ export const adminAPI = {
     if (params?.cursor) queryParams.cursor = params.cursor;
     if (params?.limit) queryParams.limit = String(params.limit);
 
-    // Using untyped api.get temporarily if typedAPI definitions lag, or typedAPI
-    // typedAPI.admin.listAuditLogs<{ logs: AuditLogEntryDTO[]; next_cursor?: string }...>
-    // Assuming typedAPI is available and updated (which we define in endpoints.ts)
-    // However, I need to check if 'typedAPI' is imported. It's not in the original file.
-    // I will stick to 'api' client for now to avoid breaking imports unless I add the import.
-    // But better to use typedAPI if possible. Let's try to import it.
-    
-    // For now, mirroring previous behavior but with new method name
-    const response = await api.get<{ logs: AuditLogEntryDTO[]; next_cursor?: string }>('/admin/audit-logs', queryParams);
+    const response = await typedAPI.admin.listAuditLogs<{ logs: AuditLogEntryDTO[]; next_cursor?: string }>({
+      query: queryParams,
+    });
     
     return {
         logs: (response.logs || []).map(mapLogToDomain),
@@ -98,28 +92,30 @@ export const adminAPI = {
   addAuditLog: async (data: { entityType: string; action: string; entityId: string; diffTitle?: string; detailText?: string }) => {
       // NOTE: This endpoint might not exist in backend yet or might be restrictive (system only?)
       // The user requested "addAuditLog" key in endpoints.
-      return api.post('/admin/audit-logs', {
+      return typedAPI.admin.addAuditLog({
+        body: {
           entity_type: data.entityType,
           action: data.action,
           entity_id: data.entityId,
           diff_title: data.diffTitle,
-          detail_text: data.detailText
+          detail_text: data.detailText,
+        },
       });
   },
 
   deleteAuditLog: async (id: string) => {
-      return api.delete(`/admin/audit-logs/${id}`);
+      return typedAPI.admin.deleteAuditLog({ params: { id } });
   },
 
   getHealth: async () => {
-    return api.get<HealthStatus>('/health');
+    return typedAPI.health.check<HealthStatus>();
   },
 
   getD1Health: async () => {
-    return api.get<HealthStatus>('/health/d1');
+    return typedAPI.health.checkService<HealthStatus>({ params: { check: 'd1' } });
   },
 
   getR2Health: async () => {
-    return api.get<HealthStatus>('/health/r2');
+    return typedAPI.health.checkService<HealthStatus>({ params: { check: 'r2' } });
   },
 };

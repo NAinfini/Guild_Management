@@ -4,6 +4,7 @@
  */
 
 import { typedAPI } from './api-builder';
+import { normalizeUtcDateTime } from './date';
 import type { Event, User } from '../../types';
 
 // ============================================================================
@@ -77,13 +78,13 @@ export const mapToDomain = (dto: EventListItemDTO | EventDetailDTO): Event => {
     type: dto.type,
     title: dto.title,
     description: dto.description || '',
-    start_time: dto.start_at_utc,
-    end_time: dto.end_at_utc || undefined,
+    start_time: normalizeUtcDateTime(dto.start_at_utc) || dto.start_at_utc,
+    end_time: normalizeUtcDateTime(dto.end_at_utc) || dto.end_at_utc || undefined,
     capacity: dto.capacity || undefined,
     is_pinned: !!dto.is_pinned,
     is_archived: !!dto.is_archived,
     is_locked: !!dto.signup_locked,
-    updated_at: dto.updated_at_utc,
+    updated_at: normalizeUtcDateTime(dto.updated_at_utc) || dto.updated_at_utc,
     participants: participants
   };
 };

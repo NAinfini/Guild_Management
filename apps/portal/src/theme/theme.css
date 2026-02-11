@@ -1,0 +1,80 @@
+:root {
+  /* Dynamic tokens are injected by ThemeController.tsx */
+  /* Fallbacks for SSR or initial load */
+  --theme-font-scale: 1;
+  --theme-font-size-base: 16px;
+  --theme-font-size: calc(var(--theme-font-size-base) * var(--theme-font-scale));
+  --theme-motion-intensity: 1;
+  --motionFast: var(--theme-motion-fast, 180ms);
+  --ease: var(--theme-motion-easing, cubic-bezier(0.22, 1, 0.36, 1));
+
+  /* Semantic token fallbacks */
+  --sys-surface-page: var(--color-bg-primary, #0b1020);
+  --sys-surface-panel: var(--color-surface-default, #121830);
+  --sys-surface-elevated: var(--color-surface-elevated, #1a2240);
+  --sys-surface-sunken: var(--color-bg-secondary, #070b17);
+  --sys-text-primary: var(--color-text-primary, #e6ebff);
+  --sys-text-secondary: var(--color-text-secondary, #a8b3d1);
+  --sys-text-tertiary: var(--color-text-tertiary, #7d89aa);
+  --sys-text-inverse: var(--color-text-inverse, #0b1020);
+  --sys-text-link: var(--color-text-link, #6ea8ff);
+  --sys-border-default: var(--color-border-default, #2f3b5e);
+  --sys-border-strong: var(--color-border-strong, #5f6f99);
+  --sys-border-subtle: var(--color-border-subtle, #222d4b);
+  --sys-interactive-accent: var(--color-accent-primary, #6b8cff);
+  --sys-interactive-hover: rgba(107, 140, 255, 0.2);
+  --sys-interactive-active: rgba(107, 140, 255, 0.3);
+  --sys-interactive-focus-ring: rgba(107, 140, 255, 0.66);
+  --color-accent-primary-fg: var(--color-text-inverse, #ffffff);
+  --color-status-success-fg: #065f46;
+  --color-status-warning-fg: #92400e;
+  --color-status-error-fg: #991b1b;
+  --color-status-info-fg: #1e3a8a;
+
+  /* Component token fallbacks */
+  --cmp-button-bg: var(--sys-interactive-accent);
+  --cmp-button-text: var(--sys-text-inverse);
+  --cmp-button-border: var(--sys-border-strong);
+  --cmp-button-hover-bg: var(--sys-interactive-hover);
+  --cmp-button-active-bg: var(--sys-interactive-active);
+  --cmp-button-radius: 12px;
+  --cmp-card-bg: var(--sys-surface-panel);
+  --cmp-card-border: var(--sys-border-default);
+  --cmp-card-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
+  --cmp-card-radius: 14px;
+  --cmp-input-bg: var(--sys-surface-elevated);
+  --cmp-input-text: var(--sys-text-primary);
+  --cmp-input-border: var(--sys-border-default);
+  --cmp-input-focus-border: var(--sys-interactive-accent);
+  --cmp-input-placeholder: var(--sys-text-secondary);
+  --cmp-input-radius: 12px;
+  --cmp-table-header-bg: var(--sys-surface-elevated);
+  --cmp-table-row-bg: var(--sys-surface-panel);
+  --cmp-table-row-hover-bg: var(--sys-interactive-hover);
+  --cmp-table-border: var(--sys-border-default);
+  --cmp-chip-bg: var(--sys-interactive-hover);
+  --cmp-chip-text: var(--sys-interactive-accent);
+  --cmp-chip-border: var(--sys-border-default);
+  --cmp-nav-bg: var(--sys-surface-page);
+  --cmp-nav-item-bg: var(--sys-surface-panel);
+  --cmp-nav-item-hover-bg: var(--sys-interactive-hover);
+  --cmp-nav-item-active-bg: var(--sys-interactive-active);
+  --cmp-nav-border: var(--sys-border-default);
+  --cmp-dialog-bg: var(--sys-surface-panel);
+  --cmp-dialog-border: var(--sys-border-strong);
+  --cmp-dialog-shadow: 0 20px 52px rgba(0, 0, 0, 0.42);
+  --cmp-dialog-radius: 16px;
+}
+
+html {
+  font-size: var(--theme-font-size);
+}
+
+[data-theme-switching="true"] * {
+  transition-duration: 220ms !important;
+}
+
+.theme-scope[data-theme] {
+  background-image: var(--theme-bg-pattern);
+  background-size: var(--theme-bg-size);
+}

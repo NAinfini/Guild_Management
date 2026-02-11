@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   Card, 
@@ -15,16 +14,16 @@ import {
   alpha
 } from '@mui/material';
 import { 
-  RefreshCw, 
+  Refresh, 
   Palette, 
-  Type, 
-  Sparkles,
+  TextFields, 
+  AutoAwesome,
   Layers,
-  Zap,
+  ElectricBolt,
   Check,
-  Copy,
-  Wrench
-} from 'lucide-react';
+  ContentCopy,
+  Build
+} from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { sanitizeHtml } from '../../../lib/utils';
 
@@ -94,7 +93,7 @@ export function StyleBuilder() {
                   title={<Typography variant="h6" fontWeight={900} fontStyle="italic" textTransform="uppercase">{t('tools.builder_title')}</Typography>}
                   subheader={<Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.1em" color="text.secondary">{t('tools.builder_subtitle')}</Typography>}
                   action={
-                     <Button size="small" variant="text" onClick={reset} startIcon={<RefreshCw size={14} />} sx={{ fontWeight: 900 }}>
+                     <Button size="small" variant="text" onClick={reset} startIcon={<Refresh sx={{ fontSize: 14 }} />} sx={{ fontWeight: 900 }}>
                         {t('common.reset')}
                      </Button>
                   }
@@ -112,7 +111,7 @@ export function StyleBuilder() {
                      
                      <Box>
                         <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary" display="block" mb={2} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                           <Palette size={14} /> {t('tools.color_pick')}
+                           <Palette sx={{ fontSize: 14 }} /> {t('tools.color_pick')}
                         </Typography>
                         <Grid container spacing={1}>
                            {colors.map(c => (
@@ -139,14 +138,14 @@ export function StyleBuilder() {
 
                      <Box>
                         <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary" display="block" mb={2} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                           <Layers size={14} /> {t('tools.style_options')}
+                           <Layers sx={{ fontSize: 14 }} /> {t('tools.style_options')}
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-                           <StyleChip icon={Type} label={t('tools.bold')} active={isBold} onClick={() => setIsBold(!isBold)} />
-                           <StyleChip icon={Type} label={t('tools.italic')} active={isItalic} onClick={() => setIsItalic(!isItalic)} />
-                           <StyleChip icon={Sparkles} label={t('tools.glow')} active={hasGlow} onClick={() => setHasGlow(!hasGlow)} />
-                           <StyleChip icon={Sparkles} label={t('tools.shadow')} active={hasShadow} onClick={() => setHasShadow(!hasShadow)} />
-                           <StyleChip icon={Zap} label={t('tools.gradient')} active={hasGradient} onClick={() => setHasGradient(!hasGradient)} />
+                           <StyleChip icon={TextFields} label={t('tools.bold')} active={isBold} onClick={() => setIsBold(!isBold)} />
+                           <StyleChip icon={TextFields} label={t('tools.italic')} active={isItalic} onClick={() => setIsItalic(!isItalic)} />
+                           <StyleChip icon={AutoAwesome} label={t('tools.glow')} active={hasGlow} onClick={() => setHasGlow(!hasGlow)} />
+                           <StyleChip icon={AutoAwesome} label={t('tools.shadow')} active={hasShadow} onClick={() => setHasShadow(!hasShadow)} />
+                           <StyleChip icon={ElectricBolt} label={t('tools.gradient')} active={hasGradient} onClick={() => setHasGradient(!hasGradient)} />
                         </Box>
                      </Box>
                   </Stack>
@@ -165,7 +164,7 @@ export function StyleBuilder() {
                         <Typography variant="h3" sx={{ wordBreak: 'break-word', textAlign: 'center' }}>
                             <span dangerouslySetInnerHTML={sanitizeHtml(generatedHtml)} />
                         </Typography>
-                        <Wrench style={{ position: 'absolute', bottom: -20, right: -20, width: 160, height: 160, opacity: 0.05, transform: 'rotate(-45deg)' }} />
+                        <Build sx={{ position: 'absolute', bottom: -20, right: -20, width: 160, height: 160, opacity: 0.05, transform: 'rotate(-45deg)' }} />
                     </Box>
                 </Card>
 
@@ -177,7 +176,7 @@ export function StyleBuilder() {
                             variant="contained" 
                             color={isCopied ? 'success' : 'primary'} 
                             onClick={handleCopy} 
-                            startIcon={isCopied ? <Check size={16} /> : <Copy size={16} />}
+                            startIcon={isCopied ? <Check sx={{ fontSize: 16 }} /> : <ContentCopy sx={{ fontSize: 16 }} />}
                             sx={{ fontWeight: 900 }}
                          >
                             {isCopied ? t('common.copied') : t('tools.copy_cipher')}
@@ -203,7 +202,7 @@ function StyleChip({ icon: Icon, label, active, onClick }: any) {
     const theme = useTheme();
     return (
         <Chip 
-            icon={<Icon size={14} color={active ? theme.palette.primary.contrastText : theme.palette.text.secondary} />} 
+            icon={<Icon sx={{ fontSize: 14, color: active ? theme.palette.primary.contrastText : theme.palette.text.secondary }} />} 
             label={label} 
             onClick={onClick} 
             variant={active ? 'filled' : 'outlined'} 

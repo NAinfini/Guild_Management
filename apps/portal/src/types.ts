@@ -122,7 +122,7 @@ export interface WarMemberStat {
 export interface WarTeam {
   id: string;
   name: string;
-  members: { user_id: string; role_tag?: string }[];
+  members: { user_id: string; role_tag?: string; username?: string }[];
   note?: string;
   is_locked?: boolean;
 }
@@ -135,6 +135,9 @@ export interface WarHistoryEntry {
   result: 'victory' | 'defeat' | 'draw' | 'pending';
   score?: number;
   enemy_score?: number;
+  opponent_name?: string;
+  total_stars?: number;
+  total_attacks?: number;
   own_stats: { kills: number; towers: number; base_hp: number; credits: number; distance?: number };
   enemy_stats: { kills: number; towers: number; base_hp: number; credits: number; distance?: number };
   teams_snapshot: WarTeam[];

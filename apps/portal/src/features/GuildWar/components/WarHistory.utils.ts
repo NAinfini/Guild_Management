@@ -29,8 +29,11 @@ export function buildWarCardMetrics(war: WarHistoryEntry) {
     deaths,
     assists,
     kda: formatKdaRatio(kills, deaths, assists),
-    credits: war.own_stats?.credits || 0,
-    distance: war.own_stats?.distance || 0,
-    towers: war.own_stats?.towers || 0,
+    ownCredits: war.own_stats?.credits || 0,
+    enemyCredits: war.enemy_stats?.credits || 0,
+    ownDistance: war.own_stats?.distance || 0,
+    enemyDistance: war.enemy_stats?.distance || 0,
+    ownTowers: war.own_stats?.towers || 0,
+    enemyTowers: war.enemy_stats?.towers || 0,
   };
 }

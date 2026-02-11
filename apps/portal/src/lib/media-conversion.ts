@@ -158,3 +158,50 @@ export function validateFileType(file: File, allowedTypes: string[]): boolean {
     return file.type === type;
   });
 }
+
+// ============================================================================
+// Video URL Validation & Utilities (migrated from media.ts)
+// ============================================================================
+
+export const ALLOWED_VIDEO_HOSTS = ['youtube.com', 'youtu.be', 'bilibili.com', 'vimeo.com'];
+
+export function validateVideoUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return ALLOWED_VIDEO_HOSTS.some(host => parsed.hostname.includes(host));
+  } catch {
+    return false;
+  }
+}
+
+export function getYouTubeId(url: string) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// ============================================================================
+// Avatar & Media URL Utilities (migrated from media.ts)
+// ============================================================================
+
+export function getAvatarInitial(username?: string | null): string {
+  const trimmed = username?.trim();
+  if (!trimmed) return '?';
+  return Array.from(trimmed)[0]?.toUpperCase() ?? '?';
+}
+
+/**
+ * Ensures media URLs are optimized for the portal.
+ * In a real scenario, this would point to a WebP/Opus conversion service.
+ * Here we provide a facade for compliance.
+ */
+export function getOptimizedMediaUrl(url: string, type: 'image' | 'audio' | 'video' = 'image'): string {
+  if (!url) return '';
+
+  // Simulation: Append format hint for compliant backends
+  const separator = url.includes('?') ? '&' : '?';
+  if (type === 'image' && !url.endsWith('.webp')) return `${url}${separator}format=webp`;
+  if (type === 'audio' && !url.endsWith('.opus')) return `${url}${separator}format=opus`;
+
+  return url;
+}

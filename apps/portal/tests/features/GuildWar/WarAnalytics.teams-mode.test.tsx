@@ -27,6 +27,10 @@ vi.mock('@/hooks', () => ({
     },
     isLoading: false,
   }),
+  useWarHistoryDetail: () => ({
+    data: null,
+    isLoading: false,
+  }),
 }));
 
 describe('WarAnalytics teams mode', () => {
@@ -34,7 +38,7 @@ describe('WarAnalytics teams mode', () => {
     const user = userEvent.setup();
     render(<WarAnalyticsMain canCopy={false} />);
 
-    await user.click(screen.getByText(/^Teams$/));
+    await user.click(screen.getByRole('tab', { name: 'guild_war.analytics_mode_teams_desc' }));
 
     expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
   });

@@ -1,57 +1,41 @@
 
-import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { useFilteredList } from '../../hooks/useFilteredList';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
+import { isWithinInterval, formatDistanceToNow } from 'date-fns';
+import { getOptimizedMediaUrl, getAvatarInitial } from '@/lib/media-conversion';
+import { sanitizeHtml, cn } from '@/lib/utils';
+import { useOnline } from '@/hooks/useOnline';
+import { useFilteredList } from '@/hooks/useFilteredList';
+import type { User } from '@/types';
+import { formatPower } from '@/lib/utils';
+import { RosterFilterPanel } from './components/RosterFilterPanel';
 import {
   Card,
   CardContent,
   Button,
-  Chip,
-  Typography,
-  Box,
-  Stack,
-  IconButton,
-  Dialog,
-  TextField,
+  Badge,
   Slider,
-  Grid,
-  InputAdornment,
-  ToggleButton,
-  ToggleButtonGroup,
-  useTheme,
-  useMediaQuery,
-  alpha,
-  Paper,
-  Badge
-} from '@mui/material';
-import { 
-  ChevronDown,
-  ChevronUp,
-  Users,
-  Filter,
-  Volume2,
-  VolumeX,
-  Image as ImageIcon,
-  X,
-  Zap,
-  ChevronLeft,
-  ChevronRight,
-  Play,
-} from 'lucide-react';
-import { PageFilterBar, type FilterOption } from '../../components/PageFilterBar';
-import { useUIStore, useAuthStore } from '../../store';
-import { useNavigate } from '@tanstack/react-router';
-import { useTranslation } from 'react-i18next';
-import { useEffect } from 'react';
-import { User } from '../../types';
-import { motion, AnimatePresence } from 'motion/react';
-import { cn, getClassColor, formatPower, sanitizeHtml, getOptimizedMediaUrl, getAvatarInitial } from '../../lib/utils';
-import { formatDistanceToNow, isWithinInterval } from 'date-fns';
-import { Skeleton } from '@mui/material';
-import { RosterFilterPanel } from './components/RosterFilterPanel';
-import { MarkdownContent } from '../../components/MarkdownContent';
+  Skeleton,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@/components';
+
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import ImageIcon from '@mui/icons-material/Image';
+import CloseIcon from '@mui/icons-material/Close';
+import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PeopleIcon from '@mui/icons-material/People';
+
+import { PageFilterBar, MarkdownContent } from '@/components';
+import { useUIStore } from '../../store';
 import type { RosterFilterState } from '../../hooks/useFilterPresets';
 import { useMembers } from '../../hooks/useServerState';
-import { CardGridSkeleton } from '../../components/SkeletonLoaders';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { membersAPI } from '../../lib/api';
 
@@ -64,7 +48,7 @@ function getAvailabilityStatus(member: User): 'active' | 'inactive' | 'unknown' 
       const start = new Date(member.vacation_start);
       const end = new Date(member.vacation_end);
       if (isWithinInterval(now, { start, end })) {
-        return 'inactive'; // Or 'vacation' if we supported that status explicitly
+        return 'inactive';
       }
     } catch {
       console.warn('Invalid vacation dates for member', member.id);
@@ -86,8 +70,6 @@ function getAvailabilityStatus(member: User): 'active' | 'inactive' | 'unknown' 
           const startTotal = startH * 60 + startM;
           const endTotal = endH * 60 + endM;
           
-          // Handle overflow (e.g. 23:00 to 02:00) - complex, assuming same day for simple MVP
-          // For cross-midnight, simple check:
           if (endTotal < startTotal) {
              return currentTime >= startTotal || currentTime <= endTotal;
           }
@@ -96,7 +78,6 @@ function getAvailabilityStatus(member: User): 'active' | 'inactive' | 'unknown' 
       });
       return isAvailable ? 'active' : 'inactive';
     }
-    // If availability is defined but not for today, they are likely inactive right now
     return 'inactive';
   }
 
@@ -184,13 +165,9 @@ function useGlobalAudio() {
 }
 
 export function Roster() {
-  // ✅ TanStack Query: Auto-fetches and caches members
   const { data: members = [], isLoading } = useMembers();
   const { audioSettings, setAudioSettings, setPageTitle } = useUIStore();
   const { t } = useTranslation();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const audioController = useGlobalAudio();
 
   useEffect(() => {
@@ -215,26 +192,6 @@ export function Roster() {
     storage.set(STORAGE_KEYS.ROSTER_FILTERS, filters);
   }, [filters]);
 
-  const isXl = useMediaQuery(theme.breakpoints.up('xl'));
-  const isLg = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
-  const isSm = useMediaQuery(theme.breakpoints.up('sm'));
-
-  const columns = isXl ? 6 : isLg ? 5 : isMd ? 4 : isSm ? 3 : 2;
-
-  // Extract available roles and classes from members
-  const { availableRoles, availableClasses } = useMemo(() => {
-    if (!members) return { availableRoles: [], availableClasses: [] };
-
-    const roles = Array.from(new Set(members.map(m => m.role)));
-    const classes = Array.from(new Set(members.flatMap(m => m.classes || [])));
-
-    return {
-      availableRoles: roles,
-      availableClasses: classes,
-    };
-  }, [members.length]); // Stable: only recompute when member count changes
-
   const memberSortFn = useMemo(() => {
     if (sort === 'power') return (a: any, b: any) => (b.power || 0) - (a.power || 0);
     if (sort === 'name') return (a: any, b: any) => a.username.localeCompare(b.username);
@@ -249,9 +206,18 @@ export function Roster() {
     sortFn: memberSortFn,
   });
 
+  // Calculate distinct roles/classes for filter panel
+  const { availableRoles, availableClasses } = useMemo(() => {
+    const roles = Array.from(new Set(members.map((m) => m.role)));
+    const classes = Array.from(new Set(members.flatMap((m) => m.classes || [])));
+    return { availableRoles: roles, availableClasses: classes };
+  }, [members]);
+
   const [page, setPage] = useState(1);
-  const pageSize = isMobile ? 12 : columns * 4;
+  // Responsive pageSize handling isn't strictly necessary to be exact, simplified:
+  const pageSize = 24; 
   const totalPages = Math.max(1, Math.ceil(filteredMembers.length / pageSize));
+  
   const pagedMembers = useMemo(() => {
     const start = (page - 1) * pageSize;
     return filteredMembers.slice(start, start + pageSize);
@@ -266,23 +232,21 @@ export function Roster() {
   }, [page, totalPages]);
 
   if (isLoading && (!members || members.length === 0)) {
-    return (
-      <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
-        <CardGridSkeleton count={12} xs={6} sm={4} md={3} lg={2.4} xl={2} aspectRatio="1/1" />
-      </Box>
-    );
+     return (
+       <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+         {Array.from({ length: 12 }).map((_, i) => (
+           <Skeleton key={i} className="aspect-square rounded-xl h-full w-full" />
+         ))}
+       </div>
+     );
   }
 
   if (!isLoading && (!members || members.length === 0)) {
     return (
-      <Box sx={{ p: { xs: 2, sm: 3 }, textAlign: 'center' }}>
-        <Typography variant="h6" fontWeight={900} gutterBottom>
-          {t('roster.empty_title')}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t('roster.empty_hint')}
-        </Typography>
-      </Box>
+      <div className="p-8 text-center space-y-2">
+        <h3 className="text-xl font-black">{t('roster.empty_title')}</h3>
+        <p className="text-muted-foreground">{t('roster.empty_hint')}</p>
+      </div>
     );
   }
 
@@ -322,19 +286,9 @@ export function Roster() {
   );
 
   return (
-    <Box sx={{
-      p: { xs: 0, sm: 1, md: 2, lg: 4 },
-      pb: { xs: 2, md: 0 },
-    }}>
-      <Paper sx={{
-        minHeight: { xs: 'auto', md: 420 },
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: { xs: 0, sm: 2, md: 4 },
-        border: { xs: 0, sm: 1 },
-        borderColor: 'divider'
-      }}>
-
+    <div className="p-0 sm:p-2 md:p-4 lg:p-8 pb-8 md:pb-0">
+      <div className="min-h-[420px] flex flex-col rounded-none sm:rounded-2xl md:rounded-3xl border-0 sm:border border-border bg-card">
+        
         <PageFilterBar
           search={search}
           onSearchChange={setSearch}
@@ -352,56 +306,36 @@ export function Roster() {
           resultsCount={filteredMembers.length}
           isLoading={isLoading}
           extraActions={
-            <Paper elevation={0} sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 3,
-              border: 1,
-              borderColor: 'divider',
-              bgcolor: 'background.default'
-            }}>
-                <IconButton
-                    size="small"
-                    onClick={() => setAudioSettings({ mute: !audioSettings.mute })}
-                    color={audioSettings.mute ? "error" : "primary"}
-                    sx={{ p: 0.5 }}
-                >
-                    {audioSettings.mute ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                </IconButton>
+            <div
+              data-testid="roster-audio-controls"
+              className="flex items-center gap-4 px-3 py-1.5 rounded-xl border border-border bg-background"
+            >
                 <Slider
-                    size="small"
-                    value={audioSettings.volume}
-                    onChange={(_, v) => setAudioSettings({ volume: v as number })}
-                    sx={{ width: 60 }}
+                    aria-label={t('roster.audio_volume')}
+                    value={[audioSettings.volume]}
+                    min={0}
+                    max={100}
+                    step={1}
+                    onChange={(_e: any, v: number | number[]) => setAudioSettings({ volume: typeof v === 'number' ? v : v[0] })}
+                    className="w-32 min-w-[128px] mr-1"
                 />
-            </Paper>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t('roster.audio_mute')}
+                    className={cn("h-6 w-6 p-0 shrink-0", audioSettings.mute ? "text-destructive" : "text-primary")}
+                    onClick={() => setAudioSettings({ mute: !audioSettings.mute })}
+                >
+                    {audioSettings.mute ? <VolumeOffIcon sx={{ fontSize: 18 }} /> : <VolumeUpIcon sx={{ fontSize: 18 }} />}
+                </Button>
+            </div>
           }
         />
 
-        {/* Scrollable Content Area */}
-        <Box sx={{
-          flex: 1,
-          p: { xs: 1.5, sm: 2, md: 3 },
-          bgcolor: 'background.default',
-        }}>
+        <div className="flex-1 p-3 sm:p-4 md:p-6 bg-background">
           {filteredMembers.length > 0 ? (
-            <Stack spacing={2}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: {
-                    xs: 'repeat(2, minmax(0, 1fr))',
-                    sm: 'repeat(3, minmax(0, 1fr))',
-                    md: 'repeat(4, minmax(0, 1fr))',
-                    lg: 'repeat(5, minmax(0, 1fr))',
-                    xl: 'repeat(6, minmax(0, 1fr))',
-                  },
-                  gap: 2,
-                }}
-              >
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {pagedMembers.map((member) => (
                   <RosterCard
                     key={member.id}
@@ -412,42 +346,51 @@ export function Roster() {
                     onLeaveAudio={handleMemberLeave}
                   />
                 ))}
-              </Box>
+              </div>
 
               {totalPages > 1 && (
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                <div className="flex justify-between items-center pt-4">
+                  <span className="text-sm font-bold text-muted-foreground">
                     {page} / {totalPages}
-                  </Typography>
-                  <Stack direction="row" spacing={1}>
+                  </span>
+                  <div className="flex gap-2">
                     <Button
-                      size="small"
-                      variant="outlined"
+                      variant="outline"
+                      size="sm"
                       disabled={page <= 1}
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                     >
                       {t('common.prev')}
                     </Button>
                     <Button
-                      size="small"
-                      variant="outlined"
+                      variant="outline"
+                      size="sm"
                       disabled={page >= totalPages}
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     >
                       {t('common.next')}
                     </Button>
-                  </Stack>
-                </Stack>
+                  </div>
+                </div>
               )}
-            </Stack>
+            </div>
           ) : (
-            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.5, gap: 2 }}>
-                <Users size={48} strokeWidth={1} />
-                <Typography variant="h6" fontWeight={700}>{t('roster.empty_title')}</Typography>
-            </Box>
+            <div className="h-full flex flex-col items-center justify-center opacity-50 gap-4 min-h-[300px]">
+                 <PeopleIcon sx={{ fontSize: 48, opacity: 0.5 }} />
+                <h3 className="text-xl font-bold">{t('roster.empty_title')}</h3>
+            </div>
           )}
-        </Box>
-      </Paper>
+        </div>
+      </div>
+
+      <RosterFilterPanel
+         open={filterPanelOpen}
+         onClose={() => setFilterPanelOpen(false)}
+         filters={filters}
+         onChange={setFilters}
+         availableRoles={availableRoles}
+         availableClasses={availableClasses}
+       />
 
       <AnimatePresence>
         {selectedMember && (
@@ -458,11 +401,10 @@ export function Roster() {
               hoveredMemberIdRef.current = null;
               audioController.stop();
             }} 
-            audio={audioController}
           />
         )}
       </AnimatePresence>
-    </Box>
+    </div>
   );
 }
 
@@ -480,167 +422,115 @@ function RosterCard({
   onLeaveAudio: (memberId: string) => void;
 }) {
   const { t } = useTranslation();
-  const theme = useTheme();
   const isPlaying = audio.activeId === member.id;
   
+  // Logic from original file adapted for Tailwind
+  const getClassStyle = (classes?: string[]) => {
+      const c = classes?.[0] || '';
+      if (c.startsWith('mingjin')) return { bg: 'bg-info/10', border: 'border-info/30' };
+      if (c.startsWith('qiansi')) return { bg: 'bg-success/10', border: 'border-success/30' };
+      if (c.startsWith('pozhu')) return { bg: 'bg-secondary/10', border: 'border-secondary/30' };
+      if (c.startsWith('lieshi')) return { bg: 'bg-destructive/10', border: 'border-destructive/40' };
+      return { bg: 'bg-info/5', border: 'border-info/20' };
+  };
+
+  const style = getClassStyle(member.classes);
+
   return (
     <Card 
+      className={cn(
+          "cursor-pointer transition-all hover:shadow-lg hover:border-primary relative overflow-hidden",
+          style.bg,
+          style.border
+      )}
       onClick={onClick}
-      onMouseEnter={() => {
-         onHoverAudio(member);
-      }}
+      onMouseEnter={() => onHoverAudio(member)}
       onMouseLeave={() => onLeaveAudio(member.id)}
-      sx={{
-          borderRadius: 2,
-          position: 'relative',
-          cursor: 'pointer',
-          transition: 'box-shadow 0.2s, border-color 0.2s',
-          border: '1px solid',
-          borderColor: (() => {
-              const c = member.classes?.[0] || '';
-              if (c.startsWith('mingjin')) return alpha(theme.palette.info.main, 0.28);
-              if (c.startsWith('qiansi')) return alpha(theme.palette.success.main, 0.28);
-              if (c.startsWith('pozhu')) return alpha(theme.palette.secondary.main, 0.28);
-              if (c.startsWith('lieshi')) return alpha(theme.palette.error.dark, 0.4);
-              return alpha(theme.palette.info.main, 0.2);
-          })(),
-          overflow: 'hidden',
-          bgcolor: (() => {
-              const c = member.classes?.[0] || '';
-              if (c.startsWith('mingjin')) return alpha(theme.palette.info.main, 0.08);
-              if (c.startsWith('qiansi')) return alpha(theme.palette.success.main, 0.08);
-              if (c.startsWith('pozhu')) return alpha(theme.palette.secondary.main, 0.1);
-              if (c.startsWith('lieshi')) return alpha(theme.palette.error.dark, 0.12);
-              return alpha(theme.palette.info.main, 0.05);
-          })(),
-          '&:hover': {
-              boxShadow: theme.shadows[4],
-              borderColor: 'primary.main',
-          }
-      }}
     >
       {/* Active Audio Glow Background */}
       {isPlaying && (
-          <Box sx={{ position: 'absolute', inset: 0, bgcolor: alpha(theme.palette.primary.main, 0.1), animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', zIndex: 0 }} />
+          <div className="absolute inset-0 bg-primary/10 animate-pulse z-0 pointer-events-none" />
       )}
 
-      <CardContent sx={{ p: 1 }}>
-          {/* Image Section - Smaller */}
-          <Box sx={{ position: 'relative', aspectRatio: '1/1', borderRadius: 1.5, overflow: 'hidden', mb: 1, bgcolor: 'action.hover' }}>
+      <CardContent className="p-2">
+          {/* Image Section */}
+          <div className="relative aspect-square rounded-xl overflow-hidden mb-2 bg-muted/50 border border-border/50">
              {member.avatar_url ? (
-               <Box
-                 component="img"
+               <img
                  src={getOptimizedMediaUrl(member.avatar_url, 'image')}
                  alt={member.username}
-                 sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                 className="w-full h-full object-cover"
                />
              ) : (
-               <Box
-                 sx={{
-                   width: '100%',
-                   height: '100%',
-                   display: 'flex',
-                   alignItems: 'center',
-                   justifyContent: 'center',
-                   bgcolor: alpha(theme.palette.primary.main, 0.14),
-                   color: 'primary.main',
-                   fontWeight: 900,
-                   fontSize: { xs: '1.8rem', md: '2.2rem' },
-                   letterSpacing: '0.03em',
-                   userSelect: 'none',
-                 }}
-               >
+               <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-black text-2xl tracking-wide select-none">
                  {getAvatarInitial(member.username)}
-               </Box>
+               </div>
              )}
-          </Box>
+          </div>
 
-          {/* Badges Row - Very compact */}
-          <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1, position: 'relative', zIndex: 1 }}>
-                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 0.75, py: 0.25, borderRadius: 5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
-                        <ImageIcon size={10} className="text-blue-500" />
-                        <Typography variant="caption" fontWeight={700} fontSize="0.7rem" lineHeight={1} color="primary.main">{member.media_counts?.images || 0}</Typography>
-                     </Box>
-                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 0.75, py: 0.25, borderRadius: 5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
-                        <Play size={10} className="text-red-500" />
-                        <Typography variant="caption" fontWeight={700} fontSize="0.7rem" lineHeight={1} color="error.main">{member.media_counts?.videos || 0}</Typography>
-                     </Box>
+          {/* Badges Row */}
+          <div className="flex items-center gap-1 mb-2 relative z-10">
+             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-background border border-border">
+                 <ImageIcon sx={{ fontSize: 12, color: "primary.main" }} />
+                <span className="text-[0.65rem] font-bold text-primary leading-none">{member.media_counts?.images || 0}</span>
+             </div>
+             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-background border border-border">
+                 <PlayArrowIcon sx={{ fontSize: 12, color: "error.main" }} />
+                <span className="text-[0.65rem] font-bold text-destructive leading-none">{member.media_counts?.videos || 0}</span>
+             </div>
 
-                     <Box sx={{ flexGrow: 1 }} />
+             <div className="flex-grow" />
 
-                     {/* Active Status / Last Seen */}
-                     {(() => {
-                        // Use last_seen if available
-                        if (member.last_seen) {
-                             const date = new Date(member.last_seen);
-                             const timeAgo = formatDistanceToNow(date, { addSuffix: true });
-                             const isOnline = new Date().getTime() - date.getTime() < 5 * 60 * 1000; // 5 mins
+             {/* Status Badge */}
+             {(() => {
+                if (member.last_seen) {
+                     const date = new Date(member.last_seen);
+                     const timeAgo = formatDistanceToNow(date, { addSuffix: true });
+                     const isOnline = new Date().getTime() - date.getTime() < 5 * 60 * 1000;
 
-                             return (
-                                <Box sx={{
-                                   px: 1, py: 0.25, borderRadius: 4,
-                                   bgcolor: isOnline ? alpha(theme.palette.success.main, 0.1) : alpha(theme.palette.text.secondary, 0.1),
-                                   color: isOnline ? theme.palette.success.main : theme.palette.text.secondary,
-                                   border: 1, borderColor: isOnline ? alpha(theme.palette.success.main, 0.2) : alpha(theme.palette.text.secondary, 0.2),
-                                   fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.05em'
-                                }}>
-                                   {isOnline ? 'ONLINE' : timeAgo.toUpperCase()}
-                                </Box>
-                             );
-                        }
+                     return (
+                        <div className={cn(
+                            "px-2 py-0.5 rounded-full text-[0.6rem] font-black tracking-wider border",
+                            isOnline ? "bg-success/10 text-success border-success/20" : "bg-muted text-muted-foreground border-border"
+                        )}>
+                           {isOnline ? 'ONLINE' : timeAgo.toUpperCase()}
+                        </div>
+                     );
+                }
+                const status = getAvailabilityStatus(member);
+                return (
+                   <div className={cn(
+                       "px-2 py-0.5 rounded-full text-[0.6rem] font-black tracking-wider border",
+                       status === 'active'
+                         ? "bg-success/10 text-success border-success/20"
+                         : status === 'inactive'
+                           ? "bg-error/10 text-error border-error/20"
+                           : "bg-muted text-muted-foreground border-border"
+                   )}>
+                       {status.toUpperCase()}
+                   </div>
+                );
+             })()}
+          </div>
 
-                        // Fallback logic
-                        const status = getAvailabilityStatus(member);
-                        let label = 'UNKNOWN';
-                        let bgcolor = theme.custom?.status.unknown.bg;
-                        let textColor = theme.custom?.status.unknown.text;
-                        let borderColor = theme.custom?.status.unknown.main;
-
-                        if (status === 'active') {
-                           label = 'ACTIVE';
-                           bgcolor = theme.custom?.status.active.bg;
-                           textColor = theme.custom?.status.active.text;
-                           borderColor = theme.custom?.status.active.main;
-                        } else if (status === 'inactive') {
-                           label = 'INACTIVE';
-                           bgcolor = theme.custom?.status.inactive.bg;
-                           textColor = theme.custom?.status.inactive.text;
-                           borderColor = theme.custom?.status.inactive.main;
-                        }
-
-                        return (
-                           <Box sx={{
-                               px: 1, py: 0.25, borderRadius: 4,
-                               bgcolor, color: textColor,
-                               border: 1, borderColor: alpha(borderColor as string, 0.2),
-                               fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.05em'
-                           }}>
-                               {label.toUpperCase()}
-                           </Box>
-                        );
-                     })()}
-                  </Stack>
-
-                  {/* Text Info */}
-                  <Box sx={{ position: 'relative', zIndex: 1 }}>
-                     <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.5} spacing={0.5}>
-                        <Typography variant="subtitle2" fontWeight={900} noWrap fontSize="0.9rem">{member.username}</Typography>
-                     </Stack>
-
-             <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" noWrap fontSize="0.75rem" sx={{ mb: 0.25 }} dangerouslySetInnerHTML={sanitizeHtml(member.title_html || t('roster.operative_title'))} />
-
-             {/* Bio hidden in mini version to save height */}
-          </Box>
+          {/* Text Info */}
+          <div className="relative z-10">
+             <div className="flex items-center justify-between mb-1 gap-1">
+                <span className="font-black text-sm truncate">{member.username}</span>
+             </div>
+             <span 
+                className="block text-xs font-semibold text-muted-foreground truncate"
+                dangerouslySetInnerHTML={sanitizeHtml(member.title_html || t('roster.operative_title'))} 
+             />
+          </div>
       </CardContent>
     </Card>
   );
 }
 
-function ProfileModal({ member, onClose, audio }: { member: User, onClose: () => void, audio: any }) {
+function ProfileModal({ member, onClose }: { member: User, onClose: () => void }) {
    const [activeIndex, setActiveIndex] = useState(0);
-   const [showThumbnails, setShowThumbnails] = useState(true);
    const { t } = useTranslation();
-   const theme = useTheme();
 
    const mediaList = useMemo(() => {
       if (member.media && member.media.length > 0) return member.media;
@@ -662,223 +552,186 @@ function ProfileModal({ member, onClose, audio }: { member: User, onClose: () =>
    };
 
    return (
-      <Dialog 
-        open 
-        onClose={onClose} 
-        fullScreen 
-        PaperProps={{ 
-            sx: { bgcolor: 'transparent', backgroundImage: 'none' } 
-        }}
-        TransitionComponent={undefined} // Use default fade manually if needed, or rely on Dialog default
-      >
-         <Box 
-            onClick={onClose}
-            sx={{ 
-                position: 'fixed', inset: 0, bgcolor: 'rgba(0,0,0,0.95)', backdropFilter: 'blur(10px)', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center' 
-            }}
-         >
-            <Box
-               onClick={e => e.stopPropagation()}
-               sx={{
-                   width: '100%', height: '100%', maxWidth: { md: '95vw' }, maxHeight: { md: '90vh' },
-                   bgcolor: '#1a1a1a', borderRadius: { md: 6 }, overflow: 'hidden',
-                   display: 'flex', flexDirection: 'column', position: 'relative',
-                   border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`
-               }}
+      <Dialog open onOpenChange={(open: boolean) => !open && onClose()}>
+        <DialogContent
+          data-testid="roster-member-detail-panel"
+          hideCloseButton
+          maxWidth={false}
+          fullWidth
+          className="w-[min(1800px,calc(100vw-1rem))] max-w-none h-[calc(100vh-3rem)] max-h-[calc(100vh-3rem)] p-0 overflow-hidden rounded-2xl border border-[color:var(--cmp-dialog-border)]"
+        >
+          <DialogTitle className="sr-only">Profile of {member.username}</DialogTitle>
+          <div className="relative flex h-full w-full flex-col">
+            <section
+              className="shrink-0 border-b p-4 sm:p-6"
+              style={{
+                backgroundColor: 'var(--cmp-dialog-bg)',
+                borderColor: 'var(--cmp-dialog-border)',
+                color: 'var(--sys-text-primary)',
+              }}
             >
-               {/* Header Overlay */}
-               <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, p: 4, zIndex: 30, background: 'linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)', pointerEvents: 'none' }}>
-                  <Stack direction="row" spacing={3} alignItems="flex-start" sx={{ pointerEvents: 'auto' }}>
-                      <Box sx={{ width: 80, height: 80, borderRadius: 3, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)', boxShadow: 10 }}>
-                          {member.avatar_url ? (
-                            <img
-                              src={getOptimizedMediaUrl(member.avatar_url, 'image')}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              alt=""
-                            />
-                          ) : (
-                            <Box
-                              sx={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                bgcolor: alpha(theme.palette.primary.main, 0.24),
-                                color: 'primary.main',
-                                fontWeight: 900,
-                                fontSize: '2rem',
-                                letterSpacing: '0.03em',
-                                userSelect: 'none',
-                              }}
-                            >
-                              {getAvatarInitial(member.username)}
-                            </Box>
-                          )}
-                      </Box>
-                      
-                      <Box flex={1}>
-                          <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                              <Box>
-                                  <Typography variant="h3" color="white" fontWeight={900} lineHeight={1}>{member.username}</Typography>
-                                  <Typography variant="body2" color="#60a5fa" fontWeight={700} sx={{ mt: 0.5 }} dangerouslySetInnerHTML={sanitizeHtml(member.title_html || t('roster.operative_title'))} />
-                              </Box>
-                              
-                              <Stack direction="row" spacing={1.5} alignItems="center">
+              <div className="flex items-start justify-between gap-3 mb-5">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border shrink-0"
+                    style={{
+                      borderColor: 'color-mix(in srgb, var(--sys-text-primary) 14%, transparent)',
+                      backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 72%, transparent)',
+                    }}
+                  >
+                    {member.avatar_url ? (
+                      <img
+                        src={getOptimizedMediaUrl(member.avatar_url, 'image')}
+                        className="w-full h-full object-cover"
+                        alt={member.username}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-primary font-black text-2xl">
+                        {getAvatarInitial(member.username)}
+                      </div>
+                    )}
+                  </div>
 
-                                  <Box sx={{ px: 1.5, py: 0.5, borderRadius: 10, bgcolor: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                      <Zap size={12} color="#eab308" />
-                                      <Typography variant="caption" color="white" fontWeight={900} fontFamily="monospace">{formatPower(member.power)}</Typography>
-                                  </Box>
-                                  <Chip
-                                    label={t(`common.${member.active_status}`)}
-                                    size="small"
-                                    sx={{
-                                      bgcolor: member.active_status === 'active' ? theme.custom?.status.active.bg : theme.custom?.status.inactive.bg,
-                                      color: member.active_status === 'active' ? theme.custom?.status.active.text : theme.custom?.status.inactive.text,
-                                      fontSize: '0.6rem',
-                                      fontWeight: 900
-                                    }}
-                                  />
-                                  <IconButton size="small" onClick={onClose} sx={{ bgcolor: 'rgba(255,255,255,0.05)', color: 'white' }}><X size={16} /></IconButton>
-                              </Stack>
-                          </Stack>
-                          
-                          <MarkdownContent
-                            content={member.bio}
-                            fallback={t('roster.no_bio')}
-                            variant="caption"
-                            color="rgba(255,255,255,0.68)"
-                            sx={{
-                              mt: 2,
-                              maxWidth: 600,
-                              '& a': { color: '#93c5fd' },
-                            }}
-                          />
-                      </Box>
-                  </Stack>
-               </Box>
+                  <div className="min-w-0">
+                    <h2 className="text-2xl sm:text-3xl font-black leading-tight truncate">{member.username}</h2>
+                    <div
+                      className="font-semibold text-primary mt-1 text-sm sm:text-base"
+                      dangerouslySetInnerHTML={sanitizeHtml(member.title_html || t('roster.operative_title'))}
+                    />
+                  </div>
+                </div>
 
-               {/* Gallery */}
-               <Box sx={{ flex: 1, position: 'relative', bgcolor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                   <IconButton
-                     onClick={handlePrev}
-                     disabled={mediaList.length === 0}
-                     sx={{ position: 'absolute', left: 20, zIndex: 20, color: 'white', bgcolor: 'rgba(0,0,0,0.3)' }}
-                   >
-                     <ChevronLeft />
-                   </IconButton>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="h-8 w-8 rounded-full shrink-0"
+                  aria-label={t('common.close')}
+                >
+                  <CloseIcon sx={{ fontSize: 18 }} />
+                </Button>
+              </div>
 
-                   {activeItem ? (
-                     <motion.div
-                       key={activeIndex}
-                       initial={{ opacity: 0, scale: 0.98 }}
-                       animate={{ opacity: 1, scale: 1 }}
-                       transition={{ duration: 0.4 }}
-                       style={{ maxWidth: '100%', maxHeight: '100%', position: 'relative', display: 'flex', justifyContent: 'center' }}
-                     >
-                       <img
-                         src={getOptimizedMediaUrl(activeItem.url || activeItem.thumbnail, activeItem.type)}
-                         style={{ maxWidth: '100%', maxHeight: '65vh', objectFit: 'contain', borderRadius: 8, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}
-                         alt=""
-                       />
-                       {activeItem.type === 'video' && (
-                         <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                           <Box sx={{ width: 80, height: 80, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
-                             <Play size={32} fill="white" color="white" style={{ marginLeft: 4 }} />
-                           </Box>
-                         </Box>
-                       )}
-                     </motion.div>
-                   ) : (
-                     <Box
-                       sx={{
-                         width: 'min(640px, 90%)',
-                         minHeight: 240,
-                         borderRadius: 3,
-                         border: '1px dashed rgba(255,255,255,0.25)',
-                         bgcolor: 'rgba(0,0,0,0.25)',
-                         display: 'flex',
-                         alignItems: 'center',
-                         justifyContent: 'center',
-                         textAlign: 'center',
-                         px: 3,
-                       }}
-                     >
-                       <Typography variant="body2" color="rgba(255,255,255,0.8)" fontWeight={700}>
-                         {t('gallery.empty')}
-                       </Typography>
-                     </Box>
-                   )}
+              <div className="flex items-center gap-2 mb-4">
+                <div
+                  className="flex items-center gap-1 px-2 py-1 border rounded-full"
+                  style={{
+                    backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 68%, transparent)',
+                    borderColor: 'color-mix(in srgb, var(--sys-text-primary) 14%, transparent)',
+                  }}
+                >
+                  <ElectricBoltIcon sx={{ fontSize: 14, color: 'warning.main' }} />
+                  <span className="text-xs font-mono font-bold text-[color:var(--sys-text-primary)]">{formatPower(member.power)}</span>
+                </div>
 
-                   <IconButton
-                     onClick={handleNext}
-                     disabled={mediaList.length === 0}
-                     sx={{ position: 'absolute', right: 20, zIndex: 20, color: 'white', bgcolor: 'rgba(0,0,0,0.3)' }}
-                   >
-                     <ChevronRight />
-                   </IconButton>
+                <div
+                  className="px-2 py-1 rounded-full text-[0.65rem] font-black border uppercase"
+                  style={
+                    member.active_status === 'active'
+                      ? {
+                          backgroundColor: 'color-mix(in srgb, var(--color-status-success-bg) 84%, transparent)',
+                          color: 'var(--color-status-success-fg)',
+                          borderColor: 'color-mix(in srgb, var(--color-status-success) 36%, transparent)',
+                        }
+                      : {
+                          backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 74%, transparent)',
+                          color: 'var(--sys-text-secondary)',
+                          borderColor: 'color-mix(in srgb, var(--sys-text-primary) 18%, transparent)',
+                        }
+                  }
+                >
+                  {member.active_status}
+                </div>
+              </div>
 
-                   {mediaList.length > 0 && (
-                     <Button
-                       onClick={() => setShowThumbnails(!showThumbnails)}
-                       startIcon={showThumbnails ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-                       sx={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', borderRadius: 10, bgcolor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.65rem', fontWeight: 900, backdropFilter: 'blur(4px)', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}
-                     >
-                       {activeIndex + 1} / {mediaList.length}
-                     </Button>
-                   )}
-               </Box>
+              <div
+                className="rounded-xl border p-3 sm:p-4"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--sys-surface-raised) 72%, transparent)',
+                  borderColor: 'color-mix(in srgb, var(--sys-text-primary) 12%, transparent)',
+                }}
+              >
+                <MarkdownContent
+                  content={member.bio}
+                  fallback={t('roster.no_bio')}
+                  className="text-sm text-[color:var(--sys-text-secondary)] leading-relaxed"
+                />
+              </div>
+            </section>
 
-               {/* Thumbnails */}
-               <AnimatePresence>
-                   {showThumbnails && mediaList.length > 0 && (
-                       <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: '7rem', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                           style={{ backgroundColor: '#121212', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}
-                       >
-                          <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', py: 2, px: 4, width: '100%', justifyContent: 'center' }}>
-                              {mediaList.map((item: any, i: number) => (
-                                  <Box 
-                                    key={i}
-                                    onClick={() => setActiveIndex(i)}
-                                    sx={{ 
-                                        width: 96, height: 64, borderRadius: 2, overflow: 'hidden', cursor: 'pointer', flexShrink: 0, position: 'relative',
-                                        border: '2px solid', borderColor: i === activeIndex ? 'primary.main' : 'transparent', opacity: i === activeIndex ? 1 : 0.4, 
-                                        transition: 'all 0.2s', '&:hover': { opacity: 1, borderColor: 'rgba(255,255,255,0.3)' }
-                                    }}
-                                  >
-                                      <img src={getOptimizedMediaUrl(item.thumbnail || item.url, 'image')} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                                      {item.type === 'video' && (
-                                         <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(0,0,0,0.4)' }}>
-                                            <Play size={12} fill="white" color="white" />
-                                         </Box>
-                                      )}
-                                  </Box>
-                              ))}
-                          </Box>
-                       </motion.div>
-                   )}
-               </AnimatePresence>
+            <div
+              className="relative flex-1 min-w-0 flex items-center justify-center p-4 sm:p-6 lg:p-8"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 62%, transparent)' }}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-3 sm:left-5 z-20 rounded-full h-10 w-10 sm:h-12 sm:w-12"
+                onClick={handlePrev}
+                disabled={mediaList.length === 0}
+                aria-label={t('common.prev')}
+              >
+                <ChevronLeftIcon sx={{ fontSize: 30 }} />
+              </Button>
 
-            </Box>
-         </Box>
+              {activeItem ? (
+                <motion.div
+                  key={activeIndex}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.35 }}
+                  className="relative max-w-full max-h-full flex items-center justify-center"
+                >
+                  <img
+                    src={getOptimizedMediaUrl(activeItem.url || activeItem.thumbnail, activeItem.type)}
+                    className="max-w-full max-h-[78vh] object-contain rounded-xl border"
+                    style={{
+                      borderColor: 'color-mix(in srgb, var(--sys-text-primary) 14%, transparent)',
+                      boxShadow: '0 22px 40px color-mix(in srgb, var(--sys-surface-sunken) 80%, transparent)',
+                    }}
+                    alt=""
+                  />
+                  {activeItem.type === 'video' && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div
+                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border flex items-center justify-center backdrop-blur-sm"
+                        style={{
+                          backgroundColor: 'color-mix(in srgb, var(--sys-surface-raised) 54%, transparent)',
+                          borderColor: 'color-mix(in srgb, var(--sys-text-primary) 30%, transparent)',
+                        }}
+                      >
+                        <PlayArrowIcon sx={{ fontSize: 40, ml: 0.25 }} />
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              ) : (
+                <div
+                  className="w-full max-w-2xl h-64 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3"
+                  style={{
+                    borderColor: 'color-mix(in srgb, var(--sys-text-primary) 20%, transparent)',
+                    color: 'var(--sys-text-secondary)',
+                    backgroundColor: 'color-mix(in srgb, var(--sys-surface-raised) 40%, transparent)',
+                  }}
+                >
+                  <ImageIcon sx={{ fontSize: 56 }} />
+                  <span className="font-semibold">{t('gallery.empty')}</span>
+                </div>
+              )}
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-3 sm:right-5 z-20 rounded-full h-10 w-10 sm:h-12 sm:w-12"
+                onClick={handleNext}
+                disabled={mediaList.length === 0}
+                aria-label={t('common.next')}
+              >
+                <ChevronRightIcon sx={{ fontSize: 30 }} />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
       </Dialog>
-   )
+   );
 }
-
-function getBadgeStyle(classType: string, theme: any) {
-    let color = theme.palette.text.secondary;
-    let bgcolor = theme.palette.action.hover;
-    
-    if (classType.includes('mingjin')) { color = '#60a5fa'; bgcolor = 'rgba(96, 165, 250, 0.1)'; }
-    if (classType.includes('qiansi')) { color = '#34d399'; bgcolor = 'rgba(52, 211, 153, 0.1)'; }
-    if (classType.includes('pozhu')) { color = '#c084fc'; bgcolor = 'rgba(192, 132, 252, 0.1)'; }
-    if (classType.includes('lieshi')) { color = '#b91c1c'; bgcolor = 'rgba(185, 28, 28, 0.14)'; }
-    
-    return { color, bgcolor, borderColor: alpha(color, 0.2) };
-}
-

@@ -7,6 +7,7 @@ export const PERMISSION_CONTROLS = {
   view_guild_war_member_detail: ['admin', 'moderator'],
   view_guild_war_analytics: ['admin', 'moderator', 'member', 'external'],
   copy_guild_war_analytics: ['admin', 'moderator', 'member'],
+  manage_guild_war_formula: ['admin'],
   access_admin_area: ['admin', 'moderator'],
   manage_member_roles: ['admin'],
   manage_member_activation: ['admin'],
@@ -34,7 +35,7 @@ export function getEffectiveRole(userRole?: Role | null, viewRole?: Role | null)
 
 export function hasPermission(role: Role | null | undefined, control: PermissionControl): boolean {
   const effectiveRole = role || 'external';
-  return PERMISSION_CONTROLS[control].includes(effectiveRole);
+  return (PERMISSION_CONTROLS[control] as readonly Role[]).includes(effectiveRole);
 }
 
 export function canJoinEvents(role?: Role | null): boolean {
@@ -59,6 +60,10 @@ export function canViewGuildWarAnalytics(role?: Role | null): boolean {
 
 export function canCopyGuildWarAnalytics(role?: Role | null): boolean {
   return hasPermission(role, 'copy_guild_war_analytics');
+}
+
+export function canManageGuildWarFormula(role?: Role | null): boolean {
+  return hasPermission(role, 'manage_guild_war_formula');
 }
 
 export function canAccessAdminArea(role?: Role | null): boolean {

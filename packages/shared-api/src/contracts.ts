@@ -48,6 +48,7 @@ export interface WarHistoryDTO {
   
   notes: string | null;
   updated_at_utc: string;
+  member_stats?: WarMemberStatDTO[];
 }
 
 export interface WarMemberStatDTO {
@@ -89,17 +90,41 @@ export interface WarPoolMemberDTO {
 export interface AnalyticsMemberStatDTO {
   user_id: string;
   username: string;
+  class?: string;
   wechat_name?: string;
   wars_participated: number;
   total_kills: number;
+  total_deaths: number;
+  total_assists: number;
   total_damage: number;
   total_healing: number;
+  total_building_damage: number;
+  total_damage_taken: number;
   total_credits: number;
   avg_kills: number;
+  avg_deaths: number;
+  avg_assists: number;
   avg_damage: number;
   avg_healing: number;
+  avg_building_damage: number;
+  avg_damage_taken: number;
   avg_credits: number;
+  kda_ratio: number | null;
+  best_war_id?: string | null;
+  best_war_value?: number | null;
 }
+
+export type AnalyticsModeDTO = 'compare' | 'rankings' | 'teams';
+export type AnalyticsMetricDTO =
+  | 'damage'
+  | 'healing'
+  | 'building_damage'
+  | 'credits'
+  | 'kills'
+  | 'deaths'
+  | 'assists'
+  | 'kda';
+export type AnalyticsAggregationDTO = 'total' | 'average' | 'best' | 'median';
 
 export interface AnalyticsPerWarStatDTO {
   war_id: string;
@@ -108,10 +133,29 @@ export interface AnalyticsPerWarStatDTO {
   result: string;
   user_id: string;
   username: string;
+  class?: string;
   kills: number;
+  deaths: number;
+  assists: number;
   damage: number;
   healing: number;
+  building_damage: number;
+  damage_taken: number;
   credits: number;
+  kda: number | null;
+  note?: string | null;
+  raw_kills?: number;
+  raw_deaths?: number;
+  raw_assists?: number;
+  raw_damage?: number;
+  raw_healing?: number;
+  raw_building_damage?: number;
+  raw_credits?: number;
+  raw_kda?: number | null;
+  normalization_factor?: number;
+  enemy_strength_index?: number;
+  enemy_strength_tier?: 'weak' | 'normal' | 'strong';
+  formula_version?: string;
 }
 
 export interface AnalyticsTeamStatDTO {
@@ -120,10 +164,24 @@ export interface AnalyticsTeamStatDTO {
   war_id: string;
   war_date: string;
   total_kills: number;
+  total_deaths: number;
+  total_assists: number;
   total_damage: number;
   total_healing: number;
+  total_building_damage: number;
   total_credits: number;
+  avg_kills: number;
+  avg_deaths: number;
+  avg_assists: number;
+  avg_damage: number;
+  avg_healing: number;
+  avg_building_damage: number;
+  avg_credits: number;
   member_count: number;
+  normalization_factor?: number;
+  enemy_strength_index?: number;
+  enemy_strength_tier?: 'weak' | 'normal' | 'strong';
+  formula_version?: string;
 }
 
 export interface AnalyticsMetaDTO {
@@ -132,6 +190,15 @@ export interface AnalyticsMetaDTO {
   totalWars: number;
   totalRows: number;
   samplingApplied: boolean;
+  limit?: number;
+  cursor?: number;
+  normalizationApplied?: boolean;
+  normalizationFormulaVersion?: string | null;
+  normalizationWeights?: {
+    kda: number;
+    towers: number;
+    distance: number;
+  };
 }
 
 export interface AnalyticsQueryDTO {
@@ -141,12 +208,17 @@ export interface AnalyticsQueryDTO {
   warIds?: string;
   userIds?: string;
   teamIds?: string;
-  mode?: 'compare' | 'rankings' | 'teams';
-  metric?: string;
-  aggregation?: 'total' | 'average' | 'best' | 'median';
+  participationOnly?: '0' | '1';
+  mode?: AnalyticsModeDTO;
+  metric?: AnalyticsMetricDTO;
+  aggregation?: AnalyticsAggregationDTO;
   limit?: number;
   cursor?: string;
   includePerWar?: '0' | '1';
+  opponentNormalized?: '0' | '1';
+  normalizationKdaWeight?: number;
+  normalizationTowerWeight?: number;
+  normalizationDistanceWeight?: number;
 }
 
 export interface AnalyticsResponseDTO {
@@ -161,6 +233,35 @@ export interface AnalyticsResponseDTO {
   };
   warResults: { result: string; count: number }[];
   meta?: AnalyticsMetaDTO;
+}
+
+export interface AnalyticsFormulaPresetDTO {
+  preset_id: string;
+  name: string;
+  version: number;
+  kda_weight: number;
+  tower_weight: number;
+  distance_weight: number;
+  is_default: 0 | 1;
+  created_by: string | null;
+  created_at_utc: string;
+  updated_at_utc: string;
+}
+
+export interface AnalyticsFormulaPresetListResponseDTO {
+  presets: AnalyticsFormulaPresetDTO[];
+}
+
+export interface CreateAnalyticsFormulaPresetBodyDTO {
+  name: string;
+  kdaWeight: number;
+  towerWeight: number;
+  distanceWeight: number;
+  isDefault?: 0 | 1;
+}
+
+export interface CreateAnalyticsFormulaPresetResponseDTO {
+  preset: AnalyticsFormulaPresetDTO;
 }
 
 // ============================================================================

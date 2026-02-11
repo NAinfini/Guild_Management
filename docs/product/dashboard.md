@@ -11,6 +11,7 @@ Quick "what's happening" overview on load. Two-column desktop layout; single-col
 ## Layout
 
 ### Desktop
+
 Upcoming Event (next 6 days)
 self registered events
 Notifications
@@ -22,7 +23,7 @@ active/total member
 ### Upcoming Events Card
 
 - **Window:** next 7 days
-- **Count:** latest 3 upcoming items across all event types 
+- **Count:** latest 3 upcoming items across all event types
 - **Pinned/Featured strip:** if any event is pinned (Admin/Mod controlled), show a slim "Featured" strip above the 3 cards
 
 #### Each Event Card Shows
@@ -51,6 +52,7 @@ active/total member
 - Copy signup: `<team_name>: @wechat1, @wechat2, ...` (or just names if no label). Uses `wechat_name` default, fallback `username`
 
 ### My Signups
+
 - same as upcoming event, but smaller, show only event name for 7 days
 - 8 day calender like style, including yesterday, list event in that calender day
 

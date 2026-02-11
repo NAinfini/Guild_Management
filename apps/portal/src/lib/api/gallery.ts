@@ -2,7 +2,7 @@
  * Gallery API Client
  */
 
-import { api } from '../api-client';
+import { typedAPI } from './api-builder';
 
 export interface GalleryImage {
   gallery_id: string;
@@ -59,25 +59,27 @@ export const galleryAPI = {
     startDate?: string;
     endDate?: string;
   }) => {
-    return api.get<GalleryListResponse>('/gallery', params);
+    return typedAPI.gallery.list<GalleryListResponse>({ query: params });
   },
 
   /**
    * Get single gallery image by ID
    */
   get: (id: string) => {
-    return api.get<GalleryImage>(`/gallery/${id}`);
+    return typedAPI.gallery.get<GalleryImage>({ params: { id } });
   },
 
   /**
    * Create new gallery image entry
    */
   create: async (data: CreateGalleryImageRequest) => {
-    const response = await api.post<{ message: string; item: GalleryImage }>('/gallery', {
-      mediaId: data.media_id,
-      title: data.title,
-      description: data.description,
-      category: data.category,
+    const response = await typedAPI.gallery.create<{ message: string; item: GalleryImage }>({
+      body: {
+        mediaId: data.media_id,
+        title: data.title,
+        description: data.description,
+        category: data.category,
+      },
     });
     return response.item;
   },
@@ -86,13 +88,13 @@ export const galleryAPI = {
    * Update gallery image metadata
    */
   update: (id: string, data: UpdateGalleryImageRequest) => {
-    return api.put<GalleryImage>(`/gallery/${id}`, data);
+    return typedAPI.gallery.update<GalleryImage>({ params: { id }, body: data });
   },
 
   /**
    * Delete gallery image
    */
   delete: (id: string) => {
-    return api.delete(`/gallery/${id}`);
+    return typedAPI.gallery.delete({ params: { id } });
   },
 };

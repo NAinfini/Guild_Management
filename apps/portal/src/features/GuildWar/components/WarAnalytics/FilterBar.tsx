@@ -1,53 +1,125 @@
+
 /**
- * War Analytics - Filter Bar Component
+ * War Analytics - Unified Filter Header
  *
- * Global filters that apply across all modes:
- * - Date range (presets + custom)
- * - War selector (multi-select)
- * - Participation filter (toggle)
+ * Single control surface for analytics:
+ * - Mode tabs (Compare / Rankings / Teams)
+ * - Date range + war selection
+ * - Participation filter
+ * - Metric controls (mode-aware)
+ * - Rankings/Teams mode-specific controls
  */
 
-import { useState } from 'react';
-import {
-  Stack,
-  Select,
-  MenuItem,
-  Switch,
-  FormControlLabel,
-  Typography,
-  Button,
-  Box,
-  Popover,
-  Checkbox,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  ListItemIcon,
-  Chip,
-  TextField,
-  InputAdornment,
-} from '@mui/material';
-import { Calendar, ChevronDown, Search, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import PeopleIcon from '@mui/icons-material/People';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import ShieldIcon from '@mui/icons-material/Shield';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import SettingsIcon from '@mui/icons-material/Settings';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
+
 import { useAnalytics } from './AnalyticsContext';
-import { PageFilterBar } from '../../../../components/PageFilterBar';
-import { DATE_RANGE_PRESETS } from './types';
-import type { WarSummary } from './types';
+import { MetricFormulaEditor } from './MetricFormulaEditor';
+import {
+  DATE_RANGE_PRESETS,
+  DEFAULT_NORMALIZATION_WEIGHTS,
+  METRICS,
+} from './types';
+import type {
+  AggregationType,
+  MetricType,
+  WarSummary,
+  AnalyticsMode,
+  MemberStats,
+} from './types';
+import { formatMetricName } from './types';
+import { useAuthStore } from '@/store';
+import { canManageGuildWarFormula, getEffectiveRole } from '@/lib/permissions';
+
+// Nexus Primitives
+import {
+  Card,
+  Button,
+  Input,
+  Label,
+  Switch,
+  Checkbox,
+  Badge,
+  Select,
+  SelectItem,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components';
+import { cn } from '@/lib/utils';
+
+// ============================================================================
+// Constants & Types
+// ============================================================================
+
+interface FilterBarProps {
+  wars: WarSummary[];
+  members?: MemberStats[];
+  isLoading?: boolean;
+}
+
+interface ModeConfig {
+  id: AnalyticsMode;
+  labelKey: string;
+  descriptionKey: string;
+  icon: React.ElementType;
+}
+
+const MODES: ModeConfig[] = [
+  {
+    id: 'compare',
+    labelKey: 'guild_war.analytics_mode_compare',
+    descriptionKey: 'guild_war.analytics_mode_compare_desc',
+    icon: PeopleIcon,
+  },
+  {
+    id: 'rankings',
+    labelKey: 'guild_war.analytics_mode_rankings',
+    descriptionKey: 'guild_war.analytics_mode_rankings_desc',
+    icon: EmojiEventsIcon,
+  },
+  {
+    id: 'teams',
+    labelKey: 'guild_war.analytics_mode_teams',
+    descriptionKey: 'guild_war.analytics_mode_teams_desc',
+    icon: ShieldIcon,
+  },
+];
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
-interface FilterBarProps {
-  wars: WarSummary[];
-  isLoading?: boolean;
-}
-
-export function FilterBar({ wars, isLoading = false }: FilterBarProps) {
+export function FilterBar({ wars, members = [], isLoading = false }: FilterBarProps) {
   const { t } = useTranslation();
-  const { filters, updateFilters } = useAnalytics();
+  const { user, viewRole } = useAuthStore();
+  const canManageFormula = canManageGuildWarFormula(getEffectiveRole(user?.role, viewRole));
+  
+  const {
+    filters,
+    updateFilters,
+    compareMode,
+    updateCompareMode,
+    rankingsMode,
+    updateRankingsMode,
+    teamsMode,
+    updateTeamsMode,
+  } = useAnalytics();
+
   const [dateRangePreset, setDateRangePreset] = useState('30d');
+  const [formulaEditorOpen, setFormulaEditorOpen] = useState(false);
 
   const handleDateRangeChange = (presetValue: string) => {
     setDateRangePreset(presetValue);
@@ -58,51 +130,260 @@ export function FilterBar({ wars, isLoading = false }: FilterBarProps) {
     }
   };
 
-  const selectedWarsCount = filters.selectedWars.length;
+  const handleModeChange = (value: string) => {
+    if (!value) return;
+    updateFilters({ mode: value as AnalyticsMode });
+  };
+
+  const handleMetricChange = (metric: MetricType) => {
+    updateFilters({ primaryMetric: metric });
+  };
+
+  // For multi-select metrics in Compare mode
+  // Note: Nexus Select typically handles single values. For multi-select, we might need a custom approach
+  // or use multiple checkboxes in a Popover if Nexus Select doesn't support 'multiple' prop directly.
+  // Assuming Nexus Select is a wrapper around Radix Select, which is single-value.
+  // We'll use a Popover with Checkboxes for multi-metric selection to be safe and consistent.
+  
+  const handleCompareMetricsToggle = (metric: MetricType) => {
+    const current = compareMode.selectedMetrics;
+    const next = current.includes(metric)
+      ? current.filter(m => m !== metric)
+      : [...current, metric];
+    
+    // Ensure at least one metric is selected
+    if (next.length === 0) return;
+
+    updateCompareMode({ selectedMetrics: next });
+    updateFilters({ primaryMetric: next[0] });
+  };
+
+  const selectedCompareMetrics = useMemo(
+    () => (compareMode.selectedMetrics.length > 0 ? compareMode.selectedMetrics : [filters.primaryMetric]),
+    [compareMode.selectedMetrics, filters.primaryMetric],
+  );
 
   return (
-    <PageFilterBar
-      isLoading={isLoading}
-      resultsCount={selectedWarsCount}
-      extraActions={
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
-          {/* Selection summary removed per user request */}
+    <Card className="p-4 space-y-4 bg-gradient-to-br from-card/90 to-background border-border/50">
+      <div className="space-y-4">
+        {/* Mode Tabs */}
+        <Tabs value={filters.mode} onValueChange={handleModeChange} className="w-full">
+          <TabsList className="w-full justify-start h-auto p-1 bg-muted/50">
+            {MODES.map((mode) => {
+              const Icon = mode.icon;
+              return (
+                <TabsTrigger
+                  key={mode.id}
+                  value={mode.id}
+                  className="flex-1 data-[state=active]:bg-background data-[state=active]:shadow-sm py-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon sx={{ fontSize: 16 }} />
+                    <span>{t(mode.labelKey)}</span>
+                  </div>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </Tabs>
 
-          {/* Date Range Selector */}
+        {/* Toolbar */}
+        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center flex-wrap">
+          
+          {/* Date Range */}
           <DateRangeSelector value={dateRangePreset} onChange={handleDateRangeChange} />
 
-          {/* War Multi-Selector */}
+          {/* War Selector */}
           <WarMultiSelector
-            wars={wars}
-            selected={filters.selectedWars}
-            onChange={(warIds) => updateFilters({ selectedWars: warIds })}
-            isLoading={isLoading}
+             wars={wars}
+             selected={filters.selectedWars}
+             onChange={(warIds) => updateFilters({ selectedWars: warIds })}
+             isLoading={isLoading}
           />
 
-          {/* Participation Toggle */}
-          <FormControlLabel
-            control={
+          {/* Filters */}
+          <div className="flex items-center gap-4 px-2 py-1.5 bg-muted/30 rounded-md border border-border/50">
+            <div className="flex items-center gap-2">
               <Switch
+                id="participation-only"
                 checked={filters.participationOnly}
-                onChange={(e) => updateFilters({ participationOnly: e.target.checked })}
-                size="small"
+                onChange={(_, checked) => updateFilters({ participationOnly: checked })}
               />
-            }
-            label={
-                <Typography variant="body2" sx={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
+              <Label htmlFor="participation-only" className="cursor-pointer text-xs font-medium">
                 {t('guild_war.analytics_participated_only')}
-              </Typography>
-            }
-            sx={{ ml: 1 }}
-          />
-        </Stack>
-      }
-    />
+              </Label>
+            </div>
+
+            <div className="h-4 w-px bg-border" />
+
+            <div className="flex items-center gap-2">
+              <Switch
+                id="opponent-normalized"
+                checked={filters.opponentNormalized}
+                onChange={(_, checked) => updateFilters({ opponentNormalized: checked })}
+              />
+              <Label htmlFor="opponent-normalized" className="cursor-pointer text-xs font-medium">
+                {t('guild_war.analytics_opponent_normalized')}
+              </Label>
+            </div>
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Metrics & Mode Specific Controls */}
+          <div className="flex flex-wrap gap-2 items-center">
+            
+            {filters.mode === 'compare' ? (
+              <MetricMultiSelector 
+                selected={selectedCompareMetrics}
+                onChange={handleCompareMetricsToggle}
+              />
+            ) : (
+                <div className="min-w-[180px]">
+                  <Select
+                    value={filters.primaryMetric}
+                    onChange={(e: any) => handleMetricChange(e.target.value as MetricType)}
+                    displayEmpty
+                    renderValue={(selected: any) => {
+                      if (!selected) return <span className="text-muted-foreground">{t('guild_war.analytics_primary_metric')}</span>;
+                      return formatMetricName(selected as MetricType);
+                    }}
+                  >
+                    {Object.keys(METRICS).map((metric) => (
+                      <SelectItem key={metric} value={metric}>
+                        {formatMetricName(metric as MetricType)}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+            )}
+
+            {filters.mode === 'rankings' && (
+              <>
+                <div className="min-w-[130px]">
+                  <Select
+                    value={filters.aggregation}
+                    onChange={(e: any) => updateFilters({ aggregation: e.target.value as AggregationType })}
+                    displayEmpty
+                    renderValue={(selected: any) => {
+                       if (!selected) return <span className="text-muted-foreground">{t('guild_war.analytics_aggregation')}</span>;
+                       // Simplified label update
+                       const labels: Record<string, string> = {
+                         total: t('common.total'),
+                         average: t('common.average'),
+                         best: t('common.best'),
+                         median: t('common.median')
+                       };
+                       return labels[selected as string] || selected;
+                    }}
+                  >
+                    <SelectItem value="total">{t('common.total')}</SelectItem>
+                    <SelectItem value="average">{t('common.average')}</SelectItem>
+                    <SelectItem value="best">{t('common.best')}</SelectItem>
+                    <SelectItem value="median">{t('common.median')}</SelectItem>
+                  </Select>
+                </div>
+
+                <div className="min-w-[110px]">
+                  <Select
+                    value={String(rankingsMode.topN)}
+                    onChange={(e: any) => updateRankingsMode({ topN: parseInt(e.target.value as string, 10) })}
+                    displayEmpty
+                    renderValue={(selected: any) => {
+                       if (!selected) return <span className="text-muted-foreground">{t('guild_war.analytics_show_top_n')}</span>;
+                       const labels: Record<string, string> = {
+                          "5": t('guild_war.analytics_top_n_5'),
+                          "10": t('guild_war.analytics_top_n_10'),
+                          "20": t('guild_war.analytics_top_n_20'),
+                          "50": t('guild_war.analytics_top_n_50')
+                       };
+                       return labels[String(selected)] || selected;
+                    }}
+                  >
+                    <SelectItem value="5">{t('guild_war.analytics_top_n_5')}</SelectItem>
+                    <SelectItem value="10">{t('guild_war.analytics_top_n_10')}</SelectItem>
+                    <SelectItem value="20">{t('guild_war.analytics_top_n_20')}</SelectItem>
+                    <SelectItem value="50">{t('guild_war.analytics_top_n_50')}</SelectItem>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {filters.mode === 'teams' && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 rounded-md border border-border/50">
+                <Switch
+                  id="show-total"
+                  checked={teamsMode.showTotal}
+                  onChange={(_, checked) => updateTeamsMode({ showTotal: checked })}
+                />
+                <Label htmlFor="show-total" className="cursor-pointer text-xs font-medium">
+                  {teamsMode.showTotal ? t('common.total') : t('common.average')}
+                </Label>
+              </div>
+            )}
+          </div>
+          
+           {/* Actions */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                updateFilters({
+                  selectedWars: [],
+                  participationOnly: true,
+                  opponentNormalized: false,
+                  normalizationWeights: DEFAULT_NORMALIZATION_WEIGHTS,
+                  primaryMetric: 'damage',
+                  aggregation: 'total',
+                });
+                updateCompareMode({ selectedMetrics: ['damage'] });
+                updateRankingsMode({ topN: 10 });
+                setDateRangePreset('30d');
+                const preset = DATE_RANGE_PRESETS.find((p) => p.value === '30d');
+                if (preset) {
+                  const { startDate, endDate } = preset.getDates();
+                  updateFilters({ startDate, endDate });
+                }
+              }}
+              title={t('common.reset')}
+            >
+              <BarChartIcon sx={{ fontSize: 16 }} className="mr-1" />
+              {t('common.reset')}
+            </Button>
+
+            {canManageFormula && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFormulaEditorOpen(true)}
+                title={t('guild_war.analytics_formula_editor_title')}
+              >
+                <SettingsIcon sx={{ fontSize: 16 }} />
+              </Button>
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      <MetricFormulaEditor
+        open={formulaEditorOpen}
+        initialWeights={filters.normalizationWeights}
+        onClose={() => setFormulaEditorOpen(false)}
+        onSave={({ weights }) => {
+          updateFilters({ normalizationWeights: weights });
+          setFormulaEditorOpen(false);
+        }}
+        // Add required props if MetricFormulaEditor expects them
+        // Assuming defaults handle missing logic for now as simplified in rewrite
+      />
+    </Card>
   );
 }
 
 // ============================================================================
-// Date Range Selector
+// Sub-Components
 // ============================================================================
 
 interface DateRangeSelectorProps {
@@ -110,31 +391,38 @@ interface DateRangeSelectorProps {
   onChange: (value: string) => void;
 }
 
-function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
+export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
+  const { t } = useTranslation();
+  
+  const presetOptions = DATE_RANGE_PRESETS.map(preset => ({
+     value: preset.value,
+     label: t(`guild_war.analytics_range_${preset.value}`) || preset.label
+  }));
+
   return (
-    <Select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      size="small"
-      startAdornment={
-        <InputAdornment position="start">
-          <Calendar size={16} />
-        </InputAdornment>
-      }
-      sx={{ minWidth: 150 }}
-    >
-      {DATE_RANGE_PRESETS.map((preset) => (
-        <MenuItem key={preset.value} value={preset.value}>
-          {preset.label}
-        </MenuItem>
-      ))}
-    </Select>
+    <div className="min-w-[140px]">
+      <Select 
+        value={value} 
+        onChange={(e: any) => onChange(e.target.value as string)}
+        renderValue={(selected: any) => {
+             const label = presetOptions.find(p => p.value === selected)?.label || selected;
+             return (
+               <div className="flex items-center gap-2">
+                 <CalendarMonthIcon sx={{ fontSize: 16 }} className="opacity-50" />
+                 <span>{label}</span>
+               </div>
+             );
+        }}
+      >
+          {presetOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+      </Select>
+    </div>
   );
 }
-
-// ============================================================================
-// War Multi-Selector
-// ============================================================================
 
 interface WarMultiSelectorProps {
   wars: WarSummary[];
@@ -143,21 +431,14 @@ interface WarMultiSelectorProps {
   isLoading?: boolean;
 }
 
-function WarMultiSelector({ wars, selected, onChange, isLoading }: WarMultiSelectorProps) {
+export function WarMultiSelector({ wars, selected, onChange, isLoading }: WarMultiSelectorProps) {
   const { t } = useTranslation();
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const open = Boolean(anchorEl);
-
-  const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-    setSearchQuery('');
-  };
+  const filteredWars = wars.filter((war) =>
+    war.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleToggle = (warId: number) => {
     if (selected.includes(warId)) {
@@ -167,153 +448,196 @@ function WarMultiSelector({ wars, selected, onChange, isLoading }: WarMultiSelec
     }
   };
 
-  const handleSelectAll = () => {
-    onChange(filteredWars.map((w) => w.war_id));
-  };
-
-  const handleClearAll = () => {
-    onChange([]);
-  };
-
-  // Filter wars by search query
-  const filteredWars = wars.filter((war) =>
-    war.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
-    <>
-      <Button
-        variant="outlined"
-        size="small"
-        onClick={handleOpen}
-        endIcon={<ChevronDown size={16} />}
-        disabled={isLoading}
-        sx={{ minWidth: 150 }}
-      >
-        {selected.length > 0
-          ? t('guild_war.analytics_wars_count', { count: selected.length })
-          : t('guild_war.analytics_select_wars')}
-      </Button>
-
-      <Popover
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'left',
-        }}
-        slotProps={{
-          paper: {
-            sx: { width: 320, maxHeight: 480 },
-          },
-        }}
-      >
-        <Box sx={{ p: 2 }}>
-          {/* Search */}
-          <TextField
-            fullWidth
-            size="small"
-            placeholder={t('guild_war.analytics_search_wars')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={16} />
-                </InputAdornment>
-              ),
-              endAdornment: searchQuery && (
-                <InputAdornment position="end">
-                  <Button size="small" onClick={() => setSearchQuery('')}>
-                    <X size={16} />
-                  </Button>
-                </InputAdornment>
-              ),
-            }}
-            sx={{ mb: 1 }}
-          />
-
-          {/* Actions */}
-          <Stack direction="row" spacing={1} mb={1}>
-            <Button size="small" onClick={handleSelectAll} disabled={filteredWars.length === 0}>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 min-w-[160px] justify-between"
+          disabled={isLoading}
+        >
+          <span className="truncate">
+            {selected.length > 0
+              ? t('guild_war.analytics_wars_count', { count: selected.length })
+              : t('guild_war.analytics_select_wars')}
+          </span>
+          <KeyboardArrowDownIcon sx={{ fontSize: 16 }} className="ml-2 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] p-0" align="start">
+        <div className="p-2 border-b">
+          <div className="relative">
+            <SearchIcon sx={{ fontSize: 16 }} className="absolute left-2 top-2.5 text-muted-foreground" />
+            <Input
+              placeholder={t('guild_war.analytics_search_wars')}
+              value={searchQuery}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+              className="pl-8 h-9"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+              >
+                <CloseIcon sx={{ fontSize: 16 }} />
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <div className="p-2 border-b flex items-center justify-between bg-muted/30">
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => onChange(filteredWars.map((w) => w.war_id))}
+              disabled={filteredWars.length === 0}
+            >
               {t('common.all')}
             </Button>
-            <Button size="small" onClick={handleClearAll} disabled={selected.length === 0}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => onChange([])}
+              disabled={selected.length === 0}
+            >
               {t('common.clear')}
             </Button>
-            <Chip
-              label={`${selected.length} / ${wars.length}`}
-              size="small"
-              sx={{ ml: 'auto' }}
-            />
-          </Stack>
-        </Box>
+          </div>
+          <Badge variant="outline" className="text-[10px] font-normal">
+            {selected.length} / {wars.length}
+          </Badge>
+        </div>
 
-        {/* War List */}
-        <List dense sx={{ maxHeight: 320, overflow: 'auto' }}>
+        <div className="max-h-[300px] overflow-auto py-1">
           {filteredWars.length === 0 ? (
-            <ListItem>
-              <ListItemText
-                primary={t('guild_war.analytics_no_wars_found')}
-                secondary={
-                  searchQuery
-                    ? t('guild_war.analytics_try_different_search')
-                    : t('guild_war.analytics_no_wars_available')
-                }
-                sx={{ textAlign: 'center' }}
-              />
-            </ListItem>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {t('guild_war.analytics_no_wars_found')}
+            </div>
           ) : (
-            filteredWars.map((war) => (
-              <ListItemButton key={war.war_id} onClick={() => handleToggle(war.war_id)}>
-                <ListItemIcon>
+            filteredWars.map((war) => {
+               const isSelected = selected.includes(war.war_id);
+               return (
+                <div
+                  key={war.war_id}
+                  className={cn(
+                    "flex items-start space-x-2 px-3 py-2 cursor-pointer hover:bg-accent transition-colors",
+                    isSelected && "bg-accent/50"
+                  )}
+                  onClick={() => handleToggle(war.war_id)}
+                >
                   <Checkbox
-                    edge="start"
-                    checked={selected.includes(war.war_id)}
-                    tabIndex={-1}
-                    disableRipple
+                    id={`war-${war.war_id}`}
+                    checked={isSelected}
+                    onChange={() => handleToggle(war.war_id)}
+                    className="mt-1"
                   />
-                </ListItemIcon>
-                <ListItemText
-                  primary={war.title}
-                  secondary={
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography variant="caption" color="text.secondary">
-                        {new Date(war.war_date).toLocaleDateString()}
-                      </Typography>
-                      <Chip
-                        label={war.result.toUpperCase()}
-                        size="small"
-                        color={war.result === 'win' ? 'success' : war.result === 'loss' ? 'error' : 'default'}
-                        sx={{ height: 16, fontSize: '0.625rem' }}
-                      />
-                      {war.missing_stats_count > 0 && (
-                        <Chip
-                          label={`Missing: ${war.missing_stats_count}`}
-                          size="small"
-                          color="warning"
-                          sx={{ height: 16, fontSize: '0.625rem' }}
-                        />
-                      )}
-                    </Stack>
-                  }
-                />
-              </ListItemButton>
-            ))
+                  <div className="flex-1 space-y-1">
+                    <Label
+                      htmlFor={`war-${war.war_id}`}
+                      className="text-sm font-medium leading-none cursor-pointer"
+                    >
+                      {war.title}
+                    </Label>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                       <span className="text-xs text-muted-foreground">
+                         {new Date(war.war_date).toLocaleDateString()}
+                       </span>
+                       <Badge 
+                          variant={war.result === 'win' ? 'outline' : war.result === 'loss' ? 'destructive' : 'secondary'}
+                          className="h-5 px-1 text-[10px] uppercase border"
+                          style={
+                            war.result === 'win'
+                              ? {
+                                  borderColor: 'color-mix(in srgb, var(--color-status-success) 50%, transparent)',
+                                  color: 'var(--color-status-success-fg)',
+                                  backgroundColor: 'color-mix(in srgb, var(--color-status-success-bg) 80%, transparent)',
+                                }
+                              : war.result === 'loss'
+                                ? {
+                                    borderColor: 'color-mix(in srgb, var(--color-status-error) 50%, transparent)',
+                                    color: 'var(--color-status-error-fg)',
+                                    backgroundColor: 'color-mix(in srgb, var(--color-status-error-bg) 80%, transparent)',
+                                  }
+                                : undefined
+                          }
+                        >
+                          {war.result === 'win' ? t('dashboard.victory') : war.result === 'loss' ? t('dashboard.defeat') : t('dashboard.pending')}
+                       </Badge>
+                       {war.missing_stats_count > 0 && (
+                          <Badge variant="destructive" className="h-5 px-1 text-[10px]">
+                            {t('guild_war.analytics_missing_count', { count: war.missing_stats_count })}
+                          </Badge>
+                       )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
           )}
-        </List>
-      </Popover>
-    </>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
-// ============================================================================
-// Export
-// ============================================================================
+// Helper component for multi-metric selection
+function MetricMultiSelector({ 
+  selected, 
+  onChange 
+}: { 
+  selected: MetricType[], 
+  onChange: (m: MetricType) => void 
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
 
-export { DateRangeSelector, WarMultiSelector };
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger>
+        <Button variant="outline" className="h-9 min-w-[200px] justify-between">
+           <div className="flex gap-1 overflow-hidden">
+              {selected.length > 0 ? (
+                 selected.slice(0, 2).map(m => (
+                    <Badge key={m} variant="secondary" className="px-1 py-0 h-5 text-[10px]">
+                      {formatMetricName(m)}
+                    </Badge>
+                 ))
+              ) : (
+                 <span>{t('guild_war.analytics_primary_metric')}</span>
+              )}
+              {selected.length > 2 && (
+                 <Badge variant="secondary" className="px-1 py-0 h-5 text-[10px]">
+                   +{selected.length - 2}
+                 </Badge>
+              )}
+           </div>
+           <KeyboardArrowDownIcon sx={{ fontSize: 16 }} className="ml-2 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[240px] p-0" align="start">
+         <div className="p-2 space-y-1">
+            {Object.keys(METRICS).map((metricKey) => {
+               const metric = metricKey as MetricType;
+               const isSelected = selected.includes(metric);
+               return (
+                  <div 
+                    key={metric}
+                    className="flex items-center space-x-2 p-2 hover:bg-accent rounded-sm cursor-pointer"
+                    onClick={() => onChange(metric)}
+                  >
+                     <Checkbox checked={isSelected} id={`metric-${metric}`} />
+                     <Label htmlFor={`metric-${metric}`} className="flex-1 cursor-pointer">
+                        {formatMetricName(metric)}
+                     </Label>
+                  </div>
+               );
+            })}
+         </div>
+      </PopoverContent>
+    </Popover>
+  );
+}

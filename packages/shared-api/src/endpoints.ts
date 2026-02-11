@@ -37,6 +37,8 @@ export const ENDPOINTS = {
   // Members
   members: {
     list: { method: 'GET', path: '/members' },
+    batchUpdate: { method: 'PATCH', path: '/members' },
+    restore: { method: 'POST', path: '/members/restore' },
     get: { method: 'GET', path: '/members/:id' },
     update: { method: 'PUT', path: '/members/:id' },
     updateRole: { method: 'PUT', path: '/members/:id/role' },
@@ -48,6 +50,7 @@ export const ENDPOINTS = {
     updateNote: { method: 'PUT', path: '/members/:id/notes' },
     toggleActive: { method: 'POST', path: '/members/:id/toggle-active' },
     resetPassword: { method: 'POST', path: '/members/:id/reset-password' },
+    updateUsername: { method: 'PUT', path: '/members/:id/username' },
     uploadMedia: { method: 'POST', path: '/members/:id/media' },
     deleteMedia: { method: 'DELETE', path: '/members/:id/media/:mediaId' },
     setAvatar: { method: 'POST', path: '/members/:id/media/:mediaId/set-avatar' },
@@ -56,14 +59,19 @@ export const ENDPOINTS = {
     addVideoUrl: { method: 'POST', path: '/members/:id/video-urls' },
     updateVideoUrl: { method: 'PUT', path: '/members/:id/video-urls/:videoId' },
     deleteVideoUrl: { method: 'DELETE', path: '/members/:id/video-urls/:videoId' },
+    legacyActionPost: { method: 'POST', path: '/members/:id/:action' },
+    legacyActionPut: { method: 'PUT', path: '/members/:id/:action' },
   },
 
   // Events
   events: {
     list: { method: 'GET', path: '/events' },
-    get: { method: 'GET', path: '/events/:id' },
     create: { method: 'POST', path: '/events' },
+    batchDelete: { method: 'DELETE', path: '/events' },
+    restore: { method: 'POST', path: '/events/restore' },
+    get: { method: 'GET', path: '/events/:id' },
     update: { method: 'PUT', path: '/events/:id' },
+    patch: { method: 'PATCH', path: '/events/:id' },
     delete: { method: 'DELETE', path: '/events/:id' },
     toggleArchive: { method: 'POST', path: '/events/:id/toggle-archive' },
     join: { method: 'POST', path: '/events/:id/join' },
@@ -71,60 +79,86 @@ export const ENDPOINTS = {
     kick: { method: 'POST', path: '/events/:id/kick' },
     toggleLock: { method: 'POST', path: '/events/:id/toggle-lock' },
     togglePin: { method: 'POST', path: '/events/:id/toggle-pin' },
+    pin: { method: 'POST', path: '/events/:id/pin' },
+    duplicate: { method: 'POST', path: '/events/:id/duplicate' },
     addMember: { method: 'POST', path: '/events/:id/participants' },
     attachMedia: { method: 'POST', path: '/events/:id/attachments' },
-    removeAttachment: { method: 'DELETE', path: '/events/:id/attachments/:mediaId' },
     reorderAttachments: { method: 'PUT', path: '/events/:id/attachments' },
+    removeAttachment: { method: 'DELETE', path: '/events/:id/attachments/:mediaId' },
+    legacyAction: { method: 'POST', path: '/events/:id/:action' },
   },
 
   // Announcements
   announcements: {
     list: { method: 'GET', path: '/announcements' },
-    get: { method: 'GET', path: '/announcements/:id' },
     create: { method: 'POST', path: '/announcements' },
+    batchDelete: { method: 'DELETE', path: '/announcements' },
+    restore: { method: 'POST', path: '/announcements/restore' },
+    get: { method: 'GET', path: '/announcements/:id' },
     update: { method: 'PUT', path: '/announcements/:id' },
+    patch: { method: 'PATCH', path: '/announcements/:id' },
     delete: { method: 'DELETE', path: '/announcements/:id' },
     toggleArchive: { method: 'POST', path: '/announcements/:id/toggle-archive' },
     togglePin: { method: 'POST', path: '/announcements/:id/pin' },
     attachMedia: { method: 'POST', path: '/announcements/:id/media' },
-    removeMedia: { method: 'DELETE', path: '/announcements/:id/media/:mediaId' },
     reorderMedia: { method: 'PUT', path: '/announcements/:id/media' },
+    removeMedia: { method: 'DELETE', path: '/announcements/:id/media/:mediaId' },
   },
 
   // Guild Wars
   wars: {
+    list: { method: 'GET', path: '/wars' },
+    create: { method: 'POST', path: '/wars' },
     latest: { method: 'GET', path: '/wars/latest' },
     get: { method: 'GET', path: '/wars/:id' },
+    update: { method: 'PUT', path: '/wars/:id' },
+    delete: { method: 'DELETE', path: '/wars/:id' },
+    getTeams: { method: 'GET', path: '/wars/:id/teams' },
     createTeam: { method: 'POST', path: '/wars/:id/teams' },
+    getTeam: { method: 'GET', path: '/wars/:id/teams/:teamId' },
     updateTeam: { method: 'PUT', path: '/wars/:id/teams/:teamId' },
     deleteTeam: { method: 'DELETE', path: '/wars/:id/teams/:teamId' },
-    // War Assignments
     poolToTeam: { method: 'POST', path: '/wars/:id/pool-to-team' },
     teamToPool: { method: 'POST', path: '/wars/:id/team-to-pool' },
     teamToTeam: { method: 'POST', path: '/wars/:id/team-to-team' },
     kickFromTeam: { method: 'POST', path: '/wars/:id/kick-from-team' },
     kickFromPool: { method: 'POST', path: '/wars/:id/kick-from-pool' },
-    updateResult: { method: 'PUT', path: '/wars/:id/result' },
-    reorderTeams: { method: 'POST', path: '/wars/:id/teams/reorder' },
-    reorderMembers: { method: 'POST', path: '/wars/:id/teams/:teamId/reorder' },
+    legacyAction: { method: 'POST', path: '/wars/:id/:action' },
+    historyList: { method: 'GET', path: '/wars/history' },
+    historyCreate: { method: 'POST', path: '/wars/history' },
+    historyGet: { method: 'GET', path: '/wars/history/:id' },
+    historyUpdate: { method: 'PUT', path: '/wars/history/:id' },
+    historyMemberStats: { method: 'GET', path: '/wars/history/:id/member-stats' },
+    historyMemberStatsUpdate: { method: 'PUT', path: '/wars/history/:id/member-stats' },
+    analytics: { method: 'GET', path: '/wars/analytics' },
+    analyticsFormulaPresets: { method: 'GET', path: '/wars/analytics-formula-presets' },
+    createAnalyticsFormulaPreset: { method: 'POST', path: '/wars/analytics-formula-presets' },
+    deleteAnalyticsFormulaPreset: { method: 'DELETE', path: '/wars/analytics-formula-presets' },
+  },
+
+  // Uploads
+  upload: {
+    image: { method: 'POST', path: '/upload/image' },
+    audio: { method: 'POST', path: '/upload/audio' },
   },
 
   // Media
   media: {
-    upload: { method: 'POST', path: '/upload' },
-    get: { method: 'GET', path: '/media/:id' },
-    delete: { method: 'DELETE', path: '/media/:id' },
+    get: { method: 'GET', path: '/media/:key' },
     listConversions: { method: 'GET', path: '/media/conversions' },
+    retryConversions: { method: 'POST', path: '/media/conversions' },
     getConversions: { method: 'GET', path: '/media/:id/conversions' },
     retryConversion: { method: 'POST', path: '/media/:id/conversions/retry' },
     checkDuplicate: { method: 'GET', path: '/media/check-duplicate' },
+    reorder: { method: 'PUT', path: '/media/reorder' },
   },
 
   // Gallery
   gallery: {
     list: { method: 'GET', path: '/gallery' },
-    get: { method: 'GET', path: '/gallery/:id' },
     create: { method: 'POST', path: '/gallery' },
+    batchDelete: { method: 'DELETE', path: '/gallery' },
+    get: { method: 'GET', path: '/gallery/:id' },
     update: { method: 'PUT', path: '/gallery/:id' },
     delete: { method: 'DELETE', path: '/gallery/:id' },
     feature: { method: 'POST', path: '/gallery/:id/feature' },
@@ -133,7 +167,7 @@ export const ENDPOINTS = {
 
   // Admin
   admin: {
-    listAuditLogs: { method: 'GET', path: '/admin/audit-logs' }, // Enhanced with cursor pagination + date range filtering
+    listAuditLogs: { method: 'GET', path: '/admin/audit-logs' },
     addAuditLog: { method: 'POST', path: '/admin/audit-logs' },
     deleteAuditLog: { method: 'DELETE', path: '/admin/audit-logs/:id' },
     getAuditStats: { method: 'GET', path: '/admin/audit-logs/stats' },
@@ -145,9 +179,15 @@ export const ENDPOINTS = {
     fetch: { method: 'GET', path: '/poll' },
   },
 
+  // Push (SSE)
+  push: {
+    connect: { method: 'GET', path: '/push' },
+  },
+
   // Health
   health: {
     check: { method: 'GET', path: '/health' },
+    checkService: { method: 'GET', path: '/health/:check' },
   },
 } as const;
 

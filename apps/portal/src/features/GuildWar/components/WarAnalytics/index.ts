@@ -13,7 +13,6 @@ export type {
   MetricType,
   AggregationType,
   AnalyticsFilters,
-  PlayerModeState,
   CompareModeState,
   RankingsModeState,
   TeamsModeState,
@@ -33,7 +32,6 @@ export type {
 export {
   METRICS,
   DEFAULT_FILTERS,
-  DEFAULT_PLAYER_MODE,
   DEFAULT_COMPARE_MODE,
   DEFAULT_RANKINGS_MODE,
   DEFAULT_TEAMS_MODE,
@@ -82,13 +80,16 @@ export {
 // Components
 export { ModeStrip, ModeDescription } from './ModeStrip';
 export { FilterBar, DateRangeSelector, WarMultiSelector } from './FilterBar';
-export { PlayerSelector, SelectedMemberCard, StatBox } from './PlayerSelector';
 export { PlayerTimelineChart } from './PlayerTimelineChart';
 export { CompareSelector } from './CompareSelector';
+export { SubjectSelector } from './SubjectSelector';
 export { CompareTrendChart, CompareTooltip } from './CompareTrendChart';
 export { RankingsFilters } from './RankingsFilters';
 export { RankingsBarChart, RankingsTooltip } from './RankingsBarChart';
 export { MetricsPanel } from './MetricsPanel';
+export { NormalizationDiagnosticsPanel } from './NormalizationDiagnosticsPanel';
+export { MetricFormulaEditor } from './MetricFormulaEditor';
+export { WarDetailSidePanel } from './WarDetailSidePanel';
 export { ShareButton } from './ShareButton';
 export { TableFallback, createTimelineColumns, createCompareColumns, createRankingsColumns } from './TableFallback';
 export { ChartLoadingSkeleton, TableLoadingSkeleton, CardLoadingSkeleton, ListLoadingSkeleton, FullPageLoading } from './LoadingStates';

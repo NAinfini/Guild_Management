@@ -54,13 +54,13 @@
     "unarchive": "取消存档",
     "recently": "最近",
     "last_checked": "上次检查",
-    "day_monday": "星期一",
-    "day_tuesday": "星期二",
-    "day_wednesday": "星期三",
-    "day_thursday": "星期四",
-    "day_friday": "星期五",
-    "day_saturday": "星期六",
-    "day_sunday": "星期日",
+    "day_monday": "周一",
+    "day_tuesday": "周二",
+    "day_wednesday": "周三",
+    "day_thursday": "周四",
+    "day_friday": "周五",
+    "day_saturday": "周六",
+    "day_sunday": "周日",
     "participants": "成员人数",
     "time": "时间",
     "status": "状态",
@@ -86,24 +86,19 @@
     "apply_filters": "应用筛选",
     "clear_filters": "清除全部",
     "active_filters": "已选筛选",
-    "retry": "重试",
-    "app_name": "白夜传送门",
-    "system_version": "系统 v4.2.0-PRD",
     "guest": "访客",
+    "retry": "重试",
     "all": "全部",
-    "clear": "清空",
-    "invert": "反选",
-    "tip": "提示",
-    "total": "总计",
-    "average": "平均",
-    "best": "最佳",
-    "median": "中位数",
-    "label_new": "新",
-    "label_updated": "已更新",
-    "label_img": "图片"
+    "clear": "清除",
+    "expand_sidebar": "展开侧边栏",
+    "collapse_sidebar": "收起侧边栏",
+    "label_img": "图片",
+    "uploading": "上传中",
+    "app_name": "公会管理平台",
+    "system_version": "系统 v4.2.0-PRD"
   },
   "nav": {
-    "dashboard": "首页",
+    "dashboard": "仪表盘",
     "events": "活动",
     "roster": "成员",
     "guild_war": "公会战",
@@ -112,10 +107,10 @@
     "profile": "个人",
     "settings": "设置",
     "tools": "工具",
-    "wiki": "百科",
+    "wiki": "攻略",
     "gallery": "画廊",
-    "account": "账号",
-    "interface_theme": "界面主题"
+    "interface_theme": "界面主题",
+    "account": "账号"
   },
   "dashboard": {
     "title": "首页",
@@ -152,16 +147,96 @@
     "distance": "距离",
     "no_war_data": "暂无战争数据",
     "no_stats_available": "暂无统计数据",
-    "overlap": "检测到冲突",
+    "overlap": "时间冲突",
     "no_operations": "暂无计划",
     "unknown": "未知",
-    "copy_roster": "复制名单",
-    "notification_update": "更新：{{title}}"
+    "overview": "概览",
+    "next_7_days": "未来 7 天",
+    "featured_event": "重点活动",
+    "no_upcoming_events": "暂无近期活动",
+    "last_guild_war": "最近公会战",
+    "mvps": "MVP",
+    "view_history": "查看历史",
+    "system": {
+      "normal": "系统正常",
+      "linked": "已连接"
+    },
+    "status": {
+      "starting_soon": "即将开始"
+    },
+    "actions": {
+      "copy_signup_list": "复制报名名单"
+    },
+    "stats": {
+      "active_members": "活跃成员",
+      "class_composition": "职业分布",
+      "power_distribution": "战力分布",
+      "kills": "击杀",
+      "towers": "塔楼",
+      "credits": "积分",
+      "distance": "距离"
+    },
+    "heatmap": {
+      "title": "活跃热力图",
+      "online_count": "{{day}} {{hour}}:00 在线 {{count}} 人",
+      "low_activity": "低活跃",
+      "peak_time": "高峰"
+    },
+    "intel": {
+      "title": "通知",
+      "notifications": "通知",
+      "members": "成员动态",
+      "view_event": "查看活动",
+      "schedule_update": "日程更新",
+      "operation_created": "活动：{{title}}",
+      "priority_transmission": "重要通知",
+      "operative_joined": "成员 {{username}} 已加入",
+      "reinforcements": "新增成员",
+      "no_recent_intel": "暂无最新通知"
+    },
+    "timeline": {
+      "today": "今天"
+    },
+    "my_signups": {
+      "title": "我的报名",
+      "event": "个活动",
+      "events": "个活动",
+      "no_events": "暂无活动",
+      "now": "现在",
+      "participants": "人",
+      "types": {
+        "war": "公会战",
+        "mission": "周常",
+        "event": "活动"
+      }
+    },
+    "recent_wars": {
+      "title": "最近公会战",
+      "victory": "胜利",
+      "defeat": "失败",
+      "mvp": "MVP",
+      "top_kda": "最佳 KDA",
+      "top_damage": "最高伤害",
+      "top_tank": "最高承伤",
+      "top_healing": "最高治疗"
+    },
+    "roles": {
+      "dmg": "输出",
+      "heal": "治疗",
+      "tank": "承伤"
+    },
+    "war": {
+      "our_guild": "我方公会",
+      "enemy_guild": "敌方公会",
+      "victory": "胜利",
+      "defeat": "失败",
+      "statistics": "战场统计"
+    }
   },
   "settings": {
     "title": "设置",
     "subtitle": "调整界面和语言偏好。",
-    "interface_theme": "主题",
+    "interface_theme": "界面主题",
     "language": "语言",
     "timezone": "时区",
     "ui_effects": "界面特效",
@@ -179,13 +254,28 @@
     "theme_soft_pink_desc": "明亮的粉彩粉色，线条柔和优雅。",
     "save_success": "设置已保存。",
     "audio_settings": "音频设置",
-    "appearance": "外观",
-    "appearance_subtitle": "选择主题以即时更换界面风格。",
-    "language_subtitle": "切换界面语言，无需刷新。",
-    "language_english": "英语",
+    "visual_theme": "界面主题",
+    "color_palette": "配色方案",
+    "language_english": "英文",
     "language_chinese": "中文",
     "active": "已启用",
-    "apply": "应用"
+    "apply": "应用",
+    "visual_theme_subtitle": "选择界面的整体视觉风格",
+    "color_palette_subtitle": "配色方案可与任意视觉主题自由组合",
+    "language_subtitle": "切换界面语言，无需刷新页面",
+    "font_size": "字体大小",
+    "font_size_subtitle": "调整全局文字大小，提升可读性",
+    "motion_intensity": "动效强度",
+    "motion_intensity_subtitle": "控制全站动画与交互运动幅度",
+    "motion_off": "关闭",
+    "motion_low": "低",
+    "motion_normal": "标准",
+    "motion_high": "高",
+    "language_native_english": "English",
+    "language_native_chinese": "中文",
+    "font_size_small": "紧凑",
+    "font_size_default": "默认",
+    "font_size_large": "较大"
   },
   "themes": {
     "default": "默认",
@@ -260,7 +350,6 @@
     "filter_weekly": "周常",
     "filter_guild": "联赛",
     "filter_other": "其他",
-    "filter_archived": "历史",
     "historical_data": "历史",
     "active_archive": "即将开始",
     "withdraw_confirm": "确定取消报名吗？",
@@ -282,7 +371,8 @@
     "kick_confirm_message": "确定要将 {{username}} 从名单中移除吗？",
     "kick": "移除",
     "delete_title": "删除活动",
-    "filter_war": "公会战"
+    "filter_war": "公会战",
+    "filter_archived": "历史"
   },
   "announcements": {
     "title": "公告发布",
@@ -333,8 +423,8 @@
     "media": "个人展示",
     "combat_stats": "数据统计",
     "identity": "个人资料",
-    "empty_title": "暂无成员",
-    "empty_hint": "添加成员或调整筛选条件以查看名单。"
+    "empty_title": "成员列表为空",
+    "empty_hint": "当前没有成员数据，请检查设置或联系管理员。"
   },
   "profile": {
     "title": "个人资料",
@@ -371,13 +461,10 @@
     "missing_availability": "活跃时间未填",
     "missing_audio": "无引导语音",
     "missing_spec": "副主修未填",
-    "archive_title": "归档",
-    "placeholder_bio": "暂无个人简介。",
-    "save_assets": "保存资源",
-    "save_intel": "保存资料",
-    "placeholder_audio_url": "https://...（MP3 链接）",
-    "placeholder_wechat": "@wechat_id",
-    "placeholder_title_html": "<span class='text-blue-500'>天选者</span>"
+    "archive_title": "已归档",
+    "placeholder_bio": "请输入个人简介...",
+    "save_assets": "保存资产",
+    "save_intel": "保存信息"
   },
   "availability": {
     "title": "活跃时间",
@@ -412,19 +499,28 @@
   },
   "login": {
     "back_dashboard": "返回仪表盘",
-    "title": "受限访问 • 请登录您的账户",
+    "title": "受限访问",
     "label_username": "用户名",
-    "placeholder_username": "您的身份名称",
+    "placeholder_username": "输入用户名",
     "label_password": "密码",
-    "placeholder_password": "••••••••",
+    "placeholder_password": "输入密码",
     "caps_lock": "大写锁定已开启",
-    "validating": "验证中...",
+    "validating": "正在验证...",
     "action_login": "登录",
-    "remember_me": "保持登录状态 30 天",
-    "disclaimer": "登录即表示您同意公会的内部行为准则和系统政策。",
+    "remember_me": "30 天内保持登录",
+    "disclaimer": "登录即表示你同意公会内部规范与系统政策。",
     "error_fail": "登录失败",
     "error_username_required": "请输入用户名",
-    "error_password_required": "请输入密码"
+    "error_password_required": "请输入密码",
+    "subtitle": "登录你的账号以继续访问",
+    "username": "用户名",
+    "password": "密码",
+    "forgot_password": "忘记密码？",
+    "status_authenticating": "认证中...",
+    "no_account": "还没有账号？",
+    "contact_admin": "联系管理员",
+    "protection_enabled": "安全保护已启用",
+    "secure_access": "安全访问"
   },
   "tools": {
     "title": "公会工具",
@@ -447,8 +543,33 @@
     "copy_cipher": "复制代码",
     "open_tool": "打开工具",
     "go_to_page": "前往页面",
-    "coming_soon": "即将推出",
-    "under_development": "该功能正在开发中。"
+    "coming_soon": "即将上线",
+    "under_development": "该功能正在开发中",
+    "nexus_controls_title": "Nexus 控件工作室",
+    "nexus_controls_subtitle": "完整 Nexus 控件库，可实时应用当前主题和配色。",
+    "nexus_studio": {
+      "title": "Nexus 控件工作室",
+      "subtitle": "完整 Nexus 控件库已接入 Portal。上方主题和配色会通过 CSS 变量实时作用于所有控件。",
+      "categories": {
+        "buttons": "按钮",
+        "text_input": "文本输入",
+        "choice_controls": "选择控件",
+        "dropdown_select": "下拉 / 选择",
+        "range_controls": "范围控件",
+        "date_time": "日期 / 时间",
+        "navigation": "导航",
+        "disclosure": "展开 / 容器",
+        "feedback": "反馈 / 状态",
+        "search_filter": "搜索 / 筛选 / 排序",
+        "file_media": "文件 / 媒体",
+        "drag_gesture": "拖拽 / 手势",
+        "layout_view": "布局 / 视图",
+        "form_flow": "表单流程",
+        "global_system": "全局系统",
+        "accessibility": "无障碍",
+        "advanced": "高级"
+      }
+    }
   },
   "wiki": {
     "title": "百科指南",
@@ -458,18 +579,7 @@
     "launch_date": "2026-02-02",
     "launch_content": "公会管理门户已完成更新。请各位成员及时完善个人资料，并查看最新的活动安排。",
     "search_guides": "搜索攻略...",
-    "search_placeholder": "搜索攻略...",
-    "category_system": "系统",
-    "label_article": "文章",
-    "tag_migration": "站点迁移",
-    "latest_update": "最新更新",
-    "card_hybrid_title": "混合架构",
-    "card_hybrid_desc": "整合现代框架，提供更好的用户体验。",
-    "card_security_title": "安全已验证",
-    "card_security_desc": "高级安全措施可确保你的数据安全。",
-    "footer_disclaimer": "成员请注意：百科是公会规则的官方来源，所有活动均会记录。",
-    "share_intel": "分享情报",
-    "select_intel": "选择情报..."
+    "search_placeholder": "搜索攻略..."
   },
   "admin": {
     "title": "管理控制台",
@@ -556,9 +666,9 @@
     "site_status": "站点状态",
     "tab_overview": "概览",
     "confirm_role_change": "确认角色变更",
-    "confirm_role_body": "确定要更改该成员的角色吗？",
-    "empty_title": "暂无成员",
-    "empty_hint": "邀请或添加成员后会显示在这里。"
+    "confirm_role_body": "您确定要更改该成员的角色吗？",
+    "empty_title": "未找到成员",
+    "empty_hint": "请邀请或添加成员以填充成员列表。"
   },
   "guild_war": {
     "title": "公会联赛",
@@ -585,64 +695,7 @@
     "remove_confirm": "将该成员移出名单？",
     "conflict_title": "检测到冲突",
     "conflict_body": "该操作与现有分配冲突，是否继续？",
-    "override": "强制覆盖",
-    "history_search_placeholder": "搜索战役记录...",
-    "history_incomplete_stats": "{{count}} 场未完成",
-    "history_missing_stats_total": "共缺失 {{count}} 条统计",
-    "member_performance": "成员表现",
-    "teams_snapshot": "队伍快照",
-    "history_victories": "胜利",
-    "history_defeats": "失败",
-    "history_draws": "平局",
-    "history_participation_high": "高 (80-100%)",
-    "history_participation_medium": "中 (50-79%)",
-    "history_participation_low": "低 (20-49%)",
-    "history_participation_rare": "极少 (<20%)",
-    "history_role_dps": "输出",
-    "history_role_tank": "前排",
-    "history_role_support": "辅助",
-    "history_role_balanced": "均衡",
-    "history_win_loss_distribution": "胜负分布",
-    "history_total_wars": "总战役数",
-    "history_participation_tiers": "参与分层",
-    "history_total_members": "总成员数",
-    "history_combat_roles": "战斗定位",
-    "history_metric_kills": "击杀",
-    "history_metric_credits": "积分",
-    "history_metric_distance": "移动距离",
-    "history_metric_towers": "推塔",
-    "history_metric_building_damage": "建筑伤害",
-    "history_metric_damage_taken": "承受伤害",
-    "history_missing_across_members": "{{members}} 名成员共缺失 {{count}} 条数据",
-    "history_missing_fields": "缺失字段：{{fields}}",
-    "analytics_select_members": "选择成员",
-    "analytics_quick_presets": "快捷预设",
-    "analytics_top_damage": "伤害前 5",
-    "analytics_top_heals": "治疗前 5",
-    "analytics_top_credits": "积分前 5",
-    "analytics_selected_count": "已选 {{count}} 人",
-    "analytics_soft_limit_warning": "你已选择 {{count}} 名成员。若选择较多成员，建议切换到排行榜模式以获得更好性能。",
-    "analytics_hard_limit_warning": "最多可选择 {{count}} 名成员。请减少成员或改用排行榜模式。",
-    "analytics_try_different_search": "请尝试其他搜索词",
-    "analytics_no_members_available": "暂无可用成员",
-    "analytics_focused": "聚焦",
-    "analytics_hidden": "隐藏",
-    "analytics_wars_count": "{{count}} 场",
-    "analytics_dmg_short": "伤害",
-    "analytics_compare_tip": "点击图例可聚焦成员，Alt+点击可隐藏/显示曲线。",
-    "analytics_metrics": "指标",
-    "analytics_primary_metric": "主要指标",
-    "analytics_aggregation": "聚合方式",
-    "analytics_share_snapshot": "分享快照",
-    "analytics_snapshot_copied": "分析快照已复制到剪贴板！",
-    "analytics_snapshot_copy_failed": "复制快照失败，请重试。",
-    "analytics_select_member": "选择成员",
-    "analytics_search_by_username": "按用户名搜索...",
-    "analytics_select_wars": "选择战斗",
-    "analytics_search_wars": "搜索战斗...",
-    "analytics_no_wars_found": "未找到战斗记录",
-    "analytics_no_wars_available": "暂无战斗记录",
-    "analytics_participated_only": "仅参与战斗"
+    "override": "强制覆盖"
   },
   "auth": {
     "login_title": "登录",
@@ -659,7 +712,8 @@
     "session_expired_message": "您的安全许可已超时。请重新验证以继续操作。",
     "login": "登录",
     "logout_success": "登出成功",
-    "password_changed": "密码修改成功"
+    "password_changed": "密码修改成功",
+    "return_to_login": "返回登录页面"
   },
   "errors": {
     "INCORRECT_CREDENTIALS": "凭据不正确",
@@ -829,38 +883,78 @@
       "qing_shan_zhi_bi": "青山执笔"
     }
   },
-  "credits": "积分",
-  "damage": "伤害",
-  "healing": "治疗",
+  "credits": "Credits",
+  "damage": "Damage",
+  "healing": "Healing",
+  "theme_menu": {
+    "themes": {
+      "neo-brutalism": {
+        "label": "新粗野主义",
+        "description": "硬边几何与强烈层次感"
+      },
+      "steampunk": {
+        "label": "蒸汽朋克",
+        "description": "机械质感与金属边框"
+      },
+      "cyberpunk": {
+        "label": "赛博朋克",
+        "description": "高对比霓虹与未来感排版"
+      },
+      "post-apocalyptic": {
+        "label": "废土末世",
+        "description": "磨损工业风与战术纹理"
+      },
+      "chibi": {
+        "label": "Q版萌系",
+        "description": "圆润活泼与轻松节奏"
+      },
+      "royal": {
+        "label": "皇家典雅",
+        "description": "高贵装饰与衬线风格"
+      },
+      "minimalistic": {
+        "label": "极简主义",
+        "description": "克制布局与清晰网格"
+      }
+    },
+    "colors": {
+      "black-gold": {
+        "label": "黑金",
+        "description": "黑底金色的高级对比"
+      },
+      "chinese-ink": {
+        "label": "水墨",
+        "description": "水墨灰阶与宣纸中性色"
+      },
+      "neon-spectral": {
+        "label": "霓虹光谱",
+        "description": "电光青与深紫需虹"
+      },
+      "red-gold": {
+        "label": "赤金",
+        "description": "高对比红金配色"
+      },
+      "soft-pink": {
+        "label": "柔粉",
+        "description": "柔和粉色与轻对比"
+      },
+      "default-violet": {
+        "label": "默认紫",
+        "description": "干净紫调与明亮中性色"
+      }
+    }
+  },
   "gallery": {
-    "title": "画廊",
-    "subtitle": "公会截图与图片收藏。",
     "upload": "上传",
     "upload_title": "上传图片",
-    "drop_files": "点击选择文件",
+    "drop_files": "点击或拖拽文件到此处",
     "file_types": "支持 PNG、JPG、WebP",
     "delete_title": "删除图片",
-    "delete_confirm": "确定要删除这张图片吗？",
+    "delete_confirm": "确定删除这张图片吗？",
     "empty": "暂无图片",
-    "filter_all": "全部",
-    "filter_screenshot": "截图",
-    "filter_meme": "梗图",
-    "filter_event": "活动",
-    "filter_achievement": "成就",
-    "filter_other": "其他",
-    "search_placeholder": "搜索图片..."
-  },
-  "connection": {
-    "connected": "已连接",
-    "disconnected": "离线",
-    "reconnecting": "重连中",
-    "realtime_active": "实时更新已启用",
-    "no_connection": "无连接，正在使用缓存数据",
-    "attempting_reconnect": "正在尝试重新连接"
-  },
-  "media": {
-    "upload_label": "上传",
-    "upload_formats": "PNG、WebP 或音频",
-    "choose_file": "选择文件"
+    "search_placeholder": "搜索图片...",
+    "alt_image": "画廊图片",
+    "untitled": "未命名",
+    "unknown_uploader": "未知"
   }
 }

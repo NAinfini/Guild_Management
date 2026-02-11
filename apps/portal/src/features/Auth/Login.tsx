@@ -1,247 +1,274 @@
-
-import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Button, 
-  TextField, 
-  Typography, 
-  Box, 
-  Stack, 
-  Checkbox, 
-  FormControlLabel, 
-  InputAdornment, 
-  IconButton,
-  Alert,
-  useTheme,
-  CircularProgress
-} from '@mui/material';
+﻿import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks';
 import { useNavigate, Link, useSearch } from '@tanstack/react-router';
-import { Eye, EyeOff, AlertCircle, ArrowLeft, Lock, User, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import PersonIcon from '@mui/icons-material/Person';
+import LockIcon from '@mui/icons-material/Lock';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ErrorIcon from '@mui/icons-material/Error';
+import CheckIcon from '@mui/icons-material/Check';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import LoginIcon from '@mui/icons-material/Login';
+import GppMaybeIcon from '@mui/icons-material/GppMaybe';
+import { cn } from '../../lib/utils';
+import {
+  Input,
+  Label,
+  Button,
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+  Checkbox,
+  Alert,
+  AlertDescription
+} from '@/components';
+import { DecorativeBackground } from '@/components';
 
 export function Login() {
-  const { login, isLoading, error } = useAuth();
-  const navigate = useNavigate();
-  const search = useSearch({ from: '/login' });
-  const theme = useTheme();
   const { t } = useTranslation();
-  
+  const { login, isAuthenticated, isLoading, error: authError } = useAuth();
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isCapsLockOn, setIsCapsLockOn] = useState(false);
-  const [stayLoggedIn, setStayLoggedIn] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const search = useSearch({ from: '/login' });
 
-  const returnTo = (search as any).returnTo || '/';
-
-  const translateError = (errorKey?: string | null) => {
-    if (!errorKey) return t('login.error_fail');
-    const key = `errors.${errorKey}` as const;
-    const translated = t(key);
-    return translated === key ? t('errors.INTERNAL_ERROR') : translated;
-  };
-
-  // Basic inline validation
-  const usernameError = submitted && !username;
-  const passwordError = submitted && !password;
-
-  // Detect Caps Lock
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.getModifierState('CapsLock')) {
-      setIsCapsLockOn(true);
-    } else {
-      setIsCapsLockOn(false);
+  useEffect(() => {
+    if (isAuthenticated) {
+      const redirect = (search as any).redirect || '/';
+      navigate({ to: redirect });
     }
-  };
+  }, [isAuthenticated, navigate, search]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setLocalError(null);
-
-    if (!username || !password) {
-        return;
-    }
-
-    const result = await login({ username, password, rememberMe: stayLoggedIn });
-    if (result.success) {
-      // Force a full page reload to ensure cookie is properly set
-      window.location.href = returnTo || '/';
-    } else {
-      // Map server error code to translation key if possible
-      setLocalError(translateError(result.error));
+    if (isLoading) return;
+    
+    try {
+      await login({ username, password });
+    } catch (err) {
+      console.error('Login failed:', err);
     }
   };
 
   return (
-    <Box sx={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        background: `radial-gradient(ellipse at top, ${theme.palette.primary.main}1A, ${theme.palette.background.default}, ${theme.palette.background.default})`,
-        p: 2 
-    }}>
-       <Box sx={{ width: '100%', maxWidth: 450 }}>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <Button 
-                startIcon={<ArrowLeft size={16} />} 
-                sx={{ mb: 2, color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
-            >
-                {t('login.back_dashboard')}
-            </Button>
-          </Link>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-background relative overflow-hidden">
+      <DecorativeBackground 
+        variant="arcane"
+        motion="reactive"
+        motionStrength={0.85}
+        layers={[
+          {
+            id: 'login-shield',
+            type: 'icon',
+            icon: VerifiedUserIcon,
+            color: 'var(--color-status-info)',
+            size: 380,
+            opacity: 0.06,
+            top: -20,
+            right: -20,
+            rotation: -10,
+          },
+          {
+            id: 'login-shield-ring',
+            type: 'ring',
+            color: 'var(--color-status-info)',
+            size: 300,
+            opacity: 0.18,
+            top: 20,
+            right: 20,
+          },
+        ]}
+        className="-top-20 -right-20"
+      />
+      <DecorativeBackground 
+        variant="minimal"
+        motion="drift"
+        motionStrength={0.7}
+        layers={[
+          {
+            id: 'login-lock',
+            type: 'icon',
+            icon: LockIcon,
+            color: 'var(--sys-text-secondary)',
+            size: 300,
+            opacity: 0.05,
+            bottom: -10,
+            left: -10,
+            rotation: -8,
+          },
+          {
+            id: 'login-lock-orb',
+            type: 'orb',
+            color: 'var(--sys-surface-elevated)',
+            size: 220,
+            opacity: 0.12,
+            blur: 20,
+            bottom: -20,
+            left: 20,
+          },
+        ]}
+        className="-bottom-10 -left-10"
+      />
 
-          <Card sx={{ 
-              backgroundColor: 'rgba(255,255,255,0.02)', 
-              backdropFilter: 'blur(20px)',
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 4
-          }}>
-            <CardHeader 
-                sx={{ textAlign: 'center', pb: 0, pt: 4 }}
-                title={
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                        <Box sx={{ 
-                            width: 56, height: 56, borderRadius: 3, 
-                            background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: `0 8px 32px ${theme.palette.primary.main}40`
-                        }}>
-                             <Lock className="text-white h-7 w-7" />
-                        </Box>
-                        <Typography variant="h4" sx={{ 
-                            fontWeight: 900, 
-                            letterSpacing: '-0.02em',
-                            background: `linear-gradient(to right, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
-                            backgroundClip: 'text',
-                            WebkitBackgroundClip: 'text',
-                            color: 'transparent'
-                        }}>
-                           BaiYe Portal
-                        </Typography>
-                    </Box>
-                }
-                subheader={
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontWeight: 500 }}>
-                        {t('login.title')}
-                    </Typography>
-                }
-            />
-            
-            <CardContent sx={{ p: 4, pt: 4 }}>
-               {(error || localError) && (
-                 <Alert severity="error" icon={<AlertCircle size={18} />} sx={{ mb: 3, borderRadius: 2 }}>
-                    {localError || translateError(error)}
-                 </Alert>
-               )}
+      <div className="w-full max-w-md z-10">
+        <div className="mb-8 text-center">
+            <Link to="/">
+                <Button 
+                    variant="ghost" 
+                    className="text-muted-foreground hover:text-foreground pl-0 gap-2"
+                >
+                    <ArrowBackIcon sx={{ fontSize: 16 }} />
+                    {t('login.back_dashboard')}
+                </Button>
+            </Link>
+        </div>
 
-               <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
-                  <Stack spacing={3}>
-                     <TextField
-                        fullWidth
-                        label={t('login.label_username')}
-                        placeholder={t('login.placeholder_username')}
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        disabled={isLoading}
-                        error={usernameError}
-                        helperText={usernameError ? t('login.error_username_required') : ''}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <User size={18} opacity={0.5} />
-                                </InputAdornment>
-                            ),
-                        }}
-                        sx={{
-                            '& .MuiOutlinedInput-root': { borderRadius: 3 }
-                        }}
-                     />
+        <Card className="border-2 shadow-2xl bg-card/50 backdrop-blur-xl">
+          <CardHeader className="space-y-1 pb-8 text-center border-b">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                <VerifiedUserIcon sx={{ fontSize: 32 }} />
+              </div>
+            </div>
+            <h1 className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">
+              {t('login.title')}
+            </h1>
+            <p className="text-sm text-muted-foreground font-medium">
+              {t('login.subtitle')}
+            </p>
+          </CardHeader>
+          
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4 pt-8">
+              {authError && (
+                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 animate-in fade-in zoom-in duration-300">
+                  <ErrorIcon sx={{ fontSize: 16 }} className="mr-2" />
+                  <AlertDescription className="text-xs font-bold uppercase tracking-wider">
+                    {authError}
+                  </AlertDescription>
+                </Alert>
+              )}
 
-                     <Box>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                             <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.1em', color: 'text.secondary' }}>
-                                 {t('login.label_password')}
-                             </Typography>
-                             {isCapsLockOn && (
-                                 <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'warning.main', fontSize: '0.7rem', fontWeight: 800 }}>
-                                     <AlertCircle size={12} /> {t('login.caps_lock')}
-                                 </Box>
-                             )}
-                          </Box>
-                          <TextField
-                             fullWidth
-                             type={showPassword ? "text" : "password"}
-                             placeholder={t('login.placeholder_password')}
-                             value={password}
-                             onChange={(e) => setPassword(e.target.value)}
-                              disabled={isLoading}
-                             error={passwordError}
-                             helperText={passwordError ? t('login.error_password_required') : ''}
-                             InputProps={{
-                                 startAdornment: (
-                                     <InputAdornment position="start">
-                                         <Lock size={18} opacity={0.5} />
-                                     </InputAdornment>
-                                 ),
-                                 endAdornment: (
-                                     <InputAdornment position="end">
-                                         <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                         </IconButton>
-                                     </InputAdornment>
-                                 )
-                             }}
-                             sx={{
-                                 '& .MuiOutlinedInput-root': { borderRadius: 3 }
-                             }}
-                          />
-                     </Box>
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-xs font-black uppercase tracking-widest ml-1">
+                  {t('login.username')}
+                </Label>
+                <div className="relative group">
+                  <PersonIcon sx={{ fontSize: 20 }} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <Input
+                    id="username"
+                    placeholder={t('login.placeholder_username')}
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="pl-10 bg-background/50 border-2 transition-all focus:border-primary uppercase font-bold tracking-wider"
+                    required
+                  />
+                </div>
+              </div>
 
-                     <FormControlLabel
-                        control={
-                            <Checkbox 
-                                checked={stayLoggedIn}
-                                onChange={(e) => setStayLoggedIn(e.target.checked)}
-                                sx={{ '& .MuiSvgIcon-root': { borderRadius: 1 } }}
-                            />
-                        }
-                        label={<Typography variant="body2" color="text.secondary">{t('login.remember_me')}</Typography>}
-                     />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between ml-1">
+                  <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest">
+                    {t('login.password')}
+                  </Label>
+                  <Button variant="link" className="text-[10px] font-black uppercase tracking-widest h-auto p-0 opacity-50 hover:opacity-100">
+                    {t('login.forgot_password')}
+                  </Button>
+                </div>
+                <div className="relative group">
+                  <LockIcon sx={{ fontSize: 20 }} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <Input
+                    id="password"
+                    placeholder={t('login.placeholder_password')}
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 pr-10 bg-background/50 border-2 transition-all focus:border-primary font-mono"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? (
+                      <VisibilityOffIcon sx={{ fontSize: 18 }} />
+                    ) : (
+                      <VisibilityIcon sx={{ fontSize: 18 }} />
+                    )}
+                  </button>
+                </div>
+              </div>
 
-                     <Button 
-                        type="submit" 
-                        variant="contained" 
-                        fullWidth 
-                        size="large"
-                        disabled={isLoading}
-                        sx={{ 
-                            height: 48, 
-                            borderRadius: 3, 
-                            fontSize: '0.9rem', 
-                            fontWeight: 900, 
-                            letterSpacing: '0.1em' 
-                        }}
-                     >
-                        {isLoading ? (
-                            <Stack direction="row" spacing={1} alignItems="center">
-                                <CircularProgress size={20} color="inherit" />
-                                <span>{t('login.validating')}</span>
-                            </Stack>
-                        ) : t('login.action_login')}
-                     </Button>
-                  </Stack>
-               </form>
+              <div className="flex items-center space-x-2 pt-2 ml-1">
+                <Checkbox 
+                  id="remember" 
+                  checked={rememberMe}
+                  onChange={(_, checked) => setRememberMe(checked)}
+                />
+                <Label 
+                  htmlFor="remember" 
+                  className="text-[11px] font-black uppercase tracking-widest cursor-pointer select-none"
+                >
+                  {t('login.remember_me')}
+                </Label>
+              </div>
             </CardContent>
-          </Card>
 
-       </Box>
-    </Box>
+            <CardFooter className="flex flex-col gap-4 pb-8 pt-4">
+              <Button 
+                type="submit" 
+                className="w-full h-12 text-sm font-black tracking-widest uppercase relative group overflow-hidden" 
+                disabled={isLoading}
+              >
+                <div className="relative z-10 flex items-center justify-center gap-2">
+                   {isLoading ? (
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" />
+                            <span>{t('login.status_authenticating')}</span>
+                        </div>
+                     ) : (
+                        <div className="flex items-center gap-2">
+                            <LoginIcon sx={{ fontSize: 20 }} className="group-hover:scale-110 transition-transform" />
+                            {t('login.action_login')}
+                        </div>
+                     )}
+                </div>
+                <div className="absolute inset-0 bg-primary-foreground/10 translate-y-12 group-hover:translate-y-0 transition-transform duration-300" />
+              </Button>
+
+              <div className="flex items-center gap-4 py-2">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                  {t('login.secure_access')}
+                </span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <div className="flex items-center justify-center gap-2 text-primary opacity-80">
+                <GppMaybeIcon sx={{ fontSize: 16 }} />
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {t('login.protection_enabled')}
+                </span>
+              </div>
+            </CardFooter>
+          </form>
+        </Card>
+
+        <p className="mt-8 text-center text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+          {t('login.no_account')}{' '}
+          <Link to="/settings" className="text-primary hover:underline underline-offset-4">
+            {t('login.contact_admin')}
+          </Link>
+        </p>
+      </div>
+    </div>
   );
 }
+

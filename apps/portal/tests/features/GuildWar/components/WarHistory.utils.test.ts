@@ -32,9 +32,9 @@ describe('WarHistory utils', () => {
     expect(metrics.kills).toBe(6);
     expect(metrics.deaths).toBe(3);
     expect(metrics.assists).toBe(8);
-    expect(metrics.credits).toBe(12000);
-    expect(metrics.distance).toBe(5600);
-    expect(metrics.towers).toBe(4);
+    expect(metrics.ownCredits).toBe(12000);
+    expect(metrics.ownDistance).toBe(5600);
+    expect(metrics.ownTowers).toBe(4);
   });
 
   it('formats KDA ratio and handles zero deaths', () => {

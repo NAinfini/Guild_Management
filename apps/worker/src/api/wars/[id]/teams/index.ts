@@ -8,7 +8,7 @@
 
 import type { Env } from '../../../../core/types';
 import { createEndpoint } from '../../../../core/endpoint-factory';
-import { etagFromTimestamp } from '../../../../core/utils';
+import { etagFromTimestamp, generateId, utcNow, createAuditLog } from '../../../../core/utils';
 
 // ============================================================
 // Types
@@ -18,6 +18,16 @@ interface WarTeamsResponse {
   teams: any[];
   pool: any[];
   warUpdatedAt?: string;
+}
+
+interface CreateTeamBody {
+  name: string;
+  note?: string;
+  description?: string;
+}
+
+interface CreateTeamResponse {
+  team: any;
 }
 
 // ============================================================
@@ -103,5 +113,69 @@ export const onRequestGet = createEndpoint<WarTeamsResponse>({
       pool: pool.results || [],
       warUpdatedAt: warHistory?.updated_at_utc || undefined,
     };
+  },
+});
+
+// ============================================================
+// POST /api/wars/[id]/teams
+// ============================================================
+
+export const onRequestPost = createEndpoint<CreateTeamResponse, CreateTeamBody>({
+  auth: 'moderator',
+  cacheControl: 'no-store',
+
+  parseBody: (body) => body as CreateTeamBody,
+
+  handler: async ({ env, user, params, body }) => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    if (!body?.name || body.name.trim().length === 0) {
+      throw new Error('Team name is required');
+    }
+
+    const eventId = params.id;
+
+    const event = await env.DB
+      .prepare('SELECT event_id, title FROM events WHERE event_id = ? AND deleted_at_utc IS NULL')
+      .bind(eventId)
+      .first<{ event_id: string; title: string }>();
+
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    const now = utcNow();
+    const teamId = generateId('team');
+    const description = body.description ?? body.note ?? null;
+
+    await env.DB.batch([
+      env.DB.prepare(
+        `INSERT INTO teams (team_id, name, description, is_locked, created_by, created_at_utc, updated_at_utc)
+         VALUES (?, ?, ?, 0, ?, ?, ?)`
+      ).bind(teamId, body.name.trim(), description, user.user_id, now, now),
+      env.DB.prepare(
+        `INSERT INTO event_teams (event_id, team_id, assigned_at_utc)
+         VALUES (?, ?, ?)`
+      ).bind(eventId, teamId, now),
+    ]);
+
+    const created = await env.DB
+      .prepare('SELECT * FROM teams WHERE team_id = ?')
+      .bind(teamId)
+      .first<any>();
+
+    await createAuditLog(
+      env.DB,
+      'war',
+      'create_team',
+      user.user_id,
+      teamId,
+      `Created team ${body.name.trim()} for event ${event.title}`,
+      JSON.stringify({ eventId })
+    );
+
+    return { team: created };
   },
 });

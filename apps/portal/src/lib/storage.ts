@@ -12,8 +12,10 @@ export const STORAGE_KEYS = {
   ROSTER_FILTERS_LEGACY: 'roster_filters',
   ROSTER_FILTER_PRESETS: 'roster_filter_presets',
   AUDIO_SETTINGS: 'audio_settings',
+  SIDEBAR_COLLAPSED: 'sidebar_collapsed',
   TIMEZONE_OFFSET: 'timezone_offset',
   UI_THEME: 'baiye_theme',
+  NOTIFICATIONS_SEEN: 'baiye_notifications_seen',
   I18N_LANG: 'i18nextLng',
 } as const;
 

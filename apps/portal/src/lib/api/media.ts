@@ -4,6 +4,7 @@
  */
 
 import { api } from '../api-client';
+import { typedAPI, ENDPOINTS } from './api-builder';
 
 export interface MediaObject {
   mediaId: string;
@@ -46,11 +47,11 @@ export interface DeleteMediaRequest {
 
 export const mediaAPI = {
   uploadImage: async (file: File, kind: 'avatar' | 'gallery') => {
-    return api.upload<UploadedMediaResponse>('/upload/image', file, { kind });
+    return api.upload<UploadedMediaResponse>(ENDPOINTS.upload.image.path, file, { kind });
   },
 
   uploadAudio: async (file: File) => {
-    return api.upload<UploadedMediaResponse>('/upload/audio', file);
+    return api.upload<UploadedMediaResponse>(ENDPOINTS.upload.audio.path, file);
   },
 
   uploadMemberMedia: async (
@@ -66,7 +67,7 @@ export const mediaAPI = {
       is_avatar: boolean;
       sort_order: number;
       url: string;
-    }>(`/members/${memberId}/media`, file, {
+    }>(ENDPOINTS.members.uploadMedia.path.replace(':id', memberId), file, {
       kind,
       is_avatar: String(isAvatar),
     });
@@ -77,19 +78,24 @@ export const mediaAPI = {
   },
 
   addVideoUrl: async (memberId: string, url: string, title?: string) => {
-    return api.post<VideoUrlResponse>(`/members/${memberId}/video-urls`, { url, title });
+    return typedAPI.members.addVideoUrl<VideoUrlResponse>({ params: { id: memberId }, body: { url, title } });
   },
 
   listVideoUrls: async (memberId: string) => {
-    return api.get<VideoUrlResponse[]>(`/members/${memberId}/video-urls`);
+    return typedAPI.members.listVideoUrls<VideoUrlResponse[]>({ params: { id: memberId } });
   },
 
   updateVideoUrl: async (memberId: string, videoId: string, data: { url?: string; title?: string }) => {
-    return api.put<VideoUrlResponse>(`/members/${memberId}/video-urls/${videoId}`, data);
+    return typedAPI.members.updateVideoUrl<VideoUrlResponse>({
+      params: { id: memberId, videoId },
+      body: data,
+    });
   },
 
   deleteVideoUrl: async (memberId: string, videoId: string) => {
-    return api.delete<{ success: true; message: string }>(`/members/${memberId}/video-urls/${videoId}`);
+    return typedAPI.members.deleteVideoUrl<{ success: true; message: string }>({
+      params: { id: memberId, videoId },
+    });
   },
 
   delete: async (params: DeleteMediaRequest | string) => {
@@ -102,14 +108,16 @@ export const mediaAPI = {
     const { scope, entityId, mediaId } = params;
 
     if (scope === 'event') {
-      return api.delete(`/events/${entityId}/attachments/${mediaId}`);
+      return typedAPI.events.removeAttachment({ params: { id: entityId, mediaId } });
     }
 
     if (scope === 'announcement') {
-      return api.delete(`/announcements/${entityId}/media/${mediaId}`);
+      return typedAPI.announcements.removeMedia({ params: { id: entityId, mediaId } });
     }
 
-    return api.delete<{ success: true; message: string }>(`/members/${entityId}/video-urls/${mediaId}`);
+    return typedAPI.members.deleteVideoUrl<{ success: true; message: string }>({
+      params: { id: entityId, videoId: mediaId },
+    });
   },
 
   getSignedUrl: async (key: string) => {
@@ -117,7 +125,7 @@ export const mediaAPI = {
   },
 
   reorder: async (request: ReorderMediaRequest) => {
-    return api.put<{ message: string }>('/media/reorder', request);
+    return typedAPI.media.reorder<{ message: string }>({ body: request });
   },
 
   reorderMemberMedia: async (
@@ -125,9 +133,9 @@ export const mediaAPI = {
     mediaIds: string[],
     kind?: 'image' | 'audio' | 'video_url'
   ) => {
-    return api.put<{ message: string; media: Array<{ media_id: string; kind: string; sort_order: number }> }>(
-      `/members/${memberId}/media/reorder`,
-      { media_ids: mediaIds, kind }
-    );
+    return typedAPI.members.reorderMedia<{ message: string; media: Array<{ media_id: string; kind: string; sort_order: number }> }>({
+      params: { id: memberId },
+      body: { media_ids: mediaIds, kind },
+    });
   },
 };

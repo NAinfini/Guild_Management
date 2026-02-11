@@ -1,301 +1,261 @@
 /**
  * War Analytics - Player Timeline Chart
  *
- * Timeline chart showing one member's performance across multiple wars
- * Supports:
- * - Primary metric line
- * - Optional secondary metric (dashed line)
- * - Optional 3-war moving average
- * - Missing data gaps (never 0-fill)
+ * Timeline chart showing one member's performance across multiple wars.
+ * Supports selecting multiple metrics and rendering one line per metric.
  */
 
 import { useMemo } from 'react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  ReferenceLine,
-  Area,
-} from 'recharts';
-import { Box, Typography, Alert } from '@mui/material';
-import { CardSkeleton } from '../../../../components/SkeletonLoaders';
-import { useAnalytics } from './AnalyticsContext';
-import { transformForTimeline, formatWarDateShort, formatNumber } from './utils';
-import { getUserColor } from './types';
+import { LineChart } from '@mui/x-charts/LineChart';
+import {  alpha,
+  useTheme
+} from "@mui/material";
+import PersonIcon from "@mui/icons-material/Person";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import InfoIcon from "@mui/icons-material/Info";
+import { ChartsReferenceLine } from '@mui/x-charts/ChartsReferenceLine';
+import { useTranslation } from 'react-i18next';
+import { CardSkeleton } from '@/components/feedback/Skeleton';
+import { formatWarDateShort, formatNumber } from './utils';
+import { METRIC_LINE_COLORS, formatMetricName } from './types';
 import type { PerWarMemberStats, WarSummary, MetricType } from './types';
+import { Alert, AlertDescription } from '@/components/feedback/Alert';
 
-// ============================================================================
-// Main Component
-// ============================================================================
 
 interface PlayerTimelineChartProps {
   perWarStats: PerWarMemberStats[];
   wars: WarSummary[];
+  metrics: MetricType[];
+  onSelectWar?: (warId: number) => void;
   isLoading?: boolean;
 }
 
-export function PlayerTimelineChart({ perWarStats, wars, isLoading }: PlayerTimelineChartProps) {
-  const { filters, playerMode } = useAnalytics();
+export function PlayerTimelineChart({ perWarStats, wars, metrics, onSelectWar, isLoading }: PlayerTimelineChartProps) {
+  const { t } = useTranslation();
+  const selectedMetrics: MetricType[] = metrics.length > 0 ? metrics : ['damage'];
 
-  // Transform data for chart
   const chartData = useMemo(() => {
-    if (!perWarStats || perWarStats.length === 0) return [];
+    if (!perWarStats || perWarStats.length === 0 || wars.length === 0) return [];
 
-    return transformForTimeline(
-      perWarStats,
-      wars,
-      filters.primaryMetric,
-      playerMode.secondaryMetric,
-      playerMode.showMovingAverage
+    const sortedWars = [...wars].sort(
+      (a, b) => new Date(a.war_date).getTime() - new Date(b.war_date).getTime()
     );
-  }, [perWarStats, wars, filters.primaryMetric, playerMode.secondaryMetric, playerMode.showMovingAverage]);
 
-  // Loading state
+    return sortedWars.map((war) => {
+      const stats = perWarStats.find((s) => s.war_id === war.war_id);
+      const point: Record<string, string | number | null> = {
+        war_id: war.war_id,
+        war_date: war.war_date,
+        war_title: war.title,
+      };
+
+      if (stats?.normalization_factor !== undefined) {
+        point.normalization_factor = stats.normalization_factor;
+      }
+      if (stats?.enemy_strength_tier) {
+        point.enemy_strength_tier = stats.enemy_strength_tier;
+      }
+
+      selectedMetrics.forEach((metric) => {
+        point[`metric_${metric}`] = stats?.[metric] ?? null;
+        const rawMetricKey = `raw_${metric}` as keyof PerWarMemberStats;
+        const rawValue = stats?.[rawMetricKey];
+        if (typeof rawValue === 'number') {
+          point[`metric_${metric}_raw`] = rawValue;
+        }
+      });
+
+      return point;
+    });
+  }, [perWarStats, wars, selectedMetrics]);
+
+  const primaryMetricKey = `metric_${selectedMetrics[0]}`;
+
+  const averageValue = useMemo(() => {
+    const values = chartData
+      .map((d) => d[primaryMetricKey])
+      .filter((v): v is number => typeof v === 'number');
+
+    if (values.length === 0) return null;
+    return values.reduce((sum, v) => sum + v, 0) / values.length;
+  }, [chartData, primaryMetricKey]);
+
+  const handleChartClick = (event: any, d: any) => {
+    if (d.dataIndex === undefined || d.dataIndex === null) return;
+    const point = chartData[d.dataIndex];
+    if (!point) return;
+    const warId = Number(point.war_id);
+    if (!Number.isFinite(warId)) return;
+    onSelectWar?.(warId);
+  };
+
   if (isLoading) {
     return <CardSkeleton aspectRatio="16/9" />;
   }
 
-  // No data state
   if (chartData.length === 0) {
     return (
-      <Alert severity="info">
-        No performance data available for the selected wars
+      <Alert variant="default">
+        <InfoIcon sx={{ fontSize: 16 }} />
+        <AlertDescription>{t('guild_war.analytics_no_performance_data')}</AlertDescription>
       </Alert>
     );
   }
 
-  // Calculate average line value
-  const averageValue = useMemo(() => {
-    const values = chartData.map(d => d.value).filter(v => v !== null) as number[];
-    if (values.length === 0) return null;
-    return values.reduce((sum, v) => sum + v, 0) / values.length;
-  }, [chartData]);
-
   return (
-    <Box sx={{ background: 'radial-gradient(circle at 10% 20%, rgba(0,120,255,0.08), transparent 25%), radial-gradient(circle at 80% 10%, rgba(255,200,87,0.08), transparent 20%)', borderRadius: 3, p: 2 }}>
-      <ResponsiveContainer width="100%" height={420}>
-        <LineChart
-          data={chartData}
-          margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
-        >
-          <defs>
-            <linearGradient id="primaryGlow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={getUserColor(1)} stopOpacity={0.35}/>
-              <stop offset="80%" stopColor={getUserColor(1)} stopOpacity={0}/>
-            </linearGradient>
-            <linearGradient id="secondaryGlow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={getUserColor(2)} stopOpacity={0.3}/>
-              <stop offset="80%" stopColor={getUserColor(2)} stopOpacity={0}/>
-            </linearGradient>
-          </defs>
-
-          <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.08)" />
-
-          <XAxis
-            dataKey="war_date"
-            tickFormatter={(date) => formatWarDateShort(date)}
-            style={{ fontSize: '0.75rem', fill: 'rgba(255,255,255,0.7)' }}
-            tickMargin={10}
+    <div
+      className="rounded-xl border bg-card p-4 shadow-sm"
+      style={{
+        background:
+          'radial-gradient(circle at 10% 20%, rgba(0,120,255,0.08), transparent 25%), radial-gradient(circle at 80% 10%, rgba(255,200,87,0.08), transparent 20%)',
+      }}
+    >
+      <LineChart
+        xAxis={[
+          {
+            scaleType: 'point' as const,
+            data: chartData.map((d) => formatWarDateShort(String(d.war_date ?? ""))),
+            tickLabelStyle: {
+              fontSize: 11,
+              fill: 'hsl(var(--muted-foreground))',
+            },
+          },
+        ]}
+        yAxis={[
+          {
+            tickLabelStyle: {
+              fontSize: 11,
+              fill: 'hsl(var(--muted-foreground))',
+            },
+            valueFormatter: (value: number | null) => formatNumber(value ?? 0),
+          },
+        ]}
+        series={selectedMetrics.map((metric, index) => ({
+          id: `metric_${metric}`,
+          data: chartData.map((d) => d[`metric_${metric}`] as number | null),
+          label: formatMetricName(metric),
+          color: METRIC_LINE_COLORS[metric],
+          connectNulls: false,
+          showMark: true,
+          area: true,
+        }))}
+        height={420}
+        margin={{ top: 10, right: 30, left: 50, bottom: 30 }}
+        grid={{ vertical: true, horizontal: true }}
+        onMarkClick={handleChartClick}
+        sx={{
+          '& .MuiChartsAxis-line': {
+            stroke: 'hsl(var(--border))',
+          },
+          '& .MuiChartsAxis-tick': {
+            stroke: 'hsl(var(--border))',
+          },
+          '& .MuiChartsGrid-line': {
+            stroke: 'hsl(var(--border))',
+            strokeDasharray: '4 4',
+          },
+          '& .MuiLineElement-root': {
+            strokeWidth: 2.5,
+          },
+        }}
+      >
+        {averageValue !== null && (
+          <ChartsReferenceLine
+            y={averageValue}
+            lineStyle={{ stroke: 'hsl(var(--muted-foreground))', strokeDasharray: '5 5' }}
+            label={t('guild_war.analytics_average_metric_label', {
+              metric: formatMetricName(selectedMetrics[0]),
+              value: formatNumber(averageValue),
+            })}
+            labelStyle={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
           />
+        )}
+      </LineChart>
 
-          <YAxis
-            style={{ fontSize: '0.75rem', fill: 'rgba(255,255,255,0.7)' }}
-            tickFormatter={(value) => formatNumber(value)}
-          />
-
-          <Tooltip content={<CustomTooltip primaryMetric={filters.primaryMetric} secondaryMetric={playerMode.secondaryMetric} />} />
-
-          <Legend
-            wrapperStyle={{ fontSize: '0.875rem' }}
-            iconType="line"
-          />
-
-          {/* Average reference line */}
-          {averageValue !== null && (
-            <ReferenceLine
-              y={averageValue}
-              stroke="rgba(255,255,255,0.35)"
-              strokeDasharray="5 5"
-              label={{
-                value: `Avg: ${formatNumber(averageValue)}`,
-                position: 'right',
-                style: { fontSize: '0.7rem', fill: 'rgba(255,255,255,0.65)' },
-              }}
-            />
-          )}
-
-          {/* Primary area glow */}
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke="none"
-            fill="url(#primaryGlow)"
-            connectNulls={false}
-          />
-
-          {/* Primary metric line */}
-          <Line
-            type="monotone"
-            dataKey="value"
-            name={formatMetricLabel(filters.primaryMetric)}
-            stroke={getUserColor(1)}
-            strokeWidth={3}
-            dot={{ r: 4 }}
-            activeDot={{ r: 6 }}
-            connectNulls={false} // CRITICAL: Show gaps for missing data
-            strokeLinecap="round"
-          />
-
-          {/* Secondary metric line (optional) */}
-          {playerMode.secondaryMetric && (
-            <>
-              <Area
-                type="monotone"
-                dataKey="secondaryValue"
-                stroke="none"
-                fill="url(#secondaryGlow)"
-                connectNulls={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="secondaryValue"
-                name={formatMetricLabel(playerMode.secondaryMetric)}
-                stroke={getUserColor(2)}
-                strokeWidth={2.5}
-                strokeDasharray="5 5"
-                dot={{ r: 3 }}
-                connectNulls={false}
-                strokeLinecap="round"
-              />
-            </>
-          )}
-
-          {/* Moving average line (optional) */}
-          {playerMode.showMovingAverage && (
-            <Line
-              type="monotone"
-              dataKey="movingAvg"
-              name="3-war Moving Avg"
-              stroke="#ff7300"
-              strokeWidth={1.5}
-              strokeDasharray="3 3"
-              dot={false}
-              connectNulls={true} // Connect for smoother line
-            />
-          )}
-        </LineChart>
-      </ResponsiveContainer>
-
-      {/* Chart Legend/Info */}
-      <Box sx={{ mt: 2, textAlign: 'center' }}>
-        <Typography variant="caption" color="text.secondary">
-          Showing {chartData.length} wars • Missing data shown as gaps (not 0)
-        </Typography>
-      </Box>
-    </Box>
+      <div className="mt-4 text-center">
+        <p className="text-xs text-muted-foreground">
+          {t('guild_war.analytics_multi_metric_hint', {
+            metrics: selectedMetrics.length,
+            wars: chartData.length,
+          })}
+        </p>
+      </div>
+    </div>
   );
 }
-
-// ============================================================================
-// Custom Tooltip
-// ============================================================================
 
 interface CustomTooltipProps {
   active?: boolean;
   payload?: any[];
-  label?: string;
-  primaryMetric: MetricType;
-  secondaryMetric?: MetricType;
+  metrics: MetricType[];
 }
 
-function CustomTooltip({ active, payload, label, primaryMetric, secondaryMetric }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, metrics }: CustomTooltipProps) {
+  const { t } = useTranslation();
   if (!active || !payload || payload.length === 0) return null;
 
-  const data = payload[0].payload;
+  const data = payload[0].payload as Record<string, string | number | null>;
+  const factor = typeof data.normalization_factor === 'number' ? data.normalization_factor : undefined;
+  const tier = typeof data.enemy_strength_tier === 'string' ? data.enemy_strength_tier : undefined;
 
   return (
-    <Box
-      sx={{
-        bgcolor: 'background.paper',
-        border: 1,
-        borderColor: 'divider',
-        borderRadius: 1,
-        p: 1.5,
-        boxShadow: 2,
-      }}
-    >
-      {/* War Title */}
-      <Typography variant="subtitle2" fontWeight={700} mb={1}>
-        {data.war_title}
-      </Typography>
+    <div className="rounded-md border bg-popover p-3 shadow-md">
+      <h4 className="mb-1 text-sm font-bold text-popover-foreground">
+        {String(data.war_title ?? '')}
+      </h4>
 
-      {/* Date */}
-      <Typography variant="caption" color="text.secondary" display="block" mb={1}>
-        {new Date(data.war_date).toLocaleDateString()}
-      </Typography>
+      <span className="mb-1 block text-xs text-muted-foreground">
+        {new Date(String(data.war_date)).toLocaleDateString()}
+      </span>
 
-      {/* Primary Metric */}
-      <Box sx={{ mb: 0.5 }}>
-        <Typography variant="body2" fontWeight={600}>
-          {formatMetricLabel(primaryMetric)}:
-        </Typography>
-        <Typography variant="body2" fontFamily="monospace">
-          {data.value !== null ? formatNumber(data.value) : <em>Missing</em>}
-        </Typography>
-      </Box>
-
-      {/* Secondary Metric */}
-      {secondaryMetric && data.secondaryValue !== undefined && (
-        <Box sx={{ mb: 0.5 }}>
-          <Typography variant="body2" fontWeight={600}>
-            {formatMetricLabel(secondaryMetric)}:
-          </Typography>
-          <Typography variant="body2" fontFamily="monospace">
-            {data.secondaryValue !== null ? formatNumber(data.secondaryValue) : <em>Missing</em>}
-          </Typography>
-        </Box>
+      {factor !== undefined && (
+        <span className="mb-1 block text-xs text-muted-foreground">
+          {t('guild_war.analytics_normalization_badge', {
+            factor: Number(factor).toFixed(2),
+            tier: tier ? t(`guild_war.analytics_tier_${tier}`) : t('common.unknown'),
+          })}
+        </span>
       )}
 
-      {/* Moving Average */}
-      {data.movingAvg !== undefined && data.movingAvg !== null && (
-        <Box>
-          <Typography variant="body2" fontWeight={600}>
-            Moving Avg:
-          </Typography>
-          <Typography variant="body2" fontFamily="monospace">
-            {formatNumber(data.movingAvg)}
-          </Typography>
-        </Box>
-      )}
-    </Box>
+      <div className="flex flex-col gap-1.5">
+        {metrics.map((metric) => {
+          const metricKey = `metric_${metric}`;
+          const value = data[metricKey] as number | null | undefined;
+          const rawValue = data[`metric_${metric}_raw`] as number | null | undefined;
+
+          return (
+            <div key={metric} className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: METRIC_LINE_COLORS[metric] }}
+                />
+                <PersonIcon sx={{ fontSize: 14, color: METRIC_LINE_COLORS[metric], mr: 0.5 }} />
+                <span className="text-xs font-semibold text-popover-foreground">
+                  {formatMetricName(metric)}
+                </span>
+              </div>
+              <span className="font-mono text-xs text-popover-foreground">
+                {value !== null && value !== undefined ? formatNumber(value) : <em className="text-muted-foreground">{t('guild_war.analytics_missing')}</em>}
+              </span>
+              {factor !== undefined &&
+                typeof rawValue === 'number' &&
+                value !== null &&
+                value !== undefined &&
+                Math.abs(rawValue - Number(value)) >= 0.01 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {t('guild_war.analytics_raw_to_normalized', {
+                      raw: formatNumber(rawValue),
+                      normalized: formatNumber(value),
+                    })}
+                  </span>
+                )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
-
-// ============================================================================
-// Helpers
-// ============================================================================
-
-function formatMetricLabel(metric: MetricType): string {
-  const labels: Record<MetricType, string> = {
-    damage: 'Damage',
-    healing: 'Healing',
-    building_damage: 'Building Damage',
-    credits: 'Credits',
-    kills: 'Kills',
-    deaths: 'Deaths',
-    assists: 'Assists',
-    kda: 'K/D/A',
-  };
-  return labels[metric] || metric;
-}
-
-// ============================================================================
-// Export
-// ============================================================================
 
 export { CustomTooltip };

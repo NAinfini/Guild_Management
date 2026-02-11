@@ -1,59 +1,68 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { 
+  Person, 
+  AccessTime, 
+  ElectricBolt, 
+  VpnKey, 
+  Security, 
+  Logout, 
+  Check, 
+  Close, 
+  Add, 
+  Delete, 
+  Image, 
+  Videocam, 
+  Save,
+  VerifiedUser,
+  Warning,
+  PhotoCamera,
+  CloudUpload,
+  MusicNote,
+  Remove,
+  ChevronLeft
+} from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { useForm, Controller } from 'react-hook-form';
+
+import { cn, formatClassDisplayName, sanitizeHtml } from '../../lib/utils';
+import { getOptimizedMediaUrl } from '../../lib/media-conversion';
+import { PageHeaderSkeleton } from '@/components/feedback/Skeleton';
+import { PROGRESSION_CATEGORIES, clampLevel } from '../../lib/progression';
+import { useAuthStore, useUIStore } from '../../store';
+import { useAuth } from '../../features/Auth/hooks/useAuth';
+import { useUpdateMember } from '../../hooks/useServerState';
+import { authAPI, mediaAPI, membersAPI } from '../../lib/api';
+import { User, DayAvailability, ProgressionData, ClassType } from '../../types';
+import { convertToOpus } from '../../lib/media-conversion';
+import { GAME_CLASS_COLORS } from '@/theme/tokens';
+import { alpha } from '@mui/material/styles';
+
+// Nexus Primitives
+// Nexus Primitives
 import { 
   Card, 
   CardContent, 
   CardHeader, 
-  Button, 
-  Chip, 
-  Typography, 
-  Box, 
-  Stack, 
-  IconButton, 
-  TextField, 
-  ToggleButton, 
-  ToggleButtonGroup, 
-  Grid,
-  useTheme,
-  alpha,
-  Alert,
-  Avatar,
-  Tab,
-  Tabs
-} from '@mui/material';
-import { 
-  User as UserIcon, 
-  Clock, 
-  Zap, 
-  Key, 
-  Shield, 
-  LogOut, 
-  Check, 
-  X, 
-  Plus, 
-  Trash2, 
-  Image as ImageIcon, 
-  Video, 
-  Save,
-  ShieldCheck,
-  AlertTriangle,
-  Camera,
-  Upload,
-  Music,
-  Minus,
-  ChevronLeft
-} from 'lucide-react';
-import { cn, getClassColor, formatClassDisplayName, formatPower, sanitizeHtml, getOptimizedMediaUrl } from '../../lib/utils';
-import { PageHeaderSkeleton } from '../../components/SkeletonLoaders';
-import { PROGRESSION_CATEGORIES, clampLevel } from '../../lib/progression';
-import { useAuthStore, useUIStore } from '../../store';
-import { useAuth } from '../../features/Auth/hooks/useAuth';
-import { useTranslation } from 'react-i18next';
-import { useUpdateMember } from '../../hooks/useServerState';
-import { authAPI, mediaAPI, membersAPI } from '../../lib/api';
-import { User, DayAvailability, ProgressionData, ClassType } from '../../types';
-import { useForm, Controller } from 'react-hook-form';
-import { convertToOpus } from '../../lib/media-conversion';
+  CardTitle, 
+  CardDescription,
+  Button,
+  Badge,
+  Input,
+  Avatar, 
+  AvatarFallback, 
+  AvatarImage,
+  Tabs, 
+  TabsList, 
+  TabsTrigger,
+  Alert, 
+  AlertTitle, 
+  AlertDescription,
+  ToggleGroup, 
+  ToggleGroupItem,
+  Label,
+  Separator
+} from '@/components';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -62,9 +71,6 @@ const CLASS_GROUPS_CONFIG = [
   {
     id: 'mingjin',
     labelKey: 'class_group.mingjin',
-    color: '#60a5fa',
-    borderColor: 'rgba(96, 165, 250, 0.3)',
-    bgColor: 'rgba(96, 165, 250, 0.1)',
     options: [
       { id: 'mingjin_hong', labelKey: 'class.mingjin_hong' }, 
       { id: 'mingjin_ying', labelKey: 'class.mingjin_ying' }
@@ -73,9 +79,6 @@ const CLASS_GROUPS_CONFIG = [
   {
     id: 'qiansi',
     labelKey: 'class_group.qiansi',
-    color: '#4ade80',
-    borderColor: 'rgba(74, 222, 128, 0.3)',
-    bgColor: 'rgba(74, 222, 128, 0.1)',
     options: [
       { id: 'qiansi_yu', labelKey: 'class.qiansi_yu' },
       { id: 'qiansi_lin', labelKey: 'class.qiansi_lin' }
@@ -84,9 +87,6 @@ const CLASS_GROUPS_CONFIG = [
   {
     id: 'pozhu',
     labelKey: 'class_group.pozhu',
-    color: '#a855f7',
-    borderColor: 'rgba(168, 85, 247, 0.3)',
-    bgColor: 'rgba(168, 85, 247, 0.1)',
     options: [
       { id: 'pozhu_feng', labelKey: 'class.pozhu_feng' },
       { id: 'pozhu_chen', labelKey: 'class.pozhu_chen' },
@@ -96,9 +96,6 @@ const CLASS_GROUPS_CONFIG = [
   {
     id: 'lieshi',
     labelKey: 'class_group.lieshi',
-    color: '#f87171',
-    borderColor: 'rgba(248, 113, 113, 0.3)',
-    bgColor: 'rgba(248, 113, 113, 0.1)',
     options: [
       { id: 'lieshi_wei', labelKey: 'class.lieshi_wei' },
       { id: 'lieshi_jun', labelKey: 'class.lieshi_jun' }
@@ -119,23 +116,26 @@ const getClassMeta = (classId: string, t: any) => {
   for (const group of CLASS_GROUPS_CONFIG) {
     const opt = group.options.find(o => o.id === classId);
     if (opt) {
+      const colors = GAME_CLASS_COLORS[group.id as keyof typeof GAME_CLASS_COLORS] || GAME_CLASS_COLORS.mingjin;
       return {
         fullLabel: formatClassDisplayName(classId),
         groupLabel: translateClassGroup(group.labelKey, t),
-        color: group.color,
-        borderColor: group.borderColor,
-        bgColor: group.bgColor
+        ...group,
+        colors
       };
     }
   }
-  return { fullLabel: formatClassDisplayName(classId), groupLabel: '?', color: '#94a3b8', borderColor: 'rgba(148, 163, 184, 0.3)', bgColor: 'rgba(148, 163, 184, 0.1)' };
+  return { 
+      fullLabel: formatClassDisplayName(classId), 
+      groupLabel: '?', 
+      colors: { main: '#94a3b8', bg: 'rgba(148, 163, 184, 0.1)', text: '#94a3b8' }
+  };
 };
 
 export function Profile() {
   const { user, logout, isLoading } = useAuth();
   const setAuthUser = useAuthStore(state => state.setUser);
-
-  // ✅ TanStack Query: Mutations for profile updates
+  
   const updateMemberMutation = useUpdateMember();
   const updateMember = async (id: string, data: any) => {
     const updated = await updateMemberMutation.mutateAsync({ id, data });
@@ -150,8 +150,7 @@ export function Profile() {
 
   const { setPageTitle } = useUIStore();
   const { t } = useTranslation();
-  const theme = useTheme();
-  const [activeTab, setActiveTab] = useState<'profile' | 'availability' | 'media' | 'progression' | 'account'>('profile');
+  const [activeTab, setActiveTab] = useState('profile');
 
   useEffect(() => {
     setPageTitle(t('profile.title'));
@@ -160,64 +159,41 @@ export function Profile() {
   if (isLoading || !user) return <PageHeaderSkeleton />;
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: 'auto', pb: 10, px: { xs: 2, sm: 4 } }}>
-      <Box sx={{ mb: 6, display: 'flex', justifyContent: 'flex-end' }}>
-        <Tabs 
-            value={activeTab} 
-            onChange={(_, v) => setActiveTab(v)}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
-            sx={{ 
-                bgcolor: 'action.hover', 
-                borderRadius: 3, 
-                p: 0.5,
-                '& .MuiTab-root': { 
-                    minHeight: 40, 
-                    borderRadius: 2, 
-                    fontSize: '0.65rem', 
-                    fontWeight: 900, 
-                    letterSpacing: '0.1em' 
-                },
-                '& .Mui-selected': {
-                    bgcolor: 'background.paper',
-                    color: 'primary.main',
-                    boxShadow: 2
-                },
-                '& .MuiTabs-indicator': { display: 'none' }
-            }}
-        >
-          {['profile', 'availability', 'media', 'progression', 'account'].map((tab) => (
-             <Tab key={tab} label={t(`profile.tab_${tab}`)} value={tab} />
-          ))}
+    <div className="max-w-[1400px] mx-auto pb-10 px-4 sm:px-8">
+      <div className="mb-6 flex justify-end">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
+             <TabsList className="w-full md:w-auto overflow-x-auto justify-start">
+               {['profile', 'availability', 'media', 'progression', 'account'].map((tab) => (
+                  <TabsTrigger key={tab} value={tab} className="text-[0.65rem] font-black tracking-widest uppercase min-w-20">
+                      {t(`profile.tab_${tab}`)}
+                  </TabsTrigger>
+               ))}
+             </TabsList>
         </Tabs>
-      </Box>
+      </div>
 
-      <Grid container spacing={4}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
          {/* Left Column: Preview */}
-         <Grid size={{ xs: 12, lg: 4 }}>
-            <Stack spacing={3}>
-               <ProfilePreview user={user} onUpdate={updateMember} />
-               <CompletionStatus user={user} />
-            </Stack>
-         </Grid>
+         <div className="lg:col-span-4 flex flex-col gap-6">
+            <ProfilePreview user={user} onUpdate={updateMember} />
+            <CompletionStatus user={user} />
+         </div>
 
          {/* Right Column: Editor */}
-         <Grid size={{ xs: 12, lg: 8 }}>
+         <div className="lg:col-span-8">
             {activeTab === 'profile' && <ProfileEditor user={user} onUpdate={updateMember} />}
             {activeTab === 'availability' && <AvailabilityEditor user={user} onUpdate={updateMember} />}
             {activeTab === 'media' && <MediaEditor user={user} onUpdate={updateMember} />}
             {activeTab === 'progression' && <ProgressionEditor user={user} onUpdate={updateMember} />}
             {activeTab === 'account' && <AccountSettings user={user} onUpdate={updateMember} onChangePassword={changePassword} onLogout={logout} />}
-         </Grid>
-      </Grid>
-    </Box>
+         </div>
+      </div>
+    </div>
   );
 }
 
 function ProfilePreview({ user, onUpdate }: { user: User, onUpdate: (id: string, updates: Partial<User>) => void }) {
   const { t } = useTranslation();
-  const theme = useTheme();
 
   const handleAvatarClick = () => {
     const url = prompt(t('profile.prompt_avatar'), user.avatar_url || '');
@@ -225,49 +201,55 @@ function ProfilePreview({ user, onUpdate }: { user: User, onUpdate: (id: string,
   };
 
   return (
-    <Card sx={{ borderRadius: 4, overflow: 'hidden', position: 'relative', border: `1px solid ${theme.palette.divider}` }}>
-       <Box sx={{ position: 'relative', aspectRatio: '1/1', bgcolor: 'action.hover' }}>
-          <Box 
-             component="img"
+    <Card className="overflow-hidden border-border bg-card">
+       <div className="relative aspect-square bg-muted group">
+          <img
              src={getOptimizedMediaUrl(user.avatar_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`, 'image')} 
              alt={user.username}
-             sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+             className="w-full h-full object-cover"
           />
-          <Box 
+          <div 
              onClick={handleAvatarClick}
-             sx={{ 
-                 position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,0.6)', opacity: 0, 
-                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
-                 cursor: 'pointer', transition: 'opacity 0.2s', '&:hover': { opacity: 1 }
-             }}
+             className="absolute inset-0 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 cursor-pointer transition-opacity duration-200"
+             style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 72%, transparent)' }}
           >
-             <Camera size={32} color="white" />
-             <Typography variant="caption" color="white" fontWeight={900} textTransform="uppercase" letterSpacing="0.1em">{t('profile.update_identity')}</Typography>
-          </Box>
-       </Box>
+             <PhotoCamera className="w-8 h-8 text-[color:var(--sys-text-inverse)]" />
+             <span className="text-xs text-[color:var(--sys-text-inverse)] font-black uppercase tracking-widest">{t('profile.update_identity')}</span>
+          </div>
+       </div>
        
-       <CardContent sx={{ p: 2 }}>
-          <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.5, borderRadius: 10, bgcolor: 'background.default', border: '1px solid', borderColor: 'divider' }}>
-                <ImageIcon size={12} className="text-muted-foreground" />
-                <Typography variant="caption" fontWeight={700} lineHeight={1}>{user.media_counts?.images || 0}</Typography>
-             </Box>
-             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.5, borderRadius: 10, bgcolor: 'background.default', border: '1px solid', borderColor: 'divider' }}>
-                <Video size={12} className="text-muted-foreground" />
-                <Typography variant="caption" fontWeight={700} lineHeight={1}>{user.media_counts?.videos || 0}</Typography>
-             </Box>
-             <Box flex={1} />
-             <Chip 
-                label={user.active_status === 'active' ? t('common.active') : t('common.inactive')} 
-                size="small" 
-                color={user.active_status === 'active' ? 'success' : 'default'}
-                variant="outlined"
-                sx={{ height: 20, fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase' }}
-             />
-          </Stack>
+       <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-background border text-muted-foreground">
+                <Image className="w-3 h-3" />
+                <span className="text-xs font-bold leading-none">{user.media_counts?.images || 0}</span>
+             </div>
+             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-background border text-muted-foreground">
+                <Videocam className="w-3 h-3" />
+                <span className="text-xs font-bold leading-none">{user.media_counts?.videos || 0}</span>
+             </div>
+             <div className="flex-1" />
+             <Badge 
+                variant={user.active_status === 'active' ? 'default' : 'secondary'}
+                className={cn(
+                    "h-5 text-[0.6rem] font-black uppercase",
+                    user.active_status === 'active' ? "hover:opacity-95" : ""
+                )}
+                style={
+                  user.active_status === 'active'
+                    ? {
+                        backgroundColor: 'var(--color-status-success)',
+                        color: 'var(--color-status-success-fg)',
+                      }
+                    : undefined
+                }
+             >
+                {user.active_status === 'active' ? t('common.active') : t('common.inactive')}
+             </Badge>
+          </div>
           
-          <Typography variant="h5" fontWeight={900} gutterBottom>{user.username}</Typography>
-          <Typography variant="subtitle2" color="primary" fontWeight={700} noWrap dangerouslySetInnerHTML={sanitizeHtml(user.title_html || t('profile.operative_title'))} />
+          <h2 className="text-2xl font-black mb-1">{user.username}</h2>
+          <div className="text-sm font-bold text-primary truncate" dangerouslySetInnerHTML={sanitizeHtml(user.title_html || t('profile.operative_title'))} />
        </CardContent>
     </Card>
   );
@@ -275,45 +257,73 @@ function ProfilePreview({ user, onUpdate }: { user: User, onUpdate: (id: string,
 
 function CompletionStatus({ user }: { user: User }) {
   const { t } = useTranslation();
-  const theme = useTheme();
   
   const missing = useMemo(() => {
     const list = [];
     if (!user.bio) list.push(t('profile.missing_bio'));
     if (!user.availability || user.availability.length === 0) list.push(t('profile.missing_availability'));
     if (!user.media_counts?.audio) list.push(t('profile.missing_audio'));
-    if (user.classes?.length < 2) list.push(t('profile.missing_spec'));
+    if (!user.classes?.length || user.classes.length < 2) list.push(t('profile.missing_spec'));
     return list;
   }, [user, t]);
 
   if (missing.length === 0) return (
-     <Alert 
-        severity="success" 
-        icon={<ShieldCheck size={20} />}
-        sx={{ borderRadius: 3, '& .MuiAlert-message': { width: '100%' } }}
+     <Alert
+       className="border"
+       style={{
+         borderColor: 'color-mix(in srgb, var(--color-status-success) 45%, transparent)',
+         backgroundColor: 'color-mix(in srgb, var(--color-status-success-bg) 84%, transparent)',
+         color: 'var(--color-status-success-fg)',
+       }}
      >
-        <Typography variant="subtitle2" fontWeight={900} textTransform="uppercase" color="success.main">{t('completion.complete')}</Typography>
-        <Typography variant="caption" fontWeight={700} color="success.main" sx={{ opacity: 0.8 }}>{t('completion.complete_desc')}</Typography>
+        <VerifiedUser className="h-4 w-4" />
+        <AlertDescription className="text-[color:var(--color-status-success-fg)]">
+            <span className="block text-xs font-black uppercase mb-0.5">{t('completion.complete')}</span>
+            <span className="text-xs font-bold opacity-80">{t('completion.complete_desc')}</span>
+        </AlertDescription>
      </Alert>
   );
 
   return (
-    <Card sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1), borderColor: alpha(theme.palette.warning.main, 0.2), borderRadius: 3 }}>
-       <CardContent sx={{ p: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-             <Avatar alt="" sx={{ bgcolor: 'warning.main', color: 'warning.contrastText' }} variant="rounded">
-                <AlertTriangle size={20} />
-             </Avatar>
-             <Box>
-                <Typography variant="subtitle2" fontWeight={900} textTransform="uppercase" color="warning.main">{t('completion.incomplete')}</Typography>
-                <Typography variant="caption" fontWeight={700} color="warning.main" sx={{ opacity: 0.8 }}>{missing.length} {t('completion.missing_entries')}</Typography>
-             </Box>
-          </Stack>
-          <Stack direction="row" flexWrap="wrap" gap={0.5}>
+    <Card
+      className="border"
+      style={{
+        backgroundColor: 'color-mix(in srgb, var(--color-status-warning-bg) 88%, transparent)',
+        borderColor: 'color-mix(in srgb, var(--color-status-warning) 40%, transparent)',
+      }}
+    >
+       <CardContent className="p-4">
+          <div className="flex items-center gap-3 mb-3">
+             <div
+               className="w-8 h-8 rounded-lg flex items-center justify-center"
+               style={{
+                 backgroundColor: 'var(--color-status-warning)',
+                 color: 'var(--color-status-warning-fg)',
+               }}
+             >
+                <Warning className="w-4 h-4" />
+             </div>
+             <div>
+                <h4 className="text-sm font-black uppercase" style={{ color: 'var(--color-status-warning-fg)' }}>{t('completion.incomplete')}</h4>
+                <p className="text-xs font-bold" style={{ color: 'color-mix(in srgb, var(--color-status-warning-fg) 82%, transparent)' }}>{missing.length} {t('completion.missing_entries')}</p>
+             </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
              {missing.map(m => (
-               <Chip key={m} label={m} size="small" variant="outlined" color="warning" sx={{ height: 20, fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase' }} />
+               <Badge
+                 key={m}
+                 variant="outline"
+                 className="text-[0.55rem] font-black uppercase h-5"
+                 style={{
+                   color: 'var(--color-status-warning-fg)',
+                   borderColor: 'color-mix(in srgb, var(--color-status-warning) 52%, transparent)',
+                   backgroundColor: 'color-mix(in srgb, var(--color-status-warning-bg) 78%, transparent)',
+                 }}
+               >
+                   {m}
+               </Badge>
              ))}
-          </Stack>
+          </div>
        </CardContent>
     </Card>
   );
@@ -328,7 +338,7 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
   );
   const [audioUploading, setAudioUploading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const audioInputRef = React.useRef<HTMLInputElement | null>(null);
+  const audioInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -397,54 +407,55 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
   };
 
   return (
-      <Card sx={{ borderRadius: 4 }}>
-        <CardHeader 
-            title={<Typography variant="h6" fontWeight={900} fontStyle="italic" textTransform="uppercase">{t('profile.archive_title')}</Typography>}
-            subheader={<Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.1em" color="text.secondary">{t('profile.tab_media')} & {t('profile.audio_identity')}</Typography>}
-            action={isDirty && (
-                <Button variant="contained" onClick={handleSave} startIcon={<Save size={16} />} sx={{ fontWeight: 900, fontSize: '0.7rem' }}>
-                    {t('profile.save_assets')}
+      <Card>
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-border">
+            <div>
+                <h3 className="text-lg font-black italic uppercase">{t('profile.archive_title')}</h3>
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t('profile.tab_media')} & {t('profile.audio_identity')}</p>
+            </div>
+            {isDirty && (
+                <Button onClick={handleSave} size="sm" className="font-black text-xs">
+                    <Save className="w-4 h-4 mr-2" /> {t('profile.save_assets')}
                 </Button>
             )}
-            sx={{ borderBottom: 1, borderColor: 'divider', p: 3 }}
-        />
-        <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
-           <Grid container spacing={2}>
-               <Grid size={{ xs: 6, sm: 4, md: 3 }}>
-                  <Box 
-                     onClick={handleAddMedia}
-                     sx={{ 
-                         aspectRatio: '1/1', borderRadius: 3, border: '2px dashed', borderColor: 'divider', 
-                         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
-                         cursor: 'pointer', transition: 'all 0.2s', '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' }
-                     }}
-                  >
-                     <Avatar alt="" sx={{ bgcolor: 'action.selected' }}><Upload size={20} /></Avatar>
-                     <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">{t('profile.add_media')}</Typography>
-                  </Box>
-               </Grid>
+        </div>
+        <CardContent className="p-6 flex flex-col gap-6">
+           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+               <div 
+                  onClick={handleAddMedia}
+                  className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-muted/50 cursor-pointer flex flex-col items-center justify-center gap-2 transition-all p-4 text-center group"
+               >
+                  <div className="w-10 h-10 rounded-full bg-muted group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+                     <CloudUpload className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
+                  </div>
+                  <span className="text-xs font-black uppercase text-muted-foreground group-hover:text-primary">{t('profile.add_media')}</span>
+               </div>
+               
                {mediaList.map((m: any) => (
-                  <Grid size={{ xs: 6, sm: 4, md: 3 }} key={m.id}>
-                     <Box sx={{ position: 'relative', aspectRatio: '1/1', borderRadius: 3, overflow: 'hidden', bgcolor: 'black' }}>
-                        {m.type === 'image' ? (
-                           <img src={getOptimizedMediaUrl(m.url, 'image')} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                        ) : (
-                           <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Video size={32} color="white" style={{ opacity: 0.6 }} />
-                           </Box>
-                        )}
-                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,0.6)', opacity: 0, transition: 'opacity 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', '&:hover': { opacity: 1 } }}>
-                            <IconButton color="error" onClick={() => handleDeleteMedia(m.id)}><Trash2 size={16} /></IconButton>
-                        </Box>
-                     </Box>
-                  </Grid>
+                  <div key={m.id} className="relative aspect-square rounded-xl overflow-hidden bg-[color:var(--sys-surface-sunken)] group">
+                     {m.type === 'image' ? (
+                        <img src={getOptimizedMediaUrl(m.url, 'image')} className="w-full h-full object-cover" alt="" />
+                     ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                           <Videocam className="w-8 h-8" style={{ color: 'color-mix(in srgb, var(--sys-text-inverse) 60%, transparent)' }} />
+                        </div>
+                     )}
+                     <div
+                       className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                       style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 72%, transparent)' }}
+                     >
+                         <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDeleteMedia(m.id)}>
+                             <Delete className="w-4 h-4" />
+                         </Button>
+                     </div>
+                  </div>
                ))}
-           </Grid>
+           </div>
            
-           <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-               <Typography variant="overline" color="text.secondary" fontWeight={900} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <Music size={14} /> {t('profile.audio_identity')}
-               </Typography>
+           <div className="pt-6 border-t border-border">
+               <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
+                  <MusicNote className="w-3.5 h-3.5" /> {t('profile.audio_identity')}
+               </h4>
                <input
                  ref={audioInputRef}
                  type="file"
@@ -457,26 +468,25 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
                    }
                  }}
                />
-               <Stack spacing={1.5}>
+               <div className="flex flex-col gap-4">
                  <Button
-                   variant="outlined"
-                   startIcon={<Upload size={16} />}
+                   variant="outline"
                    onClick={() => audioInputRef.current?.click()}
                    disabled={audioUploading}
-                   sx={{ alignSelf: 'flex-start', fontWeight: 800 }}
+                   className="w-fit font-extrabold"
                  >
+                   <CloudUpload className="w-4 h-4 mr-2" />
                    {audioUploading ? t('common.loading') : t('media.choose_file')}
                  </Button>
                  {audioUrl && (
-                   <Box
-                     component="audio"
+                   <audio
                      controls
                      src={getOptimizedMediaUrl(audioUrl, 'audio')}
-                     sx={{ width: '100%' }}
+                     className="w-full"
                    />
                  )}
-               </Stack>
-           </Box>
+               </div>
+           </div>
         </CardContent>
       </Card>
   );
@@ -484,7 +494,6 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
 
 function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, updates: Partial<User>) => void }) {
   const { t } = useTranslation();
-  const theme = useTheme();
   const { register, handleSubmit, control, watch, formState: { isDirty } } = useForm({
     defaultValues: {
       username: user.username,
@@ -507,120 +516,143 @@ function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, 
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Card sx={{ borderRadius: 4 }}>
-        <CardHeader 
-            action={isDirty && (
-                <Button type="submit" variant="contained" startIcon={<Save size={16} />} sx={{ fontWeight: 900, fontSize: '0.7rem' }}>
-                    {t('profile.save_intel')}
+      <Card>
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-border min-h-[80px]">
+            {isDirty && (
+                <Button type="submit" size="sm" className="font-black text-xs ml-auto">
+                    <Save className="w-4 h-4 mr-2" /> {t('profile.save_intel')}
                 </Button>
             )}
-            sx={{ borderBottom: 1, borderColor: 'divider', p: 3, minHeight: 80 }}
-        />
-        <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
-             <TextField maxRows={1} label={t('profile.label_username')} fullWidth {...register('username')} />
-             <TextField maxRows={1} label={t('profile.label_power')} type="number" fullWidth {...register('power', { valueAsNumber: true })} />
-          </Stack>
+        </div>
+        <CardContent className="p-6 flex flex-col gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+             <div className="space-y-2">
+                 <Label>{t('profile.label_username')}</Label>
+                 <Input {...register('username')} />
+             </div>
+             <div className="space-y-2">
+                 <Label>{t('profile.label_power')}</Label>
+                 <Input type="number" {...register('power', { valueAsNumber: true })} />
+             </div>
+          </div>
 
-          <TextField maxRows={1} label={t('profile.label_wechat')} fullWidth {...register('wechat_name')} placeholder={t('profile.placeholder_wechat')} />
+          <div className="space-y-2">
+             <Label>{t('profile.label_wechat')}</Label>
+             <Input {...register('wechat_name')} placeholder={t('profile.placeholder_wechat')} />
+          </div>
 
-          <Box>
-             <Typography variant="h6" color="warning.main" fontWeight={900} gutterBottom>{t('profile.label_spec')}</Typography>
+          <div>
+             <h4 className="text-sm font-black uppercase mb-3" style={{ color: 'var(--color-status-warning)' }}>{t('profile.label_spec')}</h4>
              <Controller
                 name="classes"
                 control={control}
-                render={({ field }: { field: any }) => {
+                render={({ field }) => {
                   const selectedClasses = field.value || [];
                   return (
-                    <Stack spacing={2}>
-                      <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider', minHeight: 60 }}>
-                         <Typography variant="caption" color="text.secondary" fontWeight={900} textTransform="uppercase" display="block" mb={1}>{t('profile.spec_selected')}</Typography>
-                         <Stack direction="row" spacing={1} flexWrap="wrap">
-                            {selectedClasses.length === 0 && <Typography variant="caption" fontStyle="italic" color="text.disabled">{t('profile.spec_none')}</Typography>}
+                    <div className="flex flex-col gap-4">
+                      <div className="p-4 rounded-xl bg-muted/50 border border-border min-h-[60px]">
+                         <span className="text-[0.6rem] font-black text-muted-foreground uppercase block mb-2">{t('profile.spec_selected')}</span>
+                         <div className="flex flex-wrap gap-2">
+                            {selectedClasses.length === 0 && <span className="text-xs italic text-muted-foreground">{t('profile.spec_none')}</span>}
                             {selectedClasses.map((clsId: string, idx: number) => {
                                const meta = getClassMeta(clsId, t);
                                return (
-                                 <Chip 
+                                 <Badge
                                     key={clsId}
-                                    label={meta.fullLabel}
-                                    onDelete={() => field.onChange(selectedClasses.filter((c: string) => c !== clsId))}
-                                    avatar={idx === 0 ? <Avatar alt="Main" sx={{ bgcolor: 'white !important', color: 'black !important', fontSize: '0.6rem !important' }}>M</Avatar> : undefined}
-                                    sx={{ 
-                                        color: meta.color, 
-                                        bgcolor: meta.bgColor, 
-                                        borderColor: meta.borderColor, 
-                                        border: '1px solid', 
-                                        fontWeight: 800 
+                                    className="h-6 pl-1 pr-2 gap-1.5 text-xs font-bold border cursor-pointer hover:opacity-80 transition-colors"
+                                    style={{
+                                        backgroundColor: meta.colors.bg,
+                                        borderColor: alpha(meta.colors.main, 0.3),
+                                        color: meta.colors.main
                                     }}
-                                 />
+                                    onClick={() => field.onChange(selectedClasses.filter((c: string) => c !== clsId))}
+                                 >
+                                    {idx === 0 && (
+                                        <span className="w-4 h-4 rounded-full bg-foreground text-background flex items-center justify-center text-[0.5rem] font-black">M</span>
+                                    )}
+                                    {meta.fullLabel} <Close className="w-3 h-3 opacity-50" />
+                                 </Badge>
                                )
                             })}
-                         </Stack>
-                      </Box>
+                         </div>
+                      </div>
                       
-                      <Box sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-                         <Grid container spacing={2}>
+                      <div className="p-4 rounded-xl border border-border">
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {CLASS_GROUPS_CONFIG.map(group => (
-                               <Grid size={{ xs: 6, md: 3 }} key={group.id}>
-                                  <Typography variant="caption" color="text.secondary" fontWeight={900} textTransform="uppercase" display="block" mb={1}>{translateClassGroup(group.labelKey, t)}</Typography>
-                                  <Stack spacing={1}>
+                               <div key={group.id}>
+                                  <span className="text-[0.6rem] font-black text-muted-foreground uppercase block mb-2">{translateClassGroup(group.labelKey, t)}</span>
+                                   <div className="flex flex-col gap-1.5">
                                      {group.options.map(opt => {
                                         const isSelected = selectedClasses.includes(opt.id as ClassType);
+                                        const colors = GAME_CLASS_COLORS[group.id as keyof typeof GAME_CLASS_COLORS] || GAME_CLASS_COLORS.mingjin;
                                         return (
                                            <Button
                                               key={opt.id}
-                                              size="small"
-                                              variant="outlined"
-                                              onClick={() => {
+                                              size="sm"
+                                              variant="outline"
+                                              className="justify-start h-7 text-xs font-bold hover:bg-accent transition-colors"
+                                              style={{
+                                                  color: isSelected ? undefined : colors.main,
+                                                  borderColor: isSelected ? undefined : alpha(colors.main, 0.3),
+                                                  backgroundColor: isSelected ? colors.main : undefined,
+                                              }}
+                                              sx={{
+                                                  ...(isSelected && {
+                                                      color: '#fff !important',
+                                                      backgroundColor: `${colors.main} !important`,
+                                                      '&:hover': {
+                                                          backgroundColor: `${alpha(colors.main, 0.9)} !important`
+                                                      }
+                                                  })
+                                              }}
+                                              onClick={(e) => {
+                                                  e.preventDefault();
                                                   if (isSelected) {
                                                     field.onChange(selectedClasses.filter((c: string) => c !== opt.id));
                                                   } else {
                                                     field.onChange([...selectedClasses, opt.id as ClassType]);
                                                   }
                                               }}
-                                              sx={{ 
-                                                  justifyContent: 'flex-start', 
-                                                  fontSize: '0.7rem', 
-                                                  color: group.color,
-                                                  borderColor: group.borderColor,
-                                                  '&:hover': { bgcolor: group.bgColor }
-                                              }}
                                            >
                                               {formatClassDisplayName(opt.id)}
                                            </Button>
                                         )
                                      })}
-                                  </Stack>
-                               </Grid>
+                                  </div>
+                               </div>
                             ))}
-                         </Grid>
-                      </Box>
-                    </Stack>
+                         </div>
+                      </div>
+                    </div>
                   )
                 }}
              />
-          </Box>
+          </div>
 
-          <Box>
-             <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="overline" color="text.secondary" fontWeight={900}>{t('profile.label_title')}</Typography>
-             </Stack>
-             <TextField 
-                fullWidth 
+          <div className="space-y-2">
+             <div className="flex justify-between items-center">
+                <Label>{t('profile.label_title')}</Label>
+             </div>
+             <Input 
                 {...register('title_html')} 
                 placeholder={t('profile.placeholder_title_html')} 
-                helperText={<span dangerouslySetInnerHTML={sanitizeHtml(titleHtml || t('profile.preview_title_placeholder'))} />}
              />
-          </Box>
+             <div className="text-xs text-muted-foreground mt-1">
+                 <span dangerouslySetInnerHTML={sanitizeHtml(titleHtml || t('profile.preview_title_placeholder'))} />
+             </div>
+          </div>
 
-          <TextField 
-            label={t('profile.label_bio')}
-            multiline
-            minRows={4}
-            fullWidth
-            {...register('bio')}
-            placeholder={t('profile.placeholder_bio')}
-          />
+          <div className="space-y-2">
+            <Label>{t('profile.label_bio')}</Label>
+            {/* Using a textarea with Tailwind classes since we don't have a Textarea primitive yet, or just basic textarea */}
+            <textarea 
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                rows={4}
+                {...register('bio')}
+                placeholder={t('profile.placeholder_bio')}
+            />
+          </div>
         </CardContent>
       </Card>
     </form>
@@ -629,7 +661,6 @@ function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, 
 
 function AvailabilityEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
   const { t } = useTranslation();
-  const theme = useTheme();
   const [grid, setGrid] = useState<Record<string, Set<number>>>({});
   const [vacationStart, setVacationStart] = useState(user.vacation_start || '');
   const [vacationEnd, setVacationEnd] = useState(user.vacation_end || '');
@@ -720,79 +751,82 @@ function AvailabilityEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
   };
 
   return (
-    <Card sx={{ borderRadius: 4 }}>
-      <CardHeader 
-         title={<Typography variant="h6" fontWeight={900} fontStyle="italic" textTransform="uppercase">{t('availability.title')}</Typography>}
-         subheader={<Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.1em" color="text.secondary">{t('availability.subtitle')}</Typography>}
-         action={isDirty && (
-            <Button variant="contained" onClick={handleSave} startIcon={<Save size={16} />} sx={{ fontWeight: 900, fontSize: '0.7rem' }}>
-                {t('availability.update_schedule')}
-            </Button>
-         )}
-         sx={{ borderBottom: 1, borderColor: 'divider', p: 3 }}
-      />
-      <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
-         <Box sx={{ overflowX: 'auto', pb: 2 }}>
-            <Box sx={{ minWidth: 600 }}>
-               <Stack direction="row" spacing={0.5} ml={12} mb={1}>
+    <Card>
+      <div className="flex items-center justify-between p-6 pb-4 border-b border-border">
+          <div>
+              <h3 className="text-lg font-black italic uppercase">{t('availability.title')}</h3>
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t('availability.subtitle')}</p>
+          </div>
+          {isDirty && (
+              <Button onClick={handleSave} size="sm" className="font-black text-xs">
+                  <Save className="w-4 h-4 mr-2" /> {t('availability.update_schedule')}
+              </Button>
+          )}
+      </div>
+      <CardContent className="p-6 flex flex-col gap-6">
+         <div className="overflow-x-auto pb-4">
+            <div className="min-w-[600px]">
+               <div className="flex ml-[80px] mb-1 gap-1">
                   {HOURS.map(h => (
-                     <Typography key={h} variant="caption" color="text.secondary" sx={{ flex: 1, textAlign: 'center', fontSize: '0.6rem' }}>{h}</Typography>
+                     <span key={h} className="flex-1 text-center text-[0.6rem] text-muted-foreground select-none">{h}</span>
                   ))}
-               </Stack>
+               </div>
                
-               <Stack spacing={1}>
+               <div className="flex flex-col gap-1.5">
                   {DAYS.map(day => (
-                     <Stack direction="row" spacing={2} alignItems="center" key={day}>
-                        <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary" sx={{ width: 80, textAlign: 'right' }}>{t(`common.day_${day}`)}</Typography>
-                        <Stack direction="row" spacing={0.5} flex={1} height={32}>
+                     <div className="flex items-center gap-2" key={day}>
+                        <span className="w-20 text-right text-[0.65rem] font-black uppercase text-muted-foreground select-none">{t(`common.day_${day}`)}</span>
+                        <div className="flex flex-1 gap-[2px] h-8 select-none">
                            {HOURS.map(hour => {
-                              const isSelected = grid[day]?.has(hour);
-                              return (
-                                 <Box 
-                                    key={hour}
-                                    onMouseDown={() => handleMouseDown(day, hour)}
-                                    onMouseEnter={() => handleMouseEnter(day, hour)}
-                                    sx={{ 
-                                        flex: 1, borderRadius: 0.5, cursor: 'pointer', border: '1px solid', borderColor: 'divider',
-                                        bgcolor: isSelected ? 'primary.main' : 'action.hover',
-                                        '&:hover': { opacity: 0.8 }
-                                    }}
-                                 />
-                              )
+                               const isSelected = grid[day]?.has(hour);
+                               return (
+                                  <div 
+                                     key={hour}
+                                     onMouseDown={() => handleMouseDown(day, hour)}
+                                     onMouseEnter={() => handleMouseEnter(day, hour)}
+                                     className={cn(
+                                         "flex-1 rounded-[1px] cursor-pointer border border-border/50 hover:opacity-80 transition-colors",
+                                         isSelected ? "bg-primary border-primary" : "bg-muted/50"
+                                     )}
+                                  />
+                               )
                            })}
-                        </Stack>
-                     </Stack>
+                        </div>
+                     </div>
                   ))}
-               </Stack>
-            </Box>
-         </Box>
+               </div>
+            </div>
+         </div>
 
-         <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-             <Typography variant="overline" fontWeight={900} color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <Shield size={14} /> {t('availability.leave_range')}
-             </Typography>
-             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
-                <TextField 
-                    type="date" 
-                    label={t('availability.leave_start')} 
-                    value={vacationStart} 
-                    onChange={(e) => { setVacationStart(e.target.value); setIsDirty(true); }} 
-                    fullWidth 
-                    InputLabelProps={{ shrink: true }} 
-                />
-                <TextField 
-                    type="date" 
-                    label={t('availability.leave_end')} 
-                    value={vacationEnd} 
-                    onChange={(e) => { setVacationEnd(e.target.value); setIsDirty(true); }} 
-                    fullWidth 
-                    InputLabelProps={{ shrink: true }} 
-                />
-             </Stack>
-         </Box>
+         <div className="pt-6 border-t border-border space-y-4">
+             <h4 className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-widest">
+                  <Security className="w-3.5 h-3.5" /> {t('availability.leave_range')}
+             </h4>
+             <div className="flex flex-col sm:flex-row gap-6">
+                <div className="space-y-2 flex-1">
+                    <Label>{t('availability.leave_start')}</Label>
+                    <Input 
+                        type="date" 
+                        value={vacationStart} 
+                        onChange={(e) => { setVacationStart(e.target.value); setIsDirty(true); }} 
+                    />
+                </div>
+                <div className="space-y-2 flex-1">
+                    <Label>{t('availability.leave_end')}</Label>
+                    <Input 
+                        type="date" 
+                        value={vacationEnd} 
+                        onChange={(e) => { setVacationEnd(e.target.value); setIsDirty(true); }} 
+                    />
+                </div>
+             </div>
+         </div>
          
-         <Alert severity="info" icon={<Clock size={16} />} sx={{ borderRadius: 2 }}>
-            <Typography variant="caption" fontWeight={800} textTransform="uppercase">{t('availability.utc_warning')}</Typography>
+         <Alert className="bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400 [&>svg]:text-sky-500">
+            <AccessTime className="w-4 h-4" />
+            <AlertDescription className="text-xs font-extrabold uppercase tracking-wide">
+                {t('availability.utc_warning')}
+            </AlertDescription>
          </Alert>
       </CardContent>
     </Card>
@@ -838,66 +872,63 @@ function ProgressionEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
   );
 
   return (
-    <Card sx={{ borderRadius: 4 }}>
-        <CardHeader 
-            title={<Typography variant="h6" fontWeight={900} fontStyle="italic" textTransform="uppercase">{t('profile.progression_title')}</Typography>}
-            subheader={<Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.1em" color="text.secondary">{t('profile.progression_subtitle')}</Typography>}
-            action={isDirty && (
-                <Button variant="contained" onClick={handleSave} startIcon={<Save size={16} />} sx={{ fontWeight: 900, fontSize: '0.7rem' }}>
-                    {t('profile.finalize_mastery')}
+    <Card>
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-border">
+            <div>
+                <h3 className="text-lg font-black italic uppercase">{t('profile.progression_title')}</h3>
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t('profile.progression_subtitle')}</p>
+            </div>
+            {isDirty && (
+                <Button onClick={handleSave} size="sm" className="font-black text-xs">
+                    <Save className="w-4 h-4 mr-2" /> {t('profile.finalize_mastery')}
                 </Button>
             )}
-            sx={{ borderBottom: 1, borderColor: 'divider', p: 3 }}
-        />
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <ToggleButtonGroup fullWidth exclusive value={category} onChange={(_, v) => v && setCategory(v)}>
+        </div>
+        <div className="p-4 border-b border-border bg-muted/20">
+            <ToggleGroup type="single" value={category} onChange={(val: any) => val && setCategory(val)} className="w-full justify-start">
                 {categories.map(c => (
-                    <ToggleButton key={c.id} value={c.id} sx={{ fontWeight: 800 }}>{c.label}</ToggleButton>
+                    <ToggleGroupItem key={c.id} value={c.id} className="flex-1 font-extrabold uppercase tracking-wide">
+                        {c.label}
+                    </ToggleGroupItem>
                 ))}
-            </ToggleButtonGroup>
-        </Box>
-        <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            </ToggleGroup>
+        </div>
+        <CardContent className="p-6 flex flex-col gap-6">
           {activeCategory?.groups.map((group) => (
-            <Box key={group.key}>
-              <Typography variant="subtitle2" fontWeight={900} textTransform="uppercase" color="text.secondary" mb={1}>
+            <div key={group.key}>
+              <h4 className="text-sm font-black text-muted-foreground uppercase mb-3 px-1">
                 {t(group.titleKey)}
-              </Typography>
-              <Grid container spacing={2}>
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {group.items.map((item) => {
                   const level = (progression[category] as any)[item.key] || 0;
                   return (
-                    <Grid size={{ xs: 6, md: 4, lg: 3 }} key={item.key}>
-                      <Box sx={{ p: 2, borderRadius: 3, bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                        <Box sx={{ position: 'relative' }}>
-                          <Avatar
-                            variant="rounded"
-                            src={item.icon}
-                            alt={item.key}
-                            sx={{ width: 80, height: 80, borderRadius: 3, bgcolor: 'background.paper' }}
-                          >
-                            <Zap size={32} />
+                    <div key={item.key} className="p-4 rounded-xl bg-card border border-border flex flex-col items-center gap-3 transition-colors hover:border-primary/50">
+                        <div className="relative">
+                          <Avatar className="w-20 h-20 rounded-xl bg-muted border border-border">
+                             <AvatarImage src={item.icon} alt={item.key} />
+                             <AvatarFallback><ElectricBolt className="w-8 h-8 text-muted-foreground/50" /></AvatarFallback>
                           </Avatar>
-                          <Box sx={{ position: 'absolute', bottom: -8, right: -8, width: 32, height: 32, borderRadius: '50%', bgcolor: 'background.default', border: '2px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 900 }}>
+                          <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-background border-2 border-border flex items-center justify-center text-sm font-black shadow-sm">
                             {level}
-                          </Box>
-                        </Box>
-                        <Typography variant="caption" fontWeight={800} textAlign="center" lineHeight={1.2}>
+                          </div>
+                        </div>
+                        <span className="text-xs font-extrabold text-center leading-tight min-h-[2.5em] flex items-center justify-center px-2">
                           {t(item.nameKey)}
-                        </Typography>
-                        <Stack direction="row" spacing={1}>
-                          <IconButton size="small" onClick={() => updateLevel(category, item.key, -1)} sx={{ bgcolor: 'background.paper' }}>
-                            <Minus size={14} />
-                          </IconButton>
-                          <IconButton size="small" onClick={() => updateLevel(category, item.key, 1)} sx={{ bgcolor: 'background.paper' }}>
-                            <Plus size={14} />
-                          </IconButton>
-                        </Stack>
-                      </Box>
-                    </Grid>
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updateLevel(category, item.key, -1)}>
+                            <Remove className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updateLevel(category, item.key, 1)}>
+                            <Add className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                    </div>
                   );
                 })}
-              </Grid>
-            </Box>
+              </div>
+            </div>
           ))}
         </CardContent>
     </Card>
@@ -930,37 +961,60 @@ function AccountSettings({ user, onChangePassword, onUpdate, onLogout }: { user:
   };
 
   return (
-      <Card sx={{ borderRadius: 4 }}>
-        <CardHeader 
-            title={<Typography variant="h6" fontWeight={900} fontStyle="italic" textTransform="uppercase">{t('account.title')}</Typography>}
-            subheader={<Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.1em" color="text.secondary">{t('account.subtitle')}</Typography>}
-            sx={{ borderBottom: 1, borderColor: 'divider', p: 3 }}
-        />
-        <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
-           <form onSubmit={handlePasswordChange}>
-              <Stack spacing={3}>
-                 <TextField type="password" label={t('account.current_password')} value={currentPass} onChange={(e) => setCurrentPass(e.target.value)} fullWidth required />
-                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
-                    <TextField type="password" label={t('account.new_password')} value={newPass} onChange={(e) => setNewPass(e.target.value)} fullWidth required />
-                    <TextField type="password" label={t('account.confirm_password')} value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} fullWidth required />
-                 </Stack>
+      <Card>
+        <div className="p-6 pb-4 border-b border-border">
+            <h3 className="text-lg font-black italic uppercase">{t('account.title')}</h3>
+            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t('account.subtitle')}</p>
+        </div>
+        <CardContent className="p-6 flex flex-col gap-8">
+           <form onSubmit={handlePasswordChange} className="space-y-6">
+              <div className="space-y-2">
+                  <Label>{t('account.current_password')}</Label>
+                  <Input type="password" value={currentPass} onChange={(e) => setCurrentPass(e.target.value)} required />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                 <div className="space-y-2">
+                    <Label>{t('account.new_password')}</Label>
+                    <Input type="password" value={newPass} onChange={(e) => setNewPass(e.target.value)} required />
+                 </div>
+                 <div className="space-y-2">
+                    <Label>{t('account.confirm_password')}</Label>
+                    <Input type="password" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} required />
+                 </div>
+              </div>
 
-                 {message && (
-                   <Alert severity={message.type} sx={{ borderRadius: 2 }}>{message.text}</Alert>
-                 )}
+              {message && (
+                <Alert className={cn(
+                    "border-l-4"
+                )}
+                style={
+                  message.type === 'success'
+                    ? {
+                        borderColor: 'var(--color-status-success)',
+                        backgroundColor: 'color-mix(in srgb, var(--color-status-success-bg) 84%, transparent)',
+                        color: 'var(--color-status-success-fg)',
+                      }
+                    : {
+                        borderColor: 'var(--color-status-error)',
+                        backgroundColor: 'color-mix(in srgb, var(--color-status-error-bg) 84%, transparent)',
+                        color: 'var(--color-status-error-fg)',
+                      }
+                }>
+                   <AlertDescription className="font-bold">{message.text}</AlertDescription>
+                </Alert>
+              )}
 
-                 <Button type="submit" variant="contained" disabled={changing} size="large" sx={{ fontWeight: 900 }} startIcon={<Key size={16} />}>
-                    {t('account.update_password')}
-                 </Button>
-              </Stack>
+              <Button type="submit" disabled={changing} size="lg" className="w-full sm:w-auto font-black">
+                <VpnKey className="w-4 h-4 mr-2" /> {t('account.update_password')}
+              </Button>
            </form>
 
-           <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-               <Typography variant="overline" color="error" fontWeight={900} display="block" mb={2}>{t('account.danger_zone')}</Typography>
-               <Button onClick={onLogout} variant="outlined" color="error" size="large" sx={{ fontWeight: 900 }} startIcon={<LogOut size={16} />}>
-                   {t('account.logout')}
+           <div className="pt-6 border-t border-border">
+               <h4 className="text-xs font-black uppercase tracking-widest mb-4" style={{ color: 'var(--color-status-error)' }}>{t('account.danger_zone')}</h4>
+                <Button onClick={onLogout} variant="destructive" size="lg" className="w-full sm:w-auto font-black">
+                   <Logout className="w-4 h-4 mr-2" /> {t('account.logout')}
                </Button>
-           </Box>
+           </div>
         </CardContent>
       </Card>
   );

@@ -66,7 +66,59 @@ export const onRequestGet = createEndpoint<WarHistoryDTO[], WarHistoryQuery>({
       .bind(query.limit, query.offset)
       .all<WarHistoryDTO>();
 
-    return wars.results || [];
+    const warRows = wars.results || [];
+    if (warRows.length === 0) return [];
+
+    const warIds = warRows.map((war) => war.war_id);
+    const placeholders = warIds.map(() => '?').join(', ');
+
+    const memberStats = await env.DB
+      .prepare(`
+        SELECT
+          wms.war_id,
+          wms.user_id,
+          u.username,
+          u.class_code,
+          wms.kills,
+          wms.deaths,
+          wms.assists,
+          wms.damage,
+          wms.healing,
+          wms.building_damage,
+          wms.damage_taken,
+          wms.credits,
+          wms.note
+        FROM war_member_stats wms
+        JOIN users u ON u.user_id = wms.user_id
+        WHERE wms.war_id IN (${placeholders})
+        ORDER BY wms.war_id, u.username
+      `)
+      .bind(...warIds)
+      .all<any>();
+
+    const memberStatsByWar = new Map<string, any[]>();
+    for (const row of memberStats.results || []) {
+      if (!memberStatsByWar.has(row.war_id)) memberStatsByWar.set(row.war_id, []);
+      memberStatsByWar.get(row.war_id)!.push({
+        user_id: row.user_id,
+        username: row.username,
+        class_code: row.class_code,
+        kills: row.kills,
+        deaths: row.deaths,
+        assists: row.assists,
+        damage: row.damage,
+        healing: row.healing,
+        building_damage: row.building_damage,
+        damage_taken: row.damage_taken,
+        credits: row.credits,
+        note: row.note,
+      });
+    }
+
+    return warRows.map((war) => ({
+      ...war,
+      member_stats: memberStatsByWar.get(war.war_id) || [],
+    }));
   },
 });
 

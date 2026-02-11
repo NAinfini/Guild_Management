@@ -20,14 +20,21 @@ import {
   alpha,
   Pagination
 } from '@mui/material';
-import { Image, ExternalLink, Download, Plus, Trash2, Upload, X, ZoomIn, Search } from 'lucide-react';
-import { CardGridSkeleton } from '../../components/SkeletonLoaders';
-import { PageFilterBar, type FilterOption } from '../../components/PageFilterBar';
+import {
+  Photo as ImageIcon,
+  Add as PlusIcon,
+  Delete as TrashIcon,
+  CloudUpload as UploadIcon,
+  Close as CloseIcon,
+  ZoomIn as ZoomInIcon,
+} from '@mui/icons-material';
+import { CardGridSkeleton } from '@/components';
+import { PageFilterBar } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useUIStore } from '../../store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { galleryAPI, type GalleryImage } from '../../lib/api/gallery';
-import { api } from '../../lib/api-client';
+import { mediaAPI } from '../../lib/api/media';
 import {
   canDeleteGalleryMedia,
   canUploadGalleryMedia,
@@ -35,7 +42,7 @@ import {
 } from '../../lib/permissions';
 
 export function Gallery() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { setPageTitle } = useUIStore();
   const theme = useTheme();
   const { user, viewRole } = useAuthStore();
@@ -54,20 +61,19 @@ export function Gallery() {
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [category, setCategory] = useState('all');
   const LIMIT = 24;
   const [isDragOver, setIsDragOver] = useState(false);
+  const localeTag = i18n.language.startsWith('zh') ? 'zh-CN' : 'en-US';
 
   // Fetch gallery images
   const { data: galleryData, isLoading } = useQuery({
-    queryKey: ['gallery', page, search, startDate, endDate, category],
+    queryKey: ['gallery', page, search, startDate, endDate],
     queryFn: () => galleryAPI.list({ 
       page, 
       limit: LIMIT,
       search: search || undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
-      category: category !== 'all' ? category : undefined
     }),
   });
 
@@ -79,15 +85,7 @@ export function Gallery() {
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [search, startDate, endDate, category]);
-
-  // ... mutations ... (unchanged, just omitting from replacement chunk but need to ensure I don't delete them. 
-  // Wait, I am replacing a huge chunk if I am not careful.
-  // I will replace only lines 46-51 (useQuery) and insert helper functions before return.
-  
-  // Actually, I'll split this chunk.
-  // Chunk 1: State and useQuery
-  // Chunk 2: processFiles helper and handlers
+  }, [search, startDate, endDate]);
 
 
   // Delete mutation
@@ -102,15 +100,11 @@ export function Gallery() {
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       // First upload the image to R2
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('kind', 'image');
-      
-      const uploadResult = await api.post<{ media_id: string; url: string }>('/upload/image', formData);
+      const uploadResult = await mediaAPI.uploadImage(file, 'gallery');
       
       // Then create gallery entry
       return galleryAPI.create({
-        media_id: uploadResult.media_id,
+        media_id: uploadResult.mediaId,
         title: file.name.replace(/\.[^/.]+$/, ''),
         category: 'other',
       });
@@ -188,14 +182,6 @@ export function Gallery() {
         search={search}
         onSearchChange={setSearch}
         searchPlaceholder={t('gallery.search_placeholder')}
-        category={category}
-        onCategoryChange={setCategory}
-        categories={[
-            { value: 'all', label: t('gallery.filter_all') || 'All' },
-            { value: 'event', label: t('gallery.filter_event') || 'Events' },
-            { value: 'war', label: t('gallery.filter_war') || 'Wars' },
-            { value: 'other', label: t('gallery.filter_other') || 'Other' },
-        ]}
         startDate={startDate}
         onStartDateChange={setStartDate}
         endDate={endDate}
@@ -206,7 +192,7 @@ export function Gallery() {
           <Button
             variant="contained"
             size="small"
-            startIcon={<Upload size={18} />}
+            startIcon={<UploadIcon sx={{ fontSize: 18 }} />}
             onClick={() => setUploadDialogOpen(true)}
             disabled={uploadMutation.isPending}
             sx={{ fontWeight: 900, borderRadius: 3, px: 3 }}
@@ -221,7 +207,6 @@ export function Gallery() {
       ) : (<>
         <Grid container spacing={3}>
           {images.map(img => {
-            // Construct image URL from R2 key
             const imageUrl = img.r2_key ? `/api/media/${encodeURIComponent(img.r2_key)}` : '';
             
             return (
@@ -244,7 +229,6 @@ export function Gallery() {
                     }
                   }}
                 >
-                  {/* Admin Delete Button */}
                   {canDelete && (
                     <IconButton
                       className="delete-btn"
@@ -263,7 +247,7 @@ export function Gallery() {
                         '&:hover': { bgcolor: 'error.dark' }
                       }}
                     >
-                      <Trash2 size={14} />
+                      <TrashIcon sx={{ fontSize: 14 }} />
                     </IconButton>
                   )}
                   
@@ -271,7 +255,7 @@ export function Gallery() {
                     <Box 
                       component="img" 
                       src={imageUrl} 
-                      alt={img.title || 'Gallery image'} 
+                      alt={img.title || t('gallery.alt_image')} 
                       sx={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }} 
                       onContextMenu={(e) => e.preventDefault()}
                     />
@@ -294,23 +278,23 @@ export function Gallery() {
                           '&:hover': { bgcolor: 'primary.main', color: 'primary.contrastText', transform: 'scale(1)' } 
                         }}
                       >
-                        <ZoomIn size={24} />
+                        <ZoomInIcon sx={{ fontSize: 24 }} />
                       </IconButton>
                     </Box>
                   </Box>
                   <CardContent sx={{ p: 2 }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1}>
                       <Typography variant="caption" fontWeight={900} textTransform="uppercase" noWrap sx={{ maxWidth: '75%' }}>
-                        {img.title || 'Untitled'}
+                        {img.title || t('gallery.untitled')}
                       </Typography>
                       <Chip label={t('common.label_img')} size="small" variant="outlined" sx={{ height: 16, fontSize: '0.55rem', fontWeight: 900 }} />
                     </Stack>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                       <Typography variant="caption" fontFamily="monospace" color="text.secondary" fontSize="0.6rem">
-                        {img.uploader_username || 'Unknown'}
+                        {img.uploader_username || t('gallery.unknown_uploader')}
                       </Typography>
                       <Typography variant="caption" fontFamily="monospace" color="text.secondary" fontSize="0.6rem">
-                        {img.created_at_utc ? new Date(img.created_at_utc).toLocaleDateString() : ''}
+                        {img.created_at_utc ? new Date(img.created_at_utc).toLocaleDateString(localeTag) : ''}
                       </Typography>
                     </Stack>
                   </CardContent>
@@ -322,7 +306,7 @@ export function Gallery() {
           {images.length === 0 && (
             <Grid size={{ xs: 12 }}>
               <Box sx={{ py: 8, textAlign: 'center', border: '2px dashed', borderColor: 'divider', borderRadius: 4, bgcolor: 'action.hover' }}>
-                <Image size={48} style={{ opacity: 0.3, marginBottom: 16 }} />
+                <ImageIcon sx={{ fontSize: 48, opacity: 0.3, mb: 2 }} />
                 <Typography variant="overline" display="block" color="text.secondary" fontWeight={900} letterSpacing="0.2em">
                   {t('gallery.empty')}
                 </Typography>
@@ -330,17 +314,16 @@ export function Gallery() {
             </Grid>
           )}
         </Grid>
-          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-            <Pagination 
-                count={totalPages} 
-                page={page} 
-                onChange={(_, p) => setPage(p)} 
-                color="primary" 
-                size="large"
-                showFirstButton 
-                showLastButton
-            />
-  
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+          <Pagination 
+            count={totalPages} 
+            page={page} 
+            onChange={(_, p) => setPage(p)} 
+            color="primary" 
+            size="large"
+            showFirstButton 
+            showLastButton
+          />
         </Box>
       </>)}
 
@@ -381,7 +364,7 @@ export function Gallery() {
             {t('gallery.upload_title')}
           </Typography>
           <IconButton size="small" onClick={() => setUploadDialogOpen(false)}>
-            <X size={18} />
+            <CloseIcon sx={{ fontSize: 18 }} />
           </IconButton>
         </DialogTitle>
         <DialogContent>
@@ -402,7 +385,7 @@ export function Gallery() {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <Upload size={48} style={{ opacity: 0.5, marginBottom: 16, color: isDragOver ? theme.palette.primary.main : 'inherit' }} />
+            <UploadIcon sx={{ fontSize: 48, opacity: 0.5, mb: 2, color: isDragOver ? theme.palette.primary.main : 'inherit' }} />
             <Typography variant="body2" fontWeight={700} mb={1}>
               {t('gallery.drop_files')}
             </Typography>
@@ -420,6 +403,7 @@ export function Gallery() {
           />
         </DialogContent>
       </Dialog>
+
       {/* Preview Modal */}
       <Dialog
         open={!!previewImage}
@@ -448,26 +432,28 @@ export function Gallery() {
                  '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
               }}
            >
-              <X size={24} />
+              <CloseIcon sx={{ fontSize: 24 }} />
            </IconButton>
            {previewImage && (
-              <img 
-                 src={previewImage.r2_key ? `/api/media/${encodeURIComponent(previewImage.r2_key)}` : ''}
-                 alt={previewImage.title || 'Gallery image'}
-                 style={{ 
-                    maxWidth: '90vw', 
-                    maxHeight: '90vh', 
-                    borderRadius: 8,
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-                 }} 
-                 onContextMenu={(e) => e.preventDefault()}
-              />
+              <Box sx={{ position: 'relative' }}>
+                <img 
+                   src={previewImage.r2_key ? `/api/media/${encodeURIComponent(previewImage.r2_key)}` : ''}
+                   alt={previewImage.title || t('gallery.alt_image')}
+                   style={{ 
+                      maxWidth: '90vw', 
+                      maxHeight: '90vh', 
+                      borderRadius: 8,
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                   }} 
+                   onContextMenu={(e) => e.preventDefault()}
+                />
+                <Box sx={{ position: 'absolute', bottom: -40, left: 0, right: 0, textAlign: 'center' }}>
+                    <Typography variant="subtitle1" fontWeight={700} color="white">
+                        {previewImage?.title || t('gallery.untitled')}
+                    </Typography>
+                </Box>
+              </Box>
            )}
-           <Box sx={{ position: 'absolute', bottom: -40, left: 0, right: 0, textAlign: 'center' }}>
-               <Typography variant="subtitle1" fontWeight={700} color="white">
-                   {previewImage?.title || 'Untitled'}
-               </Typography>
-           </Box>
         </Box>
       </Dialog>
     </Box>

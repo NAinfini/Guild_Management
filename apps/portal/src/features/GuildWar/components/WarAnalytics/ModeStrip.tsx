@@ -1,3 +1,4 @@
+
 /**
  * War Analytics - Mode Strip Component
  *
@@ -7,10 +8,15 @@
  * - Teams: Team aggregates
  */
 
-import { Tabs, Tab, Box, Chip } from '@mui/material';
-import { Users, Trophy, Shield } from 'lucide-react';
+import React from 'react';
+import ShowChartIcon from "@mui/icons-material/ShowChart";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import SettingsIcon from "@mui/icons-material/Settings";
+import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
 import type { AnalyticsMode } from './types';
+import { Tabs, TabsList, TabsTrigger, Badge, Alert } from '@/components';
+import { cn } from '@/lib/utils';
 
 // ============================================================================
 // Mode Configuration
@@ -18,29 +24,29 @@ import type { AnalyticsMode } from './types';
 
 interface ModeConfig {
   id: AnalyticsMode;
-  label: string;
-  icon: React.ComponentType<{ size?: number }>;
-  description: string;
+  labelKey: string;
+  icon: React.ElementType;
+  descriptionKey: string;
 }
 
 const MODES: ModeConfig[] = [
   {
     id: 'compare',
-    label: 'Compare',
-    icon: Users,
-    description: 'Compare multiple members side-by-side',
+    labelKey: 'guild_war.analytics_mode_compare',
+    icon: ShowChartIcon,
+    descriptionKey: 'guild_war.analytics_mode_compare_desc',
   },
   {
     id: 'rankings',
-    label: 'Rankings',
-    icon: Trophy,
-    description: 'View top performers by metric',
+    labelKey: 'guild_war.analytics_mode_rankings',
+    icon: BarChartIcon,
+    descriptionKey: 'guild_war.analytics_mode_rankings_desc',
   },
   {
     id: 'teams',
-    label: 'Teams',
-    icon: Shield,
-    description: 'Compare team performance',
+    labelKey: 'guild_war.analytics_mode_teams',
+    icon: SettingsIcon,
+    descriptionKey: 'guild_war.analytics_mode_teams_desc',
   },
 ];
 
@@ -49,10 +55,11 @@ const MODES: ModeConfig[] = [
 // ============================================================================
 
 export function ModeStrip() {
+  const { t } = useTranslation();
   const { filters, updateFilters, compareMode, teamsMode } = useAnalytics();
 
-  const handleModeChange = (_event: React.SyntheticEvent, newMode: AnalyticsMode) => {
-    updateFilters({ mode: newMode });
+  const handleModeChange = (newMode: string) => {
+    updateFilters({ mode: newMode as AnalyticsMode });
   };
 
   // Get badge count for each mode
@@ -70,53 +77,42 @@ export function ModeStrip() {
   };
 
   return (
-    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-      <Tabs
-        value={filters.mode}
-        onChange={handleModeChange}
-        aria-label="Analytics mode selector"
-        sx={{
-          '& .MuiTab-root': {
-            minHeight: 64,
-            textTransform: 'none',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-          },
-        }}
+    <div className="border-b border-border">
+      <Tabs 
+        value={filters.mode} 
+        onValueChange={handleModeChange} 
+        className="w-full"
       >
-        {MODES.map((mode) => {
-          const Icon = mode.icon;
-          const badgeCount = getBadgeCount(mode.id);
+        <TabsList className="bg-transparent p-0 gap-6 h-auto">
+            {MODES.map((mode) => {
+                const Icon = mode.icon;
+                const badgeCount = getBadgeCount(mode.id);
+                const isActive = filters.mode === mode.id;
 
-          return (
-            <Tab
-              key={mode.id}
-              value={mode.id}
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {mode.label}
-                  {badgeCount !== undefined && badgeCount > 0 && (
-                    <Chip
-                      label={badgeCount}
-                      size="small"
-                      color="primary"
-                      sx={{
-                        height: 20,
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                      }}
-                    />
-                  )}
-                </Box>
-              }
-              icon={<Icon size={18} />}
-              iconPosition="start"
-              aria-label={mode.description}
-            />
-          );
-        })}
+                return (
+                    <TabsTrigger 
+                        key={mode.id} 
+                        value={mode.id}
+                        className={cn(
+                            "relative h-14 rounded-none border-b-2 border-transparent px-2 pb-3 pt-3 font-semibold text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-none",
+                            "hover:border-border/50"
+                        )}
+                    >
+                        <div className="flex items-center gap-2">
+                            <Icon sx={{ fontSize: 20 }} className={isActive ? "text-primary" : "text-muted-foreground"} />
+                            <span>{t(mode.labelKey)}</span>
+                            {badgeCount !== undefined && badgeCount > 0 && (
+                                <Badge variant="default" className="ml-1 h-5 px-1.5 text-[10px]">
+                                    {badgeCount}
+                                </Badge>
+                            )}
+                        </div>
+                    </TabsTrigger>
+                );
+            })}
+        </TabsList>
       </Tabs>
-    </Box>
+    </div>
   );
 }
 
@@ -128,29 +124,25 @@ export function ModeStrip() {
  * Show description of current mode (can be used in a tooltip or info box)
  */
 export function ModeDescription() {
+  const { t } = useTranslation();
   const { filters } = useAnalytics();
   const currentMode = MODES.find((m) => m.id === filters.mode);
 
   if (!currentMode) return null;
 
   return (
-    <Box
-      sx={{
-        p: 2,
-        bgcolor: 'info.lighter',
-        borderRadius: 1,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-      }}
-    >
-      <currentMode.icon size={16} />
-      <Box>
-        <Box sx={{ fontWeight: 700, fontSize: '0.875rem' }}>{currentMode.label} Mode</Box>
-        <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-          {currentMode.description}
-        </Box>
-      </Box>
-    </Box>
+    <Alert className="bg-muted/50 border-none">
+        <div className="flex items-center gap-3">
+            <currentMode.icon className="w-4 h-4 text-primary" />
+            <div>
+                <h4 className="font-bold text-sm leading-none mb-1">
+                    {t('guild_war.analytics_mode_title', { mode: t(currentMode.labelKey) })}
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                    {t(currentMode.descriptionKey)}
+                </p>
+            </div>
+        </div>
+    </Alert>
   );
 }

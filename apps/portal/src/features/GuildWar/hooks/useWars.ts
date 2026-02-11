@@ -286,6 +286,19 @@ export function useWarHistory(params?: { limit?: number; offset?: number }) {
   });
 }
 
+export function useWarHistoryDetail(
+  warId: string,
+  options?: {
+    enabled?: boolean;
+  }
+) {
+  return useQuery({
+    queryKey: queryKeys.war.detail(warId),
+    queryFn: () => warsAPI.getHistoryById(warId),
+    enabled: options?.enabled !== false && !!warId,
+  });
+}
+
 export function useCreateWarHistory() {
   const queryClient = useQueryClient();
   
@@ -309,7 +322,27 @@ export function useUpdateWarStats() {
   });
 }
 
-export function useWarAnalytics(params?: { userId?: string; startDate?: string; endDate?: string }) {
+export function useWarAnalytics(params?: {
+  userId?: string;
+  startDate?: string;
+  endDate?: string;
+  warIds?: Array<number | string>;
+  userIds?: Array<number | string>;
+  teamIds?: Array<number | string>;
+  mode?: 'compare' | 'rankings' | 'teams';
+  metric?: 'damage' | 'healing' | 'building_damage' | 'credits' | 'kills' | 'deaths' | 'assists' | 'kda';
+  aggregation?: 'total' | 'average' | 'best' | 'median';
+  limit?: number;
+  cursor?: string;
+  includePerWar?: boolean;
+  participationOnly?: boolean;
+  opponentNormalized?: boolean;
+  normalizationWeights?: {
+    kda: number;
+    towers: number;
+    distance: number;
+  };
+}) {
   return useQuery({
     queryKey: queryKeys.wars.analytics(params),
     queryFn: () => warsAPI.getAnalytics(params),
@@ -366,15 +399,22 @@ export function useWarsList(params?: { startDate?: string; endDate?: string; lim
 export function useAnalyticsData(params?: {
   startDate?: string;
   endDate?: string;
-  warIds?: number[];
-  userIds?: number[];
-  teamIds?: number[];
+  warIds?: Array<number | string>;
+  userIds?: Array<number | string>;
+  teamIds?: Array<number | string>;
   mode?: 'compare' | 'rankings' | 'teams';
-  metric?: string;
+  metric?: 'damage' | 'healing' | 'building_damage' | 'credits' | 'kills' | 'deaths' | 'assists' | 'kda';
   aggregation?: 'total' | 'average' | 'best' | 'median';
   limit?: number;
   cursor?: string;
   includePerWar?: boolean;
+  participationOnly?: boolean;
+  opponentNormalized?: boolean;
+  normalizationWeights?: {
+    kda: number;
+    towers: number;
+    distance: number;
+  };
 }) {
   return useQuery({
     queryKey: queryKeys.wars.analyticsData(params),
@@ -386,5 +426,44 @@ export function useAnalyticsData(params?: {
       }),
     enabled: !!(params?.warIds && params.warIds.length > 0), // Only fetch when wars selected
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useWarAnalyticsFormulaPresets(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.wars.analyticsFormulaPresets(),
+    queryFn: () => warsAPI.getAnalyticsFormulaPresets(),
+    enabled: options?.enabled ?? true,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCreateWarAnalyticsFormulaPreset() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: {
+      name: string;
+      weights: {
+        kda: number;
+        towers: number;
+        distance: number;
+      };
+      isDefault?: boolean;
+    }) => warsAPI.createAnalyticsFormulaPreset(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.wars.analyticsFormulaPresets() });
+    },
+  });
+}
+
+export function useDeleteWarAnalyticsFormulaPreset() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (presetId: string) => warsAPI.deleteAnalyticsFormulaPreset(presetId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.wars.analyticsFormulaPresets() });
+    },
   });
 }

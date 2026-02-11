@@ -12,6 +12,9 @@ import { toast } from './toast';
 import { useAuthStore } from '../store';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+interface RequestOptions {
+  headers?: Record<string, string>;
+}
 
 export class APIError extends Error {
   status?: number;
@@ -41,6 +44,7 @@ async function request<T>(
   path: string,
   body?: any,
   query?: Record<string, string | number | boolean | undefined>,
+  options?: RequestOptions,
 ): Promise<T> {
   const url = new URL(path.startsWith('http') ? path : `${API_BASE}${path}`, window.location.origin);
   if (query) {
@@ -53,7 +57,7 @@ async function request<T>(
 
   // Build headers.
   // Avoid forcing Content-Type on GET/no-body requests to reduce CORS preflight issues.
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...(options?.headers || {}) };
   if (body !== undefined && body !== null) {
     headers['Content-Type'] = 'application/json';
   }
@@ -76,7 +80,7 @@ async function request<T>(
   }
 
   try {
-    const resp = await fetch(requestUrl, {
+        const resp = await fetch(requestUrl, {
       method,
       headers,
       credentials: 'include',
@@ -201,7 +205,7 @@ async function apiRequestWithRetry<T>(
   method: HttpMethod,
   body?: any,
   query?: Record<string, any>,
-  options?: RetryOptions
+  options?: RetryOptions & RequestOptions
 ): Promise<T> {
   const maxRetries = options?.maxRetries ?? 3;
   const retryDelayMs = options?.retryDelayMs ?? 1000; // 1 second
@@ -209,7 +213,7 @@ async function apiRequestWithRetry<T>(
 
   for (let i = 0; i <= maxRetries; i++) {
     try {
-      return await request<T>(method, path, body, query);
+      return await request<T>(method, path, body, query, options);
     } catch (error) {
       if (error instanceof APIError && retryOn(error) && i < maxRetries) {
         if (IS_DEV) {
@@ -248,20 +252,20 @@ async function apiRequestWithRetry<T>(
  * Public API methods with retry logic
  */
 export const api = {
-  get: <T = any>(path: string, query?: Record<string, any>) =>
-    apiRequestWithRetry<T>(path, 'GET', undefined, query),
+  get: <T = any>(path: string, query?: Record<string, any>, options?: RequestOptions) =>
+    apiRequestWithRetry<T>(path, 'GET', undefined, query, options),
     
-  post: <T = any>(path: string, body?: any, query?: Record<string, any>) =>
-    apiRequestWithRetry<T>(path, 'POST', body, query, { maxRetries: 2 }), // Fewer retries for mutations
+  post: <T = any>(path: string, body?: any, query?: Record<string, any>, options?: RequestOptions) =>
+    apiRequestWithRetry<T>(path, 'POST', body, query, { maxRetries: 2, ...(options || {}) }), // Fewer retries for mutations
     
-  put: <T = any>(path: string, body?: any, query?: Record<string, any>) =>
-    apiRequestWithRetry<T>(path, 'PUT', body, query, { maxRetries: 2 }),
+  put: <T = any>(path: string, body?: any, query?: Record<string, any>, options?: RequestOptions) =>
+    apiRequestWithRetry<T>(path, 'PUT', body, query, { maxRetries: 2, ...(options || {}) }),
     
-  patch: <T = any>(path: string, body?: any, query?: Record<string, any>) =>
-    apiRequestWithRetry<T>(path, 'PATCH', body, query, { maxRetries: 2 }),
+  patch: <T = any>(path: string, body?: any, query?: Record<string, any>, options?: RequestOptions) =>
+    apiRequestWithRetry<T>(path, 'PATCH', body, query, { maxRetries: 2, ...(options || {}) }),
     
-  delete: <T = any>(path: string, query?: Record<string, any>) =>
-    apiRequestWithRetry<T>(path, 'DELETE', undefined, query, { maxRetries: 2 }),
+  delete: <T = any>(path: string, query?: Record<string, any>, options?: RequestOptions) =>
+    apiRequestWithRetry<T>(path, 'DELETE', undefined, query, { maxRetries: 2, ...(options || {}) }),
 
   upload: async <T = any>(path: string, file: File, extraFields?: Record<string, string>): Promise<T> => {
     const formData = new FormData();
@@ -299,20 +303,20 @@ export const api = {
  * Direct API request without retries (for special cases)
  */
 export const apiDirect = {
-  get: <T = any>(path: string, query?: Record<string, any>) =>
-    request<T>('GET', path, undefined, query),
+  get: <T = any>(path: string, query?: Record<string, any>, options?: RequestOptions) =>
+    request<T>('GET', path, undefined, query, options),
     
-  post: <T = any>(path: string, body?: any, query?: Record<string, any>) =>
-    request<T>('POST', path, body, query),
+  post: <T = any>(path: string, body?: any, query?: Record<string, any>, options?: RequestOptions) =>
+    request<T>('POST', path, body, query, options),
     
-  put: <T = any>(path: string, body?: any, query?: Record<string, any>) =>
-    request<T>('PUT', path, body, query),
+  put: <T = any>(path: string, body?: any, query?: Record<string, any>, options?: RequestOptions) =>
+    request<T>('PUT', path, body, query, options),
     
-  patch: <T = any>(path: string, body?: any, query?: Record<string, any>) =>
-    request<T>('PATCH', path, body, query),
+  patch: <T = any>(path: string, body?: any, query?: Record<string, any>, options?: RequestOptions) =>
+    request<T>('PATCH', path, body, query, options),
     
-  delete: <T = any>(path: string, query?: Record<string, any>) =>
-    request<T>('DELETE', path, undefined, query),
+  delete: <T = any>(path: string, query?: Record<string, any>, options?: RequestOptions) =>
+    request<T>('DELETE', path, undefined, query, options),
 };
 
 export default api;

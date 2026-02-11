@@ -25,5 +25,14 @@
       "Bash(npm install:*)",
       "Bash(npx tsc:*)"
     ]
+  },
+  "mcpServers": {
+    "desktop-commander": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@wonderwhy-er/desktop-commander"
+      ]
+    }
   }
 }

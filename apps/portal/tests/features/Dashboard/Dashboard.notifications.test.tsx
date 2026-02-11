@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyNotificationSeen,
+  getDashboardRecentEvents,
   getLatestCompletedWar,
   getRecentCompletedWars,
 } from '@/features/Dashboard';
@@ -97,5 +98,30 @@ describe('Dashboard notification read state', () => {
     const recent = getRecentCompletedWars(wars, events, 4, '2026-02-08T00:00:00.000Z');
 
     expect(recent.map((war) => war.id)).toEqual(['w5', 'w4', 'w3', 'w2']);
+  });
+
+  it('returns active/upcoming dashboard events first', () => {
+    const events = [
+      { id: 'past', is_archived: false, start_time: '2026-02-01T10:00:00.000Z', end_time: '2026-02-01T11:00:00.000Z' },
+      { id: 'ongoing', is_archived: false, start_time: '2026-02-09T09:00:00.000Z', end_time: '2026-02-09T11:00:00.000Z' },
+      { id: 'upcoming', is_archived: false, start_time: '2026-02-10T10:00:00.000Z', end_time: '2026-02-10T11:00:00.000Z' },
+      { id: 'archived', is_archived: true, start_time: '2026-02-10T08:00:00.000Z', end_time: '2026-02-10T09:00:00.000Z' },
+    ] as any;
+
+    const recent = getDashboardRecentEvents(events, '2026-02-09T10:00:00.000Z', 3);
+
+    expect(recent.map((event) => event.id)).toEqual(['ongoing', 'upcoming']);
+  });
+
+  it('falls back to latest past events when there are no upcoming events', () => {
+    const events = [
+      { id: 'e1', is_archived: false, start_time: '2026-02-01T10:00:00.000Z' },
+      { id: 'e2', is_archived: false, start_time: '2026-02-03T10:00:00.000Z' },
+      { id: 'e3', is_archived: false, start_time: '2026-02-02T10:00:00.000Z' },
+    ] as any;
+
+    const recent = getDashboardRecentEvents(events, '2026-02-09T10:00:00.000Z', 2);
+
+    expect(recent.map((event) => event.id)).toEqual(['e2', 'e3']);
   });
 });

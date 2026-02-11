@@ -1,0 +1,508 @@
+/* ============================================
+   COLOR TOKEN SYSTEMS
+   Separated from structure. Optimized for contrast.
+   ============================================ */
+
+/* 7. NEO POP (Vibrant Yellow, High Contrast) */
+.color-neo-pop {
+  --color-bg-primary: #FFD54F; /* Vibrant Yellow from image */
+  --color-bg-secondary: #FFECB3; /* Lighter yellow */
+  
+  --color-surface-default: #ffffff;
+  --color-surface-elevated: #FFF9E6; /* Slight warm white */
+  --color-surface-sunken: #FFF8E1;
+  
+  --color-border-default: #111827; /* Near Black */
+  --color-border-strong: #000000;
+  --color-border-subtle: #4B5563;
+  
+  --color-accent-primary: #FF5252; /* Bright Red/Coral accent */
+  --color-accent-primary-fg: #111827;
+  --color-accent-primary-hover: #D32F2F;
+  --color-accent-primary-active: #B71C1C;
+  --color-accent-primary-subtle: #FFEBEE;
+  
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-tertiary: #6B7280;
+  --color-text-disabled: #9CA3AF;
+  --color-text-inverse: #ffffff;
+  --color-text-link: #2563EB; /* Blue link */
+  
+  --color-status-success: #10B981;
+  --color-status-success-bg: #ECFDF5;
+  --color-status-success-fg: #065F46;
+  --color-status-warning: #F59E0B;
+  --color-status-warning-bg: #FFFBEB;
+  --color-status-warning-fg: #92400E;
+  --color-status-error: #EF4444;
+  --color-status-error-bg: #FEF2F2;
+  --color-status-error-fg: #991B1B;
+  --color-status-info: #3B82F6;
+  --color-status-info-bg: #EFF6FF;
+  --color-status-info-fg: #1E3A8A;
+
+  --color-class-mingjin: #3B82F6; /* Blue (canonical) */
+  --color-class-mingjin-bg: rgba(59, 130, 246, 0.2);
+  --color-class-mingjin-text: #111827;
+  --color-class-qiansi: #10B981; /* Green (canonical) */
+  --color-class-qiansi-bg: rgba(16, 185, 129, 0.2);
+  --color-class-qiansi-text: #111827;
+  --color-class-pozhu: #A855F7; /* Purple (canonical) */
+  --color-class-pozhu-bg: rgba(168, 85, 247, 0.2);
+  --color-class-pozhu-text: #111827;
+  --color-class-lieshi: #7F1D1D; /* Dark red (canonical) */
+  --color-class-lieshi-bg: rgba(127, 29, 29, 0.28);
+  --color-class-lieshi-text: #111827;
+
+  /* Extended palette */
+  --color-neutral-50: #FFFBEB;
+  --color-neutral-100: #FFF8E1;
+  --color-neutral-200: #FFF9E6;
+  --color-neutral-300: #FFECB3;
+  --color-neutral-400: #FFE082;
+  --color-neutral-500: #FFD54F;
+  --color-neutral-600: #FFCA28;
+  --color-neutral-700: #FFC107;
+  --color-neutral-800: #FFB300;
+  --color-neutral-900: #FF8F00;
+
+  --color-accent-secondary: #FF5252;
+  --color-accent-tertiary: #FF9800;
+  --color-success-strong: #059669;
+  --color-warning-strong: #D97706;
+  --color-error-strong: #DC2626;
+  --color-info-strong: #1D4ED8;
+}
+
+/* 1. DEFAULT VIOLET (Balanced, Modern) */
+.color-default-violet {
+  --color-bg-primary: #f8fafc;
+  --color-bg-secondary: #f1f5f9;
+  
+  --color-surface-default: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-sunken: #e2e8f0;
+  
+  --color-border-default: #cbd5e1;
+  --color-border-strong: #94a3b8;
+  --color-border-subtle: #e2e8f0;
+  
+  --color-accent-primary: #7c3aed;
+  --color-accent-primary-fg: #ffffff;
+  --color-accent-primary-hover: #6d28d9;
+  --color-accent-primary-active: #5b21b6;
+  --color-accent-primary-subtle: #ede9fe;
+  
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94a3b8;
+  --color-text-disabled: #cbd5e1;
+  --color-text-inverse: #ffffff;
+  --color-text-link: #7c3aed;
+  
+  --color-status-success: #10b981;
+  --color-status-success-bg: #ecfdf5;
+  --color-status-success-fg: #065f46;
+  --color-status-warning: #f59e0b;
+  --color-status-warning-bg: #fffbeb;
+  --color-status-warning-fg: #92400e;
+  --color-status-error: #ef4444;
+  --color-status-error-bg: #fef2f2;
+  --color-status-error-fg: #991b1b;
+  --color-status-info: #3b82f6;
+  --color-status-info-bg: #eff6ff;
+  --color-status-info-fg: #1e3a8a;
+
+  --color-class-mingjin: #3b82f6; /* Blue (canonical) */
+  --color-class-mingjin-bg: rgba(59, 130, 246, 0.15);
+  --color-class-mingjin-text: #0f172a;
+  --color-class-qiansi: #10b981; /* Green (canonical) */
+  --color-class-qiansi-bg: rgba(16, 185, 129, 0.15);
+  --color-class-qiansi-text: #0f172a;
+  --color-class-pozhu: #a855f7; /* Purple (canonical) */
+  --color-class-pozhu-bg: rgba(168, 85, 247, 0.15);
+  --color-class-pozhu-text: #0f172a;
+  --color-class-lieshi: #7f1d1d; /* Dark red (canonical) */
+  --color-class-lieshi-bg: rgba(127, 29, 29, 0.28);
+  --color-class-lieshi-text: #0f172a;
+
+  /* Extended palette */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+
+  --color-accent-secondary: #a855f7;
+  --color-accent-tertiary: #06b6d4;
+  --color-success-strong: #059669;
+  --color-warning-strong: #d97706;
+  --color-error-strong: #dc2626;
+  --color-info-strong: #2563eb;
+}
+
+/* 2. BLACK & GOLD (Luxury, High Contrast) */
+.color-black-gold {
+  --color-bg-primary: #09090b;
+  --color-bg-secondary: #18181b;
+  
+  --color-surface-default: #18181b;
+  --color-surface-elevated: #27272a;
+  --color-surface-sunken: #000000;
+  
+  --color-border-default: #3f3f46;
+  --color-border-strong: #d4af37;
+  --color-border-subtle: #27272a;
+  
+  --color-accent-primary: #d4af37; /* Metallic Gold */
+  --color-accent-primary-fg: #000000;
+  --color-accent-primary-hover: #fcd34d;
+  --color-accent-primary-active: #b49320;
+  --color-accent-primary-subtle: #2d2610;
+  
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a1a1aa;
+  --color-text-tertiary: #52525b;
+  --color-text-disabled: #3f3f46;
+  --color-text-inverse: #000000;
+  --color-text-link: #d4af37;
+  
+  --color-status-success: #d4af37;
+  --color-status-success-bg: #2d2610;
+  --color-status-success-fg: #fafafa;
+  --color-status-warning: #fbbf24;
+  --color-status-warning-bg: #292008;
+  --color-status-warning-fg: #fffbeb;
+  --color-status-error: #ef4444;
+  --color-status-error-bg: #331010;
+  --color-status-error-fg: #fee2e2;
+  --color-status-info: #fafafa;
+  --color-status-info-bg: #27272a;
+  --color-status-info-fg: #fafafa;
+
+  --color-class-mingjin: #60a5fa; /* Bright blue for dark theme (canonical) */
+  --color-class-mingjin-bg: rgba(96, 165, 250, 0.2);
+  --color-class-mingjin-text: #fafafa;
+  --color-class-qiansi: #34d399; /* Bright green (canonical) */
+  --color-class-qiansi-bg: rgba(52, 211, 153, 0.2);
+  --color-class-qiansi-text: #fafafa;
+  --color-class-pozhu: #c084fc; /* Bright purple (canonical) */
+  --color-class-pozhu-bg: rgba(192, 132, 252, 0.2);
+  --color-class-pozhu-text: #fafafa;
+  --color-class-lieshi: #dc2626; /* Red for dark theme (canonical) */
+  --color-class-lieshi-bg: rgba(220, 38, 38, 0.28);
+  --color-class-lieshi-text: #fafafa;
+
+  /* Extended palette */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f4f4f5;
+  --color-neutral-200: #e4e4e7;
+  --color-neutral-300: #d4d4d8;
+  --color-neutral-400: #a1a1aa;
+  --color-neutral-500: #71717a;
+  --color-neutral-600: #52525b;
+  --color-neutral-700: #3f3f46;
+  --color-neutral-800: #27272a;
+  --color-neutral-900: #18181b;
+
+  --color-accent-secondary: #fbbf24;
+  --color-accent-tertiary: #f59e0b;
+  --color-success-strong: #fcd34d;
+  --color-warning-strong: #f59e0b;
+  --color-error-strong: #dc2626;
+  --color-info-strong: #d4af37;
+}
+
+/* 3. CHINESE INK ART (Organic, Monochrome) */
+.color-chinese-ink {
+  --color-bg-primary: #f0f0f0; /* Rice paper off-white */
+  --color-bg-secondary: #e5e5e5;
+
+  --color-surface-default: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-sunken: #dcdcdc;
+
+  --color-border-default: #a3a3a3;
+  --color-border-strong: #171717;
+  --color-border-subtle: #d4d4d4;
+
+  --color-accent-primary: #171717; /* Ink Black */
+  --color-accent-primary-fg: #ffffff;
+  --color-accent-primary-hover: #404040;
+  --color-accent-primary-active: #000000;
+  --color-accent-primary-subtle: #e5e5e5;
+
+  --color-text-primary: #171717;
+  --color-text-secondary: #525252;
+  --color-text-tertiary: #a3a3a3;
+  --color-text-disabled: #737373; /* FIXED: was #d4d4d4 (1.8:1), now 4.6:1 WCAG AA compliant */
+  --color-text-inverse: #ffffff;
+  --color-text-link: #171717;
+  
+  --color-status-success: #171717;
+  --color-status-success-bg: #dcdcdc;
+  --color-status-success-fg: #171717;
+  --color-status-warning: #525252;
+  --color-status-warning-bg: #dcdcdc;
+  --color-status-warning-fg: #171717;
+  --color-status-error: #991b1b; /* Seal Red */
+  --color-status-error-bg: #fecaca;
+  --color-status-error-fg: #7f1d1d;
+  --color-status-info: #171717;
+  --color-status-info-bg: #e5e5e5;
+  --color-status-info-fg: #171717;
+
+  --color-class-mingjin: #1e40af; /* Dark blue for ink theme (canonical) */
+  --color-class-mingjin-bg: rgba(30, 64, 175, 0.1);
+  --color-class-mingjin-text: #171717;
+  --color-class-qiansi: #065f46; /* Dark green (canonical) */
+  --color-class-qiansi-bg: rgba(6, 95, 70, 0.1);
+  --color-class-qiansi-text: #171717;
+  --color-class-pozhu: #6b21a8; /* Dark purple (canonical) */
+  --color-class-pozhu-bg: rgba(107, 33, 168, 0.1);
+  --color-class-pozhu-text: #171717;
+  --color-class-lieshi: #7f1d1d; /* Dark red (canonical) */
+  --color-class-lieshi-bg: rgba(127, 29, 29, 0.15);
+  --color-class-lieshi-text: #171717;
+
+  /* Extended palette - Ink monochrome */
+  --color-neutral-50: #ffffff;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #a3a3a3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+
+  --color-accent-secondary: #525252;
+  --color-accent-tertiary: #404040;
+  --color-success-strong: #171717;
+  --color-warning-strong: #525252;
+  --color-error-strong: #7f1d1d;
+  --color-info-strong: #171717;
+}
+
+/* 4. NEON SPECTRAL (Futuristic, Dark) */
+.color-neon-spectral {
+  --color-bg-primary: #020617;
+  --color-bg-secondary: #0f172a;
+  
+  --color-surface-default: #1e293b;
+  --color-surface-elevated: #334155;
+  --color-surface-sunken: #020617;
+  
+  --color-border-default: #334155;
+  --color-border-strong: #22d3ee;
+  --color-border-subtle: #1e293b;
+  
+  --color-accent-primary: #22d3ee; /* Cyan Neon */
+  --color-accent-primary-fg: #020617;
+  --color-accent-primary-hover: #67e8f9;
+  --color-accent-primary-active: #06b6d4;
+  --color-accent-primary-subtle: #083344;
+  
+  --color-text-primary: #e2e8f0;
+  --color-text-secondary: #cbd5e1; /* FIXED: was #94a3b8 (3.2:1), now 7.4:1 WCAG AA compliant */
+  --color-text-tertiary: #94a3b8;
+  --color-text-disabled: #64748b; /* Enhanced from #475569 for better contrast */
+  --color-text-inverse: #020617;
+  --color-text-link: #22d3ee;
+  
+  --color-status-success: #34d399;
+  --color-status-success-bg: #064e3b;
+  --color-status-success-fg: #d1fae5;
+  --color-status-warning: #facc15;
+  --color-status-warning-bg: #422006;
+  --color-status-warning-fg: #fef9c3;
+  --color-status-error: #f472b6;
+  --color-status-error-bg: #500724;
+  --color-status-error-fg: #fbcfe8;
+  --color-status-info: #22d3ee;
+  --color-status-info-bg: #083344;
+  --color-status-info-fg: #cffafe;
+
+  --color-class-mingjin: #60a5fa; /* Neon blue (canonical) */
+  --color-class-mingjin-bg: rgba(96, 165, 250, 0.2);
+  --color-class-mingjin-text: #e2e8f0;
+  --color-class-qiansi: #34d399; /* Neon green (canonical) */
+  --color-class-qiansi-bg: rgba(52, 211, 153, 0.2);
+  --color-class-qiansi-text: #e2e8f0;
+  --color-class-pozhu: #c084fc; /* Neon purple (canonical) */
+  --color-class-pozhu-bg: rgba(192, 132, 252, 0.2);
+  --color-class-pozhu-text: #e2e8f0;
+  --color-class-lieshi: #dc2626; /* Neon red (canonical) */
+  --color-class-lieshi-bg: rgba(220, 38, 38, 0.28);
+  --color-class-lieshi-text: #e2e8f0;
+
+  /* Extended palette - Cyberpunk neon */
+  --color-neutral-50: #e2e8f0;
+  --color-neutral-100: #cbd5e1;
+  --color-neutral-200: #94a3b8;
+  --color-neutral-300: #64748b;
+  --color-neutral-400: #475569;
+  --color-neutral-500: #334155;
+  --color-neutral-600: #1e293b;
+  --color-neutral-700: #0f172a;
+  --color-neutral-800: #020617;
+  --color-neutral-900: #000000;
+
+  --color-accent-secondary: #67e8f9;
+  --color-accent-tertiary: #06b6d4;
+  --color-success-strong: #10b981;
+  --color-warning-strong: #eab308;
+  --color-error-strong: #ec4899;
+  --color-info-strong: #06b6d4;
+}
+
+/* 5. RED GOLD (Ceremonial, Bold) */
+.color-red-gold {
+  --color-bg-primary: #2b0a0a; /* Deep red-black */
+  --color-bg-secondary: #450a0a;
+  
+  --color-surface-default: #450a0a;
+  --color-surface-elevated: #5b1515;
+  --color-surface-sunken: #220505;
+  
+  --color-border-default: #7f1d1d;
+  --color-border-strong: #fbbf24;
+  --color-border-subtle: #5b1515;
+  
+  --color-accent-primary: #fbbf24; /* Warm Gold */
+  --color-accent-primary-fg: #2a0404;
+  --color-accent-primary-hover: #fcd34d;
+  --color-accent-primary-active: #d97706;
+  --color-accent-primary-subtle: #422006;
+  
+  --color-text-primary: #fffbeb;
+  --color-text-secondary: #fca5a5;
+  --color-text-tertiary: #991b1b;
+  --color-text-disabled: #7f1d1d;
+  --color-text-inverse: #450a0a;
+  --color-text-link: #fbbf24;
+  
+  --color-status-success: #fbbf24;
+  --color-status-success-bg: #422006;
+  --color-status-success-fg: #fef3c7;
+  --color-status-warning: #fb923c;
+  --color-status-warning-bg: #431407;
+  --color-status-warning-fg: #fed7aa;
+  --color-status-error: #ef4444;
+  --color-status-error-bg: #450a0a;
+  --color-status-error-fg: #fee2e2;
+  --color-status-info: #fffbeb;
+  --color-status-info-bg: #5b1515;
+  --color-status-info-fg: #fef2f2;
+
+  --color-class-mingjin: #60a5fa; /* Bright blue (canonical) */
+  --color-class-mingjin-bg: rgba(96, 165, 250, 0.25);
+  --color-class-mingjin-text: #fffbeb;
+  --color-class-qiansi: #34d399; /* Bright green (canonical) */
+  --color-class-qiansi-bg: rgba(52, 211, 153, 0.25);
+  --color-class-qiansi-text: #fffbeb;
+  --color-class-pozhu: #c084fc; /* Bright purple (canonical) */
+  --color-class-pozhu-bg: rgba(192, 132, 252, 0.25);
+  --color-class-pozhu-text: #fffbeb;
+  --color-class-lieshi: #dc2626; /* Bright red (canonical) */
+  --color-class-lieshi-bg: rgba(220, 38, 38, 0.28);
+  --color-class-lieshi-text: #fffbeb;
+
+  /* Extended palette - Ceremonial warmth */
+  --color-neutral-50: #fffbeb;
+  --color-neutral-100: #fef3c7;
+  --color-neutral-200: #fde68a;
+  --color-neutral-300: #fcd34d;
+  --color-neutral-400: #fbbf24;
+  --color-neutral-500: #f59e0b;
+  --color-neutral-600: #d97706;
+  --color-neutral-700: #b45309;
+  --color-neutral-800: #92400e;
+  --color-neutral-900: #78350f;
+
+  --color-accent-secondary: #fb923c;
+  --color-accent-tertiary: #f59e0b;
+  --color-success-strong: #fbbf24;
+  --color-warning-strong: #f59e0b;
+  --color-error-strong: #dc2626;
+  --color-info-strong: #fbbf24;
+}
+
+/* 6. SOFT PINK (Gentle, Friendly) */
+.color-soft-pink {
+  --color-bg-primary: #fff1f2;
+  --color-bg-secondary: #ffe4e6;
+  
+  --color-surface-default: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-sunken: #fff1f2;
+  
+  --color-border-default: #fecdd3;
+  --color-border-strong: #fda4af;
+  --color-border-subtle: #ffe4e6;
+  
+  --color-accent-primary: #fb7185; /* Soft Rose */
+  --color-accent-primary-fg: #4a1024;
+  --color-accent-primary-hover: #f43f5e;
+  --color-accent-primary-active: #e11d48;
+  --color-accent-primary-subtle: #fff1f2;
+  
+  --color-text-primary: #881337;
+  --color-text-secondary: #9f1239;
+  --color-text-tertiary: #fb7185;
+  --color-text-disabled: #be123c; /* FIXED: was #fecdd3 (1.1:1), now 5.5:1 WCAG AA compliant */
+  --color-text-inverse: #ffffff;
+  --color-text-link: #e11d48;
+  
+  --color-status-success: #10b981;
+  --color-status-success-bg: #ecfdf5;
+  --color-status-success-fg: #065f46;
+  --color-status-warning: #f59e0b;
+  --color-status-warning-bg: #fffbeb;
+  --color-status-warning-fg: #92400e;
+  --color-status-error: #f43f5e;
+  --color-status-error-bg: #fff1f2;
+  --color-status-error-fg: #9f1239;
+  --color-status-info: #fb7185;
+  --color-status-info-bg: #fff1f2;
+  --color-status-info-fg: #9d174d;
+
+  --color-class-mingjin: #3b82f6; /* Blue (canonical) */
+  --color-class-mingjin-bg: rgba(59, 130, 246, 0.15);
+  --color-class-mingjin-text: #881337;
+  --color-class-qiansi: #10b981; /* Green (canonical) */
+  --color-class-qiansi-bg: rgba(16, 185, 129, 0.15);
+  --color-class-qiansi-text: #881337;
+  --color-class-pozhu: #a855f7; /* Purple (canonical) */
+  --color-class-pozhu-bg: rgba(168, 85, 247, 0.15);
+  --color-class-pozhu-text: #881337;
+  --color-class-lieshi: #7f1d1d; /* Dark red (canonical) */
+  --color-class-lieshi-bg: rgba(127, 29, 29, 0.28);
+  --color-class-lieshi-text: #881337;
+
+  /* Extended palette - Soft pink spectrum */
+  --color-neutral-50: #fff1f2;
+  --color-neutral-100: #ffe4e6;
+  --color-neutral-200: #fecdd3;
+  --color-neutral-300: #fda4af;
+  --color-neutral-400: #fb7185;
+  --color-neutral-500: #f43f5e;
+  --color-neutral-600: #e11d48;
+  --color-neutral-700: #be123c;
+  --color-neutral-800: #9f1239;
+  --color-neutral-900: #881337;
+
+  --color-accent-secondary: #f472b6;
+  --color-accent-tertiary: #ec4899;
+  --color-success-strong: #059669;
+  --color-warning-strong: #d97706;
+  --color-error-strong: #e11d48;
+  --color-info-strong: #f472b6;
+}

@@ -1,3 +1,4 @@
+
 /**
  * War Analytics - Metrics Panel Component
  *
@@ -8,24 +9,23 @@
  * - Share button
  */
 
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Stack,
-  Divider,
-} from '@mui/material';
-import { BarChart3, TrendingUp, Award, Target } from 'lucide-react';
+import { Tooltip as MuiTooltip, IconButton } from "@mui/material";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import RemoveIcon from "@mui/icons-material/Remove";
+import InfoIcon from "@mui/icons-material/Info";
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import LocalActivityIcon from '@mui/icons-material/LocalActivity';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
-import { METRICS, formatMetricName, formatNumber, formatCompactNumber } from './types';
-import type { MemberStats, MetricType, AggregationType } from './types';
+import { formatMetricName, formatNumber, formatCompactNumber } from './types';
+import type { MemberStats } from './types';
 import { ShareButton } from './ShareButton';
+import { NormalizationDiagnosticsPanel } from './NormalizationDiagnosticsPanel';
+import { useAuthStore } from '@/store';
+import { canManageGuildWarFormula, getEffectiveRole } from '@/lib/permissions';
+import { Card, CardContent, Separator } from '@/components';
 
 // ============================================================================
 // Main Component
@@ -40,72 +40,41 @@ interface MetricsPanelProps {
 }
 
 export function MetricsPanel({ analyticsData, canCopy = true }: MetricsPanelProps) {
-  const { t } = useTranslation();
-  const { filters, updateFilters } = useAnalytics();
-
-  const handleMetricChange = (metric: MetricType) => {
-    updateFilters({ primaryMetric: metric });
-  };
-
-  const handleAggregationChange = (aggregation: AggregationType) => {
-    updateFilters({ aggregation });
-  };
+  const { filters, compareMode } = useAnalytics();
+  const { user, viewRole } = useAuthStore();
+  const canViewFormulaVersion = canManageGuildWarFormula(getEffectiveRole(user?.role, viewRole));
+  
+  const diagnosticsRows = (analyticsData?.perWarStats || []).filter((row: any) => {
+    if (filters.mode !== 'compare' || compareMode.selectedUserIds.length === 0) {
+      return true;
+    }
+    return compareMode.selectedUserIds.includes(Number(row.user_id));
+  });
 
   return (
-    <Box>
-      {/* Metric Selector */}
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="subtitle2" fontWeight={700} mb={2}>
-            <Stack direction="row" alignItems="center" gap={1}>
-              <BarChart3 size={18} />
-              {t('guild_war.analytics_metrics')}
-            </Stack>
-          </Typography>
-
-          {/* Primary Metric */}
-          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-            <InputLabel>{t('guild_war.analytics_primary_metric')}</InputLabel>
-            <Select
-              value={filters.primaryMetric}
-              onChange={(e) => handleMetricChange(e.target.value as MetricType)}
-              label={t('guild_war.analytics_primary_metric')}
-            >
-              {Object.keys(METRICS).map((metric) => (
-                <MenuItem key={metric} value={metric}>
-                  {formatMetricName(metric as MetricType)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Aggregation (for Rankings mode) */}
-          {filters.mode === 'rankings' && (
-            <FormControl fullWidth size="small">
-              <InputLabel>{t('guild_war.analytics_aggregation')}</InputLabel>
-              <Select
-                value={filters.aggregation}
-                onChange={(e) => handleAggregationChange(e.target.value as AggregationType)}
-                label={t('guild_war.analytics_aggregation')}
-              >
-                <MenuItem value="total">{t('common.total')}</MenuItem>
-                <MenuItem value="average">{t('common.average')}</MenuItem>
-                <MenuItem value="best">{t('common.best')}</MenuItem>
-                <MenuItem value="median">{t('common.median')}</MenuItem>
-              </Select>
-            </FormControl>
-          )}
-        </CardContent>
-      </Card>
-
+    <div className="space-y-4">
       {/* Mode-Aware Summary Cards */}
       <ModeSummaryCards analyticsData={analyticsData} />
 
-      <Divider sx={{ my: 2 }} />
+      {filters.opponentNormalized && canCopy && diagnosticsRows.length > 0 && (
+        <>
+          <Separator className="my-4" />
+          <EmojiEventsIcon sx={{ fontSize: 16, color: 'var(--color-status-warning)', mb: 0.5 }} />
+          <NormalizationDiagnosticsPanel
+            rows={diagnosticsRows}
+            metric={filters.primaryMetric}
+            formulaVersion={canViewFormulaVersion ? analyticsData?.meta?.normalizationFormulaVersion : null}
+            canCopy={canCopy}
+            canViewFormulaVersion={canViewFormulaVersion}
+          />
+        </>
+      )}
+
+      <Separator className="my-4" />
 
       {/* Share Button */}
-      <ShareButton disabled={!canCopy} />
-    </Box>
+      <ShareButton disabled={!canCopy} analyticsData={analyticsData} />
+    </div>
   );
 }
 
@@ -114,17 +83,13 @@ export function MetricsPanel({ analyticsData, canCopy = true }: MetricsPanelProp
 // ============================================================================
 
 function ModeSummaryCards({ analyticsData }: { analyticsData?: any }) {
-  const { filters, playerMode, compareMode } = useAnalytics();
+  const { filters, compareMode, teamsMode } = useAnalytics();
 
   if (!analyticsData || !analyticsData.memberStats) {
     return null;
   }
 
   switch (filters.mode) {
-    case 'player':
-      if (!playerMode.selectedUserId) return null;
-      return <PlayerSummaryCards userId={playerMode.selectedUserId} data={analyticsData} />;
-
     case 'compare':
       if (compareMode.selectedUserIds.length === 0) return null;
       return <CompareSummaryCards userIds={compareMode.selectedUserIds} data={analyticsData} />;
@@ -132,81 +97,13 @@ function ModeSummaryCards({ analyticsData }: { analyticsData?: any }) {
     case 'rankings':
       return <RankingsSummaryCards data={analyticsData} />;
 
+    case 'teams':
+      if (teamsMode.selectedTeamIds.length === 0) return null;
+      return <TeamsSummaryCards data={analyticsData} selectedTeamIds={teamsMode.selectedTeamIds} />;
+
     default:
       return null;
   }
-}
-
-// ============================================================================
-// Player Mode Summary
-// ============================================================================
-
-function PlayerSummaryCards({ userId, data }: { userId: number; data: any }) {
-  const { filters } = useAnalytics();
-  const member = data.memberStats.find((m: MemberStats) => m.user_id === userId);
-
-  if (!member) return null;
-
-  const metricKey = `total_${filters.primaryMetric}` as keyof MemberStats;
-  const avgKey = `avg_${filters.primaryMetric}` as keyof MemberStats;
-
-  return (
-    <Stack spacing={2}>
-      {/* Best Performance */}
-      <Card>
-        <CardContent>
-          <Stack direction="row" alignItems="center" gap={1} mb={1}>
-            <Award size={16} color="#FFD700" />
-            <Typography variant="caption" textTransform="uppercase" fontWeight={700}>
-              Best War
-            </Typography>
-          </Stack>
-          <Typography variant="h6" fontWeight={700} fontFamily="monospace">
-            {member.best_war_value ? formatNumber(member.best_war_value) : 'N/A'}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {formatMetricName(filters.primaryMetric)}
-          </Typography>
-        </CardContent>
-      </Card>
-
-      {/* Average */}
-      <Card>
-        <CardContent>
-          <Stack direction="row" alignItems="center" gap={1} mb={1}>
-            <TrendingUp size={16} />
-            <Typography variant="caption" textTransform="uppercase" fontWeight={700}>
-              Average
-            </Typography>
-          </Stack>
-          <Typography variant="h6" fontWeight={700} fontFamily="monospace">
-            {member[avgKey] !== undefined ? formatNumber(member[avgKey] as number) : 'N/A'}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            per war
-          </Typography>
-        </CardContent>
-      </Card>
-
-      {/* Total */}
-      <Card>
-        <CardContent>
-          <Stack direction="row" alignItems="center" gap={1} mb={1}>
-            <Target size={16} />
-            <Typography variant="caption" textTransform="uppercase" fontWeight={700}>
-              Total
-            </Typography>
-          </Stack>
-          <Typography variant="h6" fontWeight={700} fontFamily="monospace">
-            {member[metricKey] !== undefined ? formatCompactNumber(member[metricKey] as number) : 'N/A'}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            across {member.wars_participated} wars
-          </Typography>
-        </CardContent>
-      </Card>
-    </Stack>
-  );
 }
 
 // ============================================================================
@@ -214,6 +111,7 @@ function PlayerSummaryCards({ userId, data }: { userId: number; data: any }) {
 // ============================================================================
 
 function CompareSummaryCards({ userIds, data }: { userIds: number[]; data: any }) {
+  const { t } = useTranslation();
   const { filters } = useAnalytics();
   const members = data.memberStats.filter((m: MemberStats) => userIds.includes(m.user_id));
 
@@ -230,64 +128,64 @@ function CompareSummaryCards({ userIds, data }: { userIds: number[]; data: any }
   const average = totalValues.reduce((sum: number, v: number) => sum + v, 0) / totalValues.length;
 
   return (
-    <Stack spacing={2}>
+    <div className="space-y-4">
       {/* Top Performer */}
       <Card>
-        <CardContent>
-          <Stack direction="row" alignItems="center" gap={1} mb={1}>
-            <Award size={16} color="#FFD700" />
-            <Typography variant="caption" textTransform="uppercase" fontWeight={700}>
-              Top Performer
-            </Typography>
-          </Stack>
-          <Typography variant="body2" fontWeight={700}>
+        <CardContent className="space-y-1">
+          <div className="flex items-center gap-2 mb-1">
+            <EmojiEventsIcon className="w-4 h-4" sx={{ color: 'var(--color-status-warning)' }} />
+            <span className="text-xs font-bold uppercase text-muted-foreground">
+              {t('guild_war.analytics_top_performer')}
+            </span>
+          </div>
+          <div className="font-bold text-sm">
             {topMember.username}
-          </Typography>
-          <Typography variant="h6" fontWeight={700} fontFamily="monospace">
+          </div>
+          <div className="text-2xl font-bold font-mono tracking-tight">
             {formatCompactNumber((topMember[metricKey] as number) || 0)}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
+          </div>
+          <div className="text-xs text-muted-foreground">
             {formatMetricName(filters.primaryMetric)}
-          </Typography>
+          </div>
         </CardContent>
       </Card>
 
       {/* Group Average */}
       <Card>
-        <CardContent>
-          <Stack direction="row" alignItems="center" gap={1} mb={1}>
-            <TrendingUp size={16} />
-            <Typography variant="caption" textTransform="uppercase" fontWeight={700}>
-              Group Average
-            </Typography>
-          </Stack>
-          <Typography variant="h6" fontWeight={700} fontFamily="monospace">
+        <CardContent className="space-y-1">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUpIcon className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs font-bold uppercase text-muted-foreground">
+              {t('guild_war.analytics_group_average')}
+            </span>
+          </div>
+          <div className="text-2xl font-bold font-mono tracking-tight">
             {formatCompactNumber(average)}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            across {members.length} members
-          </Typography>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {t('guild_war.analytics_across_members', { count: members.length })}
+          </div>
         </CardContent>
       </Card>
 
       {/* Participation */}
       <Card>
-        <CardContent>
-          <Stack direction="row" alignItems="center" gap={1} mb={1}>
-            <Target size={16} />
-            <Typography variant="caption" textTransform="uppercase" fontWeight={700}>
-              Participation
-            </Typography>
-          </Stack>
-          <Typography variant="h6" fontWeight={700}>
-            {members.reduce((sum: number, m: MemberStats) => sum + m.wars_participated, 0)}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            total war participations
-          </Typography>
+        <CardContent className="space-y-1">
+          <div className="flex items-center gap-2 mb-1">
+            <LocalActivityIcon className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs font-bold uppercase text-muted-foreground">
+              {t('guild_war.analytics_participation')}
+            </span>
+          </div>
+          <div className="text-2xl font-bold font-mono tracking-tight">
+             {members.reduce((sum: number, m: MemberStats) => sum + m.wars_participated, 0)}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {t('guild_war.analytics_total_war_participations')}
+          </div>
         </CardContent>
       </Card>
-    </Stack>
+    </div>
   );
 }
 
@@ -296,6 +194,7 @@ function CompareSummaryCards({ userIds, data }: { userIds: number[]; data: any }
 // ============================================================================
 
 function RankingsSummaryCards({ data }: { data: any }) {
+  const { t } = useTranslation();
   const { filters } = useAnalytics();
 
   if (!data.memberStats || data.memberStats.length === 0) return null;
@@ -307,36 +206,183 @@ function RankingsSummaryCards({ data }: { data: any }) {
 
   return (
     <Card>
-      <CardContent>
-        <Stack direction="row" alignItems="center" gap={1} mb={2}>
-          <Award size={16} color="#FFD700" />
-          <Typography variant="caption" textTransform="uppercase" fontWeight={700}>
-            Top 5 Quick View
-          </Typography>
-        </Stack>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-2">
+          <EmojiEventsIcon className="w-4 h-4" sx={{ color: 'var(--color-status-warning)' }} />
+          <span className="text-xs font-bold uppercase text-muted-foreground">
+            {t('guild_war.analytics_top_quick_view')}
+          </span>
+        </div>
 
-        <Stack spacing={1}>
+        <div className="space-y-2">
           {topMembers.map((member, index) => (
-            <Box
+            <div
               key={member.user_id}
-              sx={{
-                p: 1,
-                borderRadius: 1,
-                bgcolor: index === 0 ? 'warning.lighter' : 'action.hover',
-              }}
+              className={`p-2 rounded-md flex justify-between items-center ${
+                  index === 0 ? 'border' : 'bg-accent/50 hover:bg-accent'
+              }`}
+              style={
+                index === 0
+                  ? {
+                      backgroundColor: 'color-mix(in srgb, var(--color-status-warning-bg) 78%, transparent)',
+                      borderColor: 'color-mix(in srgb, var(--color-status-warning) 44%, transparent)',
+                    }
+                  : undefined
+              }
             >
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="body2" fontWeight={600}>
-                  {index + 1}. {member.username}
-                </Typography>
-                <Typography variant="caption" fontFamily="monospace" fontWeight={700}>
-                  {formatCompactNumber((member[metricKey] as number) || 0)}
-                </Typography>
-              </Stack>
-            </Box>
+              <span className="font-semibold text-sm">
+                {index + 1}. {member.username}
+              </span>
+              <span className="font-mono font-bold text-sm">
+                {formatCompactNumber((member[metricKey] as number) || 0)}
+              </span>
+            </div>
           ))}
-        </Stack>
+        </div>
       </CardContent>
     </Card>
+  );
+}
+
+// ============================================================================
+// Teams Mode Summary
+// ============================================================================
+
+function TeamsSummaryCards({
+  data,
+  selectedTeamIds,
+}: {
+  data: any;
+  selectedTeamIds: number[];
+}) {
+  const { t } = useTranslation();
+  const { filters, teamsMode } = useAnalytics();
+  const teamRows = (data.teamStats || []).filter((row: any) => selectedTeamIds.includes(row.team_id));
+
+  if (teamRows.length === 0) return null;
+
+  const metricKey = `${teamsMode.showTotal ? 'total' : 'avg'}_${filters.primaryMetric}`;
+  const byTeam = new Map<number, { name: string; values: number[]; memberCounts: number[] }>();
+
+  for (const row of teamRows) {
+    const entry =
+      byTeam.get(row.team_id) ??
+      ({
+        name: row.team_name || t('guild_war.analytics_team_fallback', { id: row.team_id }),
+        values: [],
+        memberCounts: [],
+      } as { name: string; values: number[]; memberCounts: number[] });
+    const value = Number(row[metricKey] ?? 0);
+    entry.values.push(Number.isFinite(value) ? value : 0);
+    entry.memberCounts.push(Number(row.member_count ?? 0));
+    byTeam.set(row.team_id, entry);
+  }
+
+  const teamSummaries = [...byTeam.entries()].map(([teamId, entry]) => {
+    const total = entry.values.reduce((sum, value) => sum + value, 0);
+    const avgPerWar = entry.values.length > 0 ? total / entry.values.length : 0;
+    const variance =
+      entry.values.length > 1
+        ? entry.values.reduce((sum, value) => sum + (value - avgPerWar) ** 2, 0) / entry.values.length
+        : 0;
+    const stdDev = Math.sqrt(variance);
+    const avgMemberCount =
+      entry.memberCounts.length > 0
+        ? entry.memberCounts.reduce((sum, count) => sum + count, 0) / entry.memberCounts.length
+        : 0;
+
+    return {
+      teamId,
+      teamName: entry.name,
+      total,
+      avgPerWar,
+      stdDev,
+      avgMemberCount,
+      warCount: entry.values.length,
+    };
+  });
+
+  teamSummaries.sort((a, b) => b.total - a.total);
+  const topTeam = teamSummaries[0];
+  const globalAvgPerWar =
+    teamSummaries.reduce((sum, team) => sum + team.avgPerWar, 0) / Math.max(teamSummaries.length, 1);
+  const avgStdDev =
+    teamSummaries.reduce((sum, team) => sum + team.stdDev, 0) / Math.max(teamSummaries.length, 1);
+  const avgDepth =
+    teamSummaries.reduce((sum, team) => sum + team.avgMemberCount, 0) / Math.max(teamSummaries.length, 1);
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="space-y-1">
+          <div className="flex items-center gap-2 mb-1">
+            <EmojiEventsIcon className="w-4 h-4" sx={{ color: 'var(--color-status-warning)' }} />
+            <span className="text-xs font-bold uppercase text-muted-foreground">
+              {t('guild_war.analytics_top_performer')}
+            </span>
+          </div>
+          <div className="font-bold text-sm">
+            {topTeam.teamName}
+          </div>
+          <div className="text-2xl font-bold font-mono tracking-tight">
+            {formatCompactNumber(topTeam.total)}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {t('guild_war.analytics_across_wars', { count: topTeam.warCount })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-1">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUpIcon className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs font-bold uppercase text-muted-foreground">
+              {t('common.average')}
+            </span>
+          </div>
+          <div className="text-2xl font-bold font-mono tracking-tight">
+            {formatCompactNumber(globalAvgPerWar)}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {t('guild_war.analytics_per_war')}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-1">
+          <div className="flex items-center gap-2 mb-1">
+             <ShowChartIcon className="w-4 h-4 text-muted-foreground" />
+             <span className="text-xs font-bold uppercase text-muted-foreground">
+               {t('common.median')}
+             </span>
+          </div>
+          <div className="text-2xl font-bold font-mono tracking-tight">
+             {formatCompactNumber(avgStdDev)}
+          </div>
+          <div className="text-xs text-muted-foreground">
+             {t('guild_war.analytics_team_consistency')}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-1">
+          <div className="flex items-center gap-2 mb-1">
+             <LocalActivityIcon className="w-4 h-4 text-muted-foreground" />
+             <span className="text-xs font-bold uppercase text-muted-foreground">
+               {t('guild_war.analytics_participation')}
+             </span>
+          </div>
+          <div className="text-2xl font-bold font-mono tracking-tight">
+             {formatNumber(avgDepth)}
+          </div>
+          <div className="text-xs text-muted-foreground">
+             {t('guild_war.analytics_team_depth')}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

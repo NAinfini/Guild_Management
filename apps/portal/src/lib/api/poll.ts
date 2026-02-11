@@ -3,7 +3,7 @@
  * Efficient batch fetching of multiple entities in a single request
  */
 
-import { api } from '../api-client';
+import { typedAPI } from './api-builder';
 import type { User, Event, Announcement } from '../../types';
 
 // ============================================================================
@@ -44,7 +44,7 @@ export const pollAPI = {
       queryParams.entities = params.entities.join(',');
     }
     
-    const response = await api.get<PollResponse>('/poll', queryParams);
+    const response = await typedAPI.poll.fetch<PollResponse>({ query: queryParams });
     return response;
   },
 };

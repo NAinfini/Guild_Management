@@ -4,6 +4,9 @@ import { format } from "date-fns";
 import { enUS, zhCN } from "date-fns/locale";
 import DOMPurify from "dompurify";
 import i18n, { getDateFormat } from "../i18n/config";
+import { Theme } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { GAME_CLASS_COLORS } from "@/theme/tokens";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -69,11 +72,29 @@ export function getClassColor(classType?: string): string {
 export function getClassBaseColor(className?: string): string {
   const raw = className || '';
   const normalized = raw.toLowerCase();
-  if (normalized.startsWith('mingjin') || raw.startsWith('鸣金')) return '#2563eb';
-  if (normalized.startsWith('qiansi') || raw.startsWith('牵丝')) return '#16a34a';
-  if (normalized.startsWith('pozhu') || raw.startsWith('破竹')) return '#7e22ce';
-  if (normalized.startsWith('lieshi') || raw.startsWith('裂石')) return '#7f1d1d';
-  return '#2563eb';
+  
+  if (normalized.startsWith('mingjin') || raw.startsWith('鸣金')) return GAME_CLASS_COLORS.mingjin.main;
+  if (normalized.startsWith('qiansi') || raw.startsWith('牵丝')) return GAME_CLASS_COLORS.qiansi.main;
+  if (normalized.startsWith('pozhu') || raw.startsWith('破竹')) return GAME_CLASS_COLORS.pozhu.main;
+  if (normalized.startsWith('lieshi') || raw.startsWith('裂石')) return GAME_CLASS_COLORS.lieshi.main;
+  
+  return GAME_CLASS_COLORS.mingjin.main;
+}
+
+export function getClassPillTone(classType: string | undefined, theme: Theme) {
+  const baseColor = getClassBaseColor(classType);
+  return {
+    main: baseColor,
+    bg: alpha(baseColor, 0.12),
+    text: theme.palette.mode === 'dark' ? alpha(baseColor, 0.9) : baseColor,
+  };
+}
+
+export function getMemberCardAccentColors(classes: string[] | undefined, theme?: Theme): string[] {
+  if (!classes || classes.length === 0) {
+    return [theme?.palette.primary.main ?? '#3b5fc4']; // Fallback to a default blue if theme is missing
+  }
+  return classes.map(c => getClassBaseColor(c));
 }
 
 export function formatClassDisplayName(className?: string): string {
@@ -90,16 +111,6 @@ export function formatClassDisplayName(className?: string): string {
   return className.replace(/_/g, ' ');
 }
 
-export function formatPower(power: number): string {
-  return power.toLocaleString();
-}
-
-export function getAvatarInitial(username?: string | null): string {
-  const trimmed = username?.trim();
-  if (!trimmed) return '?';
-  return Array.from(trimmed)[0]?.toUpperCase() ?? '?';
-}
-
 export function sanitizeHtml(html: string): { __html: string } {
   return {
     __html: DOMPurify.sanitize(html, {
@@ -109,18 +120,6 @@ export function sanitizeHtml(html: string): { __html: string } {
   };
 }
 
-/**
- * Ensures media URLs are optimized for the portal.
- * In a real scenario, this would point to a WebP/Opus conversion service.
- * Here we provide a facade for compliance.
- */
-export function getOptimizedMediaUrl(url: string, type: 'image' | 'audio' | 'video' = 'image'): string {
-  if (!url) return '';
-  
-  // Simulation: Append format hint for compliant backends
-  const separator = url.includes('?') ? '&' : '?';
-  if (type === 'image' && !url.endsWith('.webp')) return `${url}${separator}format=webp`;
-  if (type === 'audio' && !url.endsWith('.opus')) return `${url}${separator}format=opus`;
-  
-  return url;
+export function formatPower(power: number): string {
+  return (power || 0).toLocaleString();
 }

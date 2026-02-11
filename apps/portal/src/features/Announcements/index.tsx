@@ -25,30 +25,35 @@ import {
   ToggleButtonGroup
 } from '@mui/material';
 import { 
-  Megaphone, 
-  Pin, 
-  Archive, 
-  Plus, 
-  Search, 
-  X,
-  Clock,
-  Edit,
-  Trash2,
-  Calendar,
+  Campaign, 
+  PushPin, 
+  Archive as ArchiveIcon, 
+  Add, 
+  Search as SearchIcon, 
+  Close,
+  AccessTime,
+  Edit as EditIcon,
+  Delete,
+  CalendarToday,
   Image as ImageIcon,
-  MoreVertical,
-  Play,
-  Paperclip
-} from 'lucide-react';
-import { formatDateTime, cn, sanitizeHtml, getOptimizedMediaUrl } from '../../lib/utils';
+  MoreVert,
+  PlayArrow,
+  AttachFile
+} from '@mui/icons-material';
+import { formatDateTime, cn, sanitizeHtml } from '@/lib/utils';
+import { getOptimizedMediaUrl, getAvatarInitial } from '@/lib/media-conversion';
 import { useAuthStore, useUIStore } from '../../store';
 import { useTranslation } from 'react-i18next';
+import { useOnline } from '@/hooks/useOnline';
 import { Announcement } from '../../types';
 import { isAfter } from 'date-fns';
 import { Skeleton } from '@mui/material';
-import { CardGridSkeleton } from '../../components/SkeletonLoaders';
-import { useOnline } from '../../hooks/useOnline';
-import { TiptapEditor } from '../../components/TiptapEditor';
+import { 
+  CardGridSkeleton, 
+  TiptapEditor,
+  MarkdownRenderer,
+} from '@/components';
+import { PageFilterBar, type FilterOption } from '@/components';
 import {
   useAnnouncements,
   useCreateAnnouncement,
@@ -57,9 +62,7 @@ import {
   useTogglePinAnnouncement,
   useArchiveAnnouncement
 } from '../../hooks/useServerState';
-import { MarkdownRenderer } from '../../components/MarkdownRenderer';
 import { useLastSeen } from '../../hooks/useLastSeen';
-import { PageFilterBar, type FilterOption } from '../../components/PageFilterBar';
 import { STORAGE_KEYS } from '../../lib/storage';
 import {
   canArchiveAnnouncement,
@@ -176,9 +179,9 @@ export function Announcements() {
   };
 
   const categories: FilterOption[] = [
-    { value: 'all', label: t('announcements.filter_all') },
-    { value: 'pinned', label: t('announcements.filter_pinned') },
-    { value: 'archived', label: t('announcements.filter_archived') },
+    { id: 'all', value: 'all', label: t('announcements.filter_all') },
+    { id: 'pinned', value: 'pinned', label: t('announcements.filter_pinned') },
+    { id: 'archived', value: 'archived', label: t('announcements.filter_archived') },
   ];
 
   if (isLoading && announcements.length === 0) {
@@ -212,7 +215,7 @@ export function Announcements() {
               <Button
                 variant="contained"
                 size="small"
-                startIcon={<Plus size={18} />}
+                startIcon={<Add sx={{ fontSize: 18 }} />}
                 onClick={() => { setEditTarget(null); setIsEditorOpen(true); }}
                 disabled={!online}
                 sx={{ fontWeight: 900, borderRadius: 2 }}
@@ -245,7 +248,7 @@ export function Announcements() {
             >
               <CardContent sx={{ p: 3 }}>
                   <Stack direction="row" spacing={2} alignItems="flex-start">
-                      {ann.is_pinned && <Pin size={18} className="text-primary" />}
+                      {ann.is_pinned && <PushPin sx={{ fontSize: 18, color: 'primary.main' }} />}
                       <Box flex={1}>
                           <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -278,19 +281,19 @@ export function Announcements() {
                                      <>
                                          {images > 0 && (
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
-                                                <ImageIcon size={14} />
+                                                <ImageIcon sx={{ fontSize: 14 }} />
                                                 <Typography variant="caption" fontWeight={900}>{images}</Typography>
                                             </Box>
                                          )}
                                          {videos > 0 && (
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
-                                                <Play size={14} />
+                                                <PlayArrow sx={{ fontSize: 14 }} />
                                                 <Typography variant="caption" fontWeight={900}>{videos}</Typography>
                                             </Box>
                                          )}
                                          {others > 0 && (
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
-                                                <Paperclip size={14} />
+                                                <AttachFile sx={{ fontSize: 14 }} />
                                                 <Typography variant="caption" fontWeight={900}>{others}</Typography>
                                             </Box>
                                          )}
@@ -308,7 +311,7 @@ export function Announcements() {
 
         {filteredAnnouncements.length === 0 && (
             <Box sx={{ py: 10, textAlign: 'center', opacity: 0.5, border: `2px dashed ${theme.palette.divider}`, borderRadius: 5 }}>
-               <Megaphone size={48} color={theme.palette.text.secondary} style={{ margin: '0 auto', marginBottom: 16 }} />
+               <Campaign sx={{ fontSize: 48, color: 'text.secondary', display: 'block', margin: '0 auto', marginBottom: 2 }} />
                <Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.2em" color="text.secondary">NO ANNOUNCEMENTS FOUND</Typography>
             </Box>
         )}
@@ -332,13 +335,13 @@ export function Announcements() {
                   <Typography variant="h4" fontWeight={900} fontStyle="italic" textTransform="uppercase" lineHeight={1}>{selectedAnnouncement.title}</Typography>
                   <Stack direction="row" spacing={2} mt={2} alignItems="center">
                       <Stack direction="row" spacing={0.5} alignItems="center">
-                          <Clock size={12} color={theme.palette.text.secondary} />
+                          <AccessTime sx={{ fontSize: 12, color: 'text.secondary' }} />
                           <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">{formatDateTime(selectedAnnouncement.created_at, timezoneOffset)}</Typography>
                       </Stack>
                       <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">POSTED BY: {selectedAnnouncement.author_id}</Typography>
                   </Stack>
                </Box>
-               <IconButton onClick={() => setSelectedAnnouncement(null)}><X /></IconButton>
+               <IconButton onClick={() => setSelectedAnnouncement(null)}><Close /></IconButton>
             </Box>
 
             <DialogContent sx={{ p: 5 }}>
@@ -374,17 +377,17 @@ export function Announcements() {
             {(canEdit || canPin || canArchive || canDelete) && (
                 <DialogActions sx={{ p: 3, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
                    {canEdit && (
-                     <Button startIcon={<Edit size={16} />} onClick={() => { setEditTarget(selectedAnnouncement); setIsEditorOpen(true); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{t('announcements.edit')}</Button>
+                     <Button startIcon={<EditIcon sx={{ fontSize: 16 }} />} onClick={() => { setEditTarget(selectedAnnouncement); setIsEditorOpen(true); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{t('announcements.edit')}</Button>
                    )}
                    {canPin && (
-                     <Button startIcon={<Pin size={16} />} onClick={() => { togglePinAnnouncement(selectedAnnouncement.id, !selectedAnnouncement.is_pinned); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{selectedAnnouncement.is_pinned ? t('announcements.unpin') : t('announcements.pin')}</Button>
+                     <Button startIcon={<PushPin sx={{ fontSize: 16 }} />} onClick={() => { togglePinAnnouncement(selectedAnnouncement.id, !selectedAnnouncement.is_pinned); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{selectedAnnouncement.is_pinned ? t('announcements.unpin') : t('announcements.pin')}</Button>
                    )}
                    {canArchive && (
-                     <Button startIcon={<Archive size={16} />} onClick={() => { archiveAnnouncement(selectedAnnouncement.id, !selectedAnnouncement.is_archived); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{selectedAnnouncement.is_archived ? t('announcements.restore') : t('announcements.archive')}</Button>
+                     <Button startIcon={<ArchiveIcon sx={{ fontSize: 16 }} />} onClick={() => { archiveAnnouncement(selectedAnnouncement.id, !selectedAnnouncement.is_archived); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{selectedAnnouncement.is_archived ? t('announcements.restore') : t('announcements.archive')}</Button>
                    )}
                    {canDelete && (
                      <Button
-                       startIcon={<Trash2 size={16} />}
+                       startIcon={<Delete sx={{ fontSize: 16 }} />}
                        color="error"
                        onClick={() => {
                          openDeleteConfirm(selectedAnnouncement.id);
@@ -528,8 +531,7 @@ function EditorModal({ isOpen, onClose, initialData, onSubmit }: any) {
                                 content={content}
                                 onChange={setContent}
                                 placeholder={t('announcements.tx_body')}
-                                onImageUpload={handleImageUpload}
-                                minHeight={250}
+                                className="min-h-[250px]"
                             />
                         )}
                     </Box>
@@ -539,17 +541,17 @@ function EditorModal({ isOpen, onClose, initialData, onSubmit }: any) {
                          <Grid container spacing={2}>
                              {existingMedia.map((url: string, i: number) => (
                                  <Grid size={3} key={i}>
-                                     <Box sx={{ aspectRatio: '1/1', borderRadius: 2, overflow: 'hidden', position: 'relative' }}>
-                                         <img src={getOptimizedMediaUrl(url, 'image')} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                                         <IconButton size="small" sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'error.main' }}><Trash2 size={14} /></IconButton>
-                                     </Box>
+                                      <Box sx={{ aspectRatio: '1/1', borderRadius: 2, overflow: 'hidden', position: 'relative' }}>
+                                          <img src={getOptimizedMediaUrl(url, 'image')} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                                          <IconButton size="small" sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'error.main' }}><Delete sx={{ fontSize: 14 }} /></IconButton>
+                                      </Box>
                                  </Grid>
                              ))}
-                             <Grid size={3}>
-                                 <Box sx={{ aspectRatio: '1/1', borderRadius: 2, border: '2px dashed', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' } }}>
-                                     <Plus size={24} color="gray" />
-                                 </Box>
-                             </Grid>
+                              <Grid size={3}>
+                                  <Box sx={{ aspectRatio: '1/1', borderRadius: 2, border: '2px dashed', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' } }}>
+                                      <Add sx={{ fontSize: 24, color: 'gray' }} />
+                                  </Box>
+                              </Grid>
                          </Grid>
                     </Box>
                 </Stack>

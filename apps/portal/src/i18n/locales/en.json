@@ -2,6 +2,7 @@
   "common": {
     "save": "Save",
     "cancel": "Cancel",
+    "close": "Close",
     "search": "Search",
     "loading": "Loading...",
     "delete": "Delete",
@@ -100,7 +101,10 @@
     "total": "Total",
     "average": "Average",
     "best": "Best",
-    "median": "Median"
+    "median": "Median",
+    "expand_sidebar": "Expand sidebar",
+    "collapse_sidebar": "Collapse sidebar",
+    "uploading": "Uploading"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -119,11 +123,11 @@
   },
   "login": {
     "back_dashboard": "Back to Dashboard",
-    "title": "Restricted Access • Sign in to your account",
+    "title": "Restricted Access - Sign in to your account",
     "label_username": "USERNAME",
-    "placeholder_username": "Your identity name",
+    "placeholder_username": "Enter username",
     "label_password": "PASSWORD",
-    "placeholder_password": "••••••••",
+    "placeholder_password": "Enter password",
     "caps_lock": "CAPS LOCK ON",
     "validating": "VALIDATING...",
     "action_login": "Log In",
@@ -131,7 +135,16 @@
     "disclaimer": "By logging in, you agree to the guild's internal code of conduct and system policy.",
     "error_fail": "Login failed",
     "error_username_required": "Username is required",
-    "error_password_required": "Password is required"
+    "error_password_required": "Password is required",
+    "subtitle": "Sign in to continue to the portal",
+    "username": "Username",
+    "password": "Password",
+    "forgot_password": "Forgot password?",
+    "status_authenticating": "Authenticating...",
+    "no_account": "Don't have an account?",
+    "contact_admin": "Contact Admin",
+    "protection_enabled": "Protection enabled",
+    "secure_access": "Secure access"
   },
   "tools": {
     "title": "Guild Tools",
@@ -140,6 +153,8 @@
     "builder_subtitle": "Create custom styles for your profile.",
     "theme_lab_title": "Theme Material Lab",
     "theme_lab_subtitle": "Validate premium theme materials, physics, and signature flourishes.",
+    "nexus_controls_title": "Nexus Controls Studio",
+    "nexus_controls_subtitle": "Complete Nexus control library wired to your current theme and color composition.",
     "coming_soon": "COMING SOON",
     "under_development": "This section is currently being developed.",
     "open_tool": "Open Tool",
@@ -155,7 +170,30 @@
     "glow": "Glow Effect",
     "shadow": "Shadow Effect",
     "gradient": "Gradient Color",
-    "copy_cipher": "Copy Code"
+    "copy_cipher": "Copy Code",
+    "nexus_studio": {
+      "title": "Nexus Controls Studio",
+      "subtitle": "Complete Nexus control library in Portal. Theme and color changes above instantly restyle all controls.",
+      "categories": {
+        "buttons": "Buttons",
+        "text_input": "Text Input",
+        "choice_controls": "Choice Controls",
+        "dropdown_select": "Dropdown / Select",
+        "range_controls": "Range Controls",
+        "date_time": "Date / Time",
+        "navigation": "Navigation",
+        "disclosure": "Disclosure / Container",
+        "feedback": "Feedback / Status",
+        "search_filter": "Search / Filter / Sort",
+        "file_media": "File / Media",
+        "drag_gesture": "Drag / Gesture",
+        "layout_view": "Layout / View",
+        "form_flow": "Form Flow",
+        "global_system": "Global System",
+        "accessibility": "Accessibility",
+        "advanced": "Advanced"
+      }
+    }
   },
   "wiki": {
     "title": "Guild Guides",
@@ -194,7 +232,10 @@
     "filter_event": "Events",
     "filter_achievement": "Achievements",
     "filter_other": "Other",
-    "search_placeholder": "Search images..."
+    "search_placeholder": "Search images...",
+    "alt_image": "Gallery image",
+    "untitled": "Untitled",
+    "unknown_uploader": "Unknown"
   },
   "connection": {
     "connected": "Connected",
@@ -205,6 +246,7 @@
     "attempting_reconnect": "Attempting to reconnect"
   },
   "dashboard": {
+    "overview": "Overview",
     "title": "Dashboard",
     "subtitle": "Welcome back! Here is what's happening in the guild.",
     "upcoming_events": "Upcoming Events",
@@ -225,7 +267,6 @@
     "overlap_detected": "Time Conflict",
     "roster_manifest": "Participant List",
     "no_operatives": "No one has signed up yet.",
-    "my_schedule": "My Schedule",
     "towers": "Towers",
     "distance": "Distance",
     "credits": "CREDITS",
@@ -242,7 +283,102 @@
     "overlap": "Overlap detected",
     "copy_roster": "Copy Roster",
     "notification_update": "Update: {{title}}",
-    "no_operations": "No scheduled operations"
+    "no_operations": "No scheduled operations",
+    "last_guild_war": "Last Guild War",
+    "view_history": "View History",
+    "next_7_days": "Next 7 Days",
+    "featured_event": "Featured Event",
+    "no_upcoming_events": "No upcoming events",
+    "timeline": {
+      "title": "Operations Timeline",
+      "today": "Today",
+      "op_window_active": "Op Window Active",
+      "guild_war": "Guild War",
+      "mission": "Mission"
+    },
+    "system": {
+      "normal": "System Normal",
+      "linked": "Linked"
+    },
+    "stats": {
+      "active_members": "Active Members",
+      "class_composition": "Class Composition",
+      "power_distribution": "Power Distribution",
+      "kills": "Kills",
+      "towers": "Towers",
+      "credits": "Credits",
+      "distance": "Distance"
+    },
+    "heatmap": {
+      "title": "Availability Heatmap",
+      "online_count": "{{count}} members on {{day}} at {{hour}}:00",
+      "low_activity": "Low Activity",
+      "peak_time": "Peak Time"
+    },
+    "intel": {
+      "title": "Intel Feed",
+      "notifications": "Notifications",
+      "members": "Members",
+      "view_event": "View Event",
+      "schedule_update": "Schedule Update",
+      "operation_created": "Operation: {{title}}",
+      "priority_transmission": "Priority Transmission",
+      "operative_joined": "Operative {{username}} joined",
+      "reinforcements": "Reinforcements",
+      "no_recent_intel": "No recent intelligence reports."
+    },
+    "my_schedule": "My Schedule",
+    "view_all": "View All",
+    "recent_operations": "Recent Operations",
+    "mvps": "MVPs",
+    "roles": {
+      "dmg": "DMG",
+      "heal": "HEAL",
+      "tank": "TANK"
+    },
+    "status": {
+      "starting_soon": "Starting Soon",
+      "pinned": "Pinned"
+    },
+    "actions": {
+      "join_event": "Join Event",
+      "leave_event": "Leave Event",
+      "copy_signup_list": "Copy Signup List"
+    },
+    "opponent": {
+      "unknown": "Unknown Opponent"
+    },
+    "recent_wars": {
+      "title": "Recent Guild War",
+      "victory": "Victory",
+      "defeat": "Defeat",
+      "mvp": "MVP",
+      "top_kda": "Top KDA",
+      "top_damage": "Top Damage",
+      "top_tank": "Top Tank",
+      "top_healing": "Top Healing",
+      "mvps_highlights": "MVPs & Highlights"
+    },
+    "my_signups": {
+      "title": "My Signups",
+      "event": "event",
+      "events": "events",
+      "no_events": "No events",
+      "now": "NOW",
+      "participants": "participants",
+      "types": {
+        "war": "War",
+        "mission": "Mission",
+        "event": "Event"
+      }
+    },
+    "war": {
+      "our_guild": "Our Guild",
+      "enemy_guild": "Enemy Guild",
+      "victory": "Victory",
+      "defeat": "Defeat",
+      "statistics": "Statistics"
+    }
   },
   "events": {
     "title": "Events",
@@ -276,7 +412,9 @@
     "kick_title": "Remove Member",
     "kick_confirm_message": "Remove {{username}} from the list?",
     "kick": "Remove",
-    "delete_title": "Delete Event"
+    "delete_title": "Delete Event",
+    "expand_members": "+{{count}}",
+    "collapse_members": "Collapse"
   },
   "announcements": {
     "title": "Announcements",
@@ -328,7 +466,9 @@
     "vacation": "On Leave",
     "no_scheduled_ops": "No joined events",
     "empty_title": "No members found",
-    "empty_hint": "Add members or adjust filters to see the roster."
+    "empty_hint": "Add members or adjust filters to see the roster.",
+    "audio_volume": "Volume",
+    "audio_mute": "Mute audio"
   },
   "profile": {
     "title": "Profile",
@@ -408,6 +548,8 @@
     "title": "Settings",
     "appearance": "Appearance",
     "appearance_subtitle": "Choose a theme to instantly restyle the portal.",
+    "visual_theme": "Visual Theme",
+    "visual_theme_subtitle": "Choose the overall visual style of the interface",
     "language": "Language",
     "language_subtitle": "Switch the interface language. Reload not required.",
     "theme_default": "Violet Core",
@@ -422,11 +564,37 @@
     "theme_red_gold_desc": "Majestic crimson and gold for a regal aesthetic.",
     "theme_soft_pink": "Soft Pink",
     "theme_soft_pink_desc": "Bright pastel pinks with soft, elegant curves.",
+    "color_palette": "Color Palette",
+    "color_palette_subtitle": "Mix any color palette with any visual theme style.",
+    "color_violet_cyan": "Violet + Cyan",
+    "color_violet_cyan_desc": "The original futuristic violet and cyan accent pair.",
+    "color_gold_amber": "Gold + Amber",
+    "color_gold_amber_desc": "Warm metallic highlights for premium contrast.",
+    "color_crimson_gold": "Crimson + Gold",
+    "color_crimson_gold_desc": "Imperial red with ceremonial gold accents.",
+    "color_soft_rose": "Soft Rose",
+    "color_soft_rose_desc": "Playful pink and rose tones with softer contrast.",
+    "color_teal_neon": "Teal + Neon",
+    "color_teal_neon_desc": "Electric teal and neon magenta for cyber vibes.",
     "language_english": "English",
     "language_chinese": "Chinese",
+    "font_size": "Font Size",
+    "font_size_subtitle": "Adjust global text scale for better readability.",
+    "font_size_small": "Compact",
+    "font_size_default": "Default",
+    "font_size_large": "Large",
+    "motion_intensity": "Motion Intensity",
+    "motion_intensity_subtitle": "Control animation and interaction movement strength across the portal.",
+    "motion_off": "Off",
+    "motion_low": "Low",
+    "motion_normal": "Normal",
+    "motion_high": "High",
     "active": "Active",
     "apply": "Apply",
-    "audio_settings": "Audio Settings"
+    "audio_settings": "Audio Settings",
+    "language_native_english": "English",
+    "language_native_chinese": "中文",
+    "interface_theme": "Interface Theme"
   },
   "media": {
     "upload_label": "Upload",
@@ -546,6 +714,7 @@
     "remove_from_pool": "Remove from Pool",
     "remove_confirm": "Remove member from list?",
     "history_search_placeholder": "Search war history...",
+    "active_member_search_placeholder": "Find members in active war...",
     "history_incomplete_stats": "{{count}} incomplete",
     "history_missing_stats_total": "{{count}} missing stats",
     "member_performance": "Member Performance",
@@ -572,6 +741,8 @@
     "history_metric_towers": "Towers",
     "history_metric_building_damage": "Building Damage",
     "history_metric_damage_taken": "Damage Taken",
+    "history_ours_short": "Our",
+    "history_enemy_short": "Enemy",
     "history_missing_across_members": "{{count}} missing stats across {{members}} members",
     "history_missing_fields": "Missing: {{fields}}",
     "conflict_title": "Conflict detected",
@@ -598,13 +769,152 @@
     "analytics_share_snapshot": "Share Snapshot",
     "analytics_snapshot_copied": "Analytics snapshot copied to clipboard!",
     "analytics_snapshot_copy_failed": "Failed to copy snapshot. Please try again.",
+    "analytics_snapshot_title": "War Analytics Snapshot",
+    "analytics_snapshot_date_range": "Date range: {{start}} to {{end}}",
+    "analytics_snapshot_wars_analyzed": "Wars analyzed: {{count}}",
+    "analytics_snapshot_mode": "Mode: {{mode}}",
+    "analytics_snapshot_metric": "Metric: {{metric}}",
+    "analytics_snapshot_compare_members": "Comparing {{count}} members",
+    "analytics_snapshot_top_by_metric": "Top {{count}} by {{metric}}:",
+    "analytics_snapshot_member_line": "{{rank}}. {{username}}: {{value}}",
+    "analytics_snapshot_ranking_line": "{{rank}}. {{username}} ({{className}}): {{value}}",
+    "analytics_snapshot_generated_by": "Generated by Guild Management System",
     "analytics_select_member": "Select Member",
     "analytics_search_by_username": "Search by username...",
     "analytics_select_wars": "Select wars",
     "analytics_search_wars": "Search wars...",
     "analytics_no_wars_found": "No wars found",
     "analytics_no_wars_available": "No wars available",
-    "analytics_participated_only": "Participated"
+    "analytics_participated_only": "Participated",
+    "analytics_opponent_normalized": "Opponent-normalized",
+    "history_no_team_snapshot": "No team snapshot available for this war",
+    "analytics_mode_compare": "Compare",
+    "analytics_mode_rankings": "Rankings",
+    "analytics_mode_teams": "Teams",
+    "analytics_mode_compare_desc": "Compare multiple members side-by-side",
+    "analytics_mode_rankings_desc": "View top performers by metric",
+    "analytics_mode_teams_desc": "Compare team performance",
+    "analytics_mode_selector": "Analytics mode selector",
+    "analytics_filter_header": "War Analytics Filters",
+    "analytics_filter_subheader": "Use these filters to narrow wars and apply one consistent analysis view.",
+    "analytics_mode_title": "{{mode}} Mode",
+    "analytics_no_compare_selection": "Select members from the left panel to compare their performance",
+    "analytics_empty_no_wars_in_range": "No wars found in the selected date range",
+    "analytics_empty_no_wars_selected": "Select one or more wars to start analysis",
+    "analytics_empty_no_matching_members": "No members match the current filters",
+    "analytics_empty_no_matching_teams": "No teams match the current filters",
+    "analytics_empty_no_stats_returned": "No statistics were returned for the current selection",
+    "analytics_no_compare_data": "No performance data available for the selected wars and members",
+    "analytics_compare_chart_hint": "Comparing {{members}} members across {{wars}} wars - Click legend to focus. Ctrl/Alt+Click to hide/show.",
+    "analytics_missing": "Missing",
+    "analytics_no_team_selection": "Select teams from the left panel to compare.",
+    "analytics_no_team_data": "No team data available for the selected wars.",
+    "analytics_team_fallback": "Team {{id}}",
+    "analytics_rankings_filters": "Rankings Filters",
+    "analytics_show_top_n": "Show Top N",
+    "analytics_top_n_5": "Top 5",
+    "analytics_top_n_10": "Top 10",
+    "analytics_top_n_20": "Top 20",
+    "analytics_top_n_50": "Top 50",
+    "analytics_filter_by_class": "Filter by Class",
+    "analytics_all_classes": "All Classes",
+    "analytics_min_wars_participated": "Min Wars Participated",
+    "analytics_active_filters": "Active Filters",
+    "analytics_classes": "Classes",
+    "analytics_min_wars_label": "Min {{count}} wars",
+    "analytics_rankings_tip": "Rankings show the top performers based on the selected metric. Adjust filters to focus on specific classes or participation levels.",
+    "analytics_rankings_no_match": "No members match the current filters. Try adjusting the class filter or minimum participation threshold.",
+    "analytics_top_performers": "Top 3 Performers",
+    "analytics_rankings_chart_hint": "Showing top {{count}} by {{metric}} ({{aggregation}})",
+    "analytics_rankings_participated_wars": "Participated in {{count}} wars",
+    "analytics_best_war": "Best War",
+    "analytics_per_war": "per war",
+    "analytics_across_wars": "across {{count}} wars",
+    "analytics_top_performer": "Top Performer",
+    "analytics_group_average": "Group Average",
+    "analytics_across_members": "across {{count}} members",
+    "analytics_participation": "Participation",
+    "analytics_total_war_participations": "total war participations",
+    "analytics_team_consistency": "Consistency (Std Dev)",
+    "analytics_team_depth": "Avg members / war",
+    "analytics_top_quick_view": "Top 5 Quick View",
+    "analytics_range_7d": "Last 7 days",
+    "analytics_range_30d": "Last 30 days",
+    "analytics_range_90d": "Last 90 days",
+    "analytics_range_6m": "Last 6 months",
+    "analytics_range_1y": "Last year",
+    "analytics_range_all": "All time",
+    "analytics_high_series_warning": "{{count}} lines are visible. Narrow filters or reduce lines for readability.",
+    "analytics_high_series_hint": "Tip: focus one member, hide lines from legend, or shorten the date range.",
+    "analytics_sampling_applied": "Sampling is enabled for this chart due to large data volume.",
+    "analytics_normalization_badge": "Normalized (factor {{factor}}, tier: {{tier}})",
+    "analytics_raw_to_normalized": "Raw {{raw}} -> Normalized {{normalized}}",
+    "analytics_tier_weak": "Weak",
+    "analytics_tier_normal": "Normal",
+    "analytics_tier_strong": "Strong",
+    "analytics_missing_count": "Missing: {{count}}",
+    "analytics_no_performance_data": "No performance data available for the selected wars",
+    "analytics_multi_metric_hint": "Showing {{metrics}} metrics across {{wars}} wars. Missing data is shown as gaps.",
+    "analytics_average_metric_label": "Avg({{metric}}): {{value}}",
+    "analytics_metric_damage": "Damage",
+    "analytics_metric_healing": "Healing",
+    "analytics_metric_building_damage": "Building Damage",
+    "analytics_metric_credits": "Credits",
+    "analytics_metric_kills": "Kills",
+    "analytics_metric_deaths": "Deaths",
+    "analytics_metric_assists": "Assists",
+    "analytics_metric_kda": "K/D/A",
+    "analytics_chart_options": "Chart Options",
+    "analytics_secondary_metric": "Secondary Metric (overlay)",
+    "analytics_none": "None",
+    "analytics_show_moving_average": "Show 3-war moving average",
+    "analytics_select_member_timeline": "Select a member to view their performance timeline across wars",
+    "analytics_total_damage": "Total Damage",
+    "analytics_avg_damage": "Avg Damage",
+    "analytics_showing_data_for_wars": "Showing data for {{participated}} of {{selected}} selected wars",
+    "analytics_table_no_data": "No data available",
+    "analytics_table_rows": "Showing {{shown}} of {{total}} rows",
+    "analytics_table_date": "Date",
+    "analytics_table_war": "War",
+    "analytics_table_value": "Value",
+    "analytics_table_rank": "Rank",
+    "analytics_table_member": "Member",
+    "analytics_table_class": "Class",
+    "analytics_table_wars": "Wars",
+    "analytics_user_fallback": "User {{id}}",
+    "analytics_compare_presets": "Compare presets",
+    "analytics_preset_core_squad": "Core Squad",
+    "analytics_preset_top_damage": "Top Damage",
+    "analytics_preset_healer_group": "Healer Group",
+    "analytics_preset_last_30_days": "Last 30 Days",
+    "analytics_preset_name": "Preset name",
+    "analytics_preset_label": "Preset",
+    "analytics_reset_compare_view": "Reset compare view",
+    "analytics_normalization_diagnostics": "Normalization diagnostics",
+    "analytics_copy_diagnostics": "Copy diagnostics",
+    "analytics_metric": "Metric",
+    "analytics_raw": "Raw",
+    "analytics_normalized": "Normalized",
+    "analytics_factor": "Factor",
+    "analytics_tier": "Tier",
+    "analytics_formula_editor_title": "Formula editor",
+    "analytics_formula_kda_weight": "KDA weight",
+    "analytics_formula_tower_weight": "Tower weight",
+    "analytics_formula_distance_weight": "Distance weight",
+    "analytics_formula_total_invalid": "Total weight must equal 100.",
+    "analytics_formula_total_ok": "Total weight: {{total}}",
+    "analytics_formula_hint": "Adjust KDA, towers, and distance weights for opponent normalization.",
+    "analytics_formula_preset": "Formula preset",
+    "analytics_formula_preset_name": "Save as preset",
+    "analytics_formula_preset_name_placeholder": "Enter a name to save a new preset version",
+    "analytics_formula_version": "Formula version",
+    "analytics_formula_sync_loading": "Loading formula presets...",
+    "analytics_formula_sync_saving": "Saving formula preset...",
+    "analytics_formula_sync_deleting": "Deleting formula preset...",
+    "analytics_formula_sync_error_load": "Unable to load formula presets. Please retry.",
+    "analytics_formula_sync_error_save": "Unable to save formula preset. Please retry.",
+    "analytics_formula_sync_error_delete": "Unable to delete formula preset. Please retry.",
+    "analytics_formula_sync_retry": "Retry"
   },
   "auth": {
     "login_title": "Login",
@@ -621,7 +931,8 @@
     "session_expired_message": "Your security clearance has timed out. Please re-authenticate to continue operations.",
     "login": "Login",
     "logout_success": "Logged out successfully",
-    "password_changed": "Password changed successfully"
+    "password_changed": "Password changed successfully",
+    "return_to_login": "Return to Login"
   },
   "themes": {
     "default": "Default",
@@ -630,6 +941,64 @@
     "neon_spectral": "Neon Spectral",
     "red_gold": "Red Gold",
     "soft_pink": "Soft Pink"
+  },
+  "theme_menu": {
+    "themes": {
+      "neo-brutalism": {
+        "label": "Neo-Brutalism",
+        "description": "Bold geometric style with hard-edged depth"
+      },
+      "steampunk": {
+        "label": "Steampunk",
+        "description": "Mechanical serif style with heavy metal borders"
+      },
+      "cyberpunk": {
+        "label": "Cyberpunk",
+        "description": "Neon terminal style with techno typography"
+      },
+      "post-apocalyptic": {
+        "label": "Post-Apocalyptic",
+        "description": "Worn tactical style with dashed industrial framing"
+      },
+      "chibi": {
+        "label": "Chibi",
+        "description": "Rounded playful style with soft cartoon rhythm"
+      },
+      "royal": {
+        "label": "Royal",
+        "description": "Elegant serif style with premium ornament texture"
+      },
+      "minimalistic": {
+        "label": "Minimalistic",
+        "description": "Clean restrained style with light structured grid"
+      }
+    },
+    "colors": {
+      "black-gold": {
+        "label": "Black Gold",
+        "description": "Black-and-gold luxury contrast"
+      },
+      "chinese-ink": {
+        "label": "Chinese Ink",
+        "description": "Ink monochrome with parchment paper neutrals"
+      },
+      "neon-spectral": {
+        "label": "Neon Spectral",
+        "description": "Electric cyan over deep violet tones"
+      },
+      "red-gold": {
+        "label": "Red Gold",
+        "description": "Wasteland red-and-gold high contrast palette"
+      },
+      "soft-pink": {
+        "label": "Soft Pink",
+        "description": "Cute pink palette with gentle contrast"
+      },
+      "default-violet": {
+        "label": "Default Violet",
+        "description": "Clean violet palette with bright neutrals"
+      }
+    }
   },
   "themeLab": {
     "active_theme": "Active Theme",
@@ -856,5 +1225,66 @@
   },
   "credits": "Credits",
   "damage": "Damage",
-  "healing": "Healing"
+  "healing": "Healing",
+  "showcase": {
+    "buttons": {
+      "variants": "Button Variants",
+      "sizes": "Button Sizes",
+      "withIcons": "With Icons",
+      "iconOnly": "Icon Only",
+      "default": "Default",
+      "secondary": "Secondary",
+      "destructive": "Destructive",
+      "outline": "Outline",
+      "ghost": "Ghost",
+      "link": "Link",
+      "save": "Save",
+      "reset": "Reset",
+      "settings": "Settings",
+      "small": "Small",
+      "large": "Large",
+      "floating": "Floating / Icon Only"
+    },
+    "cards": {
+      "createProject": "Create Project",
+      "deployText": "Deploy your new project in one-click.",
+      "deploy": "Deploy",
+      "notifications": "Notifications",
+      "notificationsText": "Choose what you want to be notified about.",
+      "everything": "Everything",
+      "available": "Available",
+      "ignore": "Ignore",
+      "teamMembers": "Team Members",
+      "invite": "Invite",
+      "reportIssue": "Report an issue",
+      "reportDesc": "What area are you having problems with?",
+      "security": "Security",
+      "area": "Area",
+      "billing": "Billing",
+      "cancel": "Cancel",
+      "submit": "Submit",
+      "name": "Name",
+      "namePlaceholder": "Name of your project",
+      "interactive": "Interactive",
+      "interactiveDesc": "Card with actions and icons.",
+      "starred": "Starred",
+      "starredDesc": "Your favorite items.",
+      "addToFavorites": "Add to favorites",
+      "editConfig": "Edit Configurations",
+      "statDesc": "+18.1% from last month"
+    },
+    "inputs": {
+      "email": "Email",
+      "picture": "Picture",
+      "search": "Search...",
+      "password": "Password",
+      "tags": "Tags",
+      "addTag": "Add tag...",
+      "emailWithIcon": "Email with icon...",
+      "standard": "Standard Inputs",
+      "file": "File Input",
+      "withIcon": "With Icon",
+      "passwordToggle": "Password with Toggle"
+    }
+  }
 }

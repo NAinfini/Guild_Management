@@ -1,7 +1,13 @@
+
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, Typography, Box, Stack, Chip, useTheme } from '@mui/material';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Trophy, Users, Swords } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/layout/Card';
+import { Badge } from '@/components/data-display/Badge';
+import { PieChart } from '@mui/x-charts/PieChart';
+import {
+  EmojiEvents,
+  Groups,
+  MilitaryTech,
+} from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
 interface WarData {
@@ -47,10 +53,16 @@ interface WarHistoryPieChartsProps {
   data: WarData[];
 }
 
+export const WAR_HISTORY_PIE_COLORS = {
+  victory: 'var(--color-status-success)',
+  defeat: 'var(--color-status-error)',
+  draw: 'var(--color-status-warning)',
+  info: 'var(--color-status-info)',
+} as const;
+
 export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
-
+  
   // 1. Win/Loss/Draw Distribution
   const winLossData = useMemo(() => {
     const victories = data.filter(w => w.result === 'victory').length;
@@ -58,11 +70,11 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
     const draws = data.filter(w => w.result === 'draw').length;
 
     return [
-      { name: t('guild_war.history_victories'), value: victories, color: theme.palette.success.main },
-      { name: t('guild_war.history_defeats'), value: defeats, color: theme.palette.error.main },
-      { name: t('guild_war.history_draws'), value: draws, color: theme.palette.warning.main },
+      { name: t('guild_war.history_victories'), value: victories, color: WAR_HISTORY_PIE_COLORS.victory },
+      { name: t('guild_war.history_defeats'), value: defeats, color: WAR_HISTORY_PIE_COLORS.defeat },
+      { name: t('guild_war.history_draws'), value: draws, color: WAR_HISTORY_PIE_COLORS.draw },
     ].filter(item => item.value > 0);
-  }, [data, t, theme]);
+  }, [data, t]);
 
   // 2. Participation Distribution
   const participationData = useMemo(() => {
@@ -89,12 +101,12 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
     const rare = members.filter(m => m.count / totalWars < 0.2).length;
 
     return [
-      { name: t('guild_war.history_participation_high'), value: high, color: theme.palette.success.dark },
-      { name: t('guild_war.history_participation_medium'), value: medium, color: theme.palette.success.light },
-      { name: t('guild_war.history_participation_low'), value: low, color: theme.palette.warning.main },
-      { name: t('guild_war.history_participation_rare'), value: rare, color: theme.palette.error.light },
+      { name: t('guild_war.history_participation_high'), value: high, color: 'hsl(142 76% 36%)' }, // Success Darkish
+      { name: t('guild_war.history_participation_medium'), value: medium, color: WAR_HISTORY_PIE_COLORS.victory },
+      { name: t('guild_war.history_participation_low'), value: low, color: WAR_HISTORY_PIE_COLORS.draw },
+      { name: t('guild_war.history_participation_rare'), value: rare, color: WAR_HISTORY_PIE_COLORS.defeat },
     ].filter(item => item.value > 0);
-  }, [data, t, theme]);
+  }, [data, t]);
 
   // 3. Combat Role Distribution
   const combatRoleData = useMemo(() => {
@@ -154,103 +166,62 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
     });
 
     return [
-      { name: t('guild_war.history_role_dps'), value: dps, color: theme.palette.error.main },
-      { name: t('guild_war.history_role_tank'), value: tank, color: theme.palette.info.main },
-      { name: t('guild_war.history_role_support'), value: support, color: theme.palette.success.main },
-      { name: t('guild_war.history_role_balanced'), value: balanced, color: theme.palette.warning.main },
+      { name: t('guild_war.history_role_dps'), value: dps, color: WAR_HISTORY_PIE_COLORS.defeat },
+      { name: t('guild_war.history_role_tank'), value: tank, color: WAR_HISTORY_PIE_COLORS.info }, // Blue
+      { name: t('guild_war.history_role_support'), value: support, color: WAR_HISTORY_PIE_COLORS.victory },
+      { name: t('guild_war.history_role_balanced'), value: balanced, color: WAR_HISTORY_PIE_COLORS.draw },
     ].filter(item => item.value > 0);
-  }, [data, t, theme]);
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0];
-      return (
-        <Box sx={{
-          bgcolor: 'background.paper',
-          p: 1.5,
-          borderRadius: 1,
-          border: 1,
-          borderColor: 'divider',
-          boxShadow: 2
-        }}>
-          <Typography variant="body2" fontWeight={700}>
-            {data.name}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {data.value} ({((data.value / data.payload.total) * 100).toFixed(1)}%)
-          </Typography>
-        </Box>
-      );
-    }
-    return null;
-  };
+  }, [data, t]);
 
   const renderPieChart = (
     data: Array<{ name: string; value: number; color: string }>,
     title: string,
-    icon: React.ReactNode,
+    Icon: React.ElementType,
     totalLabel: string
   ) => {
     const total = data.reduce((sum, item) => sum + item.value, 0);
-    const dataWithTotal = data.map(item => ({ ...item, total }));
+
+    // Transform data to MUI X-Charts format
+    const chartData = data.map((item, index) => ({
+      id: index,
+      value: item.value,
+      label: `${item.name}: ${((item.value / total) * 100).toFixed(0)}%`,
+      color: item.color,
+    }));
 
     return (
-      <Card sx={{ height: '100%' }}>
-        <CardHeader
-          title={
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                {icon}
-                <Typography variant="subtitle2" fontWeight={800} fontSize="0.85rem">
-                  {title}
-                </Typography>
-              </Stack>
-              <Chip
-                label={`${totalLabel}: ${total}`}
-                size="small"
-                sx={{ fontWeight: 700, fontSize: '0.7rem' }}
-              />
-            </Stack>
-          }
-          sx={{ pb: 1 }}
-        />
-        <CardContent sx={{ p: 2, height: 300 }}>
+      <Card className="h-full">
+        <CardHeader className="pb-1 border-b">
+            <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                    <Icon sx={{ fontSize: 16 }} className="text-primary" />
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">{title}</span>
+                </div>
+                <Badge variant="outline" className="font-bold text-[0.65rem]">
+                    {totalLabel}: {total}
+                </Badge>
+            </div>
+        </CardHeader>
+        <CardContent className="p-4 h-[300px]">
           {data.length === 0 ? (
-            <Box sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              color: 'text.secondary'
-            }}>
-              <Typography variant="caption">{t('common.no_intel')}</Typography>
-            </Box>
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <span className="text-sm">{t('common.no_intel')}</span>
+            </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={dataWithTotal}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {dataWithTotal.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={false}
-                  isAnimationActive={false}
-                  position={{ x: 12, y: 12 }}
-                  wrapperStyle={{ pointerEvents: 'none' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <PieChart
+              series={[
+                {
+                  data: chartData,
+                  highlightScope: { fade: 'global', highlight: 'item' },
+                  faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
+                  arcLabel: (item) => item.label || '',
+                },
+              ]}
+              height={260}
+              margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+              hideLegend
+
+            />
           )}
         </CardContent>
       </Card>
@@ -258,34 +229,25 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
   };
 
   return (
-    <Box sx={{
-      display: 'grid',
-      gridTemplateColumns: {
-        xs: '1fr',
-        md: 'repeat(2, 1fr)',
-        lg: 'repeat(3, 1fr)'
-      },
-      gap: 2,
-      mb: 3
-    }}>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       {renderPieChart(
         winLossData,
         t('guild_war.history_win_loss_distribution'),
-        <Trophy size={16} />,
+        EmojiEvents,
         t('guild_war.history_total_wars')
       )}
       {renderPieChart(
         participationData,
         t('guild_war.history_participation_tiers'),
-        <Users size={16} />,
+        Groups,
         t('guild_war.history_total_members')
       )}
       {renderPieChart(
         combatRoleData,
         t('guild_war.history_combat_roles'),
-        <Swords size={16} />,
+        MilitaryTech,
         t('guild_war.history_total_members')
       )}
-    </Box>
+    </div>
   );
 }

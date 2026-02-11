@@ -1,0 +1,50 @@
+.theme-post-apocalyptic {
+  /* Typography */
+  --theme-font-display: 'Special Elite', cursive;
+  --theme-font-body: 'Courier Prime', monospace;
+  --theme-letter-spacing: 0.05em;
+  
+  /* Structure */
+  --theme-border-width: 2px;
+  --theme-border-radius: 2px;
+  --theme-border-style: dashed;
+  
+  /* Depth & Shadows */
+  --theme-shadow-sm: 2px 2px 0px rgba(0,0,0,0.6);
+  --theme-shadow-md: 4px 4px 0px rgba(0,0,0,0.6);
+  --theme-shadow-lg: 6px 6px 0px rgba(0,0,0,0.6);
+  
+  /* Motion */
+  --theme-duration: 0.4s;
+  --theme-easing: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --theme-motion-fast: 260ms;
+  --theme-motion-medium: 360ms;
+  --theme-motion-slow: 460ms;
+  --theme-motion-easing: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --theme-motion-hover-lift: -0.6px;
+  --theme-motion-card-lift: -0.8px;
+  --theme-motion-input-lift: -0.2px;
+  --theme-motion-press-y: 1.2px;
+  --theme-motion-press-scale: 0.992;
+
+  /* Component token overrides */
+  --cmp-button-radius: 2px;
+  --cmp-card-radius: 3px;
+  --cmp-card-border: color-mix(in srgb, var(--sys-border-strong) 50%, var(--sys-border-default));
+  --cmp-input-radius: 2px;
+  --cmp-chip-border: color-mix(in srgb, var(--sys-border-strong) 50%, var(--sys-border-default));
+  --cmp-nav-item-active-bg: color-mix(in srgb, var(--sys-interactive-accent) 18%, transparent);
+  --cmp-dialog-radius: 4px;
+}
+
+.theme-post-apocalyptic :is(.ui-button, .ui-chip, .ui-card, .ui-table, .ui-nav, .control) {
+  border: var(--theme-border-width) var(--theme-border-style) var(--color-border-default);
+  border-radius: var(--theme-border-radius);
+  font-family: var(--theme-font-body);
+  transform: rotate(-0.5deg);
+}
+
+.theme-post-apocalyptic :is(.ui-button, .ui-chip, .ui-card, .ui-table, .ui-nav, .control):hover:not(:disabled) {
+  transform: rotate(0.3deg) scale(1.01);
+  border-style: solid;
+}

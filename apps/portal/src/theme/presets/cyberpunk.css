@@ -1,0 +1,70 @@
+.theme-cyberpunk {
+  /* Typography */
+  --theme-font-display: 'Orbitron', sans-serif;
+  --theme-font-body: 'Rajdhani', sans-serif;
+  --theme-letter-spacing: 0.1em;
+  
+  /* Structure */
+  --theme-border-width: 1px;
+  --theme-border-radius: 2px;
+  --theme-border-style: solid;
+  --theme-cut-corner-size: 10px;
+  
+  /* Depth & Shadows */
+  --theme-shadow-sm: 0 0 5px var(--color-accent-primary);
+  --theme-shadow-md: 0 0 10px var(--color-accent-primary), inset 0 0 5px var(--color-accent-primary);
+  --theme-shadow-lg: 0 0 20px var(--color-accent-primary);
+  
+  /* Motion */
+  --theme-duration: 0.15s;
+  --theme-easing: steps(4, end);
+  --theme-motion-fast: 120ms;
+  --theme-motion-medium: 180ms;
+  --theme-motion-slow: 240ms;
+  --theme-motion-easing: cubic-bezier(0.16, 1, 0.3, 1);
+  --theme-motion-hover-lift: 0px;
+  --theme-motion-card-lift: 0px;
+  --theme-motion-input-lift: 0px;
+  --theme-motion-press-y: 0.5px;
+  --theme-motion-press-scale: 0.99;
+
+  /* Component token overrides */
+  --cmp-button-radius: 2px;
+  --cmp-card-radius: 2px;
+  --cmp-card-border: color-mix(in srgb, var(--sys-interactive-accent) 40%, var(--sys-border-default));
+  --cmp-input-radius: 2px;
+  --cmp-chip-bg: color-mix(in srgb, var(--sys-interactive-accent) 26%, transparent);
+  --cmp-nav-item-active-bg: color-mix(in srgb, var(--sys-interactive-accent) 32%, transparent);
+  --cmp-dialog-border: color-mix(in srgb, var(--sys-interactive-accent) 55%, var(--sys-border-default));
+}
+
+.theme-cyberpunk :is(
+  .ui-button,
+  .ui-chip,
+  .ui-input,
+  .ui-nav,
+  .control,
+  .MuiButton-root,
+  .MuiToggleButton-root,
+  .MuiChip-root,
+  .MuiOutlinedInput-root,
+  .MuiIconButton-root
+) {
+  border: var(--theme-border-width) var(--theme-border-style) var(--color-accent-primary);
+  border-radius: var(--theme-border-radius);
+  font-family: var(--theme-font-body);
+  text-transform: uppercase;
+  clip-path: polygon(
+    var(--theme-cut-corner-size) 0,
+    100% 0, 
+    100% calc(100% - var(--theme-cut-corner-size)),
+    calc(100% - var(--theme-cut-corner-size)) 100%,
+    0 100%,
+    0 var(--theme-cut-corner-size)
+  );
+  background: rgba(0,0,0,0.2);
+}
+
+.theme-cyberpunk :is(.ui-button, .ui-chip, .ui-input, .ui-nav, .control):hover:not(:disabled) {
+  border-color: var(--color-text-primary);
+}

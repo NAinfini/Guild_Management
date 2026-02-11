@@ -4,6 +4,7 @@
  */
 
 import { typedAPI } from './api-builder';
+import { normalizeUtcDateTime } from './date';
 import type { User, ClassType } from '../../types';
 
 // ============================================================================
@@ -97,11 +98,11 @@ export const mapToDomain = (dto: MemberDTO): User => {
     title_html: dto.title_html || undefined,
     active_status: dto.is_active ? 'active' : 'inactive', // 'vacation' calculation handled by UI/Store logic based on dates?
     bio: dto.bio_text || undefined,
-    vacation_start: dto.vacation_start_at_utc || undefined,
-    vacation_end: dto.vacation_end_at_utc || undefined,
-    created_at: dto.created_at_utc,
-    updated_at: dto.updated_at_utc,
-    last_seen: dto.last_seen_utc,
+    vacation_start: normalizeUtcDateTime(dto.vacation_start_at_utc) || dto.vacation_start_at_utc || undefined,
+    vacation_end: normalizeUtcDateTime(dto.vacation_end_at_utc) || dto.vacation_end_at_utc || undefined,
+    created_at: normalizeUtcDateTime(dto.created_at_utc) || dto.created_at_utc,
+    updated_at: normalizeUtcDateTime(dto.updated_at_utc) || dto.updated_at_utc,
+    last_seen: normalizeUtcDateTime(dto.last_seen_utc) || dto.last_seen_utc,
     media_counts: counts,
   };
 };

@@ -1,0 +1,75 @@
+.theme-royal {
+  /* Typography */
+  --theme-font-display: 'Playfair Display', serif;
+  --theme-font-body: 'Lato', sans-serif;
+  --theme-letter-spacing: 0.05em;
+  
+  /* Structure */
+  --theme-border-width: 1px;
+  --theme-border-radius: 4px;
+  --theme-border-style: solid;
+  
+  /* Depth & Shadows */
+  --theme-shadow-sm: 0 4px 6px rgba(0,0,0,0.1), inset 0 0 0 2px rgba(255,255,255,0.05);
+  --theme-shadow-md: 0 10px 15px rgba(0,0,0,0.15), inset 0 0 0 2px rgba(255,255,255,0.05);
+  --theme-shadow-lg: 0 20px 25px rgba(0,0,0,0.2), inset 0 0 0 2px rgba(255,255,255,0.05);
+  
+  /* Motion */
+  --theme-duration: 0.4s;
+  --theme-easing: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --theme-motion-fast: 220ms;
+  --theme-motion-medium: 320ms;
+  --theme-motion-slow: 420ms;
+  --theme-motion-easing: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --theme-motion-hover-lift: -1.5px;
+  --theme-motion-card-lift: -1.2px;
+  --theme-motion-input-lift: -0.4px;
+  --theme-motion-press-y: 1px;
+  --theme-motion-press-scale: 0.992;
+
+  /* Component token overrides */
+  --cmp-button-radius: 4px;
+  --cmp-card-radius: 8px;
+  --cmp-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.24);
+  --cmp-input-radius: 6px;
+  --cmp-chip-bg: color-mix(in srgb, var(--sys-interactive-accent) 18%, transparent);
+  --cmp-nav-item-active-bg: color-mix(in srgb, var(--sys-interactive-accent) 20%, transparent);
+  --cmp-dialog-shadow: 0 30px 80px rgba(0, 0, 0, 0.36);
+}
+
+.theme-royal :is(.ui-button, .ui-card, .ui-chip, .ui-nav, .control) {
+  border: var(--theme-border-width) var(--theme-border-style) var(--color-border-default);
+  border-radius: var(--theme-border-radius);
+  font-family: var(--theme-font-body);
+  box-shadow: var(--theme-shadow-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+  overflow: hidden; /* For shine effect */
+}
+
+/* Shine Effect */
+.theme-royal :is(.ui-button, .ui-card, .ui-nav, .control)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: skewX(-25deg);
+  transition: 0.5s;
+  pointer-events: none;
+}
+
+.theme-royal :is(.ui-button, .ui-card, .ui-nav, .control):hover::after {
+  left: 150%;
+  transition: 0.7s ease-in-out;
+}
+
+.theme-royal :is(.ui-button, .ui-card, .ui-chip, .ui-nav, .control):hover:not(:disabled) {
+  background-color: var(--color-surface-elevated);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 0 15px var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+  transform: translateY(-1px);
+}

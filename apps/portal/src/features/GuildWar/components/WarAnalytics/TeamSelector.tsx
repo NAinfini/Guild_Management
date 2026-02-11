@@ -1,22 +1,16 @@
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  List,
-  ListItemButton,
-  ListItemText,
-  ListItemIcon,
-  Checkbox,
-  Stack,
-  Switch,
-  FormControlLabel,
-  Chip,
-} from '@mui/material';
-import { Shield } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
 import type { TeamStats } from './types';
+import { Card, CardContent } from '@/components/layout/Card';
+import { Checkbox } from '@/components/input/Checkbox';
+import { Badge } from '@/components/data-display/Badge';
+import { Label } from '@/components/input/Label';
+import { cn } from '../../../../lib/utils';
+import {
+  Groups,
+  ErrorOutline
+} from '@mui/icons-material';
 
 interface TeamOption {
   teamId: number;
@@ -44,62 +38,66 @@ export function TeamSelector({ teamStats }: TeamSelectorProps) {
   };
 
   return (
-    <Box>
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="subtitle2" fontWeight={700} mb={2}>
-            <Stack direction="row" alignItems="center" gap={1}>
-              <Shield size={18} />
-              {t('guild_war.tactical_squads')}
-            </Stack>
-          </Typography>
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={teamsMode.showTotal}
-                onChange={(e) => updateTeamsMode({ showTotal: e.target.checked })}
-                size="small"
-              />
-            }
-            label={teamsMode.showTotal ? t('common.total') : t('common.average')}
-            sx={{ ml: 0 }}
-          />
-        </CardContent>
+    <div className="space-y-4">
+      <Card>
+        <div className="flex flex-col gap-4">
+        {/* Header */}
+        <div className="flex items-center gap-2 p-4">
+          <Groups className="w-5 h-5 text-primary" />
+          <h2 className="text-xl font-bold">{t('guild_war.analytics_team_comparison')}</h2>
+        </div>
+        </div>
       </Card>
 
       <Card>
-        <List dense sx={{ maxHeight: 360, overflow: 'auto' }}>
+        <div className="max-h-[360px] overflow-auto p-2">
           {teamOptions.length === 0 ? (
-            <Box sx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary" textAlign="center">
-                {t('guild_war.no_active_wars')}
-              </Typography>
-            </Box>
+            <div className="bg-card border border-border/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <ErrorOutline className="w-4 h-4 text-primary" />
+                <span className="font-bold text-sm uppercase tracking-wider text-muted-foreground">
+                  {t('guild_war.tactical_selection')}
+                </span>
+              </div>
+              <p className="text-sm">{t('guild_war.no_active_wars')}</p>
+            </div>
           ) : (
-            teamOptions.map((team) => {
-              const selected = teamsMode.selectedTeamIds.includes(team.teamId);
-              return (
-                <ListItemButton key={team.teamId} onClick={() => toggleTeam(team.teamId)} selected={selected}>
-                  <ListItemIcon>
-                    <Checkbox checked={selected} edge="start" disableRipple />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={team.teamName}
-                    secondary={
-                      <Chip
-                        size="small"
-                        label={t('guild_war.analytics_wars_count', { count: team.warsCount })}
-                      />
-                    }
-                  />
-                </ListItemButton>
-              );
-            })
+            <div className="space-y-1">
+              {teamOptions.map((team) => {
+                const selected = teamsMode.selectedTeamIds.includes(team.teamId);
+                return (
+                  <div
+                    key={team.teamId}
+                    className={cn(
+                      "flex items-center gap-3 p-2 rounded-md transition-colors cursor-pointer hover:bg-accent/50",
+                      selected && "bg-accent"
+                    )}
+                    onClick={() => toggleTeam(team.teamId)}
+                  >
+                    <Checkbox 
+                      checked={selected} 
+                      onChange={() => toggleTeam(team.teamId)}
+                      id={`team-${team.teamId}`}
+                    />
+                    <div className="flex-1 flex items-center justify-between">
+                      <Label 
+                        htmlFor={`team-${team.teamId}`}
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        {team.teamName}
+                      </Label>
+                      <Badge variant="secondary" className="text-[10px] h-5 tabular-nums">
+                        {t('guild_war.analytics_wars_count', { count: team.warsCount })}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
-        </List>
+        </div>
       </Card>
-    </Box>
+    </div>
   );
 }
 
@@ -122,4 +120,3 @@ function getTeamOptions(teamStats: TeamStats[]): TeamOption[] {
 
   return [...teamMap.values()].sort((a, b) => a.teamName.localeCompare(b.teamName));
 }
-

@@ -1,45 +1,36 @@
 /**
  * War Analytics - Rankings Bar Chart
- *
- * Horizontal bar chart showing top N performers
- * Features:
- * - Ranked bars with colors (gold/silver/bronze for top 3)
- * - Value labels on bars
- * - Click to focus member
  */
 
 import { useMemo } from 'react';
+import { BarChart } from '@mui/x-charts/BarChart';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  LabelList,
-} from 'recharts';
-import { Box, Typography, Alert, Stack, Avatar, Chip } from '@mui/material';
-import { CardSkeleton } from '../../../../components/SkeletonLoaders';
+  alpha,
+  useTheme
+} from "@mui/material";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import InfoIcon from "@mui/icons-material/Info";
+import { useTranslation } from 'react-i18next';
+import { CardSkeleton } from '@/components/feedback/Skeleton';
 import { useAnalytics } from './AnalyticsContext';
 import { transformForRankings, formatNumber } from './utils';
-import { formatMetricName } from './types';
-import type { MemberStats, MetricType } from './types';
-
-// ============================================================================
-// Main Component
-// ============================================================================
+import { METRICS, formatMetricName } from './types';
+import type { MemberStats, MetricType, PerWarMemberStats } from './types';
+import { Alert, AlertDescription } from '@/components/feedback/Alert';
+import { Badge } from '@/components/data-display/Badge';
 
 interface RankingsBarChartProps {
   members: MemberStats[];
+  perWarStats?: PerWarMemberStats[];
+  onSelectWar?: (params: { warId: number; userId?: number }) => void;
   isLoading?: boolean;
 }
 
-export function RankingsBarChart({ members, isLoading }: RankingsBarChartProps) {
+export function RankingsBarChart({ members, perWarStats = [], onSelectWar, isLoading }: RankingsBarChartProps) {
+  const { t } = useTranslation();
+  const theme = useTheme();
   const { filters, rankingsMode } = useAnalytics();
 
-  // Transform data for chart
   const chartData = useMemo(() => {
     if (!members || members.length === 0) return [];
 
@@ -53,128 +44,186 @@ export function RankingsBarChart({ members, isLoading }: RankingsBarChartProps) 
     );
   }, [members, filters.primaryMetric, filters.aggregation, rankingsMode]);
 
-  // Get bar color based on rank
   const getBarColor = (rank: number): string => {
     switch (rank) {
       case 1:
-        return '#FFD700'; // Gold
+        return theme.palette.warning.main; // Gold equivalent
       case 2:
-        return '#C0C0C0'; // Silver
+        return theme.palette.text.secondary; // Silver equivalent
       case 3:
-        return '#CD7F32'; // Bronze
+        return theme.palette.error.main; // Bronze/Red equivalent or specific bronze color
       default:
-        return '#8884d8'; // Default blue
+        return theme.palette.primary.main;
     }
   };
 
-  // Loading state
+  const bestWarByUser = useMemo(() => {
+    const map = new Map<number, number>();
+    const higherIsBetter = METRICS[filters.primaryMetric].higherIsBetter;
+
+    for (const row of perWarStats) {
+      const userId = Number(row.user_id);
+      if (!Number.isFinite(userId)) continue;
+      const value = Number(row[filters.primaryMetric] ?? 0);
+
+      const existingWarId = map.get(userId);
+      if (!existingWarId) {
+        map.set(userId, Number(row.war_id));
+        continue;
+      }
+
+      const existingRow = perWarStats.find((r) => Number(r.war_id) === existingWarId && Number(r.user_id) === userId);
+      const existingValue = Number(existingRow?.[filters.primaryMetric] ?? 0);
+      const isBetter = higherIsBetter ? value > existingValue : value < existingValue;
+      if (isBetter) {
+        map.set(userId, Number(row.war_id));
+      }
+    }
+
+    return map;
+  }, [filters.primaryMetric, perWarStats]);
+
+  const handleBarClick = (entry: any) => {
+    if (!entry) return;
+    const userId = Number(entry.user_id);
+    if (!Number.isFinite(userId)) return;
+
+    const warId = bestWarByUser.get(userId);
+    if (!warId || !Number.isFinite(warId)) return;
+    onSelectWar?.({ warId, userId });
+  };
+
   if (isLoading) {
     return <CardSkeleton aspectRatio="16/9" />;
   }
 
-  // No data state
   if (chartData.length === 0) {
     return (
-      <Alert severity="info">
-        No members match the current filters. Try adjusting the class filter or minimum
-        participation threshold.
+      <Alert variant="default">
+        <InfoIcon sx={{ fontSize: 20 }} />
+        <AlertDescription>{t('guild_war.analytics_rankings_no_match')}</AlertDescription>
       </Alert>
     );
   }
 
+  // Prepare data for MUI X-Charts
+  const usernames = chartData.map((d) => d.username);
+  const values = chartData.map((d) => d.value);
+  const colors = chartData.map((d) => getBarColor(d.rank));
+
   return (
-    <Box>
-      <ResponsiveContainer width="100%" height={Math.max(400, chartData.length * 50)}>
-        <BarChart
-          data={chartData}
-          layout="vertical"
-          margin={{ top: 5, right: 80, left: 20, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#eee" horizontal={false} />
+    <div>
+      <BarChart
+        yAxis={[
+          {
+            scaleType: 'band',
+            data: usernames,
+            tickLabelStyle: {
+              fontSize: 14,
+              fill: 'hsl(var(--foreground))',
+            },
+          },
+        ]}
+        xAxis={[
+          {
+            tickLabelStyle: {
+              fontSize: 12,
+              fill: 'hsl(var(--muted-foreground))',
+            },
+            valueFormatter: (value: number | null) => formatNumber(value ?? 0),
+          },
+        ]}
+        series={[
+          {
+            data: values,
+            valueFormatter: (value) => formatNumber(value ?? 0),
+          },
+        ]}
+        layout="horizontal"
+        height={Math.max(400, chartData.length * 50)}
+        margin={{ top: 10, right: 80, left: 120, bottom: 10 }}
+        grid={{ vertical: true }}
+        colors={colors}
+        onItemClick={(event, d) => {
+          if (d.dataIndex !== undefined && d.dataIndex !== null) {
+            handleBarClick(chartData[d.dataIndex]);
+          }
+        }}
+        sx={{
+          '& .MuiChartsAxis-line': {
+            stroke: 'hsl(var(--border))',
+          },
+          '& .MuiChartsAxis-tick': {
+            stroke: 'hsl(var(--border))',
+          },
+          '& .MuiChartsGrid-line': {
+            stroke: 'hsl(var(--border))',
+            strokeDasharray: '3 3',
+          },
+          '& .MuiBarElement-root': {
+            cursor: 'pointer',
+          },
+        }}
+        slotProps={{
+          legend: { hidden: true } as any,
+        }}
+      />
 
-          <XAxis
-            type="number"
-            style={{ fontSize: '0.75rem' }}
-            tickFormatter={(value) => formatNumber(value)}
-          />
-
-          <YAxis
-            type="category"
-            dataKey="username"
-            width={120}
-            style={{ fontSize: '0.875rem' }}
-          />
-
-          <Tooltip content={<RankingsTooltip metric={filters.primaryMetric} />} />
-
-          <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={getBarColor(entry.rank)} />
-            ))}
-            <LabelList
-              dataKey="value"
-              position="right"
-              formatter={(value: any) => formatNumber(Number(value))}
-              style={{ fontSize: '0.75rem', fontWeight: 600 }}
-            />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-
-      {/* Top 3 Podium (Optional visual) */}
       {chartData.length >= 3 && (
-        <Box sx={{ mt: 3, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
-          <Typography variant="subtitle2" fontWeight={700} mb={2}>
-            🏆 Top 3 Performers
-          </Typography>
-          <Stack direction="row" spacing={2} justifyContent="center">
+        <div className="mt-6 rounded-lg bg-secondary/50 p-4">
+          <h4 className="mb-4 text-sm font-bold text-foreground">
+            {t('guild_war.analytics_top_performers')}
+          </h4>
+          <div className="flex justify-center gap-4">
             {chartData.slice(0, 3).map((entry) => (
-              <Box
+              <div
                 key={entry.user_id}
-                sx={{
-                  flex: 1,
-                  textAlign: 'center',
-                  p: 2,
-                  borderRadius: 1,
-                  bgcolor: entry.rank === 1 ? 'warning.lighter' : 'background.paper',
-                  border: 1,
-                  borderColor: entry.rank === 1 ? 'warning.main' : 'divider',
-                }}
+                className={`flex flex-1 flex-col items-center rounded-lg border p-4 text-center ${
+                  entry.rank === 1
+                    ? 'border-[color:var(--gold-color)] bg-[color:var(--gold-bg)]'
+                    : 'bg-card'
+                }`}
+                style={
+                  entry.rank === 1
+                    ? {
+                        borderColor: theme.palette.warning.main,
+                        backgroundColor: alpha(theme.palette.warning.main, 0.1),
+                      }
+                    : undefined
+                }
               >
-                <Typography variant="h4" mb={1}>
+                <span className="mb-1 text-3xl">
                   {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
-                </Typography>
-                <Typography variant="body2" fontWeight={700}>
-                  {entry.username}
-                </Typography>
-                <Chip label={entry.class} size="small" sx={{ my: 1 }} />
-                <Typography variant="h6" fontWeight={700} fontFamily="monospace">
+                </span>
+                <BarChartIcon sx={{ fontSize: 24, color: "primary.main" }} />
+                <span className="text-sm font-bold">{entry.username}</span>
+                <Badge variant="secondary" className="my-2">
+                  {entry.class}
+                </Badge>
+                <span className="font-mono text-lg font-bold">
                   {formatNumber(entry.value)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {entry.wars_participated} wars
-                </Typography>
-              </Box>
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t('guild_war.analytics_wars_count', { count: entry.wars_participated })}
+                </span>
+              </div>
             ))}
-          </Stack>
-        </Box>
+          </div>
+        </div>
       )}
 
-      {/* Chart Info */}
-      <Box sx={{ mt: 2, textAlign: 'center' }}>
-        <Typography variant="caption" color="text.secondary">
-          Showing top {chartData.length} by {formatMetricName(filters.primaryMetric)} ({filters.aggregation})
-          {rankingsMode.minParticipation > 1 && ` • Min ${rankingsMode.minParticipation} wars`}
-          {rankingsMode.classFilter.length > 0 && ` • ${rankingsMode.classFilter.join(', ')}`}
-        </Typography>
-      </Box>
-    </Box>
+      <div className="mt-4 text-center text-xs text-muted-foreground">
+        {t('guild_war.analytics_rankings_chart_hint', {
+          count: chartData.length,
+          metric: formatMetricName(filters.primaryMetric),
+          aggregation: filters.aggregation,
+        })}
+        {rankingsMode.minParticipation > 1 && ` | ${t('guild_war.analytics_min_wars_label', { count: rankingsMode.minParticipation })}`}
+        {rankingsMode.classFilter.length > 0 && ` | ${rankingsMode.classFilter.join(', ')}`}
+      </div>
+    </div>
   );
 }
-
-// ============================================================================
-// Custom Tooltip
-// ============================================================================
 
 interface RankingsTooltipProps {
   active?: boolean;
@@ -183,47 +232,35 @@ interface RankingsTooltipProps {
 }
 
 function RankingsTooltip({ active, payload, metric }: RankingsTooltipProps) {
+  const { t } = useTranslation();
   if (!active || !payload || payload.length === 0) return null;
 
   const data = payload[0].payload;
 
   return (
-    <Box
-      sx={{
-        bgcolor: 'background.paper',
-        border: 1,
-        borderColor: 'divider',
-        borderRadius: 1,
-        p: 1.5,
-        boxShadow: 2,
-      }}
-    >
-      {/* Rank */}
-      <Typography variant="h6" fontWeight={700} mb={1}>
+    <div className="rounded-md border bg-popover p-3 shadow-md">
+      <h6 className="mb-1 font-bold text-popover-foreground">
         #{data.rank} {data.username}
-      </Typography>
+      </h6>
 
-      {/* Class */}
-      <Chip label={data.class} size="small" sx={{ mb: 1 }} />
+      <Badge variant="outline" className="mb-2">
+        {data.class}
+      </Badge>
 
-      {/* Value */}
-      <Box sx={{ mb: 0.5 }}>
-        \u003cTypography variant=\"body2\" fontWeight={600}\u003e\r\n          {formatMetricName(metric as MetricType)}:\r\n        \u003c/Typography\u003e
-        <Typography variant="body2" fontFamily="monospace" fontSize="1.1rem">
+      <div className="mb-1">
+        <span className="block text-xs font-semibold text-popover-foreground">
+          {formatMetricName(metric as MetricType)}:
+        </span>
+        <span className="font-mono text-base font-bold text-popover-foreground">
           {formatNumber(data.value)}
-        </Typography>
-      </Box>
+        </span>
+      </div>
 
-      {/* Wars Participated */}
-      <Typography variant="caption" color="text.secondary">
-        Participated in {data.wars_participated} wars
-      </Typography>
-    </Box>
+      <span className="block text-xs text-muted-foreground">
+        {t('guild_war.analytics_rankings_participated_wars', { count: data.wars_participated })}
+      </span>
+    </div>
   );
 }
-
-// ============================================================================
-// Export
-// ============================================================================
 
 export { RankingsTooltip };

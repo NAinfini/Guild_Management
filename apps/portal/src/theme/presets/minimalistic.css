@@ -1,0 +1,52 @@
+.theme-minimalistic {
+  /* Typography */
+  --theme-font-display: 'Inter', sans-serif;
+  --theme-font-body: 'Inter', sans-serif;
+  --theme-letter-spacing: -0.01em;
+  
+  /* Structure */
+  --theme-border-width: 1px;
+  --theme-border-radius: 6px;
+  --theme-border-style: solid;
+  
+  /* Depth & Shadows */
+  --theme-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --theme-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  /* Motion */
+  --theme-duration: 0.2s;
+  --theme-easing: ease-out;
+  --theme-motion-fast: 170ms;
+  --theme-motion-medium: 240ms;
+  --theme-motion-slow: 300ms;
+  --theme-motion-easing: ease-out;
+  --theme-motion-hover-lift: -0.5px;
+  --theme-motion-card-lift: -0.5px;
+  --theme-motion-input-lift: -0.25px;
+  --theme-motion-press-y: 0.5px;
+  --theme-motion-press-scale: 0.995;
+
+  /* Component token overrides */
+  --cmp-button-radius: 8px;
+  --cmp-card-radius: 10px;
+  --cmp-card-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  --cmp-input-radius: 8px;
+  --cmp-chip-bg: color-mix(in srgb, var(--sys-interactive-accent) 10%, transparent);
+  --cmp-nav-item-active-bg: color-mix(in srgb, var(--sys-interactive-accent) 12%, transparent);
+  --cmp-dialog-radius: 12px;
+}
+
+.theme-minimalistic :is(.ui-button, .ui-chip, .ui-card, .ui-input, .ui-table, .ui-nav, .control) {
+  border: var(--theme-border-width) var(--theme-border-style) transparent;
+  border-radius: var(--theme-border-radius);
+  font-family: var(--theme-font-body);
+}
+
+.theme-minimalistic :is(.ui-button, .ui-chip, .ui-input, .ui-nav, .control):hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-surface-sunken) 82%, transparent);
+}
+
+.theme-minimalistic :is(.ui-card, .ui-table):hover {
+  background-color: color-mix(in srgb, var(--color-surface-sunken) 72%, transparent);
+}

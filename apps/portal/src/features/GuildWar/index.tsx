@@ -34,31 +34,32 @@ import {
 import { WarAnalyticsMain } from './components/WarAnalytics';
 import { WarHistory as WarHistoryView } from './components/WarHistory';
 import { WarTeamDragDrop } from './components/WarTeamDragDrop';
-import { Toast } from '../../components/Toast';
-import { PlaceholderPage } from '../../components/PlaceholderPage';
+import { PlaceholderPage } from '@/components/layout/PlaceholderPage';
 import { 
-  Swords, 
-  LayoutGrid, 
-  Plus, 
-  Users, 
+  Security, 
+  GridView, 
+  Add, 
+  People, 
   Shield, 
-  ChevronDown, 
+  KeyboardArrowDown, 
   Search, 
-  History as HistoryIcon, 
-  Trash2, 
-  Edit3,
-  BarChart3,
-  X,
-  Crown,
-  Heart,
-  Sparkles,
-  Zap,
-  Undo2,
-  Trophy
-} from 'lucide-react';
-import { cn, getClassBaseColor, getClassColor, formatPower, formatDateTime, getOptimizedMediaUrl, sanitizeHtml, formatClassDisplayName } from '../../lib/utils';
+  History, 
+  Delete, 
+  Edit,
+  BarChart,
+  Close,
+  EmojiEvents,
+  Favorite,
+  AutoAwesome,
+  ElectricBolt,
+  Undo,
+  ArrowUpward,
+  ArrowDownward
+} from '@mui/icons-material';
+import { formatPower, formatDateTime, sanitizeHtml, formatClassDisplayName, getMemberCardAccentColors, getClassPillTone } from '../../lib/utils';
+import { getOptimizedMediaUrl } from '../../lib/media-conversion';
 import { useAuthStore, useUIStore } from '../../store';
-import { User, WarTeam } from '../../types';
+import { User, WarTeam, ClassType } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { useEvents, useMembers, useJoinEvent, useLeaveEvent } from '../../hooks/useServerState';
 import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent, useSensors, useSensor, PointerSensor, KeyboardSensor } from '@dnd-kit/core';
@@ -66,7 +67,8 @@ import { snapCenterToCursor } from '@dnd-kit/modifiers';
 import { useWarHistory, useWarTeams, useMovePoolToTeam, useMoveTeamToPool, useMoveTeamToTeam, useKickFromTeam, useKickFromPool } from './hooks/useWars';
 // 2026-02-06T13:26:16Z
 import { Skeleton, useMediaQuery } from '@mui/material';
-import { CardGridSkeleton } from '../../components/SkeletonLoaders';
+import { CardGridSkeleton } from '@/components/feedback/Skeleton';
+import { Toast } from '@/components/feedback';
 import { useOnline } from '../../hooks/useOnline';
 import {
   canCopyGuildWarAnalytics,
@@ -83,8 +85,32 @@ import {
 
 type Tab = 'active' | 'history' | 'analytics';
 
+function buildMemberAccentGradient(accentColors: string[]): string {
+  const [first, second, third] = accentColors;
+  const opacity = 0.5;
+
+  if (third) {
+    // Three colors: diagonal sections with sharp cuts
+    return `
+      linear-gradient(135deg, ${alpha(first, opacity)} 0%, ${alpha(first, opacity)} 33.33%, transparent 33.33%),
+      linear-gradient(225deg, ${alpha(second, opacity)} 0%, ${alpha(second, opacity)} 33.33%, transparent 33.33%),
+      linear-gradient(315deg, ${alpha(third, opacity)} 0%, ${alpha(third, opacity)} 33.33%, transparent 33.33%)
+    `.replace(/\s+/g, ' ').trim();
+  }
+  if (second) {
+    // Two colors: diagonal split with sharp cut at 50%
+    return `linear-gradient(135deg, ${alpha(first, opacity)} 0%, ${alpha(first, opacity)} 50%, ${alpha(second, opacity)} 50%, ${alpha(second, opacity)} 100%)`;
+  }
+  // Single color
+  return alpha(first, opacity);
+}
+
+const THEME_CARD_RADIUS = 'var(--cmp-card-radius)';
+const THEME_HEADER_RADIUS = 'inherit';
+
 export function GuildWar() {
   const [activeTab, setActiveTab] = useState<Tab>('active');
+  const [activeMemberSearchQuery, setActiveMemberSearchQuery] = useState('');
   const { user, viewRole } = useAuthStore();
 
   // ✅ TanStack Query: Server state
@@ -157,7 +183,7 @@ export function GuildWar() {
                     exclusive
                     onChange={(_, val) => val && setActiveTab(val)}
                     size="small"
-                    sx={{ 
+                    sx={{
                         '& .MuiToggleButton-root': {
                             border: 0,
                             borderRadius: 0,
@@ -168,27 +194,29 @@ export function GuildWar() {
                             letterSpacing: '0.05em',
                             textTransform: 'uppercase',
                             color: 'text.secondary',
+                            transition: 'all 0.2s',
                             '&.Mui-selected': {
-                                bgcolor: 'action.selected',
+                                bgcolor: alpha(theme.palette.primary.main, 0.2),
                                 color: 'primary.main',
-                                boxShadow: 'inset 0 -2px 0 0 currentColor'
+                                fontWeight: 900,
+                                boxShadow: `inset 0 -3px 0 0 ${theme.palette.primary.main}, 0 0 8px ${alpha(theme.palette.primary.main, 0.3)}`
                             }
                         }
                     }}
                  >
                     <ToggleButton value="active">
                         <Stack direction="row" gap={1} alignItems="center">
-                            <Swords size={16} /> {t('guild_war.tab_active')}
+                            <ElectricBolt sx={{ fontSize: 16, color: theme.palette.warning.main }} /> {t('guild_war.tab_active')}
                         </Stack>
                     </ToggleButton>
                     <ToggleButton value="history">
                         <Stack direction="row" gap={1} alignItems="center">
-                            <HistoryIcon size={16} /> {t('guild_war.tab_history')}
+                            <History sx={{ fontSize: 16 }} /> {t('guild_war.tab_history')}
                         </Stack>
                     </ToggleButton>
                     <ToggleButton value="analytics">
                         <Stack direction="row" gap={1} alignItems="center">
-                            <BarChart3 size={16} /> {t('guild_war.tab_analytics')}
+                            <BarChart sx={{ fontSize: 16 }} /> {t('guild_war.tab_analytics')}
                         </Stack>
                     </ToggleButton>
                  </ToggleButtonGroup>
@@ -196,26 +224,42 @@ export function GuildWar() {
          </Stack>
 
          {activeTab === 'active' && (
-             <FormControl size="small" sx={{ minWidth: 240 }}>
-                 <Select
-                   value={warEvents.length === 0 ? '' : selectedWarId}
-                   onChange={(e) => setSelectedWarId(e.target.value)}
-                   displayEmpty
-                   sx={{
-                       borderRadius: 2,
-                       fontWeight: 700,
-                       fontSize: '0.8rem',
-                       bgcolor: 'background.paper',
-                       boxShadow: 1,
-                       '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' }
+             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ width: { xs: '100%', md: 'auto' } }}>
+                 <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 240 } }}>
+                     <Select
+                       value={warEvents.length === 0 ? '' : selectedWarId}
+                       onChange={(e) => setSelectedWarId(e.target.value)}
+                       displayEmpty
+                       sx={{
+                           borderRadius: 2,
+                           fontWeight: 700,
+                           fontSize: '0.8rem',
+                           bgcolor: 'background.paper',
+                           boxShadow: 1,
+                           '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' }
+                       }}
+                     >
+                       {warEvents.length === 0 && <MenuItem value="">{t('guild_war.no_active_wars')}</MenuItem>}
+                       {warEvents.map(war => (
+                           <MenuItem key={war.id} value={war.id} sx={{ fontSize: '0.8rem', fontWeight: 600 }}>{war.title}</MenuItem>
+                       ))}
+                     </Select>
+                 </FormControl>
+                 <TextField
+                   size="small"
+                   value={activeMemberSearchQuery}
+                   onChange={(e) => setActiveMemberSearchQuery(e.target.value)}
+                   placeholder={t('guild_war.active_member_search_placeholder')}
+                   InputProps={{
+                     startAdornment: (
+                       <InputAdornment position="start">
+                         <Search sx={{ fontSize: 14 }} />
+                       </InputAdornment>
+                     ),
                    }}
-                 >
-                   {warEvents.length === 0 && <MenuItem value="">{t('guild_war.no_active_wars')}</MenuItem>}
-                   {warEvents.map(war => (
-                       <MenuItem key={war.id} value={war.id} sx={{ fontSize: '0.8rem', fontWeight: 600 }}>{war.title}</MenuItem>
-                   ))}
-                 </Select>
-             </FormControl>
+                   sx={{ minWidth: { xs: '100%', md: 260 } }}
+                 />
+             </Stack>
          )}
       </Box>
 
@@ -225,6 +269,7 @@ export function GuildWar() {
             warId={selectedWarId}
             canManageActive={canManageActive}
             canViewMemberDetail={canViewMemberDetail}
+            memberSearchQuery={activeMemberSearchQuery}
           />
         )}
         {activeTab === 'history' && <WarHistory />}
@@ -240,10 +285,12 @@ function ActiveWarManagement({
   warId,
   canManageActive,
   canViewMemberDetail,
+  memberSearchQuery,
 }: {
   warId: string;
   canManageActive: boolean;
   canViewMemberDetail: boolean;
+  memberSearchQuery: string;
 }) {
   // ✅ TanStack Query: Server state and mutations
   const { data: events = [] } = useEvents();
@@ -283,6 +330,30 @@ function ActiveWarManagement({
   const [teamSort, setTeamSort] = useState<GuildWarSortState>({ field: 'power', direction: 'desc' });
   const [conflictOpen, setConflictOpen] = useState(false);
   const [kickPoolConfirmUserId, setKickPoolConfirmUserId] = useState<string | null>(null);
+  const normalizedMemberSearchQuery = memberSearchQuery.trim().toLowerCase();
+  const matchesMemberSearch = (member: User) => {
+    if (!normalizedMemberSearchQuery) return false;
+    return [member.username, member.wechat_name, member.id]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(normalizedMemberSearchQuery);
+  };
+
+  const renderSortArrows = (sortState: GuildWarSortState, field: GuildWarSortState['field']) => {
+    const isFieldActive = sortState.field === field;
+    const upActive = isFieldActive && sortState.direction === 'asc';
+    const downActive = isFieldActive && sortState.direction === 'desc';
+    const activeColor = theme.palette.primary.main;
+    const inactiveColor = alpha(theme.palette.text.secondary, 0.55);
+
+    return (
+      <Stack direction="row" spacing={0.2} alignItems="center" sx={{ ml: 0.4 }}>
+        <ArrowUpward sx={{ fontSize: 11, color: upActive ? activeColor : inactiveColor }} />
+        <ArrowDownward sx={{ fontSize: 11, color: downActive ? activeColor : inactiveColor }} />
+      </Stack>
+    );
+  };
 
   // DnD sensors: pointer (mouse/touch) + keyboard (Space to grab, Arrow keys to move)
   const sensors = useSensors(
@@ -530,7 +601,7 @@ function ActiveWarManagement({
     <PlaceholderPage
         title={t('guild_war.no_active_wars')}
         description={t('guild_war.no_active_wars')}
-        icon={Swords}
+        icon={Security}
       />
   );
 
@@ -588,16 +659,17 @@ function ActiveWarManagement({
                 <DroppablePool id="pool_droppable">
                   <Box
                     sx={{
-                      borderRadius: 3,
+                      borderRadius: THEME_CARD_RADIUS,
                       border: '2px solid',
                       borderColor: 'divider',
                       bgcolor: alpha(theme.palette.background.paper, 0.4),
                       height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
+                      overflow: 'hidden',
                     }}
                   >
-                    <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'action.hover', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+                    <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'action.hover', borderTopLeftRadius: THEME_HEADER_RADIUS, borderTopRightRadius: THEME_HEADER_RADIUS }}>
                       <Stack direction="row" spacing={1.5} alignItems="center">
                         <Box sx={{ width: 4, height: 24, borderRadius: 1, bgcolor: 'primary.main' }} />
                         <Box>
@@ -612,18 +684,24 @@ function ActiveWarManagement({
                             onClick={() => setPoolSort((prev) => nextGuildWarSortState(prev, 'power'))}
                             sx={{ fontSize: '0.5rem', px: 1 }}
                           >
-                            {t('guild_war.sort_pwr')} {poolSort.field === 'power' ? poolSort.direction.toUpperCase() : ''}
+                            <Stack direction="row" alignItems="center">
+                              {t('guild_war.sort_pwr')}
+                              {renderSortArrows(poolSort, 'power')}
+                            </Stack>
                           </ToggleButton>
                           <ToggleButton
                             value="class"
                             onClick={() => setPoolSort((prev) => nextGuildWarSortState(prev, 'class'))}
                             sx={{ fontSize: '0.5rem', px: 1 }}
                           >
-                            {t('guild_war.sort_cls')} {poolSort.field === 'class' ? poolSort.direction.toUpperCase() : ''}
+                            <Stack direction="row" alignItems="center">
+                              {t('guild_war.sort_cls')}
+                              {renderSortArrows(poolSort, 'class')}
+                            </Stack>
                           </ToggleButton>
                         </ToggleButtonGroup>
                         {canManageActive && (
-                          <IconButton size="small" onClick={() => setAddMemberModalOpen(true)}><Plus size={16} /></IconButton>
+                          <IconButton size="small" onClick={() => setAddMemberModalOpen(true)}><Add sx={{ fontSize: 16 }} /></IconButton>
                         )}
                       </Stack>
                     </Box>
@@ -634,6 +712,7 @@ function ActiveWarManagement({
                           key={member.id}
                           member={member}
                           selected={selectedIds.has(member.id)}
+                          highlighted={matchesMemberSearch(member)}
                           onClick={handleMemberClick}
                           onDoubleClick={handleMemberDoubleClick}
                           onKick={() => handleKickFromPool(member.id)}
@@ -654,7 +733,7 @@ function ActiveWarManagement({
             <Grid size={{ xs: 12, md: 9 }} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <LayoutGrid size={20} style={{ color: theme.palette.primary.main }} />
+                        <GridView sx={{ fontSize: 20, color: theme.palette.primary.main }} />
                         <Typography variant="h6" fontWeight={900} textTransform="uppercase" fontStyle="italic">{t('guild_war.tactical_squads')}</Typography>
                         <Tooltip title={t('guild_war.squad_controls_hint')}><Typography variant="caption" color="text.secondary" sx={{ textDecoration: 'underline', cursor: 'pointer' }}>{t('guild_war.squad_controls_hint')}</Typography></Tooltip>
                     </Stack>
@@ -665,14 +744,20 @@ function ActiveWarManagement({
                           onClick={() => setTeamSort((prev) => nextGuildWarSortState(prev, 'power'))}
                           sx={{ fontSize: '0.5rem', px: 1 }}
                         >
-                          {t('guild_war.sort_pwr')} {teamSort.field === 'power' ? teamSort.direction.toUpperCase() : ''}
+                          <Stack direction="row" alignItems="center">
+                            {t('guild_war.sort_pwr')}
+                            {renderSortArrows(teamSort, 'power')}
+                          </Stack>
                         </ToggleButton>
                         <ToggleButton
                           value="class"
                           onClick={() => setTeamSort((prev) => nextGuildWarSortState(prev, 'class'))}
                           sx={{ fontSize: '0.5rem', px: 1 }}
                         >
-                          {t('guild_war.sort_cls')} {teamSort.field === 'class' ? teamSort.direction.toUpperCase() : ''}
+                          <Stack direction="row" alignItems="center">
+                            {t('guild_war.sort_cls')}
+                            {renderSortArrows(teamSort, 'class')}
+                          </Stack>
                         </ToggleButton>
                     </ToggleButtonGroup>
                 </Box>
@@ -691,14 +776,14 @@ function ActiveWarManagement({
 	                                onAssignRole={(role: string) => handleAssignRole(team.id, role)}
 	                                sortState={teamSort}
 	                                canManage={canManageActive}
+                                  memberSearchQuery={normalizedMemberSearchQuery}
 	                            />
 	                        ))}
 	                        
 	                        {canManageActive && (
 	                          <Button 
 	                              variant="outlined" 
-	                              fullWidth 
-	                              startIcon={<Plus size={16} />}
+	                              fullWidth 	                              startIcon={<Add sx={{ fontSize: 16 }} />}
 	                              sx={{ borderStyle: 'dashed', height: 48, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}
 	                          >
 	                              {t('guild_war.new_squad')}
@@ -717,7 +802,7 @@ function ActiveWarManagement({
         >
             <Alert 
                 severity="info" 
-                icon={<Undo2 className="animate-pulse" size={16} />}
+                icon={<Undo className="animate-pulse" sx={{ fontSize: 16 }} />}
                 action={
                     <Button color="inherit" size="small" onClick={handleUndo} sx={{ fontSize: '0.65rem', fontWeight: 900 }}>
                         {t('common.undo')} ({timeLeft})
@@ -731,27 +816,27 @@ function ActiveWarManagement({
         <Toast open={toastOpen && !!lastAction} message={lastAction?.desc || ''} severity="info" onClose={() => setToastOpen(false)} />
 
         <Dialog open={conflictOpen} onClose={() => setConflictOpen(false)}>
-          <DialogTitle>{t('guild_war.conflict_title') || 'Conflict detected'}</DialogTitle>
+          <DialogTitle>{t('guild_war.conflict_title')}</DialogTitle>
           <DialogContent>
             <Typography variant="body2">
-              {t('guild_war.conflict_body') || 'Another moderator changed this war. Refresh data or force override?'}
+              {t('guild_war.conflict_body')}
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => { setConflictOpen(false); refetchWar(); }}>{t('common.refresh') || 'Refresh'}</Button>
-            <Button variant="contained" color="warning" onClick={() => { setConflictOpen(false); setEtag(undefined); }}>{t('guild_war.override') || 'Override'}</Button>
+            <Button onClick={() => { setConflictOpen(false); refetchWar(); }}>{t('common.refresh')}</Button>
+            <Button variant="contained" color="warning" onClick={() => { setConflictOpen(false); setEtag(undefined); }}>{t('guild_war.override')}</Button>
           </DialogActions>
         </Dialog>
 
         <Dialog open={!!kickPoolConfirmUserId} onClose={() => setKickPoolConfirmUserId(null)} maxWidth="xs" fullWidth>
-          <DialogTitle>{t('guild_war.remove_from_pool') || 'Remove from pool'}</DialogTitle>
+          <DialogTitle>{t('guild_war.remove_from_pool')}</DialogTitle>
           <DialogContent>
             <Typography variant="body2">{t('guild_war.remove_confirm')}</Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setKickPoolConfirmUserId(null)}>{t('common.cancel')}</Button>
             <Button color="error" variant="contained" onClick={confirmKickFromPool}>
-              {t('common.remove') || 'Remove'}
+              {t('common.remove')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -793,9 +878,11 @@ function DraggableMemberCard({
   onKick,
   role,
   canManage = true,
+  highlighted = false,
 }: {
   member: User;
   selected?: boolean;
+  highlighted?: boolean;
   onClick: (id: string, e: React.MouseEvent) => void;
   onDoubleClick: (id: string, e: React.MouseEvent) => void;
   onKick: () => void;
@@ -807,15 +894,21 @@ function DraggableMemberCard({
     disabled: !canManage,
     attributes: { roleDescription: 'draggable member' },
   });
+  const { t } = useTranslation();
   const theme = useTheme();
+  const accentColors = getMemberCardAccentColors(member.classes as ClassType[] | undefined, theme);
+  const primaryAccent = accentColors[0];
+  const primaryClass = member.classes?.[0] as ClassType | undefined;
+  const classTone = getClassPillTone(primaryClass, theme);
+  const classLabel = primaryClass ? formatClassDisplayName(primaryClass) : t('common.unknown');
 
   const getRoleIcon = (r?: string) => {
      switch(r) {
-        case 'lead': return <Crown size={12} color={theme.custom?.warRoles.lead.main || theme.palette.warning.main} />;
-        case 'dmg': return <Swords size={12} color={theme.custom?.warRoles.dps.main || theme.palette.error.main} />;
-        case 'tank': return <Shield size={12} color={theme.custom?.warRoles.tank.main || theme.palette.primary.main} />;
-        case 'healer': return <Heart size={12} color={theme.custom?.warRoles.heal.main || theme.palette.success.main} />;
-        case 'support': return <Sparkles size={12} color="#a855f7" />;
+        case 'lead': return <EmojiEvents sx={{ fontSize: 12, color: theme.custom?.warRoles.lead.main || theme.palette.warning.main }} />;
+        case 'dmg': return <ElectricBolt sx={{ fontSize: 12, color: theme.custom?.warRoles.dps.main || theme.palette.error.main }} />;
+        case 'tank': return <Shield sx={{ fontSize: 12, color: theme.custom?.warRoles.tank.main || theme.palette.primary.main }} />;
+        case 'healer': return <Favorite sx={{ fontSize: 12, color: theme.custom?.warRoles.heal.main || theme.palette.success.main }} />;
+        case 'support': return <AutoAwesome sx={{ fontSize: 12, color: "#a855f7" }} />;
         default: return null;
      }
   };
@@ -833,50 +926,61 @@ function DraggableMemberCard({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          p: 1.5,
+          p: 1.2,
           cursor: canManage ? 'grab' : 'default',
           opacity: isDragging ? 0.3 : 1,
           border: '1px solid',
           borderRadius: 2,
+          overflow: 'hidden',
           borderColor: (() => {
              if (selected) return theme.palette.primary.main;
-             return alpha(getClassBaseColor(member.classes?.[0]), 0.4);
+             if (highlighted) return alpha(theme.palette.warning.main, 0.8);
+             return alpha(primaryAccent, 0.5);
           })(),
           bgcolor: (() => {
              if (selected) return alpha(theme.palette.primary.main, 0.1);
-             return alpha(getClassBaseColor(member.classes?.[0]), 0.12);
+             if (highlighted) return alpha(theme.palette.warning.main, 0.18);
+             return alpha(primaryAccent, 0.24);
           })(),
           transition: 'all 0.2s',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            background: buildMemberAccentGradient(accentColors),
+            pointerEvents: 'none',
+          },
           '&:active': canManage ? { cursor: 'grabbing', transform: 'scale(0.98)' } : undefined,
-          '&:hover': { borderColor: theme.palette.primary.main, boxShadow: 1 }
+          '&:hover': {
+            borderColor: highlighted ? theme.palette.warning.main : theme.palette.primary.main,
+            boxShadow: highlighted ? `0 0 0 1px ${alpha(theme.palette.warning.main, 0.55)}` : 1,
+          }
       }}
     >
-       <Box sx={{ flex: 1, overflow: 'hidden', mr: 2 }}>
+       <Box sx={{ position: 'relative', zIndex: 1, flex: 1, overflow: 'hidden', mr: 1.5 }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-             <Typography variant="body2" noWrap fontWeight={700} sx={{ color: 'text.primary' }} dangerouslySetInnerHTML={sanitizeHtml(member.username)} />
+             <Typography variant="body2" noWrap fontWeight={900} sx={{ color: 'common.white' }} dangerouslySetInnerHTML={sanitizeHtml(member.username)} />
              {role && <Box sx={{ p: 0.5, borderRadius: '50%', bgcolor: 'background.default', border: '1px solid', borderColor: 'divider', display: 'flex' }}>{getRoleIcon(role)}</Box>}
           </Stack>
           
-          <Stack direction="row" alignItems="center" spacing={1}>
-              {member.classes && member.classes.length > 0 && member.classes[0] && (
-                 <Box sx={{
-                     px: 1, py: 0.25, borderRadius: 4,
-                     fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase',
-                     bgcolor: (() => {
-                         return getClassBaseColor(member.classes[0]);
-                     })(),
-                     color: '#fff'
-                 }}>
-                     {formatClassDisplayName(member.classes[0])}
-                 </Box>
-              )}
+          <Stack direction="row" alignItems="center" spacing={0.6} flexWrap="wrap">
               <Box sx={{
-                  px: 1, py: 0.25, borderRadius: 4,
-                  fontSize: '0.6rem', fontWeight: 700, fontFamily: 'monospace',
-                  bgcolor: theme.custom?.warRoles.lead.bg || alpha(theme.palette.warning.main, 0.1),
-                  color: theme.custom?.warRoles.lead.text || theme.palette.warning.contrastText,
+                  px: 1, py: 0.2, borderRadius: 6,
+                  fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase',
+                  bgcolor: classTone.bg,
+                  color: classTone.text,
+                  border: '1px solid',
+                  borderColor: alpha(classTone.main, 0.55),
+              }}>
+                  {classLabel}
+              </Box>
+              <Box sx={{
+                  px: 1, py: 0.2, borderRadius: 6,
+                  fontSize: '0.62rem', fontWeight: 800, fontFamily: 'monospace',
+                  bgcolor: alpha(theme.palette.primary.light, 0.14),
+                  color: 'common.white',
                   border: 1,
-                  borderColor: alpha(theme.custom?.warRoles.lead.main || theme.palette.warning.main, 0.3)
+                  borderColor: alpha(theme.palette.primary.light, 0.4),
               }}>
                   {formatPower(member.power)}
               </Box>
@@ -884,18 +988,22 @@ function DraggableMemberCard({
        </Box>
        
 	       {canManage && (
-	         <Stack direction="row" alignItems="center" spacing={1}>
+	         <Stack direction="row" alignItems="center" spacing={1} sx={{ position: 'relative', zIndex: 1 }}>
 	            <IconButton 
 	               size="small"
 	               onPointerDown={(e) => e.stopPropagation()}
 	               onClick={(e) => { e.stopPropagation(); onKick(); }}
 	               sx={{ 
-	                   p: 0.5, 
-	                   color: 'error.main', 
-	                   '&:hover': { bgcolor: 'error.light', color: 'error.contrastText' }
+	                   p: 0.6,
+                     border: '1px solid',
+                     borderColor: alpha(theme.palette.error.main, 0.75),
+                     color: alpha(theme.palette.error.light, 0.95),
+                     borderRadius: 1.5,
+                     bgcolor: alpha(theme.palette.error.main, 0.08),
+                     '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.16) }
 	               }}
 	            >
-	               <Trash2 size={12} />
+	               <Delete sx={{ fontSize: 12 }} />
 	            </IconButton>
 	         </Stack>
 	       )}
@@ -905,8 +1013,14 @@ function DraggableMemberCard({
 
 function MemberCardOverlay({ id, members, count }: { id: string, members: User[], count: number }) {
    const member = members.find(m => m.id === id);
+   const { t } = useTranslation();
    const theme = useTheme();
    if (!member) return null;
+   const accentColors = getMemberCardAccentColors(member.classes as ClassType[] | undefined, theme);
+   const primaryAccent = accentColors[0];
+   const primaryClass = member.classes?.[0] as ClassType | undefined;
+   const classTone = getClassPillTone(primaryClass, theme);
+   const classLabel = primaryClass ? formatClassDisplayName(primaryClass) : t('common.unknown');
    
    return (
       <Box sx={{ position: 'relative' }}>
@@ -922,43 +1036,53 @@ function MemberCardOverlay({ id, members, count }: { id: string, members: User[]
          )}
 	         <Card
 	           sx={{
-	             p: 1.5,
+	             p: 1.2,
 	             border: '1px solid',
-	             borderColor: alpha(getClassBaseColor(member.classes?.[0]), 0.5),
-	             bgcolor: alpha(getClassBaseColor(member.classes?.[0]), 0.14),
+	             borderColor: alpha(primaryAccent, 0.45),
+	             bgcolor: alpha(primaryAccent, 0.24),
 	             boxShadow: 6,
+               position: 'relative',
+               overflow: 'hidden',
+               '&::before': {
+                 content: '""',
+                 position: 'absolute',
+                 inset: 0,
+                 background: buildMemberAccentGradient(accentColors),
+               },
 	           }}
 	         >
-	           <Typography variant="body2" fontWeight={700} noWrap sx={{ mb: 0.5 }}>
+	           <Typography variant="body2" fontWeight={900} noWrap sx={{ mb: 0.5, color: 'common.white', position: 'relative', zIndex: 1 }}>
 	             {member.username}
 	           </Typography>
-	           <Stack direction="row" spacing={1} alignItems="center">
-	             {member.classes && member.classes.length > 0 && (
-	               <Box
-	                 sx={{
-	                   px: 0.8,
-	                   py: 0.2,
-	                   borderRadius: 4,
-	                   fontSize: '0.55rem',
-	                   fontWeight: 900,
-	                   textTransform: 'uppercase',
-	                   bgcolor: getClassBaseColor(member.classes[0]),
-	                   color: '#fff',
-	                 }}
-	               >
-	                 {formatClassDisplayName(member.classes[0])}
-	               </Box>
-	             )}
+	           <Stack direction="row" spacing={0.6} alignItems="center" flexWrap="wrap" sx={{ position: 'relative', zIndex: 1 }}>
 	             <Box
 	               sx={{
 	                 px: 1,
 	                 py: 0.2,
-	                 borderRadius: 4,
-	                 fontSize: '0.6rem',
-	                 fontWeight: 700,
+	                 borderRadius: 6,
+	                 fontSize: '0.62rem',
+	                 fontWeight: 900,
+	                 textTransform: 'uppercase',
+                   bgcolor: classTone.bg,
+                   color: classTone.text,
+                   border: '1px solid',
+                   borderColor: alpha(classTone.main, 0.55),
+	               }}
+	             >
+	               {classLabel}
+	             </Box>
+	             <Box
+	               sx={{
+	                 px: 1,
+	                 py: 0.2,
+	                 borderRadius: 6,
+	                 fontSize: '0.62rem',
+	                 fontWeight: 800,
 	                 fontFamily: 'monospace',
-	                 bgcolor: theme.custom?.warRoles.lead.bg || alpha(theme.palette.warning.main, 0.1),
-	                 color: theme.custom?.warRoles.lead.text || theme.palette.warning.contrastText,
+	                 bgcolor: alpha(theme.palette.primary.light, 0.14),
+	                 color: 'common.white',
+                   border: '1px solid',
+                   borderColor: alpha(theme.palette.primary.light, 0.4),
 	               }}
 	             >
 	               {formatPower(member.power)}
@@ -976,7 +1100,7 @@ function DroppablePool({ id, children }: { id: string, children: React.ReactNode
     <Box 
         ref={setNodeRef} 
         sx={{ 
-            borderRadius: 3, 
+            borderRadius: THEME_CARD_RADIUS, 
             transition: 'all 0.2s', 
             minHeight: '100%',
             p: 1,
@@ -999,6 +1123,7 @@ function DroppableTeam({
     onAssignRole,
     sortState,
     canManage,
+    memberSearchQuery = '',
 }: any) {
   const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id: team.id });
@@ -1022,12 +1147,13 @@ function DroppableTeam({
     <Box 
         ref={setNodeRef} 
         sx={{ 
-            borderRadius: 3, 
+            borderRadius: THEME_CARD_RADIUS, 
             border: `2px solid`, 
             borderColor: isOver ? 'primary.main' : 'divider',
             bgcolor: isOver ? alpha(theme.palette.primary.main, 0.05) : alpha(theme.palette.background.paper, 0.4),
             transition: 'all 0.2s',
-            mb: 2
+            mb: 2,
+            overflow: 'hidden',
         }}
     >
        <Box sx={{ 
@@ -1035,7 +1161,8 @@ function DroppableTeam({
            display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
            borderBottom: '1px solid', borderColor: 'divider',
            bgcolor: 'action.hover',
-           borderTopLeftRadius: 10, borderTopRightRadius: 10
+           borderTopLeftRadius: THEME_HEADER_RADIUS,
+           borderTopRightRadius: THEME_HEADER_RADIUS
        }}>
           <Stack direction="row" alignItems="center" spacing={1}>
              <Box sx={{ width: 4, height: 24, borderRadius: 1, bgcolor: 'primary.main' }} />
@@ -1051,19 +1178,19 @@ function DroppableTeam({
           <Stack direction="row" alignItems="center" spacing={1}>
              {canManage && (
                <Box sx={{ display: 'flex', gap: 0.5, p: 0.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-                  <IconButton size="small" onClick={() => onAssignRole('lead')} sx={{ p: 0.5, color: theme.custom?.warRoles.lead.main }}><Crown size={14} /></IconButton>
-                  <IconButton size="small" onClick={() => onAssignRole('dmg')} sx={{ p: 0.5, color: theme.custom?.warRoles.dps.main }}><Swords size={14} /></IconButton>
-                  <IconButton size="small" onClick={() => onAssignRole('tank')} sx={{ p: 0.5, color: theme.custom?.warRoles.tank.main }}><Shield size={14} /></IconButton>
-                  <IconButton size="small" onClick={() => onAssignRole('healer')} sx={{ p: 0.5, color: theme.custom?.warRoles.heal.main }}><Heart size={14} /></IconButton>
+                  <IconButton size="small" onClick={() => onAssignRole('lead')} sx={{ p: 0.5, color: theme.custom?.warRoles.lead.main }}><EmojiEvents sx={{ fontSize: 14 }} /></IconButton>
+                  <IconButton size="small" onClick={() => onAssignRole('dmg')} sx={{ p: 0.5, color: theme.custom?.warRoles.dps.main }}><ElectricBolt sx={{ fontSize: 14 }} /></IconButton>
+                  <IconButton size="small" onClick={() => onAssignRole('tank')} sx={{ p: 0.5, color: theme.custom?.warRoles.tank.main }}><Shield sx={{ fontSize: 14 }} /></IconButton>
+                  <IconButton size="small" onClick={() => onAssignRole('healer')} sx={{ p: 0.5, color: theme.custom?.warRoles.heal.main }}><Favorite sx={{ fontSize: 14 }} /></IconButton>
                </Box>
              )}
 
-             <Chip icon={<Zap size={12} />} label={formatPower(totalPower)} size="small" variant="outlined" sx={{ height: 24, '& .MuiChip-label': { fontSize: '0.6rem', fontFamily: 'monospace' } }} />
-             <Chip icon={<Users size={12} />} label={team.members.length} size="small" variant="outlined" sx={{ height: 24, '& .MuiChip-label': { fontSize: '0.6rem', fontFamily: 'monospace' } }} />
+             <Chip icon={<ElectricBolt sx={{ fontSize: 12 }} />} label={formatPower(totalPower)} size="small" variant="outlined" sx={{ height: 24, '& .MuiChip-label': { fontSize: '0.6rem', fontFamily: 'monospace' } }} />
+             <Chip icon={<People sx={{ fontSize: 12 }} />} label={team.members.length} size="small" variant="outlined" sx={{ height: 24, '& .MuiChip-label': { fontSize: '0.6rem', fontFamily: 'monospace' } }} />
              {canManage && (
                <>
-                 <IconButton size="small"><Edit3 size={14} /></IconButton>
-                 <IconButton size="small" color="error"><Trash2 size={14} /></IconButton>
+                 <IconButton size="small"><Edit sx={{ fontSize: 14 }} /></IconButton>
+                 <IconButton size="small" color="error"><Delete sx={{ fontSize: 14 }} /></IconButton>
                </>
              )}
           </Stack>
@@ -1076,18 +1203,26 @@ function DroppableTeam({
            gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)', xl: 'repeat(5, 1fr)' }, 
            gap: 1.5 
        }}>
-          {teamMembers.map((member: any) => (
-             <DraggableMemberCard 
-                key={member.id} 
+          {teamMembers.map((member: any) => {
+            const isHighlighted = !!memberSearchQuery && [member.username, member.wechat_name, member.id]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase()
+              .includes(memberSearchQuery);
+            return (
+              <DraggableMemberCard
+                key={member.id}
                 member={member}
                 selected={selectedIds.has(member.id)}
+                highlighted={isHighlighted}
                 onClick={onMemberClick}
                 onDoubleClick={onMemberDoubleClick}
                 onKick={() => onMemberKick(member.id)}
                 role={member.role_tag}
                 canManage={canManage}
-             />
-          ))}
+              />
+            );
+          })}
           {teamMembers.length === 0 && (
              <Box sx={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
                 <Typography variant="caption" fontWeight={900} color="text.disabled" letterSpacing="0.1em">{t('guild_war.drop_operatives_here')}</Typography>
@@ -1114,7 +1249,7 @@ function AddMemberModal({ open, onClose, members, currentParticipants, onAdd }: 
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
          <Typography variant="overline" fontWeight={900} letterSpacing="0.1em">{t('guild_war.deploy_operative')}</Typography>
-         <IconButton size="small" onClick={onClose}><X size={18} /></IconButton>
+         <IconButton size="small" onClick={onClose}><Close sx={{ fontSize: 18 }} /></IconButton>
       </DialogTitle>
       <DialogContent>
          <TextField 
@@ -1122,7 +1257,7 @@ function AddMemberModal({ open, onClose, members, currentParticipants, onAdd }: 
              placeholder={`${t('common.search')}...`} 
              value={search} 
              onChange={e => setSearch(e.target.value)}
-             InputProps={{ startAdornment: <InputAdornment position="start"><Search size={16} /></InputAdornment> }}
+             InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ fontSize: 16 }} /></InputAdornment> }}
              sx={{ mb: 2, mt: 1 }}
          />
          <Stack spacing={1} sx={{ maxHeight: 300, overflowY: 'auto' }}>
@@ -1143,7 +1278,7 @@ function AddMemberModal({ open, onClose, members, currentParticipants, onAdd }: 
                         <Typography variant="caption" color="text.secondary" fontFamily="monospace">{formatPower(m.power)}</Typography>
                      </Box>
                   </Stack>
-                  <Plus size={16} />
+                  <Add sx={{ fontSize: 16 }} />
                </Box>
             ))}
          </Stack>
@@ -1162,6 +1297,7 @@ function MemberDetailModal({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const member = members.find((m: User) => m.id === userId);
   if(!member) return null;
 
@@ -1200,7 +1336,7 @@ function MemberDetailModal({
     <Dialog open={!!userId} onClose={onClose} fullWidth maxWidth="md">
        <Card sx={{ overflow: 'hidden' }}>
           <Box sx={{ height: 120, background: 'linear-gradient(to right bottom, #1e3a8a, #581c87)', position: 'relative' }}>
-             <IconButton onClick={onClose} sx={{ position: 'absolute', top: 8, right: 8, color: 'white' }}><X size={20} /></IconButton>
+             <IconButton onClick={onClose} sx={{ position: 'absolute', top: 8, right: 8, color: 'white' }}><Close sx={{ fontSize: 20 }} /></IconButton>
           </Box>
           <Box sx={{ px: 3, pb: 3, mt: -5 }}>
              <Avatar
@@ -1228,7 +1364,7 @@ function MemberDetailModal({
                  <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                    <Typography variant="caption" color="text.secondary" fontWeight={900} letterSpacing="0.1em">{t('admin.label_role')}</Typography>
                    <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
-                     <Crown size={14} color="#eab308" />
+                     <EmojiEvents sx={{ fontSize: 14, color: theme.palette.warning.main }} />
                      <Typography variant="body2" fontWeight={700}>{member.role.toUpperCase()}</Typography>
                    </Stack>
                  </Box>

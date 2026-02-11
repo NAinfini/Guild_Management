@@ -1,96 +1,101 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { convertToWebP } from '../../lib/media-conversion';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Button, 
-  Chip, 
-  Typography, 
-  Box, 
-  Stack, 
-  IconButton, 
-  TextField, 
-  Select, 
-  MenuItem, 
-  InputAdornment, 
-  Dialog, 
-  DialogContent, 
-  DialogTitle,
-  DialogActions,
-  Badge,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Tabs,
-  Tab,
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
   useTheme,
   useMediaQuery,
   alpha,
   Tooltip,
   Avatar,
   Grid,
-  Skeleton
+  Skeleton,
+  Box,
+  Stack,
+  Typography,
+  Paper,
+  Card,
+  CardContent,
+  CardHeader,
+  Button,
+  Badge,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  Chip,
+  Tabs,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Select,
+  MenuItem,
+  Input,
+  InputAdornment,
+  TextField,
+  IconButton
 } from '@mui/material';
-import { CardGridSkeleton, TableSkeleton } from '../../components/SkeletonLoaders';
 import { 
-  ShieldAlert, 
-  UserCog, 
-  Activity, 
+  Label,
+  Separator,
+  CardGridSkeleton, 
+  TableSkeleton 
+} from '@/components';
+import { 
+  AdminPanelSettings as ShieldAlert, 
+  ManageAccounts as UserCog, 
+  Insights as Activity, 
   Search, 
-  Filter, 
-  CheckCircle2, 
-  AlertTriangle, 
-  User as UserIcon,
-  ImageIcon,
-  Ban,
-  Upload,
-  RefreshCw,
+  FilterList as Filter, 
+  CheckCircle as CheckCircle2, 
+  Warning as AlertTriangle, 
+  Person as UserIcon,
+  Image as ImageIcon,
+  Block as Ban,
+  FileUpload as Upload,
+  Refresh as RefreshCw,
   History,
   Shield,
-  Zap,
-  Heart,
-  Calendar,
-  X,
-  Swords,
+  Bolt as Zap,
+  Favorite as Heart,
+  CalendarMonth as Calendar,
+  Close as X,
+  EmojiEvents as Swords,
   Save,
-  Video,
-  Music,
-  Trash2,
+  Videocam as Video,
+  MusicNote as Music,
+  Delete as Trash2,
   Lock,
-  KeyRound,
+  VpnKey as KeyRound,
   Terminal,
-  Database,
+  Storage as Database,
   Cloud,
-  Server,
-  Globe,
-  Plus,
-  Minus
-} from 'lucide-react';
+  Dns as Server,
+  Language as Globe,
+  Add as Plus,
+  Remove as Minus
+} from '@mui/icons-material';
 import { useAuthStore, useUIStore } from '../../store';
 import { useAuth } from '../../hooks';
 import { Navigate } from '@tanstack/react-router';
 import { useMembers, useAuditLogs, useUpdateMember } from '../../hooks/useServerState';
-import { cn, formatDateTime, getClassColor, formatPower, sanitizeHtml, getOptimizedMediaUrl, formatClassDisplayName } from '../../lib/utils';
+import { cn, formatDateTime, getClassColor, formatPower, sanitizeHtml, formatClassDisplayName } from '../../lib/utils';
+import { getOptimizedMediaUrl } from '@/lib/media-conversion';
 import { PROGRESSION_CATEGORIES, clampLevel } from '../../lib/progression';
-import { mediaAPI, membersAPI } from '../../lib/api';
-import { User, AuditLogEntry, Role, ClassType, ProgressionData, Announcement, Event } from '../../types';
+import { convertToWebP } from '../../lib/media-conversion';
+import { warsAPI, membersAPI, mediaAPI } from '../../lib/api';
+import { type User, type Role, type ClassType, type ProgressionData, type AuditLogEntry } from '../../types';
 import { useForm, Controller } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
 import { AuditLogs } from './components/AuditLogs';
-import { HealthStatus } from '../../components/HealthStatus';
-import { MediaUpload } from '../../components/MediaUpload';
-import { MediaReorder } from '../../components/MediaReorder';
-import { ProtectedRoute } from '../../components/ProtectedRoute';
-import {
-  canAccessAdminArea,
-  canManageMemberActivation,
+import { HealthStatus, MediaUpload, MediaReorder } from '@/components';
+import { ProtectedRoute } from '../Auth/components/ProtectedRoute';
+import { 
+  canAccessAdminArea, 
+  canManageMemberActivation, 
   canManageMemberRoles,
-  getEffectiveRole,
+  getEffectiveRole 
 } from '../../lib/permissions';
 
 type AdminTab = 'members' | 'audit' | 'status';
@@ -214,9 +219,9 @@ export function Admin() {
                    '& .MuiTabs-indicator': { display: 'none' }
                }}
             >
-               <Tab label={t('admin.tab_members')} value="members" icon={<UserCog size={14} />} iconPosition="start" />
-               <Tab label={t('admin.tab_audit')} value="audit" icon={<History size={14} />} iconPosition="start" />
-               <Tab label={t('admin.tab_status')} value="status" icon={<Activity size={14} />} iconPosition="start" />
+               <Tab label={t('admin.tab_members')} value="members" icon={<UserCog sx={{ fontSize: 14 }} />} iconPosition="start" />
+               <Tab label={t('admin.tab_audit')} value="audit" icon={<History sx={{ fontSize: 14 }} />} iconPosition="start" />
+               <Tab label={t('admin.tab_status')} value="status" icon={<Activity sx={{ fontSize: 14 }} />} iconPosition="start" />
             </Tabs>
         </Box>
       </Box>
@@ -268,7 +273,7 @@ function MemberManagement() {
                onChange={(e) => setSearch(e.target.value)}
                size="small"
                InputProps={{
-                  startAdornment: <InputAdornment position="start"><Search size={16} /></InputAdornment>,
+                  startAdornment: <InputAdornment position="start"><Search sx={{ fontSize: 16 }} /></InputAdornment>,
                   sx: { borderRadius: 3, fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }
                }}
                sx={{ width: { xs: '100%', sm: 300 } }}
@@ -310,7 +315,7 @@ function MemberManagement() {
                       />
                       <Typography variant="body2" fontFamily="monospace" fontWeight={700} color="primary.main">{formatPower(m.power)}</Typography>
                       <Stack direction="row" alignItems="center" spacing={0.5}>
-                        {m.active_status === 'vacation' ? <AlertTriangle size={14} color={theme.custom?.status.vacation.main} /> : <CheckCircle2 size={14} color={theme.custom?.status.active.main} />}
+                        {m.active_status === 'vacation' ? <AlertTriangle sx={{ fontSize: 14, color: theme.custom?.status.vacation.main }} /> : <CheckCircle2 sx={{ fontSize: 14, color: theme.custom?.status.active.main }} />}
                         <Typography variant="caption" fontWeight={900} textTransform="uppercase" color={m.active_status === 'vacation' ? theme.custom?.status.vacation.main : theme.custom?.status.active.main}>
                           {m.active_status === 'vacation' ? t('admin.status_vacation') : t('admin.status_active')}
                         </Typography>
@@ -385,8 +390,8 @@ function MemberManagement() {
                          </TableCell>
                          <TableCell>
                             <Stack direction="row" alignItems="center" spacing={1}>
-                               {m.active_status === 'vacation' ? <AlertTriangle size={14} color={theme.custom?.status.vacation.main} /> : <CheckCircle2 size={14} color={theme.custom?.status.active.main} />}
-                               <Typography variant="caption" fontWeight={900} textTransform="uppercase" color={m.active_status === 'vacation' ? theme.custom?.status.vacation.main : theme.custom?.status.active.main}>
+                               {m.active_status === 'vacation' ? <AlertTriangle sx={{ fontSize: 14, color: theme.custom?.status.vacation.main }} /> : <CheckCircle2 sx={{ fontSize: 14, color: theme.custom?.status.active.main }} />}
+                               <Typography variant="caption" fontWeight={900} textTransform="uppercase" color={m.active_status === 'vacation' ? theme.custom?.status.vacation.main : theme.custom?.status.vacation.main}>
                                   {m.active_status === 'vacation' ? t('admin.status_vacation') : t('admin.status_active')}
                                </Typography>
                             </Stack>
@@ -463,7 +468,7 @@ function MemberDetailModal({ member, onClose, onUpdate }: { member: User, onClos
                      </Stack>
                  </Box>
              </Stack>
-             <IconButton onClick={onClose}><X /></IconButton>
+             <IconButton onClick={onClose}><X sx={{ fontSize: 20 }} /></IconButton>
          </Box>
 
          <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3, bgcolor: 'background.paper' }}>
@@ -523,7 +528,7 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                                  size="small" 
                                  sx={{ position: 'absolute', bottom: -8, right: -8, bgcolor: 'primary.main', color: 'primary.contrastText', '&:hover': { bgcolor: 'primary.dark' } }}
                               >
-                                 <Upload size={14} />
+                                 <Upload sx={{ fontSize: 14 }} />
 
 
 
@@ -549,7 +554,7 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                            <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary" display="block" mb={1}>{t('admin.current_status')}</Typography>
                            {member.active_status === 'vacation' ? (
                               <Chip
-                                icon={<AlertTriangle size={14} />}
+                                icon={<AlertTriangle sx={{ fontSize: 14 }} />}
                                 label={t('admin.status_on_leave')}
                                 size="small"
                                 sx={{
@@ -561,7 +566,7 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                               />
                            ) : (
                               <Chip
-                                icon={<CheckCircle2 size={14} />}
+                                icon={<CheckCircle2 sx={{ fontSize: 14 }} />}
                                 label={t('admin.status_active_duty')}
                                 size="small"
                                 sx={{
@@ -608,7 +613,7 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                         </Box>
 
                         {isDirty && (
-                           <Button type="submit" variant="contained" fullWidth startIcon={<Save size={16} />} sx={{ fontWeight: 900 }} disabled={!online}>{t('admin.save_roster')}</Button>
+                           <Button type="submit" variant="contained" fullWidth startIcon={<Save sx={{ fontSize: 16 }} />} sx={{ fontWeight: 900 }} disabled={!online}>{t('admin.save_roster')}</Button>
                         )}
                      </Stack>
                   </form>
@@ -622,7 +627,7 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                     { icon: Heart, count: Object.keys(member.progression?.xinfa || {}).length, label: 'Xinfa', color: 'blue' }
                 ].map((stat, i) => (
                     <Card key={i} sx={{ p: 2, textAlign: 'center', borderRadius: 3 }}>
-                        <stat.icon size={20} color={stat.color} style={{ margin: '0 auto', marginBottom: 8 }} />
+                        <stat.icon sx={{ fontSize: 20, color: stat.color, margin: '0 auto', marginBottom: 1 }} />
                         <Typography variant="h6" fontWeight={900}>{stat.count}</Typography>
                         <Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.2em" color="text.secondary">{stat.label}</Typography>
                     </Card>
@@ -705,7 +710,7 @@ function MemberProgressionEditor({ member, onUpdate }: { member: User, onUpdate:
                  ))}
              </Box>
              {isDirty && (
-               <Button variant="contained" startIcon={<Save size={16} />} onClick={() => { onUpdate({ progression }); setIsDirty(false); }} disabled={!online}>
+               <Button variant="contained" startIcon={<Save sx={{ fontSize: 16 }} />} onClick={() => { onUpdate({ progression }); setIsDirty(false); }} disabled={!online}>
                   {t('admin.save_progression')}
                </Button>
              )}
@@ -724,7 +729,7 @@ function MemberProgressionEditor({ member, onUpdate }: { member: User, onUpdate:
                       <Card key={item.key} variant="outlined" sx={{ p: 1.5, borderRadius: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                         <Box sx={{ position: 'relative' }}>
                            <Avatar variant="rounded" src={item.icon} alt={item.key} sx={{ width: 48, height: 48, bgcolor: 'background.default' }}>
-                             <Zap size={18} />
+                            <Zap sx={{ fontSize: 18 }} />
                            </Avatar>
                            <Box sx={{ position: 'absolute', bottom: -6, right: -6, width: 22, height: 22, borderRadius: '50%', bgcolor: 'primary.main', color: 'primary.contrastText', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900 }}>
                               {level}
@@ -732,8 +737,8 @@ function MemberProgressionEditor({ member, onUpdate }: { member: User, onUpdate:
                         </Box>
                         <Typography variant="caption" fontWeight={900} textAlign="center" lineHeight={1.2}>{t(item.nameKey)}</Typography>
                         <Stack direction="row" spacing={1} mt={0.5}>
-                           <IconButton size="small" onClick={() => updateLevel(category, item.key, -1)} sx={{ border: '1px solid', borderColor: 'divider' }}><Minus size={12} /></IconButton>
-                           <IconButton size="small" onClick={() => updateLevel(category, item.key, 1)} sx={{ border: '1px solid', borderColor: 'divider' }}><Plus size={12} /></IconButton>
+                           <IconButton size="small" onClick={() => updateLevel(category, item.key, -1)} sx={{ border: '1px solid', borderColor: 'divider' }}><Minus sx={{ fontSize: 12 }} /></IconButton>
+                           <IconButton size="small" onClick={() => updateLevel(category, item.key, 1)} sx={{ border: '1px solid', borderColor: 'divider' }}><Plus sx={{ fontSize: 12 }} /></IconButton>
                         </Stack>
                       </Card>
                     );
@@ -785,7 +790,7 @@ function MemberProfileEditor({ member, onUpdate, canEdit }: { member: User, onUp
          </Grid>
          {isDirty && (
             <Box mt={3} display="flex" justifyContent="flex-end">
-               <Button type="submit" variant="contained" startIcon={<Save size={16} />} disabled={!online}>{t('admin.save_changes')}</Button>
+               <Button type="submit" variant="contained" startIcon={<Save sx={{ fontSize: 16 }} />} disabled={!online}>{t('admin.save_changes')}</Button>
             </Box>
          )}
       </form>
@@ -804,18 +809,18 @@ function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: 
       setAudioUrl((member.media || []).find((m) => m.type === 'audio')?.url || member.audio_url || '');
    }, [member]);
 
-   const handleUpload = (file: File) => {
-      const url = URL.createObjectURL(file);
-      const type = (file.type.startsWith('video') ? 'video' : 'image') as any;
-      const next = [...media, { id: `temp-${Date.now()}`, hash: '', url, type }];
+   const handleUpload = (files: File[]) => {
+      const next = [...media];
+      files.forEach(file => {
+         const url = URL.createObjectURL(file);
+         const type = (file.type.startsWith('video') ? 'video' : 'image') as any;
+         next.push({ id: `temp-${Date.now()}`, hash: '', url, type });
+      });
       setMedia(next);
       onUpdate({ media: next as any });
    };
 
-   const handleReorder = (from: number, to: number) => {
-      const next = [...media];
-      const [item] = next.splice(from, 1);
-      next.splice(to, 0, item);
+   const handleReorder = (next: any[]) => {
       setMedia(next);
       onUpdate({ media: next as any });
    };
@@ -855,8 +860,17 @@ function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: 
 
    return (
       <Stack spacing={4}>
-         <MediaUpload label={t('admin.tab_media')} onSelect={handleUpload} />
-         <MediaReorder items={media as any} onReorder={handleReorder} onDelete={handleDelete} />
+         <MediaUpload 
+            label={t('admin.tab_media')} 
+            onUpload={handleUpload} 
+            onRemove={handleDelete}
+            media={media as any}
+         />
+         <MediaReorder 
+            media={media as any} 
+            onReorder={handleReorder} 
+            onRemove={handleDelete} 
+         />
          <input
             ref={audioInputRef}
             type="file"
@@ -872,7 +886,7 @@ function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: 
          <Stack spacing={1.5}>
             <Button
                variant="outlined"
-               startIcon={<Upload size={16} />}
+               startIcon={<Upload sx={{ fontSize: 16 }} />}
                onClick={() => audioInputRef.current?.click()}
                disabled={uploadingAudio}
                sx={{ alignSelf: 'flex-start', fontWeight: 800 }}
@@ -924,7 +938,7 @@ function MemberAdminActions({ member, onUpdate, currentUser }: { member: User, o
          <Grid container spacing={4}>
             <Grid size={{ xs: 12, md: 6 }}>
                <Card variant="outlined" sx={{ height: '100%' }}>
-                  <CardHeader title={<Stack direction="row" gap={1}><KeyRound size={16} /> <Typography variant="subtitle2" fontWeight={900}>{t('admin.reset_credentials')}</Typography></Stack>} />
+                  <CardHeader title={<Stack direction="row" gap={1}><KeyRound sx={{ fontSize: 16 }} /> <Typography variant="subtitle2" fontWeight={900}>{t('admin.reset_credentials')}</Typography></Stack>} />
                   <CardContent>
                      <Stack spacing={2}>
                         <TextField type="password" placeholder={t('admin.temp_password_placeholder')} value={password} onChange={e => setPassword(e.target.value)} size="small" fullWidth />
@@ -935,7 +949,7 @@ function MemberAdminActions({ member, onUpdate, currentUser }: { member: User, o
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
                <Card variant="outlined" sx={{ height: '100%' }}>
-                  <CardHeader title={<Stack direction="row" gap={1}><Ban size={16} /> <Typography variant="subtitle2" fontWeight={900}>{t('admin.account_status')}</Typography></Stack>} />
+                  <CardHeader title={<Stack direction="row" gap={1}><Ban sx={{ fontSize: 16 }} /> <Typography variant="subtitle2" fontWeight={900}>{t('admin.account_status')}</Typography></Stack>} />
                   <CardContent>
                      <Button 
                         fullWidth 

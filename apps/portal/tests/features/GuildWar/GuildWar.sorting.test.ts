@@ -12,8 +12,8 @@ describe('Guild War sorting helpers', () => {
     const ascending = sortGuildWarMembers(members as any, { field: 'power', direction: 'asc' });
     const descending = sortGuildWarMembers(members as any, { field: 'power', direction: 'desc' });
 
-    expect(ascending.map((member) => member.id)).toEqual(['2', '3', '1']);
-    expect(descending.map((member) => member.id)).toEqual(['1', '3', '2']);
+    expect(ascending.map((member) => (member as any).id)).toEqual(['2', '3', '1']);
+    expect(descending.map((member) => (member as any).id)).toEqual(['1', '3', '2']);
   });
 
   it('toggles sort direction when selecting the same field', () => {

@@ -2,7 +2,7 @@
  * Authentication API
  */
 
-import { api } from '../api-client';
+import { typedAPI } from './api-builder';
 
 export interface LoginPayload {
   username: string;
@@ -22,6 +22,7 @@ export interface AuthUser {
 export interface LoginResponse {
   user: AuthUser;
   sessionId: string;
+  csrfToken?: string;
 }
 
 export interface SessionResponse {
@@ -34,27 +35,27 @@ export const authAPI = {
    * Login with username and password
    */
   login: async (credentials: LoginPayload): Promise<LoginResponse> => {
-    return api.post<LoginResponse>('/auth/login', credentials);
+    return typedAPI.auth.login<LoginResponse>({ body: credentials });
   },
 
   /**
    * Get current session / user
    */
   getSession: async (): Promise<SessionResponse> => {
-    return api.get<SessionResponse>('/auth/session');
+    return typedAPI.auth.session<SessionResponse>();
   },
 
   /**
    * Logout and clear session
    */
   logout: async (): Promise<void> => {
-    await api.post<void>('/auth/logout');
+    await typedAPI.auth.logout<void>();
   },
 
   /**
    * Change password
    */
   changePassword: async (data: { currentPassword: string; newPassword: string }): Promise<void> => {
-    await api.post<void>('/auth/change-password', data);
+    await typedAPI.auth.changePassword<void>({ body: data });
   },
 };

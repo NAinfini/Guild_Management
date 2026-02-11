@@ -15,7 +15,10 @@ import {
   MetricType,
   AggregationType,
   TeamStats,
+  AnalyticsMode,
+  formatMetricName,
 } from './types';
+import i18next from 'i18next';
 
 // ============================================================================
 // Data Transformations for Charts
@@ -81,23 +84,39 @@ export function transformForCompare(
   perWarStats: PerWarMemberStats[],
   wars: WarSummary[],
   userIds: number[],
-  metric: MetricType
+  metrics: MetricType[]
 ): CompareDataPoint[] {
   const sortedWars = [...wars].sort((a, b) =>
     new Date(a.war_date).getTime() - new Date(b.war_date).getTime()
   );
+  const selectedMetrics: MetricType[] = metrics.length > 0 ? metrics : ['damage'];
 
   return sortedWars.map(war => {
+    const warMeta = perWarStats.find((s) => s.war_id === war.war_id);
     const point: CompareDataPoint = {
       war_id: war.war_id,
       war_date: war.war_date,
       war_title: war.title,
     };
 
+    if (warMeta?.normalization_factor !== undefined) {
+      point.normalization_factor = warMeta.normalization_factor;
+    }
+    if (warMeta?.enemy_strength_tier) {
+      point.enemy_strength_tier = warMeta.enemy_strength_tier;
+    }
+
     // Add data for each user
     userIds.forEach(userId => {
       const stats = perWarStats.find(s => s.war_id === war.war_id && s.user_id === userId);
-      point[`user_${userId}`] = stats?.[metric] ?? null;
+      selectedMetrics.forEach((metric) => {
+        point[`user_${userId}__${metric}`] = stats?.[metric] ?? null;
+        const rawMetricKey = `raw_${metric}` as keyof PerWarMemberStats;
+        const rawValue = stats?.[rawMetricKey];
+        if (typeof rawValue === 'number') {
+          point[`user_${userId}__${metric}__raw`] = rawValue;
+        }
+      });
     });
 
     return point;
@@ -431,51 +450,77 @@ export function findBestWar(
  * Generate shareable text snapshot of analytics
  */
 export function generateAnalyticsSnapshot(
-  mode: string,
+  mode: AnalyticsMode,
   metric: MetricType,
   wars: WarSummary[],
   data: any
 ): string {
+  const t = i18next.t.bind(i18next);
   const lines: string[] = [];
+  const modeKeyMap: Record<AnalyticsMode, string> = {
+    compare: 'guild_war.analytics_mode_compare',
+    rankings: 'guild_war.analytics_mode_rankings',
+    teams: 'guild_war.analytics_mode_teams',
+  };
+  const modeLabel = t(modeKeyMap[mode]);
+  const metricLabel = formatMetricName(metric);
+  const startDate = wars[0]?.war_date ? formatWarDate(wars[0].war_date) : t('common.unknown');
+  const endDate =
+    wars.length > 0 && wars[wars.length - 1]?.war_date
+      ? formatWarDate(wars[wars.length - 1].war_date)
+      : t('common.unknown');
+  const formatSnapshotNumber = (value: unknown): string =>
+    typeof value === 'number' && Number.isFinite(value)
+      ? new Intl.NumberFormat(getLocaleTag()).format(value)
+      : t('common.unknown');
 
-  lines.push('⚔️ War Analytics Snapshot');
+  lines.push(t('guild_war.analytics_snapshot_title'));
   lines.push('');
-  lines.push(`📅 Date Range: ${wars[0]?.war_date || 'N/A'} to ${wars[wars.length - 1]?.war_date || 'N/A'}`);
-  lines.push(`🎯 Wars Analyzed: ${wars.length}`);
-  lines.push(`📊 Mode: ${mode}`);
-  lines.push(`📈 Metric: ${metric}`);
+  lines.push(t('guild_war.analytics_snapshot_date_range', { start: startDate, end: endDate }));
+  lines.push(t('guild_war.analytics_snapshot_wars_analyzed', { count: wars.length }));
+  lines.push(t('guild_war.analytics_snapshot_mode', { mode: modeLabel }));
+  lines.push(t('guild_war.analytics_snapshot_metric', { metric: metricLabel }));
   lines.push('');
-
-  // Mode-specific data
-  if (mode === 'player' && data.selectedUser) {
-    lines.push(`👤 Player: ${data.selectedUser.username}`);
-    lines.push(`💪 Class: ${data.selectedUser.class}`);
-    lines.push(`🎮 Wars Participated: ${data.selectedUser.wars_participated}`);
-    lines.push(`📊 Average ${metric}: ${data.selectedUser[`avg_${metric}`]?.toFixed(1) || 'N/A'}`);
-    lines.push(`🏆 Total ${metric}: ${data.selectedUser[`total_${metric}`]?.toLocaleString() || 'N/A'}`);
-  }
 
   if (mode === 'compare' && data.members) {
-    lines.push(`👥 Comparing ${data.members.length} members`);
+    lines.push(t('guild_war.analytics_snapshot_compare_members', { count: data.members.length }));
     lines.push('');
-    lines.push(`🏆 Top 5 by ${metric}:`);
+    lines.push(t('guild_war.analytics_snapshot_top_by_metric', { count: 5, metric: metricLabel }));
     data.members
       .sort((a: any, b: any) => (b[`total_${metric}`] || 0) - (a[`total_${metric}`] || 0))
       .slice(0, 5)
       .forEach((member: any, i: number) => {
-        lines.push(`  ${i + 1}. ${member.username}: ${member[`total_${metric}`]?.toLocaleString() || 'N/A'}`);
+        lines.push(
+          t('guild_war.analytics_snapshot_member_line', {
+            rank: i + 1,
+            username: member.username,
+            value: formatSnapshotNumber(member[`total_${metric}`]),
+          })
+        );
       });
   }
 
   if (mode === 'rankings' && data.rankings) {
-    lines.push(`🏆 Top ${data.rankings.length} by ${metric}:`);
+    lines.push(
+      t('guild_war.analytics_snapshot_top_by_metric', {
+        count: data.rankings.length,
+        metric: metricLabel,
+      })
+    );
     data.rankings.forEach((entry: any, i: number) => {
-      lines.push(`  ${i + 1}. ${entry.username} (${entry.class}): ${entry.value.toLocaleString()}`);
+      lines.push(
+        t('guild_war.analytics_snapshot_ranking_line', {
+          rank: i + 1,
+          username: entry.username,
+          className: entry.class,
+          value: formatSnapshotNumber(entry.value),
+        })
+      );
     });
   }
 
   lines.push('');
-  lines.push('🤖 Generated with Guild Management System');
+  lines.push(t('guild_war.analytics_snapshot_generated_by'));
 
   return lines.join('\n');
 }
@@ -502,11 +547,12 @@ export async function copyToClipboard(text: string): Promise<boolean> {
  */
 export function formatWarDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
+  if (Number.isNaN(date.getTime())) return i18next.t('common.unknown');
+  return new Intl.DateTimeFormat(getLocaleTag(), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  });
+  }).format(date);
 }
 
 /**
@@ -514,17 +560,18 @@ export function formatWarDate(dateString: string): string {
  */
 export function formatWarDateShort(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
+  if (Number.isNaN(date.getTime())) return i18next.t('common.unknown');
+  return new Intl.DateTimeFormat(getLocaleTag(), {
     month: 'numeric',
     day: 'numeric',
-  });
+  }).format(date);
 }
 
 /**
  * Format percentage
  */
 export function formatPercentage(value: number | null, decimals: number = 1): string {
-  if (value === null) return 'N/A';
+  if (value === null) return i18next.t('common.unknown');
   return `${value.toFixed(decimals)}%`;
 }
 
@@ -532,25 +579,29 @@ export function formatPercentage(value: number | null, decimals: number = 1): st
  * Format large numbers with K/M suffix
  */
 export function formatLargeNumber(value: number | null): string {
-  if (value === null) return 'N/A';
-
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`;
-  }
-  return value.toString();
+  if (value === null) return i18next.t('common.unknown');
+  return new Intl.NumberFormat(getLocaleTag(), {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value);
 }
 
 /**
  * Get trend icon and color
  */
 export function getTrendIndicator(trend: number | null): { icon: string; color: string } {
-  if (trend === null) return { icon: '—', color: 'text.secondary' };
-  if (trend > 5) return { icon: '↑', color: 'success.main' };
-  if (trend < -5) return { icon: '↓', color: 'error.main' };
-  return { icon: '→', color: 'warning.main' };
+  if (trend === null) return { icon: '-', color: 'text.secondary' };
+  if (trend > 5) return { icon: '^', color: 'success.main' };
+  if (trend < -5) return { icon: 'v', color: 'error.main' };
+  return { icon: '~', color: 'warning.main' };
 }
 
 export { formatNumber, formatCompactNumber, formatMetricName, METRICS } from './types';
+
+function getLocaleTag(): string {
+  const lang = i18next.language || 'en';
+  if (lang.toLowerCase().startsWith('zh')) {
+    return 'zh-CN';
+  }
+  return 'en-US';
+}

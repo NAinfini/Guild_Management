@@ -1,0 +1,62 @@
+.theme-neo-brutalism {
+  /* Typography */
+  --theme-font-display: 'Archivo Black', sans-serif;
+  --theme-font-body: 'Inter', sans-serif;
+  --theme-letter-spacing: -0.01em;
+  
+  /* Structure - Refined for "Modern" Neo-Brutalism (Neubrutalism) */
+  --theme-border-width: 2px;
+  --theme-border-radius: 8px; /* Slightly rounded as per images */
+  --theme-border-style: solid;
+  
+  /* Depth & Shadows */
+  --theme-shadow-sm: 2px 2px 0px currentColor;
+  --theme-shadow-md: 4px 4px 0px currentColor;
+  --theme-shadow-lg: 6px 6px 0px currentColor;
+  
+  /* Motion */
+  --theme-duration: 0.15s;
+  --theme-easing: cubic-bezier(0.2, 0, 0, 1);
+  --theme-motion-fast: 140ms;
+  --theme-motion-medium: 210ms;
+  --theme-motion-slow: 280ms;
+  --theme-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+  --theme-motion-hover-lift: -1px;
+  --theme-motion-card-lift: -2px;
+  --theme-motion-input-lift: -0.5px;
+  --theme-motion-press-y: 1px;
+  --theme-motion-press-scale: 0.985;
+
+  /* Component token overrides */
+  --cmp-button-radius: 8px;
+  --cmp-card-radius: 10px;
+  --cmp-card-shadow: 4px 4px 0 currentColor;
+  --cmp-input-radius: 8px;
+  --cmp-chip-border: var(--sys-border-strong);
+  --cmp-nav-item-active-bg: var(--sys-interactive-active);
+  
+  /* Theme Specific */
+  background-image: radial-gradient(var(--color-border-subtle) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.theme-neo-brutalism :is(.ui-button, .ui-chip, .ui-card, .ui-table, .control) {
+  border: var(--theme-border-width) var(--theme-border-style) var(--color-border-default);
+  border-color: var(--color-text-primary);
+  font-family: var(--theme-font-body);
+}
+
+.theme-neo-brutalism :is(.ui-button, .ui-chip):hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--theme-shadow-sm);
+}
+
+.theme-neo-brutalism :is(.ui-card, .ui-table):hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--theme-shadow-md);
+}
+
+.theme-neo-brutalism :is(.ui-button, .ui-chip):active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 currentColor;
+}
