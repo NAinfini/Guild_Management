@@ -9,9 +9,7 @@ import {
   Badge,
   ScrollArea
 } from '@/components';
-import { DecorativeBackground } from '@/components';
 
-import TrackChangesIcon from '@mui/icons-material/TrackChanges';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -65,45 +63,6 @@ export function Dashboard() {
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 relative min-h-screen overflow-x-hidden">
-      <DecorativeBackground 
-        variant="war-room"
-        motion="parallax"
-        motionStrength={1.15}
-        layers={[
-          {
-            id: 'war-icon',
-            type: 'icon',
-            icon: TrackChangesIcon,
-            color: 'var(--color-status-warning)',
-            size: 580,
-            opacity: 0.06,
-            rotation: -14,
-            top: -20,
-            right: -20,
-          },
-          {
-            id: 'war-orb',
-            type: 'orb',
-            color: 'var(--color-status-error)',
-            size: 360,
-            opacity: 0.16,
-            blur: 24,
-            top: 80,
-            right: 120,
-          },
-          {
-            id: 'war-ring',
-            type: 'ring',
-            color: 'var(--color-status-warning)',
-            size: 420,
-            opacity: 0.14,
-            top: 120,
-            right: 40,
-          },
-        ]}
-        className="-top-20 -right-20 pointer-events-none"
-      />
-
       {/* Main Grid: 2 Columns */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)]">
         

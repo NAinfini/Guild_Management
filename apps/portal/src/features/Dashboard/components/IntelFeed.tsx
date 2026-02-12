@@ -89,16 +89,6 @@ export const IntelFeed: React.FC<IntelFeedProps> = ({ announcements, newMembers,
           <div className="flex flex-col">
             {recentAnnouncements.length > 0 && (
               <>
-                <div
-                  className="px-4 py-2 border-b border-[color:var(--cmp-card-border)]"
-                  style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 56%, transparent)' }}
-                >
-                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <NotificationsIcon sx={{ fontSize: 12 }} />
-                    {t('dashboard.intel.notifications')}
-                  </span>
-                </div>
-
                 {recentAnnouncements.slice(0, 3).map((a) => (
                   <div
                     key={`announcement-${a.id}`}

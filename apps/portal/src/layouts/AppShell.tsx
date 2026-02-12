@@ -52,7 +52,6 @@ import {
 import { Palette, ColorLens, Translate } from '@mui/icons-material';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { OfflineBanner } from '@/components/feedback/OfflineBanner';
-import { ThemeAmbientEffects } from '@/components/layout/ThemeAmbientEffects';
 import { useMobileOptimizations } from '@/hooks';
 import { Role } from '@/types';
 import {
@@ -350,11 +349,6 @@ export function AppShell() {
 
   return (
     <>
-    <ThemeAmbientEffects
-      theme={themeController.currentTheme}
-      motionIntensity={themeController.motionIntensity}
-      reducedMotion={Boolean(prefersReducedMotion)}
-    />
     <Box sx={{ display: 'flex', height: '100vh', overflow: 'visible', position: 'relative', zIndex: 1 }}>
       {/* Mobile Sidebar (Drawer) */}
       {isMobile && (

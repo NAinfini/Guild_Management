@@ -25,7 +25,6 @@ import {
   Alert,
   AlertDescription
 } from '@/components';
-import { DecorativeBackground } from '@/components';
 
 export function Login() {
   const { t } = useTranslation();
@@ -57,64 +56,6 @@ export function Login() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-background relative overflow-hidden">
-      <DecorativeBackground 
-        variant="arcane"
-        motion="reactive"
-        motionStrength={0.85}
-        layers={[
-          {
-            id: 'login-shield',
-            type: 'icon',
-            icon: VerifiedUserIcon,
-            color: 'var(--color-status-info)',
-            size: 380,
-            opacity: 0.06,
-            top: -20,
-            right: -20,
-            rotation: -10,
-          },
-          {
-            id: 'login-shield-ring',
-            type: 'ring',
-            color: 'var(--color-status-info)',
-            size: 300,
-            opacity: 0.18,
-            top: 20,
-            right: 20,
-          },
-        ]}
-        className="-top-20 -right-20"
-      />
-      <DecorativeBackground 
-        variant="minimal"
-        motion="drift"
-        motionStrength={0.7}
-        layers={[
-          {
-            id: 'login-lock',
-            type: 'icon',
-            icon: LockIcon,
-            color: 'var(--sys-text-secondary)',
-            size: 300,
-            opacity: 0.05,
-            bottom: -10,
-            left: -10,
-            rotation: -8,
-          },
-          {
-            id: 'login-lock-orb',
-            type: 'orb',
-            color: 'var(--sys-surface-elevated)',
-            size: 220,
-            opacity: 0.12,
-            blur: 20,
-            bottom: -20,
-            left: 20,
-          },
-        ]}
-        className="-bottom-10 -left-10"
-      />
-
       <div className="w-full max-w-md z-10">
         <div className="mb-8 text-center">
             <Link to="/">
