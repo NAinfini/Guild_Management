@@ -5,6 +5,7 @@
 
 export const DB_TABLES = {
   users: 'users',
+  userPreferences: 'user_preferences',
   memberProfiles: 'member_profiles',
   memberClasses: 'member_classes',
   memberMedia: 'member_media',

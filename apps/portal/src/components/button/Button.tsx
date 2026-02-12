@@ -46,7 +46,6 @@ const variantSxMap: Record<NonNullable<ButtonProps["variant"]>, MuiButtonProps["
     },
     "&:active": {
       backgroundColor: "var(--cmp-button-active-bg)",
-      transform: "translateY(1px)",
     },
     "&.Mui-disabled": {
       backgroundColor: "color-mix(in srgb, var(--cmp-button-bg) 35%, transparent)",
@@ -63,7 +62,6 @@ const variantSxMap: Record<NonNullable<ButtonProps["variant"]>, MuiButtonProps["
     },
     "&:active": {
       backgroundColor: "color-mix(in srgb, var(--color-status-error) 76%, black)",
-      transform: "translateY(1px)",
     },
     "&.Mui-disabled": {
       backgroundColor: "color-mix(in srgb, var(--color-status-error) 38%, transparent)",
@@ -197,17 +195,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         color={muiColor}
         size={muiSize}
         data-ui="button"
-        className={cn(buttonVariants({ variant: resolvedVariant, size: resolvedSize }), className)}
+        className={cn("control", buttonVariants({ variant: resolvedVariant, size: resolvedSize }), className)}
         sx={[
           {
             borderRadius: "var(--cmp-button-radius)",
             textTransform: "none",
             boxShadow: "none",
-            transition:
-              "background-color var(--motionFast) var(--ease), border-color var(--motionFast) var(--ease), color var(--motionFast) var(--ease), transform var(--motionFast) var(--ease), box-shadow var(--motionFast) var(--ease)",
             "&:focus-visible, &.Mui-focusVisible": {
-              outline: "2px solid var(--sys-interactive-focus-ring)",
+              outline: "var(--interaction-focus-ring-width, 2px) solid var(--interaction-focus-ring-color, var(--sys-interactive-focus-ring))",
               outlineOffset: "2px",
+              boxShadow: "var(--interaction-focus-ring-glow, none)",
             },
             "& .MuiTouchRipple-root": {
               color: "var(--sys-interactive-accent)",

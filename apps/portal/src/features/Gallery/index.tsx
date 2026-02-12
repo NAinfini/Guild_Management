@@ -91,7 +91,42 @@ export function Gallery() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id: string) => galleryAPI.delete(id),
-    onSuccess: () => {
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['gallery'] });
+      const snapshots = queryClient.getQueriesData<{
+        images: GalleryImage[];
+        pagination?: { page: number; limit: number; total: number; pages: number };
+      }>({ queryKey: ['gallery'] });
+
+      snapshots.forEach(([queryKey, cached]) => {
+        if (!cached) return;
+
+        const nextImages = cached.images.filter((img) => img.gallery_id !== id);
+        const nextTotal = Math.max((cached.pagination?.total ?? nextImages.length) - 1, 0);
+        const pageLimit = cached.pagination?.limit ?? LIMIT;
+        const nextPages = Math.max(1, Math.ceil(nextTotal / Math.max(pageLimit, 1)));
+
+        queryClient.setQueryData(queryKey, {
+          ...cached,
+          images: nextImages,
+          pagination: cached.pagination
+            ? {
+                ...cached.pagination,
+                total: nextTotal,
+                pages: nextPages,
+              }
+            : undefined,
+        });
+      });
+
+      return { snapshots };
+    },
+    onError: (_error, _id, context) => {
+      context?.snapshots?.forEach(([queryKey, snapshot]: [readonly unknown[], unknown]) => {
+        queryClient.setQueryData(queryKey, snapshot);
+      });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['gallery'] });
     },
   });

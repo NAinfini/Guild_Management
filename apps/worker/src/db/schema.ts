@@ -1,4 +1,4 @@
-import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, primaryKey, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   userId: text('user_id').primaryKey(),
@@ -9,6 +9,18 @@ export const users = sqliteTable('users', {
   isActive: integer('is_active').notNull().default(1),
   deletedAtUtc: text('deleted_at_utc'),
   createdAtUtc: text('created_at_utc').notNull(),
+  updatedAtUtc: text('updated_at_utc').notNull(),
+});
+
+export const userPreferences = sqliteTable('user_preferences', {
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.userId, { onDelete: 'cascade' })
+    .primaryKey(),
+  theme: text('theme').notNull(),
+  color: text('color').notNull(),
+  fontScale: real('font_scale').notNull(),
+  motionIntensity: real('motion_intensity').notNull(),
   updatedAtUtc: text('updated_at_utc').notNull(),
 });
 
@@ -141,3 +153,50 @@ export const auditLog = sqliteTable('audit_log', {
   createdAtUtc: text('created_at_utc').notNull(),
   updatedAtUtc: text('updated_at_utc').notNull(),
 });
+
+export const warHistory = sqliteTable('war_history', {
+  warId: text('war_id').primaryKey(),
+  eventId: text('event_id'),
+  warDate: text('war_date').notNull(),
+  title: text('title'),
+  notes: text('notes'),
+  ourKills: integer('our_kills'),
+  enemyKills: integer('enemy_kills'),
+  ourTowers: integer('our_towers'),
+  enemyTowers: integer('enemy_towers'),
+  ourBaseHp: integer('our_base_hp'),
+  enemyBaseHp: integer('enemy_base_hp'),
+  ourDistance: integer('our_distance'),
+  enemyDistance: integer('enemy_distance'),
+  ourCredits: integer('our_credits'),
+  enemyCredits: integer('enemy_credits'),
+  result: text('result').notNull(),
+  createdBy: text('created_by').references(() => users.userId),
+  updatedBy: text('updated_by').references(() => users.userId),
+  createdAtUtc: text('created_at_utc').notNull(),
+  updatedAtUtc: text('updated_at_utc').notNull(),
+});
+
+export const warMemberStats = sqliteTable(
+  'war_member_stats',
+  {
+    warId: text('war_id')
+      .notNull()
+      .references(() => warHistory.warId, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.userId, { onDelete: 'cascade' }),
+    kills: integer('kills'),
+    deaths: integer('deaths'),
+    assists: integer('assists'),
+    damage: integer('damage'),
+    healing: integer('healing'),
+    buildingDamage: integer('building_damage'),
+    damageTaken: integer('damage_taken'),
+    credits: integer('credits'),
+    note: text('note'),
+    createdAtUtc: text('created_at_utc').notNull(),
+    updatedAtUtc: text('updated_at_utc').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.warId, t.userId] })]
+);

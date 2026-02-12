@@ -1,5 +1,13 @@
 export type ThemeMode = 'neo-brutalism' | 'steampunk' | 'cyberpunk' | 'post-apocalyptic' | 'chibi' | 'royal' | 'minimalistic';
 export type ThemeColor = 'default-violet' | 'black-gold' | 'chinese-ink' | 'neon-spectral' | 'red-gold' | 'soft-pink';
+export type ThemeBackgroundMode = 'css' | 'canvas' | 'rive';
+
+export interface ThemeVisualCapabilities {
+  hasAnimatedBackground: boolean;
+  hasMascot: boolean;
+  fxQuality: 0 | 1 | 2 | 3;
+  backgroundMode: ThemeBackgroundMode;
+}
 
 export interface ThemeVisualSpec {
   id: ThemeMode;
@@ -17,6 +25,28 @@ export interface ThemeVisualSpec {
     inputRadius: number;
   };
   shadows: string[];
+  capabilities: ThemeVisualCapabilities;
+}
+
+const DEFAULT_THEME_CAPABILITIES: ThemeVisualCapabilities = {
+  hasAnimatedBackground: false,
+  hasMascot: false,
+  fxQuality: 0,
+  backgroundMode: 'css',
+};
+
+function withThemeCapabilities(
+  spec: Omit<ThemeVisualSpec, 'capabilities'> & {
+    capabilities?: Partial<ThemeVisualCapabilities>;
+  },
+): ThemeVisualSpec {
+  return {
+    ...spec,
+    capabilities: {
+      ...DEFAULT_THEME_CAPABILITIES,
+      ...spec.capabilities,
+    },
+  };
 }
 
 export interface ThemeColorRole {
@@ -203,7 +233,7 @@ export const GAME_CLASS_COLORS = {
   lieshi: { main: '#7f1d1d', bg: 'rgba(127, 29, 29, 0.28)', text: '#fee2e2' },
 } as const;
 
-export const NEO_BRUTALISM_VISUAL_SPEC: ThemeVisualSpec = {
+export const NEO_BRUTALISM_VISUAL_SPEC: ThemeVisualSpec = withThemeCapabilities({
   id: 'neo-brutalism',
   label: 'Neo-Brutalism',
   fontFamily: "'Inter', sans-serif",
@@ -220,9 +250,15 @@ export const NEO_BRUTALISM_VISUAL_SPEC: ThemeVisualSpec = {
     '4px 4px 0px currentColor',
     '6px 6px 0px currentColor',
   ],
-};
+  capabilities: {
+    hasAnimatedBackground: true,
+    hasMascot: false,
+    fxQuality: 2,
+    backgroundMode: 'css',
+  },
+});
 
-export const STEAMPUNK_VISUAL_SPEC: ThemeVisualSpec = {
+export const STEAMPUNK_VISUAL_SPEC: ThemeVisualSpec = withThemeCapabilities({
   id: 'steampunk',
   label: 'Steampunk',
   fontFamily: "'Courier Prime', monospace",
@@ -234,9 +270,15 @@ export const STEAMPUNK_VISUAL_SPEC: ThemeVisualSpec = {
   bgSize: '400px',
   shape: { borderRadius: 6, buttonRadius: 4, inputRadius: 2 },
   shadows: ['none', '0 2px 4px rgba(0,0,0,0.4)', '0 4px 12px rgba(0,0,0,0.6)', '0 12px 32px rgba(0,0,0,0.8)'],
-};
+  capabilities: {
+    hasAnimatedBackground: true,
+    hasMascot: false,
+    fxQuality: 2,
+    backgroundMode: 'css',
+  },
+});
 
-export const MINIMALISTIC_VISUAL_SPEC: ThemeVisualSpec = {
+export const MINIMALISTIC_VISUAL_SPEC: ThemeVisualSpec = withThemeCapabilities({
   id: 'minimalistic',
   label: 'Minimalistic',
   fontFamily: "'Inter', sans-serif",
@@ -248,9 +290,15 @@ export const MINIMALISTIC_VISUAL_SPEC: ThemeVisualSpec = {
   bgSize: 'auto',
   shape: { borderRadius: 6, buttonRadius: 6, inputRadius: 6 },
   shadows: ['none', '0 1px 2px 0 rgba(0, 0, 0, 0.05)', '0 4px 6px -1px rgba(0, 0, 0, 0.1)', '0 10px 15px -3px rgba(0, 0, 0, 0.1)'],
-};
+  capabilities: {
+    hasAnimatedBackground: false,
+    hasMascot: false,
+    fxQuality: 0,
+    backgroundMode: 'css',
+  },
+});
 
-export const CYBERPUNK_VISUAL_SPEC: ThemeVisualSpec = {
+export const CYBERPUNK_VISUAL_SPEC: ThemeVisualSpec = withThemeCapabilities({
   id: 'cyberpunk',
   label: 'Cyberpunk',
   fontFamily: "'Rajdhani', sans-serif",
@@ -262,9 +310,15 @@ export const CYBERPUNK_VISUAL_SPEC: ThemeVisualSpec = {
   bgSize: '600px',
   shape: { borderRadius: 2, buttonRadius: 2, inputRadius: 2 },
   shadows: ['none', '0 0 5px var(--color-accent-primary)', '0 0 10px var(--color-accent-primary)', '0 0 20px var(--color-accent-primary)'],
-};
+  capabilities: {
+    hasAnimatedBackground: true,
+    hasMascot: true,
+    fxQuality: 3,
+    backgroundMode: 'canvas',
+  },
+});
 
-export const ROYAL_VISUAL_SPEC: ThemeVisualSpec = {
+export const ROYAL_VISUAL_SPEC: ThemeVisualSpec = withThemeCapabilities({
   id: 'royal',
   label: 'Royal',
   fontFamily: "'Lato', sans-serif",
@@ -276,9 +330,15 @@ export const ROYAL_VISUAL_SPEC: ThemeVisualSpec = {
   bgSize: 'auto',
   shape: { borderRadius: 4, buttonRadius: 4, inputRadius: 4 },
   shadows: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 10px 15px rgba(0,0,0,0.15)', '0 20px 25px rgba(0,0,0,0.2)'],
-};
+  capabilities: {
+    hasAnimatedBackground: true,
+    hasMascot: true,
+    fxQuality: 2,
+    backgroundMode: 'css',
+  },
+});
 
-export const CHIBI_VISUAL_SPEC: ThemeVisualSpec = {
+export const CHIBI_VISUAL_SPEC: ThemeVisualSpec = withThemeCapabilities({
   id: 'chibi',
   label: 'Chibi',
   fontFamily: "'Fredoka', sans-serif",
@@ -290,9 +350,15 @@ export const CHIBI_VISUAL_SPEC: ThemeVisualSpec = {
   bgSize: 'auto',
   shape: { borderRadius: 24, buttonRadius: 24, inputRadius: 24 },
   shadows: ['none', '0 4px 0 rgba(0,0,0,0.1)', '0 6px 0 rgba(0,0,0,0.15)', '0 8px 0 rgba(0,0,0,0.2)'],
-};
+  capabilities: {
+    hasAnimatedBackground: true,
+    hasMascot: true,
+    fxQuality: 2,
+    backgroundMode: 'css',
+  },
+});
 
-export const POST_APOCALYPTIC_VISUAL_SPEC: ThemeVisualSpec = {
+export const POST_APOCALYPTIC_VISUAL_SPEC: ThemeVisualSpec = withThemeCapabilities({
   id: 'post-apocalyptic',
   label: 'Post-Apocalyptic',
   fontFamily: "'Courier Prime', monospace",
@@ -304,7 +370,13 @@ export const POST_APOCALYPTIC_VISUAL_SPEC: ThemeVisualSpec = {
   bgSize: '500px',
   shape: { borderRadius: 2, buttonRadius: 0, inputRadius: 0 },
   shadows: ['none', '2px 2px 0px rgba(0,0,0,0.6)', '4px 4px 0px rgba(0,0,0,0.6)', '6px 6px 0px rgba(0,0,0,0.6)'],
-};
+  capabilities: {
+    hasAnimatedBackground: true,
+    hasMascot: false,
+    fxQuality: 2,
+    backgroundMode: 'css',
+  },
+});
 
 export const THEME_VISUAL_SPECS: Record<ThemeMode, ThemeVisualSpec> = {
   'neo-brutalism': NEO_BRUTALISM_VISUAL_SPEC,

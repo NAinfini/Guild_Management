@@ -29,6 +29,8 @@ export const ENDPOINTS = {
     csrf: { method: 'GET', path: '/auth/csrf' },
     signup: { method: 'POST', path: '/auth/signup' },
     changePassword: { method: 'POST', path: '/auth/change-password' },
+    getPreferences: { method: 'GET', path: '/auth/preferences' },
+    updatePreferences: { method: 'PUT', path: '/auth/preferences' },
     listApiKeys: { method: 'GET', path: '/auth/api-keys' },
     createApiKey: { method: 'POST', path: '/auth/api-keys' },
     revokeApiKey: { method: 'DELETE', path: '/auth/api-keys/:id' },

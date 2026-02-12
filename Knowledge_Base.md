@@ -6,7 +6,7 @@
 - If a task is completed in one loop, record what worked about the implementation.
 - If a task is a bug fix (or had issues), record `issue`, `cause`, and `fix`; do not log routine work.
 - Merge overlapping knowledge and remove smaller duplicates.
-- Use relevant skills; if a needed skill is missing, use `Find Skills` and install it (and MCP tools when available).
+- Use relevant skills; if a needed skill is missing, use `Find Skills` and install it and MCP tools when available.
 
 ## Core Lessons Learned
 

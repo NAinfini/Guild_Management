@@ -16,16 +16,23 @@ import type { Env, User } from '../../core/types';
 import { createEndpoint } from '../../core/endpoint-factory';
 import { successResponse, errorResponse, utcNow, createAuditLog } from '../../core/utils';
 import { DB_TABLES, MEMBER_USER_SELECT_FIELDS, pickAllowedFields } from '../../core/db-schema';
+import {
+  buildCursorWhereClause,
+  buildPaginatedResponse,
+  filterFields,
+  parseFieldsQuery,
+  parsePaginationQuery,
+  type PaginatedResponse,
+  type PaginationQuery,
+} from '@guild/shared-utils/pagination';
 
 // ============================================================
 // Types
 // ============================================================
 
-interface MemberListQuery {
+interface MemberListQuery extends PaginationQuery {
   includeInactive?: string;
   role?: string;
-  limit?: string;
-  cursor?: string;
   fields?: string;
   ids?: string; // Comma-separated IDs for batch fetch
   since?: string; // ISO timestamp for incremental polling
@@ -57,16 +64,6 @@ interface MemberProfile {
   updated_at_utc: string;
 }
 
-interface PaginatedResponse<T> {
-  items: T[];
-  pagination: {
-    nextCursor: string | null;
-    hasMore: boolean;
-    limit: number;
-    total?: number;
-  };
-}
-
 interface BatchReadResponse {
   members: any[];
   totalCount: number;
@@ -88,16 +85,6 @@ const MEMBER_BATCH_FIELD_MAP: Record<string, string> = {
   created_at_utc: 'created_at_utc',
   updated_at_utc: 'updated_at_utc',
 };
-
-// Cursor helpers
-function encodeCursor(timestamp: string, id: string): string {
-  return btoa(`${timestamp}|${id}`);
-}
-
-function decodeCursor(cursor: string): [string, string] {
-  const decoded = atob(cursor);
-  return decoded.split('|') as [string, string];
-}
 
 // ============================================================
 // GET /api/members - List Members or Batch Fetch by IDs
@@ -182,24 +169,20 @@ export const onRequestGet = createEndpoint<
     // LIST MODE: List members with filters and pagination
     // ============================================================
     try {
-      const limit = query.limit ? Math.min(parseInt(query.limit), 100) : 50;
-
-      let cursorTimestamp: string | null = null;
-      let cursorId: string | null = null;
-      if (query.cursor) {
-        try {
-          [cursorTimestamp, cursorId] = decodeCursor(query.cursor);
-        } catch {
-          throw new Error('Invalid cursor');
-        }
-      }
-
-      const requestedFields = query.fields?.split(',').map(f => f.trim());
-      const allowedFields = [
-        'user_id', 'username', 'wechat_name', 'role', 'power', 'is_active',
-        'title_html', 'classes', 'media_count', 'created_at_utc', 'updated_at_utc'
-      ];
-      const selectFields = requestedFields?.filter(f => allowedFields.includes(f)) || allowedFields;
+      const { limit, cursor } = parsePaginationQuery(query);
+      const requestedFields = parseFieldsQuery(query.fields, [
+        'user_id',
+        'username',
+        'wechat_name',
+        'role',
+        'power',
+        'is_active',
+        'title_html',
+        'classes',
+        'media_count',
+        'created_at_utc',
+        'updated_at_utc',
+      ]);
 
       const whereClauses = ['u.deleted_at_utc IS NULL'];
       const bindings: any[] = [];
@@ -218,9 +201,10 @@ export const onRequestGet = createEndpoint<
         bindings.push(query.since);
       }
 
-      if (cursorTimestamp && cursorId) {
-        whereClauses.push('(u.created_at_utc < ? OR (u.created_at_utc = ? AND u.user_id < ?))');
-        bindings.push(cursorTimestamp, cursorTimestamp, cursorId);
+      const cursorClause = buildCursorWhereClause(cursor, 'u.created_at_utc', 'u.user_id');
+      if (cursorClause.clause) {
+        whereClauses.push(cursorClause.clause);
+        bindings.push(...cursorClause.bindings);
       }
 
       const sqlQuery = `
@@ -236,13 +220,12 @@ export const onRequestGet = createEndpoint<
         WHERE ${whereClauses.join(' AND ')}
         GROUP BY u.user_id
         ORDER BY u.created_at_utc DESC, u.user_id DESC
-        LIMIT ${limit + 1}
+        LIMIT ?
       `;
 
-      const result = await env.DB.prepare(sqlQuery).bind(...bindings).all();
+      const result = await env.DB.prepare(sqlQuery).bind(...bindings, limit + 1).all();
 
-      const members = (result.results || []).map((row: any) => {
-        const member: any = {
+      const members: MemberProfile[] = (result.results || []).map((row: any) => ({
           user_id: row.user_id,
           username: row.username,
           wechat_name: row.wechat_name,
@@ -254,36 +237,14 @@ export const onRequestGet = createEndpoint<
           media_count: row.media_count || 0,
           created_at_utc: row.created_at_utc,
           updated_at_utc: row.updated_at_utc,
-        };
+        }));
 
-        if (requestedFields && requestedFields.length > 0) {
-          const filtered: any = {};
-          requestedFields.forEach(field => {
-            if (Object.prototype.hasOwnProperty.call(member, field)) {
-              filtered[field] = member[field];
-            }
-          });
-          return filtered;
-        }
+      const paginated = buildPaginatedResponse(members, limit, 'created_at_utc', 'user_id');
+      if (requestedFields) {
+        paginated.items = paginated.items.map((member) => filterFields(member, requestedFields) as MemberProfile);
+      }
 
-        return member;
-      });
-
-      // ALWAYS return paginated format
-      const items = members.slice(0, limit);
-      const hasMore = members.length > limit;
-      const nextCursor = hasMore && items.length > 0
-        ? encodeCursor(items[items.length - 1].created_at_utc, items[items.length - 1].user_id)
-        : null;
-
-      return {
-        items,
-        pagination: {
-          nextCursor,
-          hasMore,
-          limit,
-        },
-      };
+      return paginated;
     } catch (error: any) {
       console.error('List members error:', error.message, error.stack);
       throw error;

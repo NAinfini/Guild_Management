@@ -23,81 +23,131 @@
   --theme-motion-press-y-effective: calc(var(--theme-motion-press-y) * var(--theme-motion-intensity));
   --theme-motion-press-scale-effective: var(--theme-motion-press-scale);
 
-  --control-fast: var(--theme-motion-fast-effective, var(--theme-motion-fast, 150ms));
-  --control-medium: var(--theme-motion-medium-effective, var(--theme-motion-medium, 220ms));
-  --control-slow: var(--theme-motion-slow-effective, var(--theme-motion-slow, 300ms));
-  --control-ease: var(--theme-motion-easing, cubic-bezier(0.22, 1, 0.36, 1));
+  --interaction-fast: var(--theme-motion-fast-effective, var(--theme-motion-fast, 150ms));
+  --interaction-med: var(--theme-motion-medium-effective, var(--theme-motion-medium, 220ms));
+  --interaction-slow: var(--theme-motion-slow-effective, var(--theme-motion-slow, 300ms));
+  --interaction-ease: var(--theme-motion-easing, cubic-bezier(0.22, 1, 0.36, 1));
+  --interaction-hover-lift: var(--theme-motion-hover-lift-effective, var(--theme-motion-hover-lift, -1px));
+  --interaction-card-lift: var(--theme-motion-card-lift-effective, var(--theme-motion-card-lift, -1px));
+  --interaction-input-lift: var(--theme-motion-input-lift-effective, var(--theme-motion-input-lift, -0.5px));
+  --interaction-press-scale: var(--theme-motion-press-scale-effective, var(--theme-motion-press-scale, 0.985));
+  --interaction-press-y: var(--theme-motion-press-y-effective, var(--theme-motion-press-y, 1px));
+  --interaction-focus-ring-color: var(--sys-interactive-focus-ring, rgba(107, 140, 255, 0.66));
+  --interaction-focus-ring-width: 2px;
+  --interaction-focus-ring-glow: 0 0 0 calc(var(--interaction-focus-ring-width) * 2)
+    color-mix(in srgb, var(--interaction-focus-ring-color) 30%, transparent);
+
+  /* Backwards-compatible aliases */
+  --control-fast: var(--interaction-fast);
+  --control-medium: var(--interaction-med);
+  --control-slow: var(--interaction-slow);
+  --control-ease: var(--interaction-ease);
 }
 
 /* Buttons / chips */
-:is(.ui-button, .ui-chip, .control[data-ui="button"], .control[data-ui="chip"], .control) {
+:is(.ui-button, .control[data-ui="button"], button.control, .MuiButton-root, .MuiButton-root[data-ui="button"]) {
   transition:
-    transform var(--control-fast) var(--control-ease),
-    box-shadow var(--control-medium) var(--control-ease),
-    border-color var(--control-fast) var(--control-ease),
-    background-color var(--control-fast) var(--control-ease),
-    color var(--control-fast) var(--control-ease);
+    transform var(--interaction-fast) var(--interaction-ease),
+    box-shadow var(--interaction-med) var(--interaction-ease),
+    border-color var(--interaction-fast) var(--interaction-ease),
+    background-color var(--interaction-fast) var(--interaction-ease),
+    color var(--interaction-fast) var(--interaction-ease);
 }
 
-:is(.ui-button, .ui-chip, .control[data-ui="button"], .control[data-ui="chip"]):hover:not(:disabled) {
-  transform: translateY(var(--theme-motion-hover-lift-effective, var(--theme-motion-hover-lift, -1px)));
+:is(.ui-button, .control[data-ui="button"], button.control, .MuiButton-root, .MuiButton-root[data-ui="button"]):hover:not(:disabled) {
+  transform: translateY(var(--interaction-hover-lift));
 }
 
-:is(.ui-button, .ui-chip, .control[data-ui="button"], .control[data-ui="chip"]):active:not(:disabled) {
-  transform: translateY(var(--theme-motion-press-y-effective, var(--theme-motion-press-y, 1px))) scale(var(--theme-motion-press-scale-effective, var(--theme-motion-press-scale, 0.985)));
+:is(.ui-button, .control[data-ui="button"], button.control, .MuiButton-root, .MuiButton-root[data-ui="button"]):active:not(:disabled) {
+  transform: translateY(var(--interaction-press-y)) scale(var(--interaction-press-scale));
+}
+
+:is(.ui-chip, .control[data-ui="chip"]) {
+  transition:
+    transform var(--interaction-fast) var(--interaction-ease),
+    box-shadow var(--interaction-med) var(--interaction-ease),
+    border-color var(--interaction-fast) var(--interaction-ease),
+    background-color var(--interaction-fast) var(--interaction-ease),
+    color var(--interaction-fast) var(--interaction-ease);
+}
+
+:is(.ui-chip, .control[data-ui="chip"]):hover:not(:disabled) {
+  transform: translateY(var(--interaction-hover-lift));
+}
+
+:is(.ui-chip, .control[data-ui="chip"]):active:not(:disabled) {
+  transform: translateY(var(--interaction-press-y)) scale(var(--interaction-press-scale));
 }
 
 /* Card / dialog */
 :is(.ui-card, .ui-dialog, .control[data-ui="card"], .control[data-ui="dialog"]) {
   transition:
-    transform var(--control-fast) var(--control-ease),
-    box-shadow var(--control-medium) var(--control-ease),
-    border-color var(--control-fast) var(--control-ease),
-    background-color var(--control-fast) var(--control-ease);
+    transform var(--interaction-fast) var(--interaction-ease),
+    box-shadow var(--interaction-med) var(--interaction-ease),
+    border-color var(--interaction-fast) var(--interaction-ease),
+    background-color var(--interaction-fast) var(--interaction-ease);
 }
 
 :is(.ui-card, .ui-dialog):hover {
-  transform: translateY(var(--theme-motion-card-lift-effective, var(--theme-motion-card-lift, -1px)));
+  transform: translateY(var(--interaction-card-lift));
 }
 
 /* Inputs */
 :is(.ui-input, .control[data-ui="input"]) {
   transition:
-    transform var(--control-fast) var(--control-ease),
-    box-shadow var(--control-medium) var(--control-ease),
-    border-color var(--control-fast) var(--control-ease),
-    background-color var(--control-fast) var(--control-ease),
-    color var(--control-fast) var(--control-ease);
+    transform var(--interaction-fast) var(--interaction-ease),
+    box-shadow var(--interaction-med) var(--interaction-ease),
+    border-color var(--interaction-fast) var(--interaction-ease),
+    background-color var(--interaction-fast) var(--interaction-ease),
+    color var(--interaction-fast) var(--interaction-ease);
 }
 
 :is(.ui-input, .control[data-ui="input"]):hover:not(.Mui-disabled):not(:disabled) {
-  transform: translateY(var(--theme-motion-input-lift-effective, var(--theme-motion-input-lift, -0.5px)));
+  transform: translateY(var(--interaction-input-lift));
 }
 
 /* Tables */
 :is(.ui-table, .control[data-ui="table"]) {
   transition:
-    border-color var(--control-fast) var(--control-ease),
-    background-color var(--control-fast) var(--control-ease),
-    color var(--control-fast) var(--control-ease);
+    border-color var(--interaction-fast) var(--interaction-ease),
+    background-color var(--interaction-fast) var(--interaction-ease),
+    color var(--interaction-fast) var(--interaction-ease);
 }
 
 /* Nav */
 :is(.ui-nav, .control[data-ui="nav"]) {
   transition:
-    transform var(--control-fast) var(--control-ease),
-    box-shadow var(--control-medium) var(--control-ease),
-    border-color var(--control-fast) var(--control-ease),
-    background-color var(--control-fast) var(--control-ease);
+    transform var(--interaction-fast) var(--interaction-ease),
+    box-shadow var(--interaction-med) var(--interaction-ease),
+    border-color var(--interaction-fast) var(--interaction-ease),
+    background-color var(--interaction-fast) var(--interaction-ease);
 }
 
 :is(.ui-nav, .control[data-ui="nav"]):hover:not(:disabled) {
-  transform: translateY(var(--theme-motion-hover-lift-effective, var(--theme-motion-hover-lift, -1px)));
+  transform: translateY(var(--interaction-hover-lift));
+}
+
+:is(
+  .ui-button,
+  .ui-chip,
+  .ui-input,
+  .ui-card,
+  .ui-dialog,
+  .ui-nav,
+  .control,
+  .MuiButton-root,
+  .MuiIconButton-root,
+  .MuiMenuItem-root,
+  .MuiListItemButton-root
+):focus-visible {
+  outline: var(--interaction-focus-ring-width) solid var(--interaction-focus-ring-color);
+  outline-offset: 2px;
+  box-shadow: var(--interaction-focus-ring-glow);
 }
 
 /* Accessibility: reduce motion for users requesting it */
 @media (prefers-reduced-motion: reduce) {
-  :is(.ui-button, .ui-card, .ui-input, .ui-chip, .ui-nav, .ui-table, .ui-dialog, .control) {
+  :is(.ui-button, .ui-card, .ui-input, .ui-chip, .ui-nav, .ui-table, .ui-dialog, .control, .MuiButton-root) {
     transition-duration: 0ms !important;
     animation-duration: 0ms !important;
     transform: none !important;

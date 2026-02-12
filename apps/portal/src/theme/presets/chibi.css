@@ -71,12 +71,10 @@
   .control[data-ui="chip"],
   .control[data-ui="nav"]
 ):hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.02);
   box-shadow: var(--theme-shadow-md);
 }
 
 .theme-chibi :is(.ui-card, .ui-table):hover {
-  transform: translateY(-1px);
   box-shadow: var(--theme-shadow-md);
 }
 
@@ -88,6 +86,5 @@
   .control[data-ui="chip"],
   .control[data-ui="nav"]
 ):active:not(:disabled) {
-  transform: translateY(1px) scale(0.98);
   box-shadow: var(--theme-shadow-sm);
 }

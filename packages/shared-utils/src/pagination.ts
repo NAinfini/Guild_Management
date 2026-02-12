@@ -20,6 +20,19 @@ export interface PaginationQuery {
   cursor?: string;
 }
 
+const DEFAULT_LIMIT = 50;
+const MIN_LIMIT = 1;
+const MAX_LIMIT = 100;
+
+function normalizeLimit(limitRaw?: string): number {
+  if (!limitRaw) return DEFAULT_LIMIT;
+
+  const parsed = Number.parseInt(limitRaw, 10);
+  if (!Number.isFinite(parsed)) return DEFAULT_LIMIT;
+
+  return Math.min(MAX_LIMIT, Math.max(MIN_LIMIT, parsed));
+}
+
 /**
  * Encode cursor from timestamp and ID
  * Format: base64(timestamp|id)
@@ -43,12 +56,13 @@ export function encodeCursor(timestamp: string, id: string): string {
  */
 export function decodeCursor(cursor: string): [string, string] {
   try {
-    let decoded: string;
+    const decodedBase64 = atob(cursor);
+    let decoded = decodedBase64;
+
     try {
-      decoded = atob(cursor);
-    } catch (e) {
-      // Try decoding URI component if direct atob fails
-      decoded = decodeURIComponent(atob(cursor));
+      decoded = decodeURIComponent(decodedBase64);
+    } catch {
+      // decodedBase64 was not URI-encoded; keep raw decoded payload
     }
 
     const parts = decoded.split('|');
@@ -69,7 +83,7 @@ export function parsePaginationQuery(query: PaginationQuery): {
   limit: number;
   cursor: { timestamp: string; id: string } | null;
 } {
-  const limit = query.limit ? Math.min(parseInt(query.limit), 100) : 50;
+  const limit = normalizeLimit(query.limit);
 
   let cursor: { timestamp: string; id: string } | null = null;
   if (query.cursor) {

@@ -4,7 +4,6 @@ import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { SessionInitializer } from '@/features/Auth/components/SessionInitializer';
 import { ToastContainer } from '@/components/feedback/ToastContainer';
-import { ThemeControllerProvider } from '@/theme/ThemeController';
 
 
 // Import the generated route tree
@@ -27,10 +26,8 @@ function App() {
   return (
     <>
       <SessionInitializer>
-        <ThemeControllerProvider>
-          <RouterProvider router={router} />
-          <ToastContainer />
-        </ThemeControllerProvider>
+        <RouterProvider router={router} />
+        <ToastContainer />
       </SessionInitializer>
       <ReactQueryDevtools initialIsOpen={false} />
     </>

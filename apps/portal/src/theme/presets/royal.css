@@ -71,5 +71,4 @@
   background-color: var(--color-surface-elevated);
   box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 0 15px var(--color-accent-primary);
   border-color: var(--color-accent-primary);
-  transform: translateY(-1px);
 }

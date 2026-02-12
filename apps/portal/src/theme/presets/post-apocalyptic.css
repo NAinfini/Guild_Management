@@ -41,10 +41,9 @@
   border: var(--theme-border-width) var(--theme-border-style) var(--color-border-default);
   border-radius: var(--theme-border-radius);
   font-family: var(--theme-font-body);
-  transform: rotate(-0.5deg);
 }
 
 .theme-post-apocalyptic :is(.ui-button, .ui-chip, .ui-card, .ui-table, .ui-nav, .control):hover:not(:disabled) {
-  transform: rotate(0.3deg) scale(1.01);
   border-style: solid;
+  filter: contrast(1.04) saturate(1.02);
 }

@@ -54,6 +54,8 @@ import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { OfflineBanner } from '@/components/feedback/OfflineBanner';
 import { useMobileOptimizations } from '@/hooks';
 import { Role } from '@/types';
+import { useMotionTokens } from '@/theme/useMotionTokens';
+import { ThemeFXLayer } from '@/theme/fx/ThemeFXLayer';
 import {
   useThemeController,
   NEXUS_THEME_OPTIONS,
@@ -62,7 +64,6 @@ import {
 
 const DRAWER_WIDTH = 260;
 const DRAWER_COLLAPSED_WIDTH = 84;
-const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 
 export function AppShell() {
   const { user, logout } = useAuth();
@@ -83,10 +84,36 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const prefersReducedMotion = useReducedMotion();
+  const motionTokens = useMotionTokens();
   const themeController = useThemeController();
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [submenuAnchor, setSubmenuAnchor] = useState<null | HTMLElement>(null);
   const [submenuType, setSubmenuType] = useState<'theme' | 'color' | 'language' | null>(null);
+
+  const motionEase = React.useMemo<[number, number, number, number]>(() => {
+    const match = motionTokens.ease.trim().match(/^cubic-bezier\(([^)]+)\)$/i);
+    if (!match?.[1]) {
+      return [0.22, 1, 0.36, 1];
+    }
+
+    const values = match[1]
+      .split(',')
+      .map((part) => Number.parseFloat(part.trim()))
+      .filter((part) => Number.isFinite(part));
+
+    if (values.length !== 4) {
+      return [0.22, 1, 0.36, 1];
+    }
+
+    return [values[0]!, values[1]!, values[2]!, values[3]!];
+  }, [motionTokens.ease]);
+
+  const motionFastMs = Math.max(0, Math.round(motionTokens.fastMs));
+  const motionMediumMs = Math.max(0, Math.round(motionTokens.mediumMs));
+  const motionFastSec = motionFastMs / 1000;
+  const motionMediumSec = motionMediumMs / 1000;
+  const navDelayStepSec = motionFastSec / 5;
+  const navDelayCapSec = motionMediumSec;
 
   const effectiveRole = getEffectiveRole(user?.role, viewRole);
   const canSeeAdmin = canAccessAdminArea(effectiveRole);
@@ -193,7 +220,7 @@ export function AppShell() {
                    transform: 'translate(-50%, 0px)',
                    opacity: 0,
                    pointerEvents: 'none',
-                   transition: 'opacity 0.2s ease, transform 0.2s ease',
+                   transition: `opacity ${motionFastMs}ms ${motionTokens.ease}, transform ${motionFastMs}ms ${motionTokens.ease}`,
                    bgcolor: theme.palette.primary.main,
                    color: theme.palette.primary.contrastText,
                    border: `2px solid ${theme.palette.primary.light}`,
@@ -235,7 +262,11 @@ export function AppShell() {
             transition={
               prefersReducedMotion
                 ? undefined
-                : { duration: 0.26, delay: Math.min(index * 0.04, 0.24), ease: MOTION_EASE }
+                : {
+                    duration: motionMediumSec,
+                    delay: Math.min(index * navDelayStepSec, navDelayCapSec),
+                    ease: motionEase,
+                  }
             }
           >
             <Tooltip
@@ -268,10 +299,11 @@ export function AppShell() {
                     transform: 'translateX(4px)',
                   },
                   '&:focus-visible': {
-                    outline: `2px solid ${theme.palette.primary.main}`,
+                    outline: 'var(--interaction-focus-ring-width, 2px) solid var(--interaction-focus-ring-color, var(--sys-interactive-focus-ring))',
                     outlineOffset: 2,
+                    boxShadow: 'var(--interaction-focus-ring-glow, none)',
                   },
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                  transition: `all ${motionMediumMs}ms ${motionTokens.ease}`,
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
@@ -308,6 +340,7 @@ export function AppShell() {
                      return (
                         <Button
                           key={r}
+                          data-ui="button"
                           onClick={() => setViewRole(r === user?.role ? null : r as Role)}
                           sx={{ 
                              flex: 1, 
@@ -350,6 +383,7 @@ export function AppShell() {
   return (
     <>
     <Box sx={{ display: 'flex', height: '100vh', overflow: 'visible', position: 'relative', zIndex: 1 }}>
+      <ThemeFXLayer />
       {/* Mobile Sidebar (Drawer) */}
       {isMobile && (
         <Drawer
@@ -386,10 +420,7 @@ export function AppShell() {
             top: 0,
             overflowY: 'auto',
             overflowX: 'hidden',
-            transition: theme.transitions.create('width', {
-              duration: theme.transitions.duration.shorter,
-              easing: theme.transitions.easing.easeInOut,
-            }),
+            transition: `width ${motionMediumMs}ms ${motionTokens.ease}`,
           }}
         >
           {SidebarContent}
@@ -404,7 +435,7 @@ export function AppShell() {
               : 'rgba(255,255,255,0.8)',
             backdropFilter: 'blur(16px)',
             zIndex: theme.zIndex.drawer + 1,
-            transition: 'all 0.3s ease'
+            transition: `all ${motionMediumMs}ms ${motionTokens.ease}`,
         }}>
           <Toolbar sx={{ minHeight: { xs: 56, sm: 64, lg: 80 }, px: { xs: 1, sm: 2, md: 3 }, pb: 0 }}>
             {isMobile && (
@@ -428,7 +459,7 @@ export function AppShell() {
                   initial={prefersReducedMotion ? false : { opacity: 0, y: 8, filter: 'blur(4px)' }}
                   animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, filter: 'blur(0px)' }}
                   exit={prefersReducedMotion ? undefined : { opacity: 0, y: -6, filter: 'blur(3px)' }}
-                  transition={prefersReducedMotion ? undefined : { duration: 0.22, ease: MOTION_EASE }}
+                  transition={prefersReducedMotion ? undefined : { duration: motionFastSec, ease: motionEase }}
                 >
                   <Typography
                     variant={isMobile ? "subtitle1" : "h6"}
@@ -449,6 +480,7 @@ export function AppShell() {
 
             <Stack direction="row" alignItems="center" spacing={{ xs: 0.5, sm: 1, md: 2 }}>
                    <Button
+                      data-ui="button"
                       onClick={(e) => setUserMenuAnchor(e.currentTarget)}
                       endIcon={
                         <Avatar
@@ -672,7 +704,7 @@ export function AppShell() {
               initial={prefersReducedMotion ? false : { opacity: 0, y: 14, filter: 'blur(5px)' }}
               animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, filter: 'blur(0px)' }}
               exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8, filter: 'blur(4px)' }}
-              transition={prefersReducedMotion ? undefined : { duration: 0.28, ease: MOTION_EASE }}
+              transition={prefersReducedMotion ? undefined : { duration: motionMediumSec, ease: motionEase }}
               style={{ minHeight: '100%' }}
             >
               <Outlet />

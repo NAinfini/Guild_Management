@@ -29,6 +29,8 @@ export function getThemeVisualSpec(mode: ThemeMode): ThemeVisualSpec {
  */
 export function getThemeOptions(mode: ThemeMode): ThemeOptions {
   const spec = getThemeVisualSpec(mode);
+  const usesCanvasFxProfile = spec.capabilities.backgroundMode === 'canvas';
+  const buttonTextTransform = usesCanvasFxProfile ? 'uppercase' : 'none';
 
   return {
     typography: {
@@ -40,7 +42,7 @@ export function getThemeOptions(mode: ThemeMode): ThemeOptions {
       h5: { fontFamily: spec.headingFont, fontWeight: 500 },
       h6: { fontFamily: spec.headingFont, fontWeight: 500 },
       button: {
-        textTransform: mode === 'cyberpunk' ? 'uppercase' : 'none',
+        textTransform: buttonTextTransform,
         fontWeight: 600,
       },
     },
@@ -53,8 +55,8 @@ export function getThemeOptions(mode: ThemeMode): ThemeOptions {
           root: ({ theme }) => ({
             borderRadius: spec.shape.buttonRadius,
             fontWeight: 600,
-            textTransform: mode === 'cyberpunk' ? 'uppercase' : 'none',
-            ...(mode === 'cyberpunk' && {
+            textTransform: buttonTextTransform,
+            ...(usesCanvasFxProfile && {
                 clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)',
                 borderLeft: '3px solid var(--color-accent-primary)',
                 '&:hover': {

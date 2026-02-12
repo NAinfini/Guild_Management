@@ -28,7 +28,20 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE deleted_at_utc IS NULL;
 CREATE INDEX IF NOT EXISTS idx_users_active ON users(role, power DESC) WHERE deleted_at_utc IS NULL;
 CREATE INDEX IF NOT EXISTS idx_users_updated ON users(updated_at_utc DESC);
+CREATE INDEX IF NOT EXISTS idx_users_created ON users(created_at_utc DESC);
 CREATE INDEX IF NOT EXISTS idx_users_deleted ON users(deleted_at_utc) WHERE deleted_at_utc IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active) WHERE deleted_at_utc IS NULL;
+
+CREATE TABLE IF NOT EXISTS user_preferences (
+  user_id TEXT PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+  theme TEXT NOT NULL,
+  color TEXT NOT NULL,
+  font_scale REAL NOT NULL,
+  motion_intensity REAL NOT NULL,
+  updated_at_utc TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_preferences_updated ON user_preferences(updated_at_utc DESC);
 
 CREATE TABLE IF NOT EXISTS user_auth_password (
   user_id       TEXT PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
@@ -245,6 +258,7 @@ CREATE TABLE IF NOT EXISTS member_classes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_member_classes_class_code ON member_classes(class_code);
+CREATE INDEX IF NOT EXISTS idx_member_classes_user ON member_classes(user_id, sort_order);
 
 -- Weekly availability blocks (stored in user's local timezone minutes)
 CREATE TABLE IF NOT EXISTS member_availability_blocks (
@@ -353,6 +367,7 @@ CREATE TABLE IF NOT EXISTS member_media (
 );
 
 CREATE INDEX IF NOT EXISTS idx_member_media_user_kind ON member_media(user_id, kind, sort_order);
+CREATE INDEX IF NOT EXISTS idx_member_media_user ON member_media(user_id);
 
 -- One avatar per user (among images)
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_member_media_one_avatar ON member_media(user_id) WHERE is_avatar = 1;
@@ -589,6 +604,7 @@ CREATE TABLE IF NOT EXISTS war_history (
 
 CREATE INDEX IF NOT EXISTS idx_war_history_date ON war_history(war_date DESC);
 CREATE INDEX IF NOT EXISTS idx_war_history_updated ON war_history(updated_at_utc DESC);
+CREATE INDEX IF NOT EXISTS idx_war_history_result_date ON war_history(result, war_date DESC);
 
 -- (Legacy war_teams, war_team_members, war_pool_members tables REMOVED)
 

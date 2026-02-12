@@ -10,14 +10,24 @@ import type { Env } from '../../core/types';
 import { createEndpoint } from '../../core/endpoint-factory';
 import { generateId, utcNow, createAuditLog } from '../../core/utils';
 import type { WarHistoryDTO } from '@guild/shared-api/contracts';
+import { getDb } from '../../core/drizzle';
+import { warHistory } from '../../db/schema';
+import { desc } from 'drizzle-orm';
 
 // ============================================================
 // Types
 // ============================================================
 
 interface WarHistoryQuery {
-  limit?: number;
-  offset?: number;
+  limit: number;
+  offset: number;
+}
+
+function parseBoundedInt(value: string | null, fallback: number, min: number, max: number): number {
+  if (value === null || value.trim() === '') return fallback;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
 }
 
 interface CreateWarHistoryBody {
@@ -52,21 +62,42 @@ export const onRequestGet = createEndpoint<WarHistoryDTO[], WarHistoryQuery>({
   cacheControl: 'public, max-age=60',
 
   parseQuery: (searchParams) => ({
-    limit: parseInt(searchParams.get('limit') || '50'),
-    offset: parseInt(searchParams.get('offset') || '0'),
+    limit: parseBoundedInt(searchParams.get('limit'), 50, 1, 200),
+    offset: parseBoundedInt(searchParams.get('offset'), 0, 0, 10_000),
   }),
 
   handler: async ({ env, query }) => {
-    const wars = await env.DB
-      .prepare(`
-        SELECT * FROM war_history 
-        ORDER BY war_date DESC 
-        LIMIT ? OFFSET ?
-      `)
-      .bind(query.limit, query.offset)
-      .all<WarHistoryDTO>();
+    const db = getDb(env);
+    const warRowsRaw = await db
+      .select()
+      .from(warHistory)
+      .orderBy(desc(warHistory.warDate))
+      .limit(query.limit)
+      .offset(query.offset);
 
-    const warRows = wars.results || [];
+    const warRows: WarHistoryDTO[] = warRowsRaw.map((war) => ({
+      war_id: war.warId,
+      event_id: war.eventId ?? '',
+      war_date: war.warDate,
+      title: war.title ?? '',
+      notes: war.notes,
+      our_kills: war.ourKills,
+      enemy_kills: war.enemyKills,
+      our_towers: war.ourTowers,
+      enemy_towers: war.enemyTowers,
+      our_base_hp: war.ourBaseHp,
+      enemy_base_hp: war.enemyBaseHp,
+      our_distance: war.ourDistance,
+      enemy_distance: war.enemyDistance,
+      our_credits: war.ourCredits,
+      enemy_credits: war.enemyCredits,
+      result: war.result as WarHistoryDTO['result'],
+      created_by: war.createdBy,
+      updated_by: war.updatedBy,
+      created_at_utc: war.createdAtUtc,
+      updated_at_utc: war.updatedAtUtc,
+    }));
+
     if (warRows.length === 0) return [];
 
     const warIds = warRows.map((war) => war.war_id);

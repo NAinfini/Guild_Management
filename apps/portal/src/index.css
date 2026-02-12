@@ -155,12 +155,6 @@
 /* Legacy showcase compatibility: keep `control` stable without global heavy motion */
 .control {
   box-sizing: border-box;
-  transition:
-    background-color var(--motionFast) var(--ease),
-    border-color var(--motionFast) var(--ease),
-    color var(--motionFast) var(--ease),
-    box-shadow var(--motionFast) var(--ease),
-    transform var(--motionFast) var(--ease);
 }
 
 /* Keep native date/time picker trigger visible across all themes */

@@ -47,16 +47,13 @@
 }
 
 .theme-neo-brutalism :is(.ui-button, .ui-chip):hover:not(:disabled) {
-  transform: translate(-1px, -1px);
   box-shadow: var(--theme-shadow-sm);
 }
 
 .theme-neo-brutalism :is(.ui-card, .ui-table):hover {
-  transform: translate(-2px, -2px);
   box-shadow: var(--theme-shadow-md);
 }
 
 .theme-neo-brutalism :is(.ui-button, .ui-chip):active:not(:disabled) {
-  transform: translate(1px, 1px);
   box-shadow: 1px 1px 0 currentColor;
 }

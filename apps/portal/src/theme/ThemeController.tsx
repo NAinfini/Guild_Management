@@ -19,6 +19,8 @@ import {
 import { alpha, createTheme, ThemeOptions } from '@mui/material/styles';
 import { Palette } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@/store';
+import { themePreferencesAPI } from '@/lib/api/themePreferences';
 import {
   getThemeColorPalette,
   getThemeColorTokens,
@@ -104,6 +106,15 @@ function resolveColor(color: string | null, theme: ThemeMode): ThemeColor {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function serializePreferences(preferences: ThemePreferences): string {
+  return [
+    preferences.theme,
+    preferences.color,
+    preferences.fontScale.toFixed(3),
+    preferences.motionIntensity.toFixed(3),
+  ].join('|');
 }
 
 function resolveNumericPreference(
@@ -487,8 +498,9 @@ const GlobalScrollbar = () => (
         opacity: 0.9,
       },
       '.MuiButton-root:focus-visible, .MuiIconButton-root:focus-visible, .MuiMenuItem-root:focus-visible, .MuiListItemButton-root:focus-visible': {
-        outline: `2px solid ${alpha(theme.palette.primary.main, 0.88)}`,
+        outline: 'var(--interaction-focus-ring-width, 2px) solid var(--interaction-focus-ring-color, var(--sys-interactive-focus-ring))',
         outlineOffset: '2px',
+        boxShadow: 'var(--interaction-focus-ring-glow, none)',
       },
     })}
   />
@@ -718,6 +730,11 @@ function applyColorPalette(themeOptions: ThemeOptions, color: ThemeColor): Theme
 
 export const ThemeControllerProvider: React.FC<ThemeControllerProps> = ({ children }) => {
   const [preferences, setPreferences] = useState<ThemePreferences>(() => initThemePreferences());
+  const user = useAuthStore((state) => state.user);
+  const remoteHydratedRef = React.useRef(false);
+  const remoteApplyGuardRef = React.useRef(false);
+  const lastPersistedRemoteKeyRef = React.useRef<string | null>(null);
+
   const theme = useMemo(() => {
     const baseThemeOptions = getThemeOptions(preferences.theme);
     const themeObj = createTheme(applyColorPalette(baseThemeOptions, preferences.color));
@@ -767,6 +784,93 @@ export const ThemeControllerProvider: React.FC<ThemeControllerProps> = ({ childr
       return next;
     });
   };
+
+  useEffect(() => {
+    remoteHydratedRef.current = false;
+    remoteApplyGuardRef.current = false;
+    lastPersistedRemoteKeyRef.current = null;
+
+    if (!user?.id) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const syncFromServer = async () => {
+      try {
+        const response = await themePreferencesAPI.get();
+        if (cancelled || !response.preferences) {
+          return;
+        }
+
+        const remote = response.preferences;
+        const nextPreferences: ThemePreferences = {
+          theme: resolveTheme(remote.theme),
+          color: resolveColor(remote.color, resolveTheme(remote.theme)),
+          fontScale: clamp(remote.fontScale, MIN_FONT_SCALE, MAX_FONT_SCALE),
+          motionIntensity: clamp(remote.motionIntensity, MIN_MOTION_INTENSITY, MAX_MOTION_INTENSITY),
+        };
+
+        const remoteKey = serializePreferences(nextPreferences);
+        lastPersistedRemoteKeyRef.current = remoteKey;
+
+        if (serializePreferences(preferences) === remoteKey) {
+          return;
+        }
+
+        remoteApplyGuardRef.current = true;
+        setPreferences(nextPreferences);
+        setThemePreferences(nextPreferences);
+      } catch (error) {
+        console.warn('Failed to load server theme preferences:', error);
+      } finally {
+        if (!cancelled) {
+          remoteHydratedRef.current = true;
+        }
+      }
+    };
+
+    syncFromServer();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!remoteHydratedRef.current) return;
+
+    const nextKey = serializePreferences(preferences);
+
+    if (remoteApplyGuardRef.current) {
+      remoteApplyGuardRef.current = false;
+      lastPersistedRemoteKeyRef.current = nextKey;
+      return;
+    }
+
+    if (lastPersistedRemoteKeyRef.current === nextKey) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      themePreferencesAPI
+        .update({
+          theme: preferences.theme,
+          color: preferences.color,
+          fontScale: preferences.fontScale,
+          motionIntensity: preferences.motionIntensity,
+        })
+        .then(() => {
+          lastPersistedRemoteKeyRef.current = nextKey;
+        })
+        .catch((error) => {
+          console.warn('Failed to persist server theme preferences:', error);
+        });
+    }, 280);
+
+    return () => window.clearTimeout(timer);
+  }, [preferences.theme, preferences.color, preferences.fontScale, preferences.motionIntensity, user?.id]);
 
   useEffect(() => {
     const tokens = getThemeColorTokens(preferences.color);
@@ -849,6 +953,9 @@ export const ThemeControllerProvider: React.FC<ThemeControllerProps> = ({ childr
       '--sys-interactive-hover': alpha(palette.primary.main, mode === 'dark' ? 0.22 : 0.16),
       '--sys-interactive-active': alpha(palette.primary.main, mode === 'dark' ? 0.3 : 0.22),
       '--sys-interactive-focus-ring': alpha(palette.primary.main, mode === 'dark' ? 0.72 : 0.64),
+      '--interaction-focus-ring-color': alpha(palette.primary.main, mode === 'dark' ? 0.72 : 0.64),
+      '--interaction-focus-ring-width': '2px',
+      '--interaction-focus-ring-glow': `0 0 0 4px ${alpha(palette.primary.main, mode === 'dark' ? 0.32 : 0.24)}`,
 
       '--color-status-success': palette.status.success,
       '--color-status-success-bg': palette.statusBg.success,
@@ -933,8 +1040,8 @@ export const ThemeControllerProvider: React.FC<ThemeControllerProps> = ({ childr
       '--shadow1': visual.shadows[1],
       '--shadow2': visual.shadows[2],
       '--shadow3': visual.shadows[3],
-      '--motionFast': 'var(--theme-motion-fast, 180ms)',
-      '--ease': 'var(--theme-motion-easing, cubic-bezier(0.22, 1, 0.36, 1))',
+      '--motionFast': 'var(--interaction-fast, var(--theme-motion-fast, 180ms))',
+      '--ease': 'var(--interaction-ease, var(--theme-motion-easing, cubic-bezier(0.22, 1, 0.36, 1)))',
       '--sigA': palette.divider,
       '--sigA-image': mode === 'dark'
         ? 'radial-gradient(rgba(255, 255, 255, 0.035) 0.6px, transparent 0.6px)'

@@ -43,6 +43,7 @@ import {
   NEXUS_THEME_OPTIONS,
   NEXUS_COLOR_OPTIONS,
 } from '@/theme/ThemeController';
+import { useMotionTokens } from '@/theme/useMotionTokens';
 
 export function BottomNavigation() {
   const { t, i18n } = useTranslation();
@@ -54,10 +55,35 @@ export function BottomNavigation() {
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const theme = useTheme();
   const themeController = useThemeController();
+  const motionTokens = useMotionTokens();
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const prefersReducedMotion = useReducedMotion();
   const effectiveRole = getEffectiveRole(user?.role, viewRole);
   const canSeeAdmin = canAccessAdminArea(effectiveRole);
+  const motionEase = React.useMemo<[number, number, number, number]>(() => {
+    const match = motionTokens.ease.trim().match(/^cubic-bezier\(([^)]+)\)$/i);
+    if (!match?.[1]) {
+      return [0.22, 1, 0.36, 1];
+    }
+
+    const values = match[1]
+      .split(',')
+      .map((part) => Number.parseFloat(part.trim()))
+      .filter((part) => Number.isFinite(part));
+
+    if (values.length !== 4) {
+      return [0.22, 1, 0.36, 1];
+    }
+
+    return [values[0]!, values[1]!, values[2]!, values[3]!];
+  }, [motionTokens.ease]);
+  const motionFastMs = Math.max(0, Math.round(motionTokens.fastMs));
+  const motionMediumMs = Math.max(0, Math.round(motionTokens.mediumMs));
+  const motionFastSec = motionFastMs / 1000;
+  const motionMediumSec = motionMediumMs / 1000;
+  const navDelayStepSec = motionFastSec / 5;
+  const navDelayCapSec = motionMediumSec;
+  const pressTapScale = Math.max(0.9, Math.min(1, motionTokens.pressScale));
 
   const handleLanguageChange = (lng: 'en' | 'zh') => {
     i18n.changeLanguage(lng);
@@ -118,11 +144,17 @@ export function BottomNavigation() {
                 transition={
                   prefersReducedMotion
                     ? undefined
-                    : { duration: 0.25, delay: Math.min(index * 0.03, 0.12), ease: [0.22, 1, 0.36, 1] }
+                    : {
+                        duration: motionMediumSec,
+                        delay: Math.min(index * navDelayStepSec, navDelayCapSec),
+                        ease: motionEase,
+                      }
                 }
-                whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
+                whileTap={prefersReducedMotion ? undefined : { scale: pressTapScale }}
               >
                 <ButtonBase
+                  className="control"
+                  data-ui="nav"
                   component={Link}
                   to={item.href}
                   aria-label={item.label}
@@ -137,10 +169,11 @@ export function BottomNavigation() {
                     height: '100%',
                     minWidth: { xs: 60, sm: 70 },
                     color: active ? 'primary.main' : 'text.secondary',
-                    transition: 'all 0.2s',
+                    transition: `all ${motionFastMs}ms ${motionTokens.ease}`,
                     borderRadius: 2,
                     '&:active': {
-                      bgcolor: 'action.hover'
+                      bgcolor: 'action.hover',
+                      transform: `scale(${pressTapScale})`,
                     }
                   }}
                 >
@@ -174,10 +207,12 @@ export function BottomNavigation() {
             style={{ flex: 1, height: '100%' }}
             initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
             animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-            transition={prefersReducedMotion ? undefined : { duration: 0.25, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
+            transition={prefersReducedMotion ? undefined : { duration: motionMediumSec, delay: navDelayCapSec, ease: motionEase }}
+            whileTap={prefersReducedMotion ? undefined : { scale: pressTapScale }}
           >
             <ButtonBase
+              className="control"
+              data-ui="nav"
               onClick={() => setMoreOpen(true)}
               aria-label={t('common.more')}
               sx={{
@@ -191,8 +226,10 @@ export function BottomNavigation() {
                 minWidth: { xs: 60, sm: 70 },
                 color: moreOpen ? 'primary.main' : 'text.secondary',
                 borderRadius: 2,
+                transition: `all ${motionFastMs}ms ${motionTokens.ease}`,
                 '&:active': {
-                  bgcolor: 'action.hover'
+                  bgcolor: 'action.hover',
+                  transform: `scale(${pressTapScale})`,
                 }
               }}
             >
@@ -284,11 +321,21 @@ export function BottomNavigation() {
                     key={item.href}
                     initial={prefersReducedMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}
                     animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
-                    transition={prefersReducedMotion ? undefined : { duration: 0.22, delay: Math.min(index * 0.035, 0.14), ease: [0.22, 1, 0.36, 1] }}
-                    whileHover={prefersReducedMotion ? undefined : { y: -2 }}
-                    whileTap={prefersReducedMotion ? undefined : { scale: 0.97 }}
+                    transition={
+                      prefersReducedMotion
+                        ? undefined
+                        : {
+                            duration: motionMediumSec,
+                            delay: Math.min(index * navDelayStepSec, navDelayCapSec),
+                            ease: motionEase,
+                          }
+                    }
+                    whileHover={prefersReducedMotion ? undefined : { y: motionTokens.liftPx }}
+                    whileTap={prefersReducedMotion ? undefined : { scale: pressTapScale }}
                   >
                     <ButtonBase
+                       className="control"
+                       data-ui="button"
                        component={Link}
                        to={item.href}
                        onClick={() => setMoreOpen(false)}
@@ -302,14 +349,14 @@ export function BottomNavigation() {
                            border: theme.custom?.cardBorder,
                            aspectRatio: '1/1',
                            minHeight: { xs: 80, sm: 100 },
-                           transition: 'all 0.2s',
+                           transition: `all ${motionFastMs}ms ${motionTokens.ease}`,
                            '&:hover': {
                                borderColor: 'primary.main',
                                bgcolor: 'action.selected',
                                boxShadow: theme.custom?.glow
                            },
                            '&:active': {
-                               transform: 'scale(0.95)'
+                               transform: `scale(${pressTapScale})`
                            }
                        }}
                     >
@@ -340,6 +387,8 @@ export function BottomNavigation() {
                   <Stack spacing={1}>
                       {adminItems.map(item => (
                          <ButtonBase 
+                            className="control"
+                            data-ui="button"
                             key={item.href}
                             component={Link}
                             to={item.href}
@@ -353,6 +402,7 @@ export function BottomNavigation() {
                                 bgcolor: theme.palette.error.main + '15', // 15 = low opacity hex
                                 border: `1px solid ${theme.palette.error.main}30`,
                                 color: theme.palette.error.main,
+                                transition: `all ${motionFastMs}ms ${motionTokens.ease}`,
                                 '&:hover': {
                                     bgcolor: theme.palette.error.main + '25'
                                 }
@@ -369,14 +419,16 @@ export function BottomNavigation() {
             <Divider sx={{ my: 2 }} />
 
             <Stack spacing={1}>
-                <ButtonBase component={Link} to="/profile" onClick={() => setMoreOpen(false)} sx={{ width: '100%', justifyContent: 'flex-start', gap: 2, p: 2, borderRadius: 3, '&:hover': { bgcolor: 'action.hover' } }}>
+                <ButtonBase className="control" data-ui="button" component={Link} to="/profile" onClick={() => setMoreOpen(false)} sx={{ width: '100%', justifyContent: 'flex-start', gap: 2, p: 2, borderRadius: 3, transition: `all ${motionFastMs}ms ${motionTokens.ease}`, '&:hover': { bgcolor: 'action.hover' } }}>
                      <ManageAccounts sx={{ fontSize: 20, color: theme.palette.text.secondary }} />
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('nav.profile')}</Typography>
                 </ButtonBase>
 
                 <ButtonBase
+                  className="control"
+                  data-ui="button"
                   onClick={() => setThemeMenuOpen((prev) => !prev)}
-                  sx={{ width: '100%', justifyContent: 'space-between', gap: 2, p: 2, borderRadius: 3, '&:hover': { bgcolor: 'action.hover' } }}
+                  sx={{ width: '100%', justifyContent: 'space-between', gap: 2, p: 2, borderRadius: 3, transition: `all ${motionFastMs}ms ${motionTokens.ease}`, '&:hover': { bgcolor: 'action.hover' } }}
                 >
                   <Stack direction="row" alignItems="center" spacing={2}>
                     <Palette sx={{ fontSize: 20, color: theme.palette.text.secondary }} />
@@ -390,6 +442,8 @@ export function BottomNavigation() {
                   <Stack spacing={0.5} sx={{ pl: 4 }}>
                     {NEXUS_THEME_OPTIONS.map((opt: any) => (
                       <ButtonBase
+                        className="control"
+                        data-ui="button"
                         key={`mobile-theme-${opt.id}`}
                         onClick={() => themeController.setTheme(opt.id)}
                         sx={{
@@ -398,6 +452,7 @@ export function BottomNavigation() {
                           p: 1.25,
                           borderRadius: 2,
                           bgcolor: themeController.currentTheme === opt.id ? 'action.selected' : 'transparent',
+                          transition: `all ${motionFastMs}ms ${motionTokens.ease}`,
                           '&:hover': { bgcolor: 'action.hover' },
                         }}
                       >
@@ -410,8 +465,10 @@ export function BottomNavigation() {
                 )}
 
                 <ButtonBase
+                  className="control"
+                  data-ui="button"
                   onClick={() => setColorMenuOpen((prev) => !prev)}
-                  sx={{ width: '100%', justifyContent: 'space-between', gap: 2, p: 2, borderRadius: 3, '&:hover': { bgcolor: 'action.hover' } }}
+                  sx={{ width: '100%', justifyContent: 'space-between', gap: 2, p: 2, borderRadius: 3, transition: `all ${motionFastMs}ms ${motionTokens.ease}`, '&:hover': { bgcolor: 'action.hover' } }}
                 >
                   <Stack direction="row" alignItems="center" spacing={2}>
                     <ColorLens sx={{ fontSize: 20, color: theme.palette.text.secondary }} />
@@ -425,6 +482,8 @@ export function BottomNavigation() {
                   <Stack spacing={0.5} sx={{ pl: 4 }}>
                     {NEXUS_COLOR_OPTIONS.map((opt: any) => (
                       <ButtonBase
+                        className="control"
+                        data-ui="button"
                         key={`mobile-color-${opt.id}`}
                         onClick={() => themeController.setColor(opt.id)}
                         sx={{
@@ -433,6 +492,7 @@ export function BottomNavigation() {
                           p: 1.25,
                           borderRadius: 2,
                           bgcolor: themeController.currentColor === opt.id ? 'action.selected' : 'transparent',
+                          transition: `all ${motionFastMs}ms ${motionTokens.ease}`,
                           '&:hover': { bgcolor: 'action.hover' },
                         }}
                       >
@@ -445,8 +505,10 @@ export function BottomNavigation() {
                 )}
 
                 <ButtonBase
+                  className="control"
+                  data-ui="button"
                   onClick={() => setLanguageMenuOpen((prev) => !prev)}
-                  sx={{ width: '100%', justifyContent: 'space-between', gap: 2, p: 2, borderRadius: 3, '&:hover': { bgcolor: 'action.hover' } }}
+                  sx={{ width: '100%', justifyContent: 'space-between', gap: 2, p: 2, borderRadius: 3, transition: `all ${motionFastMs}ms ${motionTokens.ease}`, '&:hover': { bgcolor: 'action.hover' } }}
                 >
                   <Stack direction="row" alignItems="center" spacing={2}>
                     <Translate sx={{ fontSize: 20, color: theme.palette.text.secondary }} />
@@ -459,6 +521,8 @@ export function BottomNavigation() {
                 {languageMenuOpen && (
                   <Stack spacing={0.5} sx={{ pl: 4 }}>
                     <ButtonBase
+                      className="control"
+                      data-ui="button"
                       onClick={() => handleLanguageChange('en')}
                       sx={{
                         width: '100%',
@@ -466,6 +530,7 @@ export function BottomNavigation() {
                         p: 1.25,
                         borderRadius: 2,
                         bgcolor: !i18n.language.startsWith('zh') ? 'action.selected' : 'transparent',
+                        transition: `all ${motionFastMs}ms ${motionTokens.ease}`,
                         '&:hover': { bgcolor: 'action.hover' },
                       }}
                     >
@@ -474,6 +539,8 @@ export function BottomNavigation() {
                       </Typography>
                     </ButtonBase>
                     <ButtonBase
+                      className="control"
+                      data-ui="button"
                       onClick={() => handleLanguageChange('zh')}
                       sx={{
                         width: '100%',
@@ -481,6 +548,7 @@ export function BottomNavigation() {
                         p: 1.25,
                         borderRadius: 2,
                         bgcolor: i18n.language.startsWith('zh') ? 'action.selected' : 'transparent',
+                        transition: `all ${motionFastMs}ms ${motionTokens.ease}`,
                         '&:hover': { bgcolor: 'action.hover' },
                       }}
                     >
@@ -491,7 +559,7 @@ export function BottomNavigation() {
                   </Stack>
                 )}
 
-                <ButtonBase component={Link} to="/settings" onClick={() => setMoreOpen(false)} sx={{ width: '100%', justifyContent: 'flex-start', gap: 2, p: 2, borderRadius: 3, '&:hover': { bgcolor: 'action.hover' } }}>
+                <ButtonBase className="control" data-ui="button" component={Link} to="/settings" onClick={() => setMoreOpen(false)} sx={{ width: '100%', justifyContent: 'flex-start', gap: 2, p: 2, borderRadius: 3, transition: `all ${motionFastMs}ms ${motionTokens.ease}`, '&:hover': { bgcolor: 'action.hover' } }}>
                      <Settings sx={{ fontSize: 20, color: theme.palette.text.secondary }} />
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('nav.settings')}</Typography>
             </ButtonBase>
