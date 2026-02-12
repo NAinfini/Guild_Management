@@ -211,14 +211,25 @@ export const onRequestGet = createEndpoint<
         SELECT
           u.*,
           mp.title_html,
-          GROUP_CONCAT(DISTINCT mc.class_code ORDER BY mc.sort_order) as classes_csv,
-          COUNT(DISTINCT mm.media_id) as media_count
+          mc_agg.classes_csv,
+          COALESCE(mm_agg.media_count, 0) as media_count
         FROM users u
         LEFT JOIN member_profiles mp ON u.user_id = mp.user_id
-        LEFT JOIN member_classes mc ON u.user_id = mc.user_id
-        LEFT JOIN member_media mm ON u.user_id = mm.user_id
+        LEFT JOIN (
+          SELECT
+            user_id,
+            GROUP_CONCAT(class_code ORDER BY sort_order) as classes_csv
+          FROM member_classes
+          GROUP BY user_id
+        ) mc_agg ON u.user_id = mc_agg.user_id
+        LEFT JOIN (
+          SELECT
+            user_id,
+            COUNT(*) as media_count
+          FROM member_media
+          GROUP BY user_id
+        ) mm_agg ON u.user_id = mm_agg.user_id
         WHERE ${whereClauses.join(' AND ')}
-        GROUP BY u.user_id
         ORDER BY u.created_at_utc DESC, u.user_id DESC
         LIMIT ?
       `;

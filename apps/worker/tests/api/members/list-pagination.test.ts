@@ -64,6 +64,8 @@ describe('GET /api/members pagination contracts', () => {
     const listQuerySql = sqlCalls.find((sql) => sql.includes('FROM users u'));
     expect(listQuerySql).toBeTruthy();
     expect(listQuerySql).not.toContain('LIMIT NaN');
+    expect(listQuerySql).not.toContain('COUNT(DISTINCT');
+    expect(listQuerySql).not.toContain('GROUP_CONCAT(DISTINCT');
 
     const listBind = bindCalls.find((args) => args[args.length - 1] === 51);
     expect(listBind).toBeTruthy();

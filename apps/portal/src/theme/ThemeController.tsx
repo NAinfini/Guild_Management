@@ -226,7 +226,7 @@ function applyMotionScaleTokens(root: HTMLElement, intensity: number): void {
 
 function applyThemeToDom({ theme, color }: ThemePreferences): void {
   document.documentElement.dataset.theme = theme;
-  document.documentElement.dataset.themeMode = theme;
+  document.documentElement.dataset.themeMode = isLightColorTheme(color) ? 'light' : 'dark';
   document.documentElement.dataset.themeColor = color;
 }
 
@@ -880,7 +880,7 @@ export const ThemeControllerProvider: React.FC<ThemeControllerProps> = ({ childr
 
     const root = document.documentElement;
     root.setAttribute('data-theme', preferences.theme);
-    root.setAttribute('data-theme-mode', preferences.theme);
+    root.setAttribute('data-theme-mode', mode);
     root.setAttribute('data-theme-color', preferences.color);
 
     const cssVars: Record<string, string> = {

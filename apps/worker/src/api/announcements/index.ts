@@ -44,6 +44,7 @@ interface CreateAnnouncementResponse {
 interface ListAnnouncementsQuery extends PaginationQuery {
   filter?: string; // all|pinned|archived
   search?: string;
+  searchIn?: 'title' | 'all';
   ids?: string; // NEW: Comma-separated IDs for batch fetch
   startDate?: string;
   endDate?: string;
@@ -72,6 +73,7 @@ export const onRequestGet = createEndpoint<
   parseQuery: (searchParams) => ({
     filter: searchParams.get('filter') || undefined,
     search: searchParams.get('search')?.trim() || undefined,
+    searchIn: (searchParams.get('searchIn') || 'title') as 'title' | 'all',
     limit: searchParams.get('limit') || undefined,
     cursor: searchParams.get('cursor') || undefined,
     ids: searchParams.get('ids') || undefined,
@@ -137,8 +139,13 @@ export const onRequestGet = createEndpoint<
       }
 
       if (query.search) {
-        clauses.push('(title LIKE ? OR body_html LIKE ?)');
-        params.push(`%${query.search}%`, `%${query.search}%`);
+        if (query.searchIn === 'all') {
+          clauses.push('(title LIKE ? OR body_html LIKE ?)');
+          params.push(`%${query.search}%`, `%${query.search}%`);
+        } else {
+          clauses.push('title LIKE ?');
+          params.push(`%${query.search}%`);
+        }
       }
 
       if (query.startDate) {

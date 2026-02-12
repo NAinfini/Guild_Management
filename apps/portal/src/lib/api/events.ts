@@ -97,7 +97,16 @@ export const eventsAPI = {
   /**
    * List events with optional filters
    */
-  list: async (params?: { type?: string; includeArchived?: boolean; search?: string; startDate?: string; endDate?: string; since?: string }): Promise<Event[]> => {
+  list: async (params?: {
+    type?: string;
+    includeArchived?: boolean;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+    since?: string;
+    includeParticipants?: boolean;
+    fields?: string[];
+  }): Promise<Event[]> => {
     const queryParams: Record<string, string> = {};
     if (params?.type) queryParams.type = params.type;
     if (params?.includeArchived) queryParams.includeArchived = 'true';
@@ -105,6 +114,9 @@ export const eventsAPI = {
     if (params?.startDate) queryParams.startDate = params.startDate;
     if (params?.endDate) queryParams.endDate = params.endDate;
     if (params?.since) queryParams.since = params.since;
+    if (params?.includeParticipants === false) queryParams.include = 'summary';
+    if (params?.includeParticipants === true) queryParams.include = 'participants';
+    if (params?.fields && params.fields.length > 0) queryParams.fields = params.fields.join(',');
 
     // API always returns paginated format: { items: [...], pagination: {...} }
     const response = await typedAPI.events.list<{ items: EventListItemDTO[], pagination: any }>({ query: queryParams });

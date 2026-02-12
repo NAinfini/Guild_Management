@@ -29,6 +29,7 @@ import {
 interface EventsListQuery extends PaginationQuery {
   ids?: string; // NEW: Comma-separated IDs for batch fetch
   fields?: string; // NEW: Field filtering
+  include?: string; // Comma-separated expansions, e.g. participants
   startDate?: string;
   endDate?: string;
   since?: string; // Incremental polling
@@ -86,6 +87,7 @@ export const onRequestGet = createEndpoint<
     cursor: searchParams.get('cursor') || undefined,
     ids: searchParams.get('ids') || undefined,
     fields: searchParams.get('fields') || undefined,
+    include: searchParams.get('include') || undefined,
     startDate: searchParams.get('startDate') || undefined,
     endDate: searchParams.get('endDate') || undefined,
     since: searchParams.get('since') || undefined,
@@ -158,21 +160,36 @@ export const onRequestGet = createEndpoint<
       bindings.push(query.since);
     }
 
+    const requestedFields = query.fields?.split(',').map((field) => field.trim()).filter(Boolean);
+    const selectedFields = pickAllowedFields(requestedFields, EVENT_SELECT_FIELDS, EVENT_SELECT_FIELDS);
+    const selectedFieldSet = new Set(selectedFields);
+    selectedFieldSet.add(EVENT_COLUMNS.id);
+    selectedFieldSet.add(EVENT_COLUMNS.startAt);
+    const selectClause = Array.from(selectedFieldSet).join(', ');
+
+    const includeSet = new Set(
+      (query.include || '')
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean)
+    );
+    const includeParticipants = query.include ? includeSet.has('participants') : true;
+
     const sqlQuery = `
-      SELECT * FROM ${DB_TABLES.events}
+      SELECT ${selectClause} FROM ${DB_TABLES.events}
       WHERE ${whereClauses.join(' AND ')}
       ORDER BY ${EVENT_COLUMNS.startAt} DESC, ${EVENT_COLUMNS.id} DESC
-      LIMIT ${limit + 1}
+      LIMIT ?
     `;
 
-    const events = await env.DB.prepare(sqlQuery).bind(...bindings).all<Event>();
+    const events = await env.DB.prepare(sqlQuery).bind(...bindings, limit + 1).all<Event>();
     const eventRows = events.results || [];
 
     // Load participants for each event via team_members + event_teams
     const eventIds = eventRows.map((e: any) => e.event_id);
     let participantsMap: Record<string, any[]> = {};
 
-    if (eventIds.length > 0) {
+    if (includeParticipants && eventIds.length > 0) {
       const placeholders = eventIds.map(() => '?').join(',');
       const participantsResult = await env.DB
         .prepare(`
@@ -200,12 +217,14 @@ export const onRequestGet = createEndpoint<
       }
     }
 
-    // Attach participants to each event
-    const eventsWithParticipants = eventRows.map((e: any) => ({
-      ...e,
-      participants: participantsMap[e.event_id] || [],
-      participantCount: (participantsMap[e.event_id] || []).length,
-    }));
+    // Attach participants to each event when requested.
+    const eventsWithParticipants = includeParticipants
+      ? eventRows.map((e: any) => ({
+          ...e,
+          participants: participantsMap[e.event_id] || [],
+          participantCount: (participantsMap[e.event_id] || []).length,
+        }))
+      : eventRows;
 
     return buildPaginatedResponse(eventsWithParticipants, limit, 'start_at_utc', 'event_id');
   },

@@ -147,10 +147,15 @@ export function ThemeAmbientCanvas({
     let height = 0;
     let raf = 0;
     let frame = 0;
+    let isVisible = typeof document === 'undefined' ? true : document.visibilityState !== 'hidden';
     const particles: AmbientCanvasParticle[] = [];
+    const saveDataEnabled =
+      typeof navigator !== 'undefined' && Boolean((navigator as any).connection?.saveData);
+    const densityScale = saveDataEnabled ? 0.58 : 1;
     const count = Math.round(
       (scheme === 'pipeline' ? 160 : scheme === 'swirl' ? 280 : scheme === 'coalesce' ? 180 : 130) *
-        (0.5 + intensity * 0.65),
+        (0.5 + intensity * 0.65) *
+        densityScale,
     );
 
     const resize = () => {
@@ -197,6 +202,10 @@ export function ThemeAmbientCanvas({
     };
 
     const drawFrame = () => {
+      if (!isVisible) {
+        raf = 0;
+        return;
+      }
       frame += 1;
       const time = frame * (0.9 + intensity * 0.35);
       const cursorX = cursorRef.current.x * width;
@@ -290,17 +299,38 @@ export function ThemeAmbientCanvas({
 
     resize();
     const onResize = () => resize();
+    const onVisibilityChange = () => {
+      isVisible = document.visibilityState !== 'hidden';
+      if (!isVisible) {
+        if (raf) {
+          window.cancelAnimationFrame(raf);
+          raf = 0;
+        }
+        return;
+      }
+
+      if (!reducedMode && !raf) {
+        raf = window.requestAnimationFrame(drawFrame);
+      }
+    };
+
     window.addEventListener('resize', onResize, { passive: true });
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibilityChange);
+    }
 
     if (reducedMode) {
       drawBackground();
       drawPulse();
-    } else {
+    } else if (isVisible) {
       drawFrame();
     }
 
     return () => {
       window.removeEventListener('resize', onResize);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      }
       if (raf) window.cancelAnimationFrame(raf);
     };
   }, [clickPulseSeed, intensity, reducedMode, scheme]);
