@@ -23,7 +23,11 @@
       "Bash(grep:*)",
       "Bash(npm run build)",
       "Bash(npm install:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm run dev:portal:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(npx @executeautomation/playwright-mcp-server:*)",
+      "Bash(npm ls:*)"
     ]
   },
   "mcpServers": {

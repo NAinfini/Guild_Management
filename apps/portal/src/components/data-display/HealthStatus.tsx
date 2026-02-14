@@ -3,7 +3,7 @@
  * Displays system health metrics
  */
 
-import { Box, Card, CardContent, Typography, Grid, Chip, Stack, Alert, Skeleton, Button, Paper } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, Chip, Stack, Alert, Skeleton, Button, useTheme } from '@mui/material';
 import { CardGridSkeleton } from '../feedback/Skeleton';
 import { 
   Insights, 
@@ -15,7 +15,7 @@ import {
   Error,
   ErrorOutline,
 } from "@mui/icons-material";
-import { useHealthStatus, useD1Health, useR2Health } from '@/hooks';
+import { useHealthStatus, useD1Health, useR2Health, useEndpointHealth } from '@/hooks';
 import { useTranslation } from 'react-i18next';
 
 function HealthCard({ title, icon, status, details, onRetry, loading }: {
@@ -27,6 +27,9 @@ function HealthCard({ title, icon, status, details, onRetry, loading }: {
   loading?: boolean;
 }) {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const cardToken = theme.custom?.components?.card;
+  const buttonToken = theme.custom?.components?.button;
 
   const statusConfig = {
     healthy: { color: 'success' as const, icon: <CheckCircle sx={{ fontSize: 20 }} />, label: t('admin.healthy') },
@@ -37,7 +40,14 @@ function HealthCard({ title, icon, status, details, onRetry, loading }: {
   const config = statusConfig[status];
 
   return (
-    <Card>
+    <Card
+      sx={{
+        bgcolor: cardToken?.bg || 'background.paper',
+        border: '1px solid',
+        borderColor: cardToken?.border || 'divider',
+        boxShadow: cardToken?.shadow || 'none',
+      }}
+    >
       <CardContent>
         <Stack spacing={2}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -62,7 +72,20 @@ function HealthCard({ title, icon, status, details, onRetry, loading }: {
             </Typography>
           )}
           {onRetry && (
-            <Button size="small" variant="outlined" onClick={onRetry} disabled={loading}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={onRetry}
+              disabled={loading}
+              sx={{
+                borderColor: buttonToken?.border || 'divider',
+                color: buttonToken?.text || 'text.primary',
+                '&:hover': {
+                  bgcolor: buttonToken?.hoverBg || 'action.hover',
+                  borderColor: buttonToken?.border || 'divider',
+                },
+              }}
+            >
               {loading ? t('common.loading') : t('common.retry')}
             </Button>
           )}
@@ -74,9 +97,18 @@ function HealthCard({ title, icon, status, details, onRetry, loading }: {
 
 export function HealthStatus() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const cardToken = theme.custom?.components?.card;
+  const buttonToken = theme.custom?.components?.button;
   const { data: health, isLoading: healthLoading, error: healthError, refetch: refetchHealth, isFetching: fetchingHealth } = useHealthStatus();
   const { data: d1Health, isLoading: d1Loading, refetch: refetchD1, isFetching: fetchingD1 } = useD1Health();
   const { data: r2Health, isLoading: r2Loading, refetch: refetchR2, isFetching: fetchingR2 } = useR2Health();
+  const {
+    data: endpointHealth,
+    isLoading: endpointLoading,
+    isFetching: endpointFetching,
+    refetch: refetchEndpoints,
+  } = useEndpointHealth();
 
   if (healthLoading || d1Loading || r2Loading) {
     return (
@@ -103,6 +135,13 @@ export function HealthStatus() {
       return 'down';
   };
 
+  const endpointStatusColor = (status: 'healthy' | 'degraded' | 'down' | 'skipped') => {
+    if (status === 'healthy') return 'success';
+    if (status === 'degraded') return 'warning';
+    if (status === 'down') return 'error';
+    return 'default';
+  };
+
   return (
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
@@ -118,6 +157,14 @@ export function HealthStatus() {
             void refetchR2();
           }}
           disabled={fetchingHealth || fetchingD1 || fetchingR2}
+          sx={{
+            bgcolor: buttonToken?.bg || 'primary.main',
+            color: buttonToken?.text || 'primary.contrastText',
+            borderColor: buttonToken?.border || 'transparent',
+            '&:hover': {
+              bgcolor: buttonToken?.hoverBg || 'primary.dark',
+            },
+          }}
         >
           {t('common.retry')}
         </Button>
@@ -158,7 +205,123 @@ export function HealthStatus() {
         </Grid>
       </Grid>
 
-      <Card sx={{ mt: 3, opacity: 0.6 }}>
+      <Card
+        sx={{
+          mt: 3,
+          bgcolor: cardToken?.bg || 'background.paper',
+          border: '1px solid',
+          borderColor: cardToken?.border || 'divider',
+          boxShadow: cardToken?.shadow || 'none',
+        }}
+      >
+        <CardContent>
+          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={1.5} mb={2}>
+            <Typography variant="h6" fontWeight={700}>
+              {t('admin.endpoint_checks', { defaultValue: 'API Endpoint Checks' })}
+            </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => void refetchEndpoints()}
+              disabled={endpointFetching}
+              sx={{
+                borderColor: buttonToken?.border || 'divider',
+                color: buttonToken?.text || 'text.primary',
+                '&:hover': {
+                  bgcolor: buttonToken?.hoverBg || 'action.hover',
+                  borderColor: buttonToken?.border || 'divider',
+                },
+              }}
+            >
+              {endpointFetching ? t('common.loading') : t('common.retry')}
+            </Button>
+          </Stack>
+
+          {endpointHealth && (
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+              <Chip size="small" color="success" label={`${t('admin.healthy')}: ${endpointHealth.summary.healthy}`} />
+              <Chip size="small" color="warning" label={`${t('admin.status_degraded')}: ${endpointHealth.summary.degraded}`} />
+              <Chip size="small" color="error" label={`${t('admin.status_down')}: ${endpointHealth.summary.down}`} />
+              <Chip size="small" label={`${t('admin.skipped_checks', { defaultValue: 'Skipped' })}: ${endpointHealth.summary.skipped}`} />
+              <Chip size="small" variant="outlined" label={`${t('common.total', { defaultValue: 'Total' })}: ${endpointHealth.summary.total}`} />
+            </Stack>
+          )}
+
+          {endpointLoading ? (
+            <Stack spacing={1}>
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <Skeleton key={idx} height={34} />
+              ))}
+            </Stack>
+          ) : !endpointHealth ? (
+            <Alert severity="warning">
+              {t('admin.endpoint_check_unavailable', { defaultValue: 'Endpoint checks are currently unavailable.' })}
+            </Alert>
+          ) : (
+            <Box
+              sx={{
+                border: '1px solid',
+                borderColor: theme.custom?.components?.table?.border || 'divider',
+                borderRadius: 2,
+                overflow: 'hidden',
+                bgcolor: theme.custom?.components?.table?.rowBg || 'transparent',
+              }}
+            >
+              <Stack sx={{ maxHeight: 360, overflowY: 'auto' }}>
+                {endpointHealth.endpoints.map((probe) => (
+                  <Box
+                    key={probe.key}
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr', md: '110px 1fr 130px' },
+                      gap: 1,
+                      alignItems: 'center',
+                      px: 1.5,
+                      py: 1,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                      '&:last-child': { borderBottom: 0 },
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 800 }}>
+                      {probe.method}
+                    </Typography>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 700 }} noWrap>
+                        {probe.path}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" noWrap>
+                        {probe.details}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      size="small"
+                      label={probe.status}
+                      color={endpointStatusColor(probe.status) as any}
+                      sx={{ justifySelf: { xs: 'start', md: 'end' }, textTransform: 'uppercase', fontWeight: 700 }}
+                    />
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          )}
+
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: 'block' }}>
+            {t('admin.last_checked')}: {endpointHealth?.checkedAt ? new Date(endpointHealth.checkedAt).toLocaleTimeString() : t('common.recently')}
+          </Typography>
+        </CardContent>
+      </Card>
+
+      <Card
+        sx={{
+          mt: 3,
+          opacity: 0.75,
+          bgcolor: cardToken?.bg || 'background.paper',
+          border: '1px solid',
+          borderColor: cardToken?.border || 'divider',
+          boxShadow: 'none',
+        }}
+      >
          <CardContent>
             <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={900}>
                System Version: 2.0.0-PROD
@@ -168,5 +331,3 @@ export function HealthStatus() {
     </Box>
   );
 }
-
-

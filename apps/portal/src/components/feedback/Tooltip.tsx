@@ -5,7 +5,6 @@ import * as React from "react";
 import { 
   Tooltip as MuiTooltip, 
   TooltipProps as MuiTooltipProps,
-  Box
 } from "@mui/material";
 
 // We maintain the sub-component pattern to match expectations, 
@@ -15,10 +14,60 @@ export function TooltipProvider({ children }: { children: React.ReactNode, delay
   return <>{children}</>; // MUI doesn't require a global provider for basic tooltip
 }
 
-export function Tooltip({ children, ...props }: any) {
+type ThemedTooltipProps = Omit<MuiTooltipProps, "title" | "children"> & {
+  children: React.ReactElement;
+  content?: React.ReactNode;
+  title?: React.ReactNode;
+  className?: string;
+};
+
+const getThemedSlotProps = (className?: string, slotProps?: MuiTooltipProps["slotProps"]): MuiTooltipProps["slotProps"] => {
+  const tooltipSlot = slotProps?.tooltip ?? {};
+  const arrowSlot = slotProps?.arrow ?? {};
+
+  return {
+    ...slotProps,
+    tooltip: {
+      ...tooltipSlot,
+      className: cn("z-50 rounded-md px-3 py-1.5 text-xs font-semibold shadow-md", className, (tooltipSlot as { className?: string }).className),
+      sx: {
+        backgroundColor: "var(--cmp-panel-bg)",
+        color: "var(--color-text-primary)",
+        border: "1px solid var(--cmp-panel-border)",
+        boxShadow: "var(--theme-shadow-md)",
+        borderRadius: "calc(var(--theme-border-radius) * 0.75)",
+        maxWidth: 260,
+        ...(tooltipSlot as { sx?: object }).sx,
+      },
+    },
+    arrow: {
+      ...arrowSlot,
+      sx: {
+        color: "var(--cmp-panel-bg)",
+        ...(arrowSlot as { sx?: object }).sx,
+      },
+    },
+  };
+};
+
+export function Tooltip({ children, content, title, className, slotProps, enterDelay, ...props }: ThemedTooltipProps) {
+  const resolvedTitle = content ?? title;
+
+  if (resolvedTitle === undefined || resolvedTitle === null || resolvedTitle === "") {
+    return <>{children}</>;
+  }
+
   return (
     <TooltipProvider>
-      {React.cloneElement(children as React.ReactElement, props)}
+      <MuiTooltip
+        title={resolvedTitle}
+        arrow
+        enterDelay={enterDelay ?? 140}
+        slotProps={getThemedSlotProps(className, slotProps)}
+        {...props}
+      >
+        {children}
+      </MuiTooltip>
     </TooltipProvider>
   );
 }
@@ -52,30 +101,9 @@ export const NexusTooltip = ({
   className?: string;
 } & Partial<MuiTooltipProps>) => {
   return (
-    <MuiTooltip
-      title={content}
-      slotProps={{
-        tooltip: {
-          className: cn(
-            "bg-primary text-primary-foreground z-50 rounded-md px-3 py-1.5 text-xs shadow-md",
-            className
-          ),
-          sx: {
-            backgroundColor: 'var(--primary) !important',
-            color: 'var(--primary-foreground) !important',
-          }
-        },
-        arrow: {
-          sx: {
-            color: 'var(--primary)',
-          }
-        }
-      }}
-      arrow
-      {...props}
-    >
+    <Tooltip content={content} className={className} {...props}>
       {children}
-    </MuiTooltip>
+    </Tooltip>
   );
 };
 

@@ -1,0 +1,1497 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > chibi full profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--chibi"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--floaters"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="floaters"
+  />
+  <div
+    class="theme-ambient__cursor-glow"
+  />
+  <div
+    class="theme-ambient__cursor-ring"
+  />
+  <div
+    class="theme-ambient__scroll-trace"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--chibi"
+  />
+  <div
+    class="theme-ambient__chibi-jelly-sea"
+  />
+  <span
+    class="theme-ambient__chibi-blob"
+    style="--ambient-x: 12%; --ambient-y: 58%; --ambient-size: 128px; --ambient-delay: 0s; --ambient-duration: 11s;"
+  />
+  <span
+    class="theme-ambient__chibi-blob"
+    style="--ambient-x: 28%; --ambient-y: 66%; --ambient-size: 96px; --ambient-delay: -2.4s; --ambient-duration: 12.5s;"
+  />
+  <span
+    class="theme-ambient__chibi-blob"
+    style="--ambient-x: 46%; --ambient-y: 62%; --ambient-size: 142px; --ambient-delay: -5.1s; --ambient-duration: 10.8s;"
+  />
+  <span
+    class="theme-ambient__chibi-blob"
+    style="--ambient-x: 64%; --ambient-y: 68%; --ambient-size: 104px; --ambient-delay: -3.7s; --ambient-duration: 13.2s;"
+  />
+  <span
+    class="theme-ambient__chibi-blob"
+    style="--ambient-x: 82%; --ambient-y: 60%; --ambient-size: 118px; --ambient-delay: -6.4s; --ambient-duration: 12s;"
+  />
+  <span
+    class="theme-ambient__chibi-sparkle"
+    style="--ambient-x: 18%; --ambient-y: 24%; --ambient-delay: 0s; --ambient-duration: 16s;"
+  />
+  <span
+    class="theme-ambient__chibi-sparkle"
+    style="--ambient-x: 34%; --ambient-y: 18%; --ambient-delay: -3.8s; --ambient-duration: 19s;"
+  />
+  <span
+    class="theme-ambient__chibi-sparkle"
+    style="--ambient-x: 52%; --ambient-y: 28%; --ambient-delay: -7.2s; --ambient-duration: 17s;"
+  />
+  <span
+    class="theme-ambient__chibi-sparkle"
+    style="--ambient-x: 68%; --ambient-y: 20%; --ambient-delay: -10.4s; --ambient-duration: 20s;"
+  />
+  <span
+    class="theme-ambient__chibi-sparkle"
+    style="--ambient-x: 84%; --ambient-y: 26%; --ambient-delay: -13.1s; --ambient-duration: 18s;"
+  />
+  <div
+    class="theme-ambient__vignette theme-ambient__vignette--chibi"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > chibi reduced profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--chibi is-reduced-motion"
+  data-ambient-reduced-profile="chibi"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--floaters"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="floaters"
+  />
+  <div
+    class="theme-ambient__reduced-profile theme-ambient__reduced-profile--chibi"
+    data-ambient-reduced-profile-theme="chibi"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--chibi"
+  />
+  <div
+    class="theme-ambient__chibi-jelly-sea"
+  />
+  <span
+    class="theme-ambient__chibi-blob"
+    style="--ambient-x: 12%; --ambient-y: 58%; --ambient-size: 128px; --ambient-delay: 0s; --ambient-duration: 11s;"
+  />
+  <span
+    class="theme-ambient__chibi-blob"
+    style="--ambient-x: 28%; --ambient-y: 66%; --ambient-size: 96px; --ambient-delay: -2.4s; --ambient-duration: 12.5s;"
+  />
+  <span
+    class="theme-ambient__chibi-blob"
+    style="--ambient-x: 46%; --ambient-y: 62%; --ambient-size: 142px; --ambient-delay: -5.1s; --ambient-duration: 10.8s;"
+  />
+  <span
+    class="theme-ambient__chibi-blob"
+    style="--ambient-x: 64%; --ambient-y: 68%; --ambient-size: 104px; --ambient-delay: -3.7s; --ambient-duration: 13.2s;"
+  />
+  <span
+    class="theme-ambient__chibi-blob"
+    style="--ambient-x: 82%; --ambient-y: 60%; --ambient-size: 118px; --ambient-delay: -6.4s; --ambient-duration: 12s;"
+  />
+  <span
+    class="theme-ambient__chibi-sparkle"
+    style="--ambient-x: 18%; --ambient-y: 24%; --ambient-delay: 0s; --ambient-duration: 16s;"
+  />
+  <span
+    class="theme-ambient__chibi-sparkle"
+    style="--ambient-x: 34%; --ambient-y: 18%; --ambient-delay: -3.8s; --ambient-duration: 19s;"
+  />
+  <span
+    class="theme-ambient__chibi-sparkle"
+    style="--ambient-x: 52%; --ambient-y: 28%; --ambient-delay: -7.2s; --ambient-duration: 17s;"
+  />
+  <span
+    class="theme-ambient__chibi-sparkle"
+    style="--ambient-x: 68%; --ambient-y: 20%; --ambient-delay: -10.4s; --ambient-duration: 20s;"
+  />
+  <span
+    class="theme-ambient__chibi-sparkle"
+    style="--ambient-x: 84%; --ambient-y: 26%; --ambient-delay: -13.1s; --ambient-duration: 18s;"
+  />
+  <div
+    class="theme-ambient__vignette theme-ambient__vignette--chibi"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > cyberpunk full profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--cyberpunk"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--pipeline"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="pipeline"
+  />
+  <div
+    class="theme-ambient__cursor-glow"
+  />
+  <div
+    class="theme-ambient__cursor-ring"
+  />
+  <div
+    class="theme-ambient__scroll-trace"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--cyberpunk"
+  />
+  <div
+    class="theme-ambient__cyber-grid"
+  />
+  <span
+    class="theme-ambient__cyber-dead-zone"
+    style="--ambient-x: 18%; --ambient-y: 72%; --ambient-width: 11%; --ambient-height: 10%; --ambient-delay: 0s; --ambient-duration: 7.6s;"
+  />
+  <span
+    class="theme-ambient__cyber-dead-zone"
+    style="--ambient-x: 36%; --ambient-y: 66%; --ambient-width: 9%; --ambient-height: 9%; --ambient-delay: -1.4s; --ambient-duration: 8.2s;"
+  />
+  <span
+    class="theme-ambient__cyber-dead-zone"
+    style="--ambient-x: 58%; --ambient-y: 74%; --ambient-width: 13%; --ambient-height: 10%; --ambient-delay: -2.8s; --ambient-duration: 9.1s;"
+  />
+  <span
+    class="theme-ambient__cyber-dead-zone"
+    style="--ambient-x: 79%; --ambient-y: 68%; --ambient-width: 10%; --ambient-height: 8%; --ambient-delay: -3.5s; --ambient-duration: 8.7s;"
+  />
+  <div
+    class="theme-ambient__cyber-hud"
+  />
+  <div
+    class="theme-ambient__scan-beam"
+  />
+  <div
+    class="theme-ambient__horizon-glow"
+  />
+  <div
+    class="theme-ambient__city theme-ambient__city--far"
+  />
+  <div
+    class="theme-ambient__city theme-ambient__city--near"
+  />
+  <div
+    class="theme-ambient__cyber-target"
+    style="--ambient-x: 10%; --ambient-y: 22%; --ambient-delay: 0s; --ambient-duration: 13s;"
+  >
+    <span
+      class="theme-ambient__target-label"
+    >
+      DRONE.01
+    </span>
+    <span
+      class="theme-ambient__target-state"
+    >
+      TRACKING
+    </span>
+  </div>
+  <div
+    class="theme-ambient__cyber-target"
+    style="--ambient-x: 24%; --ambient-y: 34%; --ambient-delay: -1.8s; --ambient-duration: 16s;"
+  >
+    <span
+      class="theme-ambient__target-label"
+    >
+      NODE.17
+    </span>
+    <span
+      class="theme-ambient__target-state"
+    >
+      TRACKING
+    </span>
+  </div>
+  <div
+    class="theme-ambient__cyber-target"
+    style="--ambient-x: 42%; --ambient-y: 18%; --ambient-delay: -2.6s; --ambient-duration: 14s;"
+  >
+    <span
+      class="theme-ambient__target-label"
+    >
+      TOWER.00
+    </span>
+    <span
+      class="theme-ambient__target-state"
+    >
+      TRACKING
+    </span>
+  </div>
+  <div
+    class="theme-ambient__cyber-target"
+    style="--ambient-x: 64%; --ambient-y: 28%; --ambient-delay: -3.4s; --ambient-duration: 15s;"
+  >
+    <span
+      class="theme-ambient__target-label"
+    >
+      ANOMALY.01
+    </span>
+    <span
+      class="theme-ambient__target-state"
+    >
+      TRACKING
+    </span>
+  </div>
+  <div
+    class="theme-ambient__cyber-target"
+    style="--ambient-x: 80%; --ambient-y: 20%; --ambient-delay: -4.2s; --ambient-duration: 17s;"
+  >
+    <span
+      class="theme-ambient__target-label"
+    >
+      DRONE.02
+    </span>
+    <span
+      class="theme-ambient__target-state"
+    >
+      TRACKING
+    </span>
+  </div>
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 8%; --ambient-delay: 0s; --ambient-duration: 8s; --ambient-alpha: 0.16;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 16%; --ambient-delay: -1.3s; --ambient-duration: 9.1s; --ambient-alpha: 0.2;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 24%; --ambient-delay: -3.4s; --ambient-duration: 7.7s; --ambient-alpha: 0.18;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 33%; --ambient-delay: -2.1s; --ambient-duration: 8.8s; --ambient-alpha: 0.14;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 42%; --ambient-delay: -5s; --ambient-duration: 9.6s; --ambient-alpha: 0.2;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 52%; --ambient-delay: -0.9s; --ambient-duration: 7.9s; --ambient-alpha: 0.16;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 61%; --ambient-delay: -2.8s; --ambient-duration: 8.6s; --ambient-alpha: 0.17;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 72%; --ambient-delay: -4.7s; --ambient-duration: 9.4s; --ambient-alpha: 0.2;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 82%; --ambient-delay: -1.7s; --ambient-duration: 8.1s; --ambient-alpha: 0.15;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 90%; --ambient-delay: -3.8s; --ambient-duration: 9.2s; --ambient-alpha: 0.18;"
+  />
+  <span
+    class="theme-ambient__cyber-data-stream"
+    style="--ambient-x: 22%; --ambient-delay: 0s; --ambient-duration: 14.5s; --ambient-stream-width: 12px; --ambient-stream-height: 110px;"
+  />
+  <span
+    class="theme-ambient__cyber-data-stream"
+    style="--ambient-x: 48%; --ambient-delay: -4.4s; --ambient-duration: 16.8s; --ambient-stream-width: 10px; --ambient-stream-height: 140px;"
+  />
+  <span
+    class="theme-ambient__cyber-data-stream"
+    style="--ambient-x: 71%; --ambient-delay: -7.2s; --ambient-duration: 15.4s; --ambient-stream-width: 14px; --ambient-stream-height: 122px;"
+  />
+  <span
+    class="theme-ambient__cyber-data-stream"
+    style="--ambient-x: 86%; --ambient-delay: -9.6s; --ambient-duration: 17.2s; --ambient-stream-width: 9px; --ambient-stream-height: 136px;"
+  />
+  <div
+    class="theme-ambient__noise theme-ambient__noise--cyberpunk"
+  />
+  <div
+    class="theme-ambient__vignette"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > cyberpunk reduced profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--cyberpunk is-reduced-motion"
+  data-ambient-reduced-profile="cyberpunk"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--pipeline"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="pipeline"
+  />
+  <div
+    class="theme-ambient__reduced-profile theme-ambient__reduced-profile--cyberpunk"
+    data-ambient-reduced-profile-theme="cyberpunk"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--cyberpunk"
+  />
+  <div
+    class="theme-ambient__cyber-grid"
+  />
+  <span
+    class="theme-ambient__cyber-dead-zone"
+    style="--ambient-x: 18%; --ambient-y: 72%; --ambient-width: 11%; --ambient-height: 10%; --ambient-delay: 0s; --ambient-duration: 7.6s;"
+  />
+  <span
+    class="theme-ambient__cyber-dead-zone"
+    style="--ambient-x: 36%; --ambient-y: 66%; --ambient-width: 9%; --ambient-height: 9%; --ambient-delay: -1.4s; --ambient-duration: 8.2s;"
+  />
+  <span
+    class="theme-ambient__cyber-dead-zone"
+    style="--ambient-x: 58%; --ambient-y: 74%; --ambient-width: 13%; --ambient-height: 10%; --ambient-delay: -2.8s; --ambient-duration: 9.1s;"
+  />
+  <span
+    class="theme-ambient__cyber-dead-zone"
+    style="--ambient-x: 79%; --ambient-y: 68%; --ambient-width: 10%; --ambient-height: 8%; --ambient-delay: -3.5s; --ambient-duration: 8.7s;"
+  />
+  <div
+    class="theme-ambient__cyber-hud"
+  />
+  <div
+    class="theme-ambient__scan-beam"
+  />
+  <div
+    class="theme-ambient__horizon-glow"
+  />
+  <div
+    class="theme-ambient__city theme-ambient__city--far"
+  />
+  <div
+    class="theme-ambient__city theme-ambient__city--near"
+  />
+  <div
+    class="theme-ambient__cyber-target"
+    style="--ambient-x: 10%; --ambient-y: 22%; --ambient-delay: 0s; --ambient-duration: 13s;"
+  >
+    <span
+      class="theme-ambient__target-label"
+    >
+      DRONE.01
+    </span>
+    <span
+      class="theme-ambient__target-state"
+    >
+      TRACKING
+    </span>
+  </div>
+  <div
+    class="theme-ambient__cyber-target"
+    style="--ambient-x: 24%; --ambient-y: 34%; --ambient-delay: -1.8s; --ambient-duration: 16s;"
+  >
+    <span
+      class="theme-ambient__target-label"
+    >
+      NODE.17
+    </span>
+    <span
+      class="theme-ambient__target-state"
+    >
+      TRACKING
+    </span>
+  </div>
+  <div
+    class="theme-ambient__cyber-target"
+    style="--ambient-x: 42%; --ambient-y: 18%; --ambient-delay: -2.6s; --ambient-duration: 14s;"
+  >
+    <span
+      class="theme-ambient__target-label"
+    >
+      TOWER.00
+    </span>
+    <span
+      class="theme-ambient__target-state"
+    >
+      TRACKING
+    </span>
+  </div>
+  <div
+    class="theme-ambient__cyber-target"
+    style="--ambient-x: 64%; --ambient-y: 28%; --ambient-delay: -3.4s; --ambient-duration: 15s;"
+  >
+    <span
+      class="theme-ambient__target-label"
+    >
+      ANOMALY.01
+    </span>
+    <span
+      class="theme-ambient__target-state"
+    >
+      TRACKING
+    </span>
+  </div>
+  <div
+    class="theme-ambient__cyber-target"
+    style="--ambient-x: 80%; --ambient-y: 20%; --ambient-delay: -4.2s; --ambient-duration: 17s;"
+  >
+    <span
+      class="theme-ambient__target-label"
+    >
+      DRONE.02
+    </span>
+    <span
+      class="theme-ambient__target-state"
+    >
+      TRACKING
+    </span>
+  </div>
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 8%; --ambient-delay: 0s; --ambient-duration: 8s; --ambient-alpha: 0.16;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 16%; --ambient-delay: -1.3s; --ambient-duration: 9.1s; --ambient-alpha: 0.2;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 24%; --ambient-delay: -3.4s; --ambient-duration: 7.7s; --ambient-alpha: 0.18;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 33%; --ambient-delay: -2.1s; --ambient-duration: 8.8s; --ambient-alpha: 0.14;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 42%; --ambient-delay: -5s; --ambient-duration: 9.6s; --ambient-alpha: 0.2;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 52%; --ambient-delay: -0.9s; --ambient-duration: 7.9s; --ambient-alpha: 0.16;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 61%; --ambient-delay: -2.8s; --ambient-duration: 8.6s; --ambient-alpha: 0.17;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 72%; --ambient-delay: -4.7s; --ambient-duration: 9.4s; --ambient-alpha: 0.2;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 82%; --ambient-delay: -1.7s; --ambient-duration: 8.1s; --ambient-alpha: 0.15;"
+  />
+  <span
+    class="theme-ambient__rain"
+    style="--ambient-x: 90%; --ambient-delay: -3.8s; --ambient-duration: 9.2s; --ambient-alpha: 0.18;"
+  />
+  <span
+    class="theme-ambient__cyber-data-stream"
+    style="--ambient-x: 22%; --ambient-delay: 0s; --ambient-duration: 14.5s; --ambient-stream-width: 12px; --ambient-stream-height: 110px;"
+  />
+  <span
+    class="theme-ambient__cyber-data-stream"
+    style="--ambient-x: 48%; --ambient-delay: -4.4s; --ambient-duration: 16.8s; --ambient-stream-width: 10px; --ambient-stream-height: 140px;"
+  />
+  <span
+    class="theme-ambient__cyber-data-stream"
+    style="--ambient-x: 71%; --ambient-delay: -7.2s; --ambient-duration: 15.4s; --ambient-stream-width: 14px; --ambient-stream-height: 122px;"
+  />
+  <span
+    class="theme-ambient__cyber-data-stream"
+    style="--ambient-x: 86%; --ambient-delay: -9.6s; --ambient-duration: 17.2s; --ambient-stream-width: 9px; --ambient-stream-height: 136px;"
+  />
+  <div
+    class="theme-ambient__noise theme-ambient__noise--cyberpunk"
+  />
+  <div
+    class="theme-ambient__vignette"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > minimalistic full profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--minimalistic"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--swirl"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="swirl"
+  />
+  <div
+    class="theme-ambient__cursor-glow"
+  />
+  <div
+    class="theme-ambient__cursor-ring"
+  />
+  <div
+    class="theme-ambient__scroll-trace"
+  />
+  <div
+    class="theme-ambient__frosted-plane"
+  />
+  <div
+    class="theme-ambient__frosted-plane theme-ambient__frosted-plane--inner"
+  />
+  <div
+    class="theme-ambient__minimal-grid"
+  />
+  <div
+    class="theme-ambient__gallery-primitive theme-ambient__gallery-primitive--sphere"
+    style="--ambient-x: 16%; --ambient-y: 22%; --ambient-size: 128px; --ambient-delay: 0s; --ambient-duration: 20s;"
+  />
+  <div
+    class="theme-ambient__gallery-primitive theme-ambient__gallery-primitive--ring"
+    style="--ambient-x: 34%; --ambient-y: 34%; --ambient-size: 92px; --ambient-delay: -4.2s; --ambient-duration: 24s;"
+  />
+  <div
+    class="theme-ambient__gallery-primitive theme-ambient__gallery-primitive--sphere"
+    style="--ambient-x: 52%; --ambient-y: 26%; --ambient-size: 108px; --ambient-delay: -1.8s; --ambient-duration: 22s;"
+  />
+  <div
+    class="theme-ambient__gallery-primitive theme-ambient__gallery-primitive--ring"
+    style="--ambient-x: 70%; --ambient-y: 36%; --ambient-size: 84px; --ambient-delay: -3.6s; --ambient-duration: 26s;"
+  />
+  <div
+    class="theme-ambient__gallery-primitive theme-ambient__gallery-primitive--sphere"
+    style="--ambient-x: 82%; --ambient-y: 24%; --ambient-size: 116px; --ambient-delay: -5.4s; --ambient-duration: 23s;"
+  />
+  <span
+    class="theme-ambient__minimal-wave"
+    style="--ambient-y: 24%; --ambient-delay: 0s; --ambient-duration: 16s;"
+  />
+  <span
+    class="theme-ambient__minimal-wave"
+    style="--ambient-y: 42%; --ambient-delay: -3s; --ambient-duration: 19s;"
+  />
+  <span
+    class="theme-ambient__minimal-wave"
+    style="--ambient-y: 60%; --ambient-delay: -6s; --ambient-duration: 21s;"
+  />
+  <div
+    class="theme-ambient__noise theme-ambient__noise--minimalistic"
+  />
+  <div
+    class="theme-ambient__vignette theme-ambient__vignette--minimalistic"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > minimalistic reduced profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--minimalistic is-reduced-motion"
+  data-ambient-reduced-profile="minimalistic"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--swirl"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="swirl"
+  />
+  <div
+    class="theme-ambient__reduced-profile theme-ambient__reduced-profile--minimalistic"
+    data-ambient-reduced-profile-theme="minimalistic"
+  />
+  <div
+    class="theme-ambient__frosted-plane"
+  />
+  <div
+    class="theme-ambient__frosted-plane theme-ambient__frosted-plane--inner"
+  />
+  <div
+    class="theme-ambient__minimal-grid"
+  />
+  <div
+    class="theme-ambient__gallery-primitive theme-ambient__gallery-primitive--sphere"
+    style="--ambient-x: 16%; --ambient-y: 22%; --ambient-size: 128px; --ambient-delay: 0s; --ambient-duration: 20s;"
+  />
+  <div
+    class="theme-ambient__gallery-primitive theme-ambient__gallery-primitive--ring"
+    style="--ambient-x: 34%; --ambient-y: 34%; --ambient-size: 92px; --ambient-delay: -4.2s; --ambient-duration: 24s;"
+  />
+  <div
+    class="theme-ambient__gallery-primitive theme-ambient__gallery-primitive--sphere"
+    style="--ambient-x: 52%; --ambient-y: 26%; --ambient-size: 108px; --ambient-delay: -1.8s; --ambient-duration: 22s;"
+  />
+  <div
+    class="theme-ambient__gallery-primitive theme-ambient__gallery-primitive--ring"
+    style="--ambient-x: 70%; --ambient-y: 36%; --ambient-size: 84px; --ambient-delay: -3.6s; --ambient-duration: 26s;"
+  />
+  <div
+    class="theme-ambient__gallery-primitive theme-ambient__gallery-primitive--sphere"
+    style="--ambient-x: 82%; --ambient-y: 24%; --ambient-size: 116px; --ambient-delay: -5.4s; --ambient-duration: 23s;"
+  />
+  <span
+    class="theme-ambient__minimal-wave"
+    style="--ambient-y: 24%; --ambient-delay: 0s; --ambient-duration: 16s;"
+  />
+  <span
+    class="theme-ambient__minimal-wave"
+    style="--ambient-y: 42%; --ambient-delay: -3s; --ambient-duration: 19s;"
+  />
+  <span
+    class="theme-ambient__minimal-wave"
+    style="--ambient-y: 60%; --ambient-delay: -6s; --ambient-duration: 21s;"
+  />
+  <div
+    class="theme-ambient__noise theme-ambient__noise--minimalistic"
+  />
+  <div
+    class="theme-ambient__vignette theme-ambient__vignette--minimalistic"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > neo-brutalism full profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--neo-brutalism"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--floaters"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="floaters"
+  />
+  <div
+    class="theme-ambient__cursor-glow"
+  />
+  <div
+    class="theme-ambient__cursor-ring"
+  />
+  <div
+    class="theme-ambient__scroll-trace"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--neo"
+  />
+  <div
+    class="theme-ambient__neo-halftone-horizon"
+  />
+  <span
+    class="theme-ambient__neo-dot-field"
+    style="--ambient-x: 14%; --ambient-y: 70%; --ambient-size: 220px; --ambient-delay: 0s; --ambient-duration: 14s;"
+  />
+  <span
+    class="theme-ambient__neo-dot-field"
+    style="--ambient-x: 44%; --ambient-y: 64%; --ambient-size: 180px; --ambient-delay: -2.3s; --ambient-duration: 16s;"
+  />
+  <span
+    class="theme-ambient__neo-dot-field"
+    style="--ambient-x: 72%; --ambient-y: 68%; --ambient-size: 204px; --ambient-delay: -4.7s; --ambient-duration: 15s;"
+  />
+  <div
+    class="theme-ambient__brutal-grid"
+  />
+  <div
+    class="theme-ambient__brutal-hud"
+  />
+  <div
+    class="theme-ambient__marquee"
+  />
+  <div
+    class="theme-ambient__brutal-target"
+    style="--ambient-x: 12%; --ambient-y: 20%; --ambient-delay: 0s; --ambient-duration: 9s;"
+  >
+    TRACKING
+  </div>
+  <div
+    class="theme-ambient__brutal-target"
+    style="--ambient-x: 38%; --ambient-y: 40%; --ambient-delay: -1.4s; --ambient-duration: 12s;"
+  >
+    SECTOR.B
+  </div>
+  <div
+    class="theme-ambient__brutal-target"
+    style="--ambient-x: 66%; --ambient-y: 24%; --ambient-delay: -2.9s; --ambient-duration: 11s;"
+  >
+    NODE.X
+  </div>
+  <div
+    class="theme-ambient__brutal-target"
+    style="--ambient-x: 82%; --ambient-y: 56%; --ambient-delay: -3.6s; --ambient-duration: 10s;"
+  >
+    READY
+  </div>
+  <div
+    class="theme-ambient__block theme-ambient__block--1"
+  />
+  <div
+    class="theme-ambient__block theme-ambient__block--2"
+  />
+  <div
+    class="theme-ambient__block theme-ambient__block--3"
+  />
+  <div
+    class="theme-ambient__line theme-ambient__line--1"
+  />
+  <div
+    class="theme-ambient__line theme-ambient__line--2"
+  />
+  <div
+    class="theme-ambient__noise theme-ambient__noise--neo"
+  />
+  <div
+    class="theme-ambient__vignette"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > neo-brutalism reduced profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--neo-brutalism is-reduced-motion"
+  data-ambient-reduced-profile="neo-brutalism"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--floaters"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="floaters"
+  />
+  <div
+    class="theme-ambient__reduced-profile theme-ambient__reduced-profile--neo-brutalism"
+    data-ambient-reduced-profile-theme="neo-brutalism"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--neo"
+  />
+  <div
+    class="theme-ambient__neo-halftone-horizon"
+  />
+  <span
+    class="theme-ambient__neo-dot-field"
+    style="--ambient-x: 14%; --ambient-y: 70%; --ambient-size: 220px; --ambient-delay: 0s; --ambient-duration: 14s;"
+  />
+  <span
+    class="theme-ambient__neo-dot-field"
+    style="--ambient-x: 44%; --ambient-y: 64%; --ambient-size: 180px; --ambient-delay: -2.3s; --ambient-duration: 16s;"
+  />
+  <span
+    class="theme-ambient__neo-dot-field"
+    style="--ambient-x: 72%; --ambient-y: 68%; --ambient-size: 204px; --ambient-delay: -4.7s; --ambient-duration: 15s;"
+  />
+  <div
+    class="theme-ambient__brutal-grid"
+  />
+  <div
+    class="theme-ambient__brutal-hud"
+  />
+  <div
+    class="theme-ambient__marquee"
+  />
+  <div
+    class="theme-ambient__brutal-target"
+    style="--ambient-x: 12%; --ambient-y: 20%; --ambient-delay: 0s; --ambient-duration: 9s;"
+  >
+    TRACKING
+  </div>
+  <div
+    class="theme-ambient__brutal-target"
+    style="--ambient-x: 38%; --ambient-y: 40%; --ambient-delay: -1.4s; --ambient-duration: 12s;"
+  >
+    SECTOR.B
+  </div>
+  <div
+    class="theme-ambient__brutal-target"
+    style="--ambient-x: 66%; --ambient-y: 24%; --ambient-delay: -2.9s; --ambient-duration: 11s;"
+  >
+    NODE.X
+  </div>
+  <div
+    class="theme-ambient__brutal-target"
+    style="--ambient-x: 82%; --ambient-y: 56%; --ambient-delay: -3.6s; --ambient-duration: 10s;"
+  >
+    READY
+  </div>
+  <div
+    class="theme-ambient__block theme-ambient__block--1"
+  />
+  <div
+    class="theme-ambient__block theme-ambient__block--2"
+  />
+  <div
+    class="theme-ambient__block theme-ambient__block--3"
+  />
+  <div
+    class="theme-ambient__line theme-ambient__line--1"
+  />
+  <div
+    class="theme-ambient__line theme-ambient__line--2"
+  />
+  <div
+    class="theme-ambient__noise theme-ambient__noise--neo"
+  />
+  <div
+    class="theme-ambient__vignette"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > post-apocalyptic full profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--post-apocalyptic"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--coalesce"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="coalesce"
+  />
+  <div
+    class="theme-ambient__cursor-glow"
+  />
+  <div
+    class="theme-ambient__cursor-ring"
+  />
+  <div
+    class="theme-ambient__scroll-trace"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--wasteland"
+  />
+  <div
+    class="theme-ambient__wasteland-dust-volume"
+  />
+  <div
+    class="theme-ambient__wasteland-ruins"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 8%; --ambient-y: 66%; --ambient-delay: 0s; --ambient-duration: 8s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 18%; --ambient-y: 60%; --ambient-delay: -1.5s; --ambient-duration: 7.2s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 32%; --ambient-y: 70%; --ambient-delay: -3.4s; --ambient-duration: 9.6s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 48%; --ambient-y: 64%; --ambient-delay: -2.1s; --ambient-duration: 8.7s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 61%; --ambient-y: 68%; --ambient-delay: -4s; --ambient-duration: 7.5s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 74%; --ambient-y: 62%; --ambient-delay: -1s; --ambient-duration: 8.9s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 86%; --ambient-y: 69%; --ambient-delay: -2.6s; --ambient-duration: 9.2s;"
+  />
+  <span
+    class="theme-ambient__wasteland-lightning"
+    style="--ambient-x: 22%; --ambient-delay: 0s; --ambient-duration: 22s;"
+  />
+  <span
+    class="theme-ambient__wasteland-lightning"
+    style="--ambient-x: 74%; --ambient-delay: -8.5s; --ambient-duration: 25s;"
+  />
+  <div
+    class="theme-ambient__wasteland-cracks-overlay"
+  />
+  <div
+    class="theme-ambient__noise theme-ambient__noise--wasteland"
+  />
+  <div
+    class="theme-ambient__vignette theme-ambient__vignette--wasteland"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > post-apocalyptic reduced profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--post-apocalyptic is-reduced-motion"
+  data-ambient-reduced-profile="post-apocalyptic"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--coalesce"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="coalesce"
+  />
+  <div
+    class="theme-ambient__reduced-profile theme-ambient__reduced-profile--post-apocalyptic"
+    data-ambient-reduced-profile-theme="post-apocalyptic"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--wasteland"
+  />
+  <div
+    class="theme-ambient__wasteland-dust-volume"
+  />
+  <div
+    class="theme-ambient__wasteland-ruins"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 8%; --ambient-y: 66%; --ambient-delay: 0s; --ambient-duration: 8s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 18%; --ambient-y: 60%; --ambient-delay: -1.5s; --ambient-duration: 7.2s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 32%; --ambient-y: 70%; --ambient-delay: -3.4s; --ambient-duration: 9.6s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 48%; --ambient-y: 64%; --ambient-delay: -2.1s; --ambient-duration: 8.7s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 61%; --ambient-y: 68%; --ambient-delay: -4s; --ambient-duration: 7.5s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 74%; --ambient-y: 62%; --ambient-delay: -1s; --ambient-duration: 8.9s;"
+  />
+  <span
+    class="theme-ambient__wasteland-dust"
+    style="--ambient-x: 86%; --ambient-y: 69%; --ambient-delay: -2.6s; --ambient-duration: 9.2s;"
+  />
+  <div
+    class="theme-ambient__wasteland-cracks-overlay"
+  />
+  <div
+    class="theme-ambient__noise theme-ambient__noise--wasteland"
+  />
+  <div
+    class="theme-ambient__vignette theme-ambient__vignette--wasteland"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > royal full profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--royal"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--floaters"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="floaters"
+  />
+  <div
+    class="theme-ambient__cursor-glow"
+  />
+  <div
+    class="theme-ambient__cursor-ring"
+  />
+  <div
+    class="theme-ambient__scroll-trace"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--royal"
+  />
+  <div
+    class="theme-ambient__royal-silk-plane"
+  />
+  <span
+    class="theme-ambient__royal-silk-wave"
+    style="--ambient-y: 24%; --ambient-delay: 0s; --ambient-duration: 26s;"
+  />
+  <span
+    class="theme-ambient__royal-silk-wave"
+    style="--ambient-y: 44%; --ambient-delay: -6.4s; --ambient-duration: 31s;"
+  />
+  <span
+    class="theme-ambient__royal-silk-wave"
+    style="--ambient-y: 64%; --ambient-delay: -11.2s; --ambient-duration: 29s;"
+  />
+  <span
+    class="theme-ambient__royal-glint"
+    style="--ambient-x: 18%; --ambient-y: 22%; --ambient-delay: 0s; --ambient-duration: 18s;"
+  />
+  <span
+    class="theme-ambient__royal-glint"
+    style="--ambient-x: 42%; --ambient-y: 36%; --ambient-delay: -4.7s; --ambient-duration: 22s;"
+  />
+  <span
+    class="theme-ambient__royal-glint"
+    style="--ambient-x: 68%; --ambient-y: 26%; --ambient-delay: -9.1s; --ambient-duration: 20s;"
+  />
+  <span
+    class="theme-ambient__royal-glint"
+    style="--ambient-x: 84%; --ambient-y: 40%; --ambient-delay: -13.2s; --ambient-duration: 24s;"
+  />
+  <div
+    class="theme-ambient__royal-caustic-sweep"
+  />
+  <div
+    class="theme-ambient__vignette"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > royal reduced profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--royal is-reduced-motion"
+  data-ambient-reduced-profile="royal"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--floaters"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="floaters"
+  />
+  <div
+    class="theme-ambient__reduced-profile theme-ambient__reduced-profile--royal"
+    data-ambient-reduced-profile-theme="royal"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--royal"
+  />
+  <div
+    class="theme-ambient__royal-silk-plane"
+  />
+  <span
+    class="theme-ambient__royal-silk-wave"
+    style="--ambient-y: 24%; --ambient-delay: 0s; --ambient-duration: 26s;"
+  />
+  <span
+    class="theme-ambient__royal-silk-wave"
+    style="--ambient-y: 44%; --ambient-delay: -6.4s; --ambient-duration: 31s;"
+  />
+  <span
+    class="theme-ambient__royal-silk-wave"
+    style="--ambient-y: 64%; --ambient-delay: -11.2s; --ambient-duration: 29s;"
+  />
+  <span
+    class="theme-ambient__royal-glint"
+    style="--ambient-x: 18%; --ambient-y: 22%; --ambient-delay: 0s; --ambient-duration: 18s;"
+  />
+  <span
+    class="theme-ambient__royal-glint"
+    style="--ambient-x: 42%; --ambient-y: 36%; --ambient-delay: -4.7s; --ambient-duration: 22s;"
+  />
+  <span
+    class="theme-ambient__royal-glint"
+    style="--ambient-x: 68%; --ambient-y: 26%; --ambient-delay: -9.1s; --ambient-duration: 20s;"
+  />
+  <span
+    class="theme-ambient__royal-glint"
+    style="--ambient-x: 84%; --ambient-y: 40%; --ambient-delay: -13.2s; --ambient-duration: 24s;"
+  />
+  <div
+    class="theme-ambient__royal-caustic-sweep"
+  />
+  <div
+    class="theme-ambient__vignette"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > steampunk full profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--steampunk"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--coalesce"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="coalesce"
+  />
+  <div
+    class="theme-ambient__cursor-glow"
+  />
+  <div
+    class="theme-ambient__cursor-ring"
+  />
+  <div
+    class="theme-ambient__scroll-trace"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--steampunk"
+  />
+  <div
+    class="theme-ambient__foundry-gear theme-ambient__foundry-gear--distant"
+  />
+  <div
+    class="theme-ambient__steam-fog"
+  />
+  <span
+    class="theme-ambient__foundry-steam-band"
+    style="--ambient-y: 58%; --ambient-delay: 0s; --ambient-duration: 17s; --ambient-opacity: 0.2;"
+  />
+  <span
+    class="theme-ambient__foundry-steam-band"
+    style="--ambient-y: 66%; --ambient-delay: -3.2s; --ambient-duration: 19s; --ambient-opacity: 0.16;"
+  />
+  <span
+    class="theme-ambient__foundry-steam-band"
+    style="--ambient-y: 74%; --ambient-delay: -6.1s; --ambient-duration: 18s; --ambient-opacity: 0.14;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 10%; --ambient-y: 70%; --ambient-delay: 0s; --ambient-duration: 9.2s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 20%; --ambient-y: 66%; --ambient-delay: -1.4s; --ambient-duration: 8.6s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 33%; --ambient-y: 72%; --ambient-delay: -2.5s; --ambient-duration: 9.8s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 47%; --ambient-y: 68%; --ambient-delay: -3.7s; --ambient-duration: 8.9s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 58%; --ambient-y: 74%; --ambient-delay: -1.8s; --ambient-duration: 9.4s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 72%; --ambient-y: 69%; --ambient-delay: -4.6s; --ambient-duration: 8.5s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 84%; --ambient-y: 73%; --ambient-delay: -5.2s; --ambient-duration: 10.1s;"
+  />
+  <div
+    class="theme-ambient__pipe theme-ambient__pipe--1"
+  />
+  <div
+    class="theme-ambient__pipe theme-ambient__pipe--2"
+  />
+  <div
+    class="theme-ambient__pipe theme-ambient__pipe--3"
+  />
+  <div
+    class="theme-ambient__gauge"
+    style="--ambient-x: 12%; --ambient-y: 24%; --ambient-size: 78px; --ambient-delay: 0s; --ambient-duration: 10s; --ambient-rotate: 24deg;"
+  >
+    <span
+      class="theme-ambient__gauge-ring"
+    />
+    <span
+      class="theme-ambient__gauge-needle"
+    />
+    <span
+      class="theme-ambient__gauge-value"
+    >
+      74
+    </span>
+  </div>
+  <div
+    class="theme-ambient__gauge"
+    style="--ambient-x: 30%; --ambient-y: 16%; --ambient-size: 62px; --ambient-delay: -1.5s; --ambient-duration: 9s; --ambient-rotate: -30deg;"
+  >
+    <span
+      class="theme-ambient__gauge-ring"
+    />
+    <span
+      class="theme-ambient__gauge-needle"
+    />
+    <span
+      class="theme-ambient__gauge-value"
+    >
+      89
+    </span>
+  </div>
+  <div
+    class="theme-ambient__gauge"
+    style="--ambient-x: 76%; --ambient-y: 18%; --ambient-size: 70px; --ambient-delay: -2.4s; --ambient-duration: 11s; --ambient-rotate: 36deg;"
+  >
+    <span
+      class="theme-ambient__gauge-ring"
+    />
+    <span
+      class="theme-ambient__gauge-needle"
+    />
+    <span
+      class="theme-ambient__gauge-value"
+    >
+      61
+    </span>
+  </div>
+  <div
+    class="theme-ambient__rail theme-ambient__rail--1"
+  />
+  <div
+    class="theme-ambient__rail theme-ambient__rail--2"
+  />
+  <div
+    class="theme-ambient__gear theme-ambient__gear--1"
+  />
+  <div
+    class="theme-ambient__gear theme-ambient__gear--2"
+  />
+  <div
+    class="theme-ambient__train-wrap"
+  >
+    <svg
+      aria-hidden="true"
+      class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium theme-ambient__item theme-ambient__train css-1umw9bq-MuiSvgIcon-root"
+      data-testid="TrainIcon"
+      focusable="false"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2.23l2-2H14l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4M7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17m3.5-7H6V6h5zm2 0V6h5v4zm3.5 7c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5"
+      />
+    </svg>
+    <span
+      class="theme-ambient__steam theme-ambient__steam--1"
+    />
+    <span
+      class="theme-ambient__steam theme-ambient__steam--2"
+    />
+    <span
+      class="theme-ambient__steam theme-ambient__steam--3"
+    />
+  </div>
+  <div
+    class="theme-ambient__noise theme-ambient__noise--steampunk"
+  />
+  <div
+    class="theme-ambient__vignette"
+  />
+</div>
+`;
+
+exports[`phase 5 visual regression snapshots for theme ambient direction > steampunk reduced profile snapshot 1`] = `
+<div
+  aria-hidden="true"
+  class="theme-ambient-layer theme-ambient--steampunk is-reduced-motion"
+  data-ambient-reduced-profile="steampunk"
+  data-ambient-render-mode="demand"
+  style="--ambient-cursor-x: 50%; --ambient-cursor-y: 50%; --ambient-parallax-x: 0.0000; --ambient-parallax-y: 0.0000; --ambient-scroll-progress: 0.0000; --ambient-intensity: 1.0000;"
+>
+  <canvas
+    aria-hidden="true"
+    class="theme-ambient__canvas theme-ambient__canvas--coalesce"
+    data-frameloop="demand"
+    data-renderer="theme-background-renderer"
+    data-scheme="coalesce"
+  />
+  <div
+    class="theme-ambient__reduced-profile theme-ambient__reduced-profile--steampunk"
+    data-ambient-reduced-profile-theme="steampunk"
+  />
+  <div
+    class="theme-ambient__scene-shell theme-ambient__scene-shell--steampunk"
+  />
+  <div
+    class="theme-ambient__foundry-gear theme-ambient__foundry-gear--distant"
+  />
+  <div
+    class="theme-ambient__steam-fog"
+  />
+  <span
+    class="theme-ambient__foundry-steam-band"
+    style="--ambient-y: 58%; --ambient-delay: 0s; --ambient-duration: 17s; --ambient-opacity: 0.2;"
+  />
+  <span
+    class="theme-ambient__foundry-steam-band"
+    style="--ambient-y: 66%; --ambient-delay: -3.2s; --ambient-duration: 19s; --ambient-opacity: 0.16;"
+  />
+  <span
+    class="theme-ambient__foundry-steam-band"
+    style="--ambient-y: 74%; --ambient-delay: -6.1s; --ambient-duration: 18s; --ambient-opacity: 0.14;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 10%; --ambient-y: 70%; --ambient-delay: 0s; --ambient-duration: 9.2s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 20%; --ambient-y: 66%; --ambient-delay: -1.4s; --ambient-duration: 8.6s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 33%; --ambient-y: 72%; --ambient-delay: -2.5s; --ambient-duration: 9.8s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 47%; --ambient-y: 68%; --ambient-delay: -3.7s; --ambient-duration: 8.9s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 58%; --ambient-y: 74%; --ambient-delay: -1.8s; --ambient-duration: 9.4s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 72%; --ambient-y: 69%; --ambient-delay: -4.6s; --ambient-duration: 8.5s;"
+  />
+  <span
+    class="theme-ambient__foundry-soot"
+    style="--ambient-x: 84%; --ambient-y: 73%; --ambient-delay: -5.2s; --ambient-duration: 10.1s;"
+  />
+  <div
+    class="theme-ambient__pipe theme-ambient__pipe--1"
+  />
+  <div
+    class="theme-ambient__pipe theme-ambient__pipe--2"
+  />
+  <div
+    class="theme-ambient__pipe theme-ambient__pipe--3"
+  />
+  <div
+    class="theme-ambient__gauge"
+    style="--ambient-x: 12%; --ambient-y: 24%; --ambient-size: 78px; --ambient-delay: 0s; --ambient-duration: 10s; --ambient-rotate: 24deg;"
+  >
+    <span
+      class="theme-ambient__gauge-ring"
+    />
+    <span
+      class="theme-ambient__gauge-needle"
+    />
+    <span
+      class="theme-ambient__gauge-value"
+    >
+      74
+    </span>
+  </div>
+  <div
+    class="theme-ambient__gauge"
+    style="--ambient-x: 30%; --ambient-y: 16%; --ambient-size: 62px; --ambient-delay: -1.5s; --ambient-duration: 9s; --ambient-rotate: -30deg;"
+  >
+    <span
+      class="theme-ambient__gauge-ring"
+    />
+    <span
+      class="theme-ambient__gauge-needle"
+    />
+    <span
+      class="theme-ambient__gauge-value"
+    >
+      89
+    </span>
+  </div>
+  <div
+    class="theme-ambient__gauge"
+    style="--ambient-x: 76%; --ambient-y: 18%; --ambient-size: 70px; --ambient-delay: -2.4s; --ambient-duration: 11s; --ambient-rotate: 36deg;"
+  >
+    <span
+      class="theme-ambient__gauge-ring"
+    />
+    <span
+      class="theme-ambient__gauge-needle"
+    />
+    <span
+      class="theme-ambient__gauge-value"
+    >
+      61
+    </span>
+  </div>
+  <div
+    class="theme-ambient__rail theme-ambient__rail--1"
+  />
+  <div
+    class="theme-ambient__rail theme-ambient__rail--2"
+  />
+  <div
+    class="theme-ambient__gear theme-ambient__gear--1"
+  />
+  <div
+    class="theme-ambient__gear theme-ambient__gear--2"
+  />
+  <div
+    class="theme-ambient__train-wrap"
+  >
+    <svg
+      aria-hidden="true"
+      class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium theme-ambient__item theme-ambient__train css-1umw9bq-MuiSvgIcon-root"
+      data-testid="TrainIcon"
+      focusable="false"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2.23l2-2H14l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4M7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17m3.5-7H6V6h5zm2 0V6h5v4zm3.5 7c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5"
+      />
+    </svg>
+    <span
+      class="theme-ambient__steam theme-ambient__steam--1"
+    />
+    <span
+      class="theme-ambient__steam theme-ambient__steam--2"
+    />
+    <span
+      class="theme-ambient__steam theme-ambient__steam--3"
+    />
+  </div>
+  <div
+    class="theme-ambient__noise theme-ambient__noise--steampunk"
+  />
+  <div
+    class="theme-ambient__vignette"
+  />
+</div>
+`;

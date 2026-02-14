@@ -176,7 +176,7 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
   const renderPieChart = (
     data: Array<{ name: string; value: number; color: string }>,
     title: string,
-    Icon: React.ElementType,
+    Icon: React.ElementType<{ sx?: { fontSize?: number }; className?: string }>,
     totalLabel: string
   ) => {
     const total = data.reduce((sum, item) => sum + item.value, 0);

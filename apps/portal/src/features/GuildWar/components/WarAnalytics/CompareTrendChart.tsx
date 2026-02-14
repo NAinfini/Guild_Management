@@ -173,19 +173,14 @@ export function CompareTrendChart({ perWarStats, wars, members, onSelectWar, sam
         ]}
         series={compareSeries
           .filter((series) => !compareMode.hiddenUserIds.has(series.userId))
-          .map((series) => {
-            const drawArea = selectedMetrics.length === 1;
-
-            return {
-              id: series.dataKey,
-              data: chartData.map((d) => (d as any)[series.dataKey] ?? null),
-              label: `${series.username} · ${formatMetricName(series.metric as MetricType)}`,
-              color: series.color,
-              connectNulls: false,
-              showMark: true,
-              area: drawArea,
-            };
-          })}
+          .map((series) => ({
+            id: series.dataKey,
+            data: chartData.map((d) => (d as any)[series.dataKey] ?? null),
+            label: `${series.username} · ${formatMetricName(series.metric as MetricType)}`,
+            color: series.color,
+            connectNulls: false,
+            showMark: true,
+          }))}
         height={420}
         margin={{ top: 10, right: 30, left: 50, bottom: 30 }}
         grid={{ vertical: true, horizontal: true }}

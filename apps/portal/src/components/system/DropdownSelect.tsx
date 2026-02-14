@@ -267,7 +267,7 @@ export function DropdownSelectShowcase({ className = '' }: DropdownSelectProps) 
                 minWidth: '120px'
               }}
             >
-              #7C3AED
+              var(--color-accent-primary)
             </div>
           </div>
         </div>

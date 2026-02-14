@@ -53,7 +53,7 @@ describe('theme motion contract', () => {
       expect(typeof spec.capabilities.hasAnimatedBackground).toBe('boolean');
       expect(typeof spec.capabilities.hasMascot).toBe('boolean');
       expect([0, 1, 2, 3]).toContain(spec.capabilities.fxQuality);
-      expect(['css', 'canvas', 'rive']).toContain(spec.capabilities.backgroundMode);
+      expect(['css', 'canvas']).toContain(spec.capabilities.backgroundMode);
     }
   });
 });

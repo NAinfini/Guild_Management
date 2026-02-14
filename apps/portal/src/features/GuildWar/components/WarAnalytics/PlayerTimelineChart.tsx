@@ -42,7 +42,9 @@ export function PlayerTimelineChart({ perWarStats, wars, metrics, onSelectWar, i
     );
 
     return sortedWars.map((war) => {
-      const stats = perWarStats.find((s) => s.war_id === war.war_id);
+      const stats = perWarStats.find(
+        (s) => Number(s.war_id) === Number(war.war_id)
+      );
       const point: Record<string, string | number | null> = {
         war_id: war.war_id,
         war_date: war.war_date,
@@ -137,7 +139,6 @@ export function PlayerTimelineChart({ perWarStats, wars, metrics, onSelectWar, i
           color: METRIC_LINE_COLORS[metric],
           connectNulls: false,
           showMark: true,
-          area: true,
         }))}
         height={420}
         margin={{ top: 10, right: 30, left: 50, bottom: 30 }}

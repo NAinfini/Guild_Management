@@ -4,7 +4,7 @@ import React from 'react';
 type PlaceholderPageProps = {
   title: string;
   description?: string;
-  icon?: React.ElementType; 
+  icon?: React.ElementType<{ className?: string }>;
   className?: string;
 };
 

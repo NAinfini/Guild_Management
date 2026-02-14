@@ -4,7 +4,6 @@ import { useFilteredList } from '../../hooks/useFilteredList';
 import { 
   Card, 
   CardContent, 
-  CardHeader, 
   Button, 
   Chip, 
   Typography, 
@@ -25,8 +24,6 @@ import {
   Snackbar,
   Alert,
   Tooltip,
-  ToggleButtonGroup,
-  ToggleButton,
   Avatar,
   Paper,
   alpha
@@ -34,14 +31,18 @@ import {
 import { WarAnalyticsMain } from './components/WarAnalytics';
 import { WarHistory as WarHistoryView } from './components/WarHistory';
 import { WarTeamDragDrop } from './components/WarTeamDragDrop';
+import { TeamMemberCard } from '@/components/data-display';
 import { PlaceholderPage } from '@/components/layout/PlaceholderPage';
+import { ThemedTabControl } from '@/components/controls/ThemedTabControl';
+import { ThemedSortButtonGroup } from '@/components/controls/ThemedSortButtonGroup';
+import { ThemedPanelBox } from '@/components/controls/ThemedPanelBox';
+import { ThemedIconButton } from '@/components/controls/ThemedIconButton';
 import { 
   Security, 
   GridView, 
   Add, 
   People, 
   Shield, 
-  KeyboardArrowDown, 
   Search, 
   History, 
   Delete, 
@@ -53,18 +54,18 @@ import {
   AutoAwesome,
   ElectricBolt,
   Undo,
-  ArrowUpward,
-  ArrowDownward
 } from '@mui/icons-material';
-import { formatPower, formatDateTime, sanitizeHtml, formatClassDisplayName, getMemberCardAccentColors, getClassPillTone } from '../../lib/utils';
-import { getOptimizedMediaUrl } from '../../lib/media-conversion';
+import { formatPower, formatDateTime, sanitizeHtml, formatClassDisplayName, getMemberCardAccentColors, getClassPillTone, buildMemberAccentGradient } from '../../lib/utils';
+// ... (imports remain same until next change)
+
+
 import { useAuthStore, useUIStore } from '../../store';
 import { User, WarTeam, ClassType } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { useEvents, useMembers, useJoinEvent, useLeaveEvent } from '../../hooks/useServerState';
 import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent, useSensors, useSensor, PointerSensor, KeyboardSensor } from '@dnd-kit/core';
 import { snapCenterToCursor } from '@dnd-kit/modifiers';
-import { useWarHistory, useWarTeams, useMovePoolToTeam, useMoveTeamToPool, useMoveTeamToTeam, useKickFromTeam, useKickFromPool } from './hooks/useWars';
+import { useWarTeams, useMovePoolToTeam, useMoveTeamToPool, useMoveTeamToTeam, useKickFromTeam, useKickFromPool } from './hooks/useWars';
 // 2026-02-06T13:26:16Z
 import { Skeleton, useMediaQuery } from '@mui/material';
 import { CardGridSkeleton } from '@/components/feedback/Skeleton';
@@ -85,28 +86,48 @@ import {
 
 type Tab = 'active' | 'history' | 'analytics';
 
-function buildMemberAccentGradient(accentColors: string[]): string {
-  const [first, second, third] = accentColors;
-  const opacity = 0.5;
 
-  if (third) {
-    // Three colors: diagonal sections with sharp cuts
-    return `
-      linear-gradient(135deg, ${alpha(first, opacity)} 0%, ${alpha(first, opacity)} 33.33%, transparent 33.33%),
-      linear-gradient(225deg, ${alpha(second, opacity)} 0%, ${alpha(second, opacity)} 33.33%, transparent 33.33%),
-      linear-gradient(315deg, ${alpha(third, opacity)} 0%, ${alpha(third, opacity)} 33.33%, transparent 33.33%)
-    `.replace(/\s+/g, ' ').trim();
-  }
-  if (second) {
-    // Two colors: diagonal split with sharp cut at 50%
-    return `linear-gradient(135deg, ${alpha(first, opacity)} 0%, ${alpha(first, opacity)} 50%, ${alpha(second, opacity)} 50%, ${alpha(second, opacity)} 100%)`;
-  }
-  // Single color
-  return alpha(first, opacity);
-}
 
 const THEME_CARD_RADIUS = 'var(--cmp-card-radius)';
-const THEME_HEADER_RADIUS = 'inherit';
+
+function getGuildWarPanelTokens(theme: any) {
+  const custom = theme?.custom ?? {};
+  const panel = custom?.components?.panel ?? {};
+  const card = custom?.components?.card ?? {};
+  const semanticSurface = custom?.semantic?.surface ?? {};
+  const semanticBorder = custom?.semantic?.border ?? {};
+  const semanticInteractive = custom?.semantic?.interactive ?? {};
+  const semanticText = custom?.semantic?.text ?? {};
+
+  return {
+    panelBg: card.bg ?? panel.bg ?? semanticSurface.panel ?? 'var(--cmp-panel-bg)',
+    panelHeaderBg: panel.headerBg ?? card.bg ?? semanticSurface.elevated ?? 'var(--cmp-panel-header-bg)',
+    panelBorder: card.border ?? panel.border ?? semanticBorder.default ?? 'var(--cmp-panel-border)',
+    dropTargetBg: panel.dropTargetBg ?? semanticInteractive.hover ?? 'var(--cmp-panel-drop-target-bg)',
+    dropTargetBorder: panel.dropTargetBorder ?? semanticInteractive.accent ?? 'var(--cmp-panel-drop-target-border)',
+    panelControlBg: panel.controlBg ?? semanticSurface.sunken ?? 'var(--cmp-panel-control-bg)',
+    panelText: semanticText.primary ?? theme.palette.text.primary,
+    panelMutedText: semanticText.secondary ?? theme.palette.text.secondary,
+    inverseText: semanticText.inverse ?? theme.palette.common?.white ?? '#FFFFFF',
+  };
+}
+
+function getGuildWarSegmentedTokens(theme: any) {
+  const custom = theme?.custom ?? {};
+  const segmented = custom?.components?.segmentedControl ?? {};
+  const sortArrows = custom?.components?.sortArrows ?? {};
+  const semanticText = custom?.semantic?.text ?? {};
+  const semanticInteractive = custom?.semantic?.interactive ?? {};
+
+  return {
+    bg: segmented.bg ?? theme.palette.background.paper,
+    border: segmented.border ?? theme.palette.divider,
+    text: segmented.text ?? semanticText.secondary ?? theme.palette.text.secondary,
+    selectedBg: segmented.selectedBg ?? semanticInteractive.hover ?? alpha(theme.palette.primary.main, 0.12),
+    selectedText: segmented.selectedText ?? semanticText.primary ?? theme.palette.text.primary,
+    indicator: sortArrows.active ?? semanticInteractive.accent ?? theme.palette.primary.main,
+  };
+}
 
 export function GuildWar() {
   const [activeTab, setActiveTab] = useState<Tab>('active');
@@ -119,6 +140,7 @@ export function GuildWar() {
   const { setPageTitle } = useUIStore();
   const { t } = useTranslation();
   const theme = useTheme();
+  const panelTokens = getGuildWarPanelTokens(theme);
   const online = useOnline();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const effectiveRole = getEffectiveRole(user?.role, viewRole);
@@ -177,50 +199,43 @@ export function GuildWar() {
       {/* Page Header Area */}
       <Box sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { md: 'center' }, justifyContent: 'space-between', gap: 2 }}>
          <Stack direction="row" alignItems="center" gap={2}>
-             <Paper elevation={0} sx={{ border: 1, borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
-                 <ToggleButtonGroup
-                    value={activeTab}
-                    exclusive
-                    onChange={(_, val) => val && setActiveTab(val)}
-                    size="small"
-                    sx={{
-                        '& .MuiToggleButton-root': {
-                            border: 0,
-                            borderRadius: 0,
-                            px: 3,
-                            py: 1,
-                            fontSize: '0.75rem',
-                            fontWeight: 800,
-                            letterSpacing: '0.05em',
-                            textTransform: 'uppercase',
-                            color: 'text.secondary',
-                            transition: 'all 0.2s',
-                            '&.Mui-selected': {
-                                bgcolor: alpha(theme.palette.primary.main, 0.2),
-                                color: 'primary.main',
-                                fontWeight: 900,
-                                boxShadow: `inset 0 -3px 0 0 ${theme.palette.primary.main}, 0 0 8px ${alpha(theme.palette.primary.main, 0.3)}`
-                            }
-                        }
-                    }}
-                 >
-                    <ToggleButton value="active">
-                        <Stack direction="row" gap={1} alignItems="center">
-                            <ElectricBolt sx={{ fontSize: 16, color: theme.palette.warning.main }} /> {t('guild_war.tab_active')}
-                        </Stack>
-                    </ToggleButton>
-                    <ToggleButton value="history">
-                        <Stack direction="row" gap={1} alignItems="center">
-                            <History sx={{ fontSize: 16 }} /> {t('guild_war.tab_history')}
-                        </Stack>
-                    </ToggleButton>
-                    <ToggleButton value="analytics">
-                        <Stack direction="row" gap={1} alignItems="center">
-                            <BarChart sx={{ fontSize: 16 }} /> {t('guild_war.tab_analytics')}
-                        </Stack>
-                    </ToggleButton>
-                 </ToggleButtonGroup>
-             </Paper>
+             <ThemedTabControl
+                value={activeTab}
+                onValueChange={(next) => setActiveTab(next as Tab)}
+                sx={{
+                  bgcolor: panelTokens.panelControlBg,
+                  borderColor: panelTokens.panelBorder,
+                }}
+                options={[
+                  {
+                    value: 'active',
+                    label: (
+                      <Stack direction="row" gap={1} alignItems="center">
+                        <ElectricBolt sx={{ fontSize: 16, color: 'var(--color-status-warning)' }} />
+                        {t('guild_war.tab_active')}
+                      </Stack>
+                    ),
+                  },
+                  {
+                    value: 'history',
+                    label: (
+                      <Stack direction="row" gap={1} alignItems="center">
+                        <History sx={{ fontSize: 16 }} />
+                        {t('guild_war.tab_history')}
+                      </Stack>
+                    ),
+                  },
+                  {
+                    value: 'analytics',
+                    label: (
+                      <Stack direction="row" gap={1} alignItems="center">
+                        <BarChart sx={{ fontSize: 16 }} />
+                        {t('guild_war.tab_analytics')}
+                      </Stack>
+                    ),
+                  },
+                ]}
+             />
          </Stack>
 
          {activeTab === 'active' && (
@@ -306,6 +321,7 @@ function ActiveWarManagement({
 
   const { t } = useTranslation();
   const theme = useTheme();
+  const panelTokens = getGuildWarPanelTokens(theme);
   const online = useOnline();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const activeWar = useMemo(() => events.find(e => e.id === warId), [events, warId]);
@@ -338,21 +354,6 @@ function ActiveWarManagement({
       .join(' ')
       .toLowerCase()
       .includes(normalizedMemberSearchQuery);
-  };
-
-  const renderSortArrows = (sortState: GuildWarSortState, field: GuildWarSortState['field']) => {
-    const isFieldActive = sortState.field === field;
-    const upActive = isFieldActive && sortState.direction === 'asc';
-    const downActive = isFieldActive && sortState.direction === 'desc';
-    const activeColor = theme.palette.primary.main;
-    const inactiveColor = alpha(theme.palette.text.secondary, 0.55);
-
-    return (
-      <Stack direction="row" spacing={0.2} alignItems="center" sx={{ ml: 0.4 }}>
-        <ArrowUpward sx={{ fontSize: 11, color: upActive ? activeColor : inactiveColor }} />
-        <ArrowDownward sx={{ fontSize: 11, color: downActive ? activeColor : inactiveColor }} />
-      </Stack>
-    );
   };
 
   // DnD sensors: pointer (mouse/touch) + keyboard (Space to grab, Arrow keys to move)
@@ -657,56 +658,52 @@ function ActiveWarManagement({
             {/* LEFT COLUMN: POOL */}
             <Grid size={{ xs: 12, md: 3 }} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <DroppablePool id="pool_droppable">
-                  <Box
-                    sx={{
-                      borderRadius: THEME_CARD_RADIUS,
-                      border: '2px solid',
-                      borderColor: 'divider',
-                      bgcolor: alpha(theme.palette.background.paper, 0.4),
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'action.hover', borderTopLeftRadius: THEME_HEADER_RADIUS, borderTopRightRadius: THEME_HEADER_RADIUS }}>
+                  <ThemedPanelBox
+                    variant="pool"
+                    sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+                    left={
                       <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Box sx={{ width: 4, height: 24, borderRadius: 1, bgcolor: 'primary.main' }} />
                         <Box>
                           <Typography variant="subtitle2" fontWeight={800} textTransform="uppercase">{t('guild_war.reserves')}</Typography>
                           <Typography variant="caption" fontFamily="monospace" color="text.secondary">{t('guild_war.operatives_count', { count: poolMembers.length })}</Typography>
                         </Box>
                       </Stack>
+                    }
+                    right={
                       <Stack direction="row" spacing={0.5}>
-                        <ToggleButtonGroup size="small" value={poolSort.field} exclusive sx={{ height: 28 }}>
-                          <ToggleButton
-                            value="power"
-                            onClick={() => setPoolSort((prev) => nextGuildWarSortState(prev, 'power'))}
-                            sx={{ fontSize: '0.5rem', px: 1 }}
-                          >
-                            <Stack direction="row" alignItems="center">
-                              {t('guild_war.sort_pwr')}
-                              {renderSortArrows(poolSort, 'power')}
-                            </Stack>
-                          </ToggleButton>
-                          <ToggleButton
-                            value="class"
-                            onClick={() => setPoolSort((prev) => nextGuildWarSortState(prev, 'class'))}
-                            sx={{ fontSize: '0.5rem', px: 1 }}
-                          >
-                            <Stack direction="row" alignItems="center">
-                              {t('guild_war.sort_cls')}
-                              {renderSortArrows(poolSort, 'class')}
-                            </Stack>
-                          </ToggleButton>
-                        </ToggleButtonGroup>
+                        <ThemedSortButtonGroup
+                          sortState={poolSort}
+                          onFieldChange={(field) =>
+                            setPoolSort((prev) => nextGuildWarSortState(prev, field as GuildWarSortState['field']))
+                          }
+                          options={[
+                            { value: 'power', label: t('guild_war.sort_pwr') },
+                            { value: 'class', label: t('guild_war.sort_cls') },
+                          ]}
+                          sx={{
+                            bgcolor: panelTokens.panelControlBg,
+                            borderColor: panelTokens.panelBorder,
+                          }}
+                        />
                         {canManageActive && (
-                          <IconButton size="small" onClick={() => setAddMemberModalOpen(true)}><Add sx={{ fontSize: 16 }} /></IconButton>
+                          <ThemedIconButton
+                            size="small"
+                            onClick={() => setAddMemberModalOpen(true)}
+                            sx={{
+                              border: '1px solid',
+                              borderColor: panelTokens.panelBorder,
+                              bgcolor: panelTokens.panelControlBg,
+                              color: panelTokens.panelText,
+                              '&:hover': { bgcolor: panelTokens.dropTargetBg },
+                            }}
+                          >
+                            <Add sx={{ fontSize: 16 }} />
+                          </ThemedIconButton>
                         )}
                       </Stack>
-                    </Box>
-
-                    <Box sx={{ p: 2, minHeight: 120, display: 'grid', gridTemplateColumns: '1fr', gap: 1.5, flex: 1, overflowY: 'auto' }}>
+                    }
+                    contentSx={{ p: 2, minHeight: 120, display: 'grid', gridTemplateColumns: '1fr', gap: 1.5, flex: 1, overflowY: 'auto', bgcolor: panelTokens.panelBg }}
+                  >
                       {poolMembers.map(member => (
                         <DraggableMemberCard
                           key={member.id}
@@ -720,12 +717,11 @@ function ActiveWarManagement({
                         />
                       ))}
                       {poolMembers.length === 0 && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: panelTokens.panelBorder, borderRadius: 2 }}>
                           <Typography variant="caption" fontWeight={900} color="text.disabled" textTransform="uppercase">{t('guild_war.empty_pool')}</Typography>
                         </Box>
                       )}
-                    </Box>
-                  </Box>
+                  </ThemedPanelBox>
                 </DroppablePool>
             </Grid>
 
@@ -738,28 +734,20 @@ function ActiveWarManagement({
                         <Tooltip title={t('guild_war.squad_controls_hint')}><Typography variant="caption" color="text.secondary" sx={{ textDecoration: 'underline', cursor: 'pointer' }}>{t('guild_war.squad_controls_hint')}</Typography></Tooltip>
                     </Stack>
                     
-                    <ToggleButtonGroup size="small" value={teamSort.field} exclusive sx={{ height: 28 }}>
-                        <ToggleButton
-                          value="power"
-                          onClick={() => setTeamSort((prev) => nextGuildWarSortState(prev, 'power'))}
-                          sx={{ fontSize: '0.5rem', px: 1 }}
-                        >
-                          <Stack direction="row" alignItems="center">
-                            {t('guild_war.sort_pwr')}
-                            {renderSortArrows(teamSort, 'power')}
-                          </Stack>
-                        </ToggleButton>
-                        <ToggleButton
-                          value="class"
-                          onClick={() => setTeamSort((prev) => nextGuildWarSortState(prev, 'class'))}
-                          sx={{ fontSize: '0.5rem', px: 1 }}
-                        >
-                          <Stack direction="row" alignItems="center">
-                            {t('guild_war.sort_cls')}
-                            {renderSortArrows(teamSort, 'class')}
-                          </Stack>
-                        </ToggleButton>
-                    </ToggleButtonGroup>
+                    <ThemedSortButtonGroup
+                      sortState={teamSort}
+                      onFieldChange={(field) =>
+                        setTeamSort((prev) => nextGuildWarSortState(prev, field as GuildWarSortState['field']))
+                      }
+                      options={[
+                        { value: 'power', label: t('guild_war.sort_pwr') },
+                        { value: 'class', label: t('guild_war.sort_cls') },
+                      ]}
+                      sx={{
+                        bgcolor: panelTokens.panelControlBg,
+                        borderColor: panelTokens.panelBorder,
+                      }}
+                    />
                 </Box>
 
                 <Box sx={{ flex: 1, overflowY: 'auto', pr: 1, pb: 2 }}>
@@ -894,133 +882,31 @@ function DraggableMemberCard({
     disabled: !canManage,
     attributes: { roleDescription: 'draggable member' },
   });
-  const { t } = useTranslation();
-  const theme = useTheme();
-  const accentColors = getMemberCardAccentColors(member.classes as ClassType[] | undefined, theme);
-  const primaryAccent = accentColors[0];
-  const primaryClass = member.classes?.[0] as ClassType | undefined;
-  const classTone = getClassPillTone(primaryClass, theme);
-  const classLabel = primaryClass ? formatClassDisplayName(primaryClass) : t('common.unknown');
-
-  const getRoleIcon = (r?: string) => {
-     switch(r) {
-        case 'lead': return <EmojiEvents sx={{ fontSize: 12, color: theme.custom?.warRoles.lead.main || theme.palette.warning.main }} />;
-        case 'dmg': return <ElectricBolt sx={{ fontSize: 12, color: theme.custom?.warRoles.dps.main || theme.palette.error.main }} />;
-        case 'tank': return <Shield sx={{ fontSize: 12, color: theme.custom?.warRoles.tank.main || theme.palette.primary.main }} />;
-        case 'healer': return <Favorite sx={{ fontSize: 12, color: theme.custom?.warRoles.heal.main || theme.palette.success.main }} />;
-        case 'support': return <AutoAwesome sx={{ fontSize: 12, color: "#a855f7" }} />;
-        default: return null;
-     }
-  };
 
   return (
-    <Card
-      ref={setNodeRef}
-      {...(canManage ? listeners : {})}
-      {...(canManage ? attributes : {})}
-      aria-label={`${member.username}${role ? `, ${role}` : ''}`}
-      onClick={(e) => onClick(member.id, e)}
-      onDoubleClick={(e) => onDoubleClick(member.id, e)}
-      sx={{
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          p: 1.2,
-          cursor: canManage ? 'grab' : 'default',
-          opacity: isDragging ? 0.3 : 1,
-          border: '1px solid',
-          borderRadius: 2,
-          overflow: 'hidden',
-          borderColor: (() => {
-             if (selected) return theme.palette.primary.main;
-             if (highlighted) return alpha(theme.palette.warning.main, 0.8);
-             return alpha(primaryAccent, 0.5);
-          })(),
-          bgcolor: (() => {
-             if (selected) return alpha(theme.palette.primary.main, 0.1);
-             if (highlighted) return alpha(theme.palette.warning.main, 0.18);
-             return alpha(primaryAccent, 0.24);
-          })(),
-          transition: 'all 0.2s',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            inset: 0,
-            background: buildMemberAccentGradient(accentColors),
-            pointerEvents: 'none',
-          },
-          '&:active': canManage ? { cursor: 'grabbing', transform: 'scale(0.98)' } : undefined,
-          '&:hover': {
-            borderColor: highlighted ? theme.palette.warning.main : theme.palette.primary.main,
-            boxShadow: highlighted ? `0 0 0 1px ${alpha(theme.palette.warning.main, 0.55)}` : 1,
-          }
+    <TeamMemberCard
+      member={member}
+      variant="draggable"
+      selected={selected}
+      highlighted={highlighted}
+      role={role}
+      canManage={canManage}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      onKick={onKick}
+      draggableProps={{
+        attributes,
+        listeners,
+        setNodeRef,
+        isDragging,
       }}
-    >
-       <Box sx={{ position: 'relative', zIndex: 1, flex: 1, overflow: 'hidden', mr: 1.5 }}>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-             <Typography variant="body2" noWrap fontWeight={900} sx={{ color: 'common.white' }} dangerouslySetInnerHTML={sanitizeHtml(member.username)} />
-             {role && <Box sx={{ p: 0.5, borderRadius: '50%', bgcolor: 'background.default', border: '1px solid', borderColor: 'divider', display: 'flex' }}>{getRoleIcon(role)}</Box>}
-          </Stack>
-          
-          <Stack direction="row" alignItems="center" spacing={0.6} flexWrap="wrap">
-              <Box sx={{
-                  px: 1, py: 0.2, borderRadius: 6,
-                  fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase',
-                  bgcolor: classTone.bg,
-                  color: classTone.text,
-                  border: '1px solid',
-                  borderColor: alpha(classTone.main, 0.55),
-              }}>
-                  {classLabel}
-              </Box>
-              <Box sx={{
-                  px: 1, py: 0.2, borderRadius: 6,
-                  fontSize: '0.62rem', fontWeight: 800, fontFamily: 'monospace',
-                  bgcolor: alpha(theme.palette.primary.light, 0.14),
-                  color: 'common.white',
-                  border: 1,
-                  borderColor: alpha(theme.palette.primary.light, 0.4),
-              }}>
-                  {formatPower(member.power)}
-              </Box>
-          </Stack>
-       </Box>
-       
-	       {canManage && (
-	         <Stack direction="row" alignItems="center" spacing={1} sx={{ position: 'relative', zIndex: 1 }}>
-	            <IconButton 
-	               size="small"
-	               onPointerDown={(e) => e.stopPropagation()}
-	               onClick={(e) => { e.stopPropagation(); onKick(); }}
-	               sx={{ 
-	                   p: 0.6,
-                     border: '1px solid',
-                     borderColor: alpha(theme.palette.error.main, 0.75),
-                     color: alpha(theme.palette.error.light, 0.95),
-                     borderRadius: 1.5,
-                     bgcolor: alpha(theme.palette.error.main, 0.08),
-                     '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.16) }
-	               }}
-	            >
-	               <Delete sx={{ fontSize: 12 }} />
-	            </IconButton>
-	         </Stack>
-	       )}
-	    </Card>
-	  );
+    />
+  );
 }
 
 function MemberCardOverlay({ id, members, count }: { id: string, members: User[], count: number }) {
    const member = members.find(m => m.id === id);
-   const { t } = useTranslation();
-   const theme = useTheme();
    if (!member) return null;
-   const accentColors = getMemberCardAccentColors(member.classes as ClassType[] | undefined, theme);
-   const primaryAccent = accentColors[0];
-   const primaryClass = member.classes?.[0] as ClassType | undefined;
-   const classTone = getClassPillTone(primaryClass, theme);
-   const classLabel = primaryClass ? formatClassDisplayName(primaryClass) : t('common.unknown');
    
    return (
       <Box sx={{ position: 'relative' }}>
@@ -1034,68 +920,15 @@ function MemberCardOverlay({ id, members, count }: { id: string, members: User[]
                {count}
             </Box>
          )}
-	         <Card
-	           sx={{
-	             p: 1.2,
-	             border: '1px solid',
-	             borderColor: alpha(primaryAccent, 0.45),
-	             bgcolor: alpha(primaryAccent, 0.24),
-	             boxShadow: 6,
-               position: 'relative',
-               overflow: 'hidden',
-               '&::before': {
-                 content: '""',
-                 position: 'absolute',
-                 inset: 0,
-                 background: buildMemberAccentGradient(accentColors),
-               },
-	           }}
-	         >
-	           <Typography variant="body2" fontWeight={900} noWrap sx={{ mb: 0.5, color: 'common.white', position: 'relative', zIndex: 1 }}>
-	             {member.username}
-	           </Typography>
-	           <Stack direction="row" spacing={0.6} alignItems="center" flexWrap="wrap" sx={{ position: 'relative', zIndex: 1 }}>
-	             <Box
-	               sx={{
-	                 px: 1,
-	                 py: 0.2,
-	                 borderRadius: 6,
-	                 fontSize: '0.62rem',
-	                 fontWeight: 900,
-	                 textTransform: 'uppercase',
-                   bgcolor: classTone.bg,
-                   color: classTone.text,
-                   border: '1px solid',
-                   borderColor: alpha(classTone.main, 0.55),
-	               }}
-	             >
-	               {classLabel}
-	             </Box>
-	             <Box
-	               sx={{
-	                 px: 1,
-	                 py: 0.2,
-	                 borderRadius: 6,
-	                 fontSize: '0.62rem',
-	                 fontWeight: 800,
-	                 fontFamily: 'monospace',
-	                 bgcolor: alpha(theme.palette.primary.light, 0.14),
-	                 color: 'common.white',
-                   border: '1px solid',
-                   borderColor: alpha(theme.palette.primary.light, 0.4),
-	               }}
-	             >
-	               {formatPower(member.power)}
-	             </Box>
-	           </Stack>
-	         </Card>
-	      </Box>
-	   )
+         <TeamMemberCard member={member} variant="default" />
+      </Box>
+   );
 }
 
 function DroppablePool({ id, children }: { id: string, children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id });
   const theme = useTheme();
+  const panelTokens = getGuildWarPanelTokens(theme);
   return (
     <Box 
         ref={setNodeRef} 
@@ -1104,13 +937,26 @@ function DroppablePool({ id, children }: { id: string, children: React.ReactNode
             transition: 'all 0.2s', 
             minHeight: '100%',
             p: 1,
-            bgcolor: isOver ? alpha(theme.palette.primary.main, 0.05) : 'transparent',
-            outline: isOver ? `2px dashed ${theme.palette.primary.main}` : 'none'
+            bgcolor: isOver ? panelTokens.dropTargetBg : 'transparent',
+            outline: isOver ? `2px dashed ${panelTokens.dropTargetBorder}` : 'none'
         }}
     >
       {children}
     </Box>
   );
+}
+
+interface DroppableTeamProps {
+  team: WarTeam;
+  members: User[];
+  selectedIds: Set<string>;
+  onMemberClick: (id: string, e: React.MouseEvent) => void;
+  onMemberDoubleClick: (id: string, e: React.MouseEvent) => void;
+  onMemberKick: (id: string) => void;
+  onAssignRole: (role: string) => void;
+  sortState: GuildWarSortState;
+  canManage: boolean;
+  memberSearchQuery?: string;
 }
 
 function DroppableTeam({ 
@@ -1124,19 +970,20 @@ function DroppableTeam({
     sortState,
     canManage,
     memberSearchQuery = '',
-}: any) {
+}: DroppableTeamProps) {
   const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id: team.id });
   const theme = useTheme();
+  const panelTokens = getGuildWarPanelTokens(theme);
   
-  const totalPower = team.members.reduce((acc: any, tm: any) => {
-     const m = members.find((u: any) => u.id === tm.user_id);
+  const totalPower = team.members.reduce((acc: number, tm: { user_id: string }) => {
+     const m = members.find((u: User) => u.id === tm.user_id);
      return acc + (m?.power || 0);
   }, 0);
 
   const teamMembers = useMemo(() => {
-      let list = team.members.map((tm: any) => ({
-         ...members.find((m: any) => m.id === tm.user_id),
+      let list = team.members.map((tm: { user_id: string, role_tag?: string }) => ({
+         ...members.find((m: User) => m.id === tm.user_id),
          role_tag: tm.role_tag
       })).filter((m: any) => m.id) as any[];
 
@@ -1144,66 +991,80 @@ function DroppableTeam({
   }, [team.members, members, sortState]);
 
   return (
-    <Box 
-        ref={setNodeRef} 
-        sx={{ 
-            borderRadius: THEME_CARD_RADIUS, 
-            border: `2px solid`, 
-            borderColor: isOver ? 'primary.main' : 'divider',
-            bgcolor: isOver ? alpha(theme.palette.primary.main, 0.05) : alpha(theme.palette.background.paper, 0.4),
-            transition: 'all 0.2s',
-            mb: 2,
-            overflow: 'hidden',
-        }}
-    >
-       <Box sx={{ 
-           px: 2, py: 1.5, 
-           display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-           borderBottom: '1px solid', borderColor: 'divider',
-           bgcolor: 'action.hover',
-           borderTopLeftRadius: THEME_HEADER_RADIUS,
-           borderTopRightRadius: THEME_HEADER_RADIUS
-       }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
-             <Box sx={{ width: 4, height: 24, borderRadius: 1, bgcolor: 'primary.main' }} />
-             <TextField 
-                variant="standard" 
-                defaultValue={team.name} 
-                placeholder={t('guild_war.squad_name_placeholder')}
-                disabled={!canManage}
-                InputProps={{ disableUnderline: true, sx: { fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' } }}
-             />
-          </Stack>
-          
-          <Stack direction="row" alignItems="center" spacing={1}>
-             {canManage && (
-               <Box sx={{ display: 'flex', gap: 0.5, p: 0.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-                  <IconButton size="small" onClick={() => onAssignRole('lead')} sx={{ p: 0.5, color: theme.custom?.warRoles.lead.main }}><EmojiEvents sx={{ fontSize: 14 }} /></IconButton>
-                  <IconButton size="small" onClick={() => onAssignRole('dmg')} sx={{ p: 0.5, color: theme.custom?.warRoles.dps.main }}><ElectricBolt sx={{ fontSize: 14 }} /></IconButton>
-                  <IconButton size="small" onClick={() => onAssignRole('tank')} sx={{ p: 0.5, color: theme.custom?.warRoles.tank.main }}><Shield sx={{ fontSize: 14 }} /></IconButton>
-                  <IconButton size="small" onClick={() => onAssignRole('healer')} sx={{ p: 0.5, color: theme.custom?.warRoles.heal.main }}><Favorite sx={{ fontSize: 14 }} /></IconButton>
-               </Box>
-             )}
+    <ThemedPanelBox
+      variant="team"
+      rootRef={setNodeRef}
+      dropOver={isOver}
+      sx={{ mb: 2 }}
+      left={
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <TextField
+            variant="standard"
+            defaultValue={team.name}
+            placeholder={t('guild_war.squad_name_placeholder')}
+            disabled={!canManage}
+            InputProps={{ disableUnderline: true, sx: { fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' } }}
+          />
+        </Stack>
+      }
+      right={
+        <Stack direction="row" alignItems="center" spacing={1}>
+          {canManage && (
+            <Box sx={{ display: 'flex', gap: 0.5, p: 0.5, bgcolor: panelTokens.panelControlBg, borderRadius: 1, border: '1px solid', borderColor: panelTokens.panelBorder }}>
+              <ThemedIconButton size="small" onClick={() => onAssignRole('lead')} sx={{ p: 0.5, color: theme.custom?.warRoles.lead.main }}><EmojiEvents sx={{ fontSize: 14 }} /></ThemedIconButton>
+              <ThemedIconButton size="small" onClick={() => onAssignRole('dmg')} sx={{ p: 0.5, color: theme.custom?.warRoles.dps.main }}><ElectricBolt sx={{ fontSize: 14 }} /></ThemedIconButton>
+              <ThemedIconButton size="small" onClick={() => onAssignRole('tank')} sx={{ p: 0.5, color: theme.custom?.warRoles.tank.main }}><Shield sx={{ fontSize: 14 }} /></ThemedIconButton>
+              <ThemedIconButton size="small" onClick={() => onAssignRole('healer')} sx={{ p: 0.5, color: theme.custom?.warRoles.heal.main }}><Favorite sx={{ fontSize: 14 }} /></ThemedIconButton>
+            </Box>
+          )}
 
-             <Chip icon={<ElectricBolt sx={{ fontSize: 12 }} />} label={formatPower(totalPower)} size="small" variant="outlined" sx={{ height: 24, '& .MuiChip-label': { fontSize: '0.6rem', fontFamily: 'monospace' } }} />
-             <Chip icon={<People sx={{ fontSize: 12 }} />} label={team.members.length} size="small" variant="outlined" sx={{ height: 24, '& .MuiChip-label': { fontSize: '0.6rem', fontFamily: 'monospace' } }} />
-             {canManage && (
-               <>
-                 <IconButton size="small"><Edit sx={{ fontSize: 14 }} /></IconButton>
-                 <IconButton size="small" color="error"><Delete sx={{ fontSize: 14 }} /></IconButton>
-               </>
-             )}
-          </Stack>
-       </Box>
-       
-       <Box sx={{ 
-           p: 2, 
-           minHeight: 120, 
-           display: 'grid', 
-           gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)', xl: 'repeat(5, 1fr)' }, 
-           gap: 1.5 
-       }}>
-          {teamMembers.map((member: any) => {
+          <Chip
+            icon={<ElectricBolt sx={{ fontSize: 12 }} />}
+            label={formatPower(totalPower)}
+            size="small"
+            variant="outlined"
+            sx={{
+              height: 24,
+              borderColor: panelTokens.panelBorder,
+              bgcolor: panelTokens.panelControlBg,
+              color: panelTokens.panelText,
+              '& .MuiChip-label': { fontSize: '0.6rem', fontFamily: 'monospace' },
+            }}
+          />
+          <Chip
+            icon={<People sx={{ fontSize: 12 }} />}
+            label={team.members.length}
+            size="small"
+            variant="outlined"
+            sx={{
+              height: 24,
+              borderColor: panelTokens.panelBorder,
+              bgcolor: panelTokens.panelControlBg,
+              color: panelTokens.panelText,
+              '& .MuiChip-label': { fontSize: '0.6rem', fontFamily: 'monospace' },
+            }}
+          />
+          {canManage && (
+            <>
+              <ThemedIconButton size="small" sx={{ color: panelTokens.panelText }}>
+                <Edit sx={{ fontSize: 14 }} />
+              </ThemedIconButton>
+              <ThemedIconButton variant="overlayDanger" size="small">
+                <Delete sx={{ fontSize: 14 }} />
+              </ThemedIconButton>
+            </>
+          )}
+        </Stack>
+      }
+      contentSx={{
+        p: 2,
+        minHeight: 120,
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)', xl: 'repeat(5, 1fr)' },
+        gap: 1.5,
+      }}
+    >
+          {teamMembers.map((member: User & { role_tag?: string }) => {
             const isHighlighted = !!memberSearchQuery && [member.username, member.wechat_name, member.id]
               .filter(Boolean)
               .join(' ')
@@ -1224,12 +1085,11 @@ function DroppableTeam({
             );
           })}
           {teamMembers.length === 0 && (
-             <Box sx={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
+             <Box sx={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: panelTokens.panelBorder, borderRadius: 2 }}>
                 <Typography variant="caption" fontWeight={900} color="text.disabled" letterSpacing="0.1em">{t('guild_war.drop_operatives_here')}</Typography>
              </Box>
           )}
-       </Box>
-    </Box>
+    </ThemedPanelBox>
   );
 }
 

@@ -14,6 +14,7 @@ import * as authSignup from '../api/auth/signup';
 import * as authSession from '../api/auth/session';
 import * as authCsrf from '../api/auth/csrf';
 import * as authChangePassword from '../api/auth/change-password';
+import * as authPreferences from '../api/auth/preferences';
 import * as authApiKeys from '../api/auth/api-keys';
 import * as authApiKeysById from '../api/auth/api-keys/[id]';
 
@@ -140,6 +141,7 @@ const ROUTE_MAP: Record<string, RouteHandler> = {
   '/auth/session': authSession,
   '/auth/csrf': authCsrf,
   '/auth/change-password': authChangePassword,
+  '/auth/preferences': authPreferences,
 
   // Members (specific routes first, then general)
   '/members/restore': membersRestore,

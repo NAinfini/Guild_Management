@@ -54,9 +54,14 @@ vi.mock('@/theme/ThemeController', () => ({
   useThemeController: () => ({
     currentTheme: 'neo-brutalism',
     currentColor: 'black-gold',
+    reducedMotion: false,
+    motionMode: 'full',
+    effectiveMotionMode: 'full',
     setTheme: vi.fn(),
     setColor: vi.fn(),
+    setMotionMode: vi.fn(),
   }),
+  onThemeChange: () => () => undefined,
   NEXUS_THEME_OPTIONS: [
     { id: 'neo-brutalism', label: 'Neo-Brutalism', description: 'Bold styling' },
   ],

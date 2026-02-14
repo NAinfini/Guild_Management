@@ -118,17 +118,27 @@ export const membersAPI = {
     if (params?.role) queryParams.role = params.role;
     if (params?.since) queryParams.since = params.since;
 
-    // API always returns paginated format: { items: [...], pagination: {...} }
-    const response = await typedAPI.members.list<{ items: MemberDTO[], pagination: any }>({ query: queryParams });
+    // Primary shape: paginated response { items, pagination }.
+    // Fallback shapes are supported for legacy routes.
+    const response = await typedAPI.members.list<any>({ query: queryParams });
+    const listItems: MemberDTO[] = Array.isArray(response?.items)
+      ? response.items
+      : Array.isArray(response?.members)
+      ? response.members
+      : Array.isArray(response)
+      ? response
+      : [];
 
-
-
-    if (!response || !response.items) {
-      console.warn('[membersAPI.list] No items in response, returning empty array');
-      return [];
+    if (!Array.isArray(listItems)) {
+      throw new Error('[membersAPI.list] Invalid response shape');
     }
 
-    const mapped = response.items.map(mapToDomain);
+    // Fail closed on malformed payloads so Query keeps previous data instead of wiping to [].
+    if (!response || (listItems.length === 0 && !Array.isArray(response?.items) && !Array.isArray(response?.members) && !Array.isArray(response))) {
+      throw new Error('[membersAPI.list] Missing members payload');
+    }
+
+    const mapped = listItems.map(mapToDomain);
 
     return mapped;
   },

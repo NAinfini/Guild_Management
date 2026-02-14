@@ -4,7 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { warsAPI, type WarHistory } from '../../../lib/api';
+import { warsAPI, type WarHistory, type MemberStats } from '../../../lib/api';
 import { queryKeys } from '../../../lib/queryKeys';
 
 export function useActiveWars() {
@@ -316,8 +316,24 @@ export function useUpdateWarStats() {
   return useMutation({
     mutationFn: ({ warId, data, ifMatch }: { warId: string; data: Partial<WarHistory>; ifMatch?: string }) =>
       warsAPI.updateWarStats(warId, data, ifMatch),
-    onSuccess: () => {
+    onSuccess: (_, { warId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.wars.history() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.war.detail(warId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.war.memberStats(warId) });
+    },
+  });
+}
+
+export function useUpdateWarMemberStats() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ warId, data, ifMatch }: { warId: string; data: MemberStats[]; ifMatch?: string }) =>
+      warsAPI.updateMemberStatsBatch(warId, data, ifMatch),
+    onSuccess: (_, { warId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.wars.history() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.war.detail(warId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.war.memberStats(warId) });
     },
   });
 }

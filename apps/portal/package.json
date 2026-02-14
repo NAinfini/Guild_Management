@@ -8,7 +8,8 @@
     "build": "vite build --config ../../config/vite/vite.portal.config.ts",
     "preview": "vite preview --config ../../config/vite/vite.portal.config.ts",
     "test": "vitest --config ../../config/vitest/vitest.portal.config.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
     "@guild/shared-api": "*",

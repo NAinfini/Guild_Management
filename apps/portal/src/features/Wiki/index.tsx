@@ -45,7 +45,7 @@ export function Wiki() {
     title: string;
     category: string;
     date: string;
-    icon: React.ElementType;
+    icon: React.ElementType<{ className?: string }>;
     colorClass: string;
     bgClass: string;
     isDummy?: boolean;

@@ -12,6 +12,7 @@ import {
 } from '@/components/layout/Card';
 import { Avatar } from '@/components/data-display';
 import { Badge } from '@/components/data-display/Badge';
+import { TeamMemberCard } from '@/components/data-display';
 import { cn } from '../../../lib/utils';
 
 type Team = {
@@ -67,43 +68,14 @@ export function WarTeamDragDrop({ warId: _warId, teams, unassignedMembers, onAss
             <CardContent className="p-0">
               <div className="divide-y divide-border">
                 {team.members.map((m) => {
-                  const primaryClass = m.classes?.[0] as ClassType | undefined;
-                  const classLabel = primaryClass ? formatClassDisplayName(primaryClass) : t('common.unknown');
-                  
                   return (
-                    <div
+                    <TeamMemberCard
                       key={m.id}
-                      className="relative flex items-center justify-between p-3 bg-card hover:bg-accent/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 relative z-10">
-                        <Avatar src={m.avatar_url} alt={m.username} className="w-8 h-8">
-                             {m.username.substring(0,2)}
-                        </Avatar>
-                        <div>
-                          <p className="text-sm font-bold text-foreground leading-none">{m.username}</p>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            {/* Class Pill */}
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.65rem] font-black uppercase bg-primary/10 text-primary border border-primary/20">
-                              {classLabel}
-                            </span>
-                            {/* Power Pill */}
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.65rem] font-bold font-mono bg-muted text-muted-foreground border border-border">
-                              {formatPower(m.power || 0)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => !disabled && onAssign?.(m.id, undefined)}
-                        disabled={disabled}
-                        className="h-8 w-auto px-3 text-xs font-bold text-destructive hover:text-destructive hover:bg-destructive/10 z-10"
-                      >
-                         Unassign
-                      </Button>
-                    </div>
+                      member={m}
+                      variant="default"
+                      canManage={!disabled}
+                      onKick={!disabled ? () => onAssign?.(m.id, undefined) : undefined}
+                    />
                   );
                 })}
                 {team.members.length === 0 && (

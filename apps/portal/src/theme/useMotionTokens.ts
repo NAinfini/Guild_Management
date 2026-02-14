@@ -107,7 +107,7 @@ function isMotionDebugEnabled(): boolean {
 }
 
 export function useMotionTokens(): MotionTokens {
-  const { currentTheme, currentColor, motionIntensity } = useThemeController();
+  const { currentTheme, currentColor, motionIntensity, motionMode, effectiveMotionMode } = useThemeController();
   const [tokens, setTokens] = React.useState<MotionTokens>(() => readMotionTokensFromDom());
 
   const refreshTokens = React.useCallback(() => {
@@ -116,7 +116,7 @@ export function useMotionTokens(): MotionTokens {
 
   React.useEffect(() => {
     refreshTokens();
-  }, [refreshTokens, currentTheme, currentColor, motionIntensity]);
+  }, [refreshTokens, currentTheme, currentColor, motionIntensity, motionMode, effectiveMotionMode]);
 
   React.useEffect(() => onThemeChange(() => refreshTokens()), [refreshTokens]);
 
@@ -127,10 +127,11 @@ export function useMotionTokens(): MotionTokens {
       theme: currentTheme,
       color: currentColor,
       motionIntensity,
+      motionMode,
+      effectiveMotionMode,
       ...tokens,
     });
-  }, [tokens, currentTheme, currentColor, motionIntensity]);
+  }, [tokens, currentTheme, currentColor, motionIntensity, motionMode, effectiveMotionMode]);
 
   return tokens;
 }
-

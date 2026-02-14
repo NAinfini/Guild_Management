@@ -1,0 +1,242 @@
+/**
+ * Layout Utilities
+ * ================
+ * Full-width and constrained layout options
+ */
+
+/* Global: Remove max-width constraints from main page containers */
+#main-content > div > *[class*="MuiBox-root"]:first-child,
+.app-route-frame > *[class*="MuiBox-root"]:first-child {
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Opt-out: Allow specific pages to keep constraints */
+.layout-keep-constraints #main-content > div > *[class*="MuiBox-root"]:first-child,
+.layout-keep-constraints .app-route-frame > *[class*="MuiBox-root"]:first-child {
+  max-width: revert !important;
+  margin-left: revert !important;
+  margin-right: revert !important;
+}
+
+/* Full-width content (no side margins) */
+.layout-full-width {
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100% !important;
+}
+
+/* Constrained content with comfortable reading width */
+.layout-constrained {
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Wide layout for data-heavy pages */
+.layout-wide {
+  max-width: 1800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Standard layout (default) */
+.layout-standard {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Compact layout for focused content */
+.layout-compact {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Narrow layout for forms and reading */
+.layout-narrow {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Responsive padding utilities */
+.layout-padding-standard {
+  padding-left: clamp(16px, 2.5vw, 32px);
+  padding-right: clamp(16px, 2.5vw, 32px);
+}
+
+.layout-padding-none {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Grid-based layouts for different screen sizes */
+.layout-grid-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.layout-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.layout-grid-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.layout-grid-4col {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+/* Responsive breakpoints for grid layouts */
+@media (max-width: 1200px) {
+  .layout-grid-4col {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .layout-grid-4col,
+  .layout-grid-3col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .layout-grid-4col,
+  .layout-grid-3col,
+  .layout-grid-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Flex-based layouts */
+.layout-flex-row {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.layout-flex-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Sidebar layouts */
+.layout-with-sidebar {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 1024px) {
+  .layout-with-sidebar {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dashboard/panel layouts */
+.layout-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+/* Container utilities for different page types */
+.page-container-full {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+}
+
+.page-container-wide {
+  width: 100%;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding-left: clamp(16px, 2.5vw, 40px);
+  padding-right: clamp(16px, 2.5vw, 40px);
+}
+
+.page-container-standard {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-left: clamp(16px, 2.5vw, 32px);
+  padding-right: clamp(16px, 2.5vw, 32px);
+}
+
+.page-container-comfortable {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: clamp(16px, 2.5vw, 24px);
+  padding-right: clamp(16px, 2.5vw, 24px);
+}
+
+/* Utility: Remove default page padding */
+.remove-page-padding {
+  margin: calc(-1 * var(--page-padding-top, 20px))
+          calc(-1 * var(--page-padding-right, 20px))
+          calc(-1 * var(--page-padding-bottom, 20px))
+          calc(-1 * var(--page-padding-left, 20px));
+}
+
+/* Utility: Full bleed within constrained container */
+.full-bleed {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+
+/* Responsive spacing */
+.spacing-section {
+  margin-top: clamp(32px, 5vw, 64px);
+  margin-bottom: clamp(32px, 5vw, 64px);
+}
+
+.spacing-component {
+  margin-top: clamp(16px, 2.5vw, 32px);
+  margin-bottom: clamp(16px, 2.5vw, 32px);
+}
+
+/* Safe area insets for mobile devices */
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-inset-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-inset-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Print layouts */
+@media print {
+  .layout-full-width,
+  .layout-constrained,
+  .layout-wide,
+  .layout-standard {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}

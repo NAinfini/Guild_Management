@@ -42,6 +42,7 @@ import {
   useThemeController,
   NEXUS_THEME_OPTIONS,
   NEXUS_COLOR_OPTIONS,
+  getThemeModeIcon,
 } from '@/theme/ThemeController';
 import { useMotionTokens } from '@/theme/useMotionTokens';
 
@@ -57,7 +58,7 @@ export function BottomNavigation() {
   const themeController = useThemeController();
   const motionTokens = useMotionTokens();
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion() || themeController.reducedMotion;
   const effectiveRole = getEffectiveRole(user?.role, viewRole);
   const canSeeAdmin = canAccessAdminArea(effectiveRole);
   const motionEase = React.useMemo<[number, number, number, number]>(() => {
@@ -113,6 +114,7 @@ export function BottomNavigation() {
     <>
       <Paper 
         elevation={0}
+        className="bottom-nav"
         sx={{ 
           position: 'fixed', 
           bottom: 0, 
@@ -123,6 +125,7 @@ export function BottomNavigation() {
           borderTop: theme.custom?.border,
           bgcolor: 'background.paper',
           backdropFilter: 'blur(20px)',
+          boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
           pb: 'env(safe-area-inset-bottom)'
         }}
       >
@@ -159,6 +162,7 @@ export function BottomNavigation() {
                   to={item.href}
                   aria-label={item.label}
                   aria-current={active ? 'page' : undefined}
+                  data-active={active ? 'true' : undefined}
                   sx={{
                     width: '100%',
                     flex: 1,
@@ -190,8 +194,8 @@ export function BottomNavigation() {
                     sx={{
                       fontSize: { xs: '0.55rem', sm: '0.6rem' },
                       fontWeight: 900,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.1em',
+                      textTransform: 'var(--cmp-nav-label-transform, uppercase)',
+                      letterSpacing: 'var(--cmp-nav-label-letter-spacing, 0.1em)',
                       lineHeight: 1,
                       display: { xs: 'none', sm: 'block' }
                     }}
@@ -215,6 +219,7 @@ export function BottomNavigation() {
               data-ui="nav"
               onClick={() => setMoreOpen(true)}
               aria-label={t('common.more')}
+              data-active={moreOpen ? 'true' : undefined}
               sx={{
                 width: '100%',
                 flex: 1,
@@ -246,8 +251,8 @@ export function BottomNavigation() {
                 sx={{
                   fontSize: { xs: '0.55rem', sm: '0.6rem' },
                   fontWeight: 900,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
+                  textTransform: 'var(--cmp-nav-label-transform, uppercase)',
+                  letterSpacing: 'var(--cmp-nav-label-letter-spacing, 0.1em)',
                   lineHeight: 1,
                   display: { xs: 'none', sm: 'block' }
                 }}
@@ -440,27 +445,41 @@ export function BottomNavigation() {
                 </ButtonBase>
                 {themeMenuOpen && (
                   <Stack spacing={0.5} sx={{ pl: 4 }}>
-                    {NEXUS_THEME_OPTIONS.map((opt: any) => (
-                      <ButtonBase
-                        className="control"
-                        data-ui="button"
-                        key={`mobile-theme-${opt.id}`}
-                        onClick={() => themeController.setTheme(opt.id)}
-                        sx={{
-                          width: '100%',
-                          justifyContent: 'flex-start',
-                          p: 1.25,
-                          borderRadius: 2,
-                          bgcolor: themeController.currentTheme === opt.id ? 'action.selected' : 'transparent',
-                          transition: `all ${motionFastMs}ms ${motionTokens.ease}`,
-                          '&:hover': { bgcolor: 'action.hover' },
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                          {t(`theme_menu.themes.${opt.id}.label`, { defaultValue: opt.label })}
-                        </Typography>
-                      </ButtonBase>
-                    ))}
+                    {NEXUS_THEME_OPTIONS.map((opt: any) => {
+                      const ThemeIcon = getThemeModeIcon(opt.id);
+                      const isSelected = themeController.currentTheme === opt.id;
+
+                      return (
+                        <ButtonBase
+                          className="control"
+                          data-ui="button"
+                          key={`mobile-theme-${opt.id}`}
+                          onClick={() => themeController.setTheme(opt.id)}
+                          sx={{
+                            width: '100%',
+                            justifyContent: 'flex-start',
+                            p: 1.25,
+                            borderRadius: 2,
+                            bgcolor: isSelected ? 'action.selected' : 'transparent',
+                            transition: `all ${motionFastMs}ms ${motionTokens.ease}`,
+                            '&:hover': { bgcolor: 'action.hover' },
+                          }}
+                        >
+                          <Stack direction="row" spacing={1.25} alignItems="center">
+                            <ThemeIcon
+                              sx={{
+                                fontSize: 16,
+                                color: isSelected ? 'primary.main' : 'text.secondary',
+                                flexShrink: 0,
+                              }}
+                            />
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              {t(`theme_menu.themes.${opt.id}.label`, { defaultValue: opt.label })}
+                            </Typography>
+                          </Stack>
+                        </ButtonBase>
+                      );
+                    })}
                   </Stack>
                 )}
 

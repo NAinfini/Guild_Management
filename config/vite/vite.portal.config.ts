@@ -11,9 +11,14 @@ export default defineConfig({
   root: path.resolve(repoRoot, 'apps/portal'),
   plugins: [TanStackRouterVite(), react()],
   resolve: {
+    dedupe: ['three'],
     alias: {
       '@': path.resolve(repoRoot, 'apps/portal/src'),
+      three: path.resolve(repoRoot, 'node_modules/three'),
     },
+  },
+  optimizeDeps: {
+    include: ['three'],
   },
   css: {
     postcss: path.resolve(repoRoot, 'config/postcss/postcss.config.js'),

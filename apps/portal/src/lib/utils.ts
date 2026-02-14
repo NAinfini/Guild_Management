@@ -69,16 +69,29 @@ export function getClassColor(classType?: string): string {
   return 'bg-slate-800 text-slate-100 border-slate-700';
 }
 
+/**
+ * Get theme-aware class color from CSS variables
+ * Falls back to hardcoded colors if CSS variables are not available
+ */
 export function getClassBaseColor(className?: string): string {
   const raw = className || '';
   const normalized = raw.toLowerCase();
-  
-  if (normalized.startsWith('mingjin') || raw.startsWith('鸣金')) return GAME_CLASS_COLORS.mingjin.main;
-  if (normalized.startsWith('qiansi') || raw.startsWith('牵丝')) return GAME_CLASS_COLORS.qiansi.main;
-  if (normalized.startsWith('pozhu') || raw.startsWith('破竹')) return GAME_CLASS_COLORS.pozhu.main;
-  if (normalized.startsWith('lieshi') || raw.startsWith('裂石')) return GAME_CLASS_COLORS.lieshi.main;
-  
-  return GAME_CLASS_COLORS.mingjin.main;
+
+  // Determine class type
+  let classType: 'mingjin' | 'qiansi' | 'pozhu' | 'lieshi' = 'mingjin';
+  if (normalized.startsWith('qiansi') || raw.startsWith('牵丝')) classType = 'qiansi';
+  else if (normalized.startsWith('pozhu') || raw.startsWith('破竹')) classType = 'pozhu';
+  else if (normalized.startsWith('lieshi') || raw.startsWith('裂石')) classType = 'lieshi';
+
+  // Try to read CSS variable from current theme
+  if (typeof window !== 'undefined') {
+    const cssVarName = `--member-card-${classType}`;
+    const cssValue = getComputedStyle(document.documentElement).getPropertyValue(cssVarName).trim();
+    if (cssValue) return cssValue;
+  }
+
+  // Fallback to hardcoded colors
+  return GAME_CLASS_COLORS[classType].main;
 }
 
 export function getClassPillTone(classType: string | undefined, theme: Theme) {
@@ -123,3 +136,32 @@ export function sanitizeHtml(html: string): { __html: string } {
 export function formatPower(power: number): string {
   return (power || 0).toLocaleString();
 }
+
+export function buildMemberAccentGradient(accentColors: string[]): string {
+  const [first, second, third] = accentColors;
+  const opacity = 0.5;
+
+  if (third) {
+    // Three colors: diagonal sections with sharp cuts
+    return `
+      linear-gradient(135deg, ${alpha(first, opacity)} 0%, ${alpha(first, opacity)} 33.33%, transparent 33.33%),
+      linear-gradient(225deg, ${alpha(second, opacity)} 0%, ${alpha(second, opacity)} 33.33%, transparent 33.33%),
+      linear-gradient(315deg, ${alpha(third, opacity)} 0%, ${alpha(third, opacity)} 33.33%, transparent 33.33%)
+    `.replace(/\s+/g, ' ').trim();
+  }
+  if (second) {
+    // Two colors: diagonal split with sharp cut at 50%
+    return `linear-gradient(135deg, ${alpha(first, opacity)} 0%, ${alpha(first, opacity)} 50%, ${alpha(second, opacity)} 50%, ${alpha(second, opacity)} 100%)`;
+  }
+  // Single color
+  return alpha(first, opacity);
+}
+
+/**
+ * Get theme-aware class background color (uses same source as getClassBaseColor)
+ * This is just an alias for consistency
+ */
+export function getClassBackgroundColor(primaryClass: string | undefined): string {
+  return getClassBaseColor(primaryClass);
+}
+

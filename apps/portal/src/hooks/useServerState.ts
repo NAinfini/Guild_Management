@@ -114,6 +114,7 @@ export function useMembers(options?: { includeInactive?: boolean; polling?: Poll
     queryKey: queryKeys.members.list(queryOptions),
     queryFn: () => membersAPI.list(queryOptions),
     staleTime: 30 * 1000,
+    placeholderData: (previousData) => previousData,
     refetchInterval,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
@@ -175,43 +176,73 @@ export function useEvent(id: string) {
 }
 
 export function useCreateEvent() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => eventsAPI.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    },
   });
 }
 
 export function useUpdateEvent() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => eventsAPI.update(id, data),
+    onSuccess: (_updated, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    },
   });
 }
 
 export function useDeleteEvent() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => eventsAPI.delete(id),
+    onSuccess: (_result, id) => {
+      queryClient.removeQueries({ queryKey: queryKeys.events.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    },
   });
 }
 
 export function useTogglePinEvent() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => eventsAPI.togglePin(id),
+    onSuccess: (_result, id) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    },
   });
 }
 
 export function useToggleLockEvent() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => eventsAPI.toggleLock(id),
+    onSuccess: (_result, id) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    },
   });
 }
 
 export function useArchiveEvent() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id }: { id: string; isArchived: boolean }) =>
       eventsAPI.toggleArchive(id),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    },
   });
 }
 
 export function useJoinEvent() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
       const currentUser = useAuthStore.getState().user;
@@ -221,13 +252,15 @@ export function useJoinEvent() {
         await eventsAPI.addMember(eventId, userId);
       }
     },
-    onSuccess: async () => {
-      // Push will update query cache; no manual refetch needed.
+    onSuccess: async (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(variables.eventId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
   });
 }
 
 export function useLeaveEvent() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) => {
       const currentUser = useAuthStore.getState().user;
@@ -236,8 +269,9 @@ export function useLeaveEvent() {
       }
       return eventsAPI.kick(eventId, userId);
     },
-    onSuccess: async () => {
-      // Push will update query cache; no manual refetch needed.
+    onSuccess: async (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(variables.eventId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
   });
 }
@@ -276,21 +310,35 @@ export function useAnnouncement(id: string) {
 }
 
 export function useCreateAnnouncement() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => announcementsAPI.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcements.all });
+    },
   });
 }
 
 export function useUpdateAnnouncement() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       announcementsAPI.update(id, data),
+    onSuccess: (_updated, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcements.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcements.all });
+    },
   });
 }
 
 export function useDeleteAnnouncement() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => announcementsAPI.delete(id),
+    onSuccess: (_result, id) => {
+      queryClient.removeQueries({ queryKey: queryKeys.announcements.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcements.all });
+    },
   });
 }
 
@@ -322,9 +370,14 @@ export function useTogglePinAnnouncement() {
 }
 
 export function useArchiveAnnouncement() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id }: { id: string; isArchived: boolean }) =>
       announcementsAPI.toggleArchive(id),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcements.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcements.all });
+    },
   });
 }
 

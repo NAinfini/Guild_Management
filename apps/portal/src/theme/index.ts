@@ -28,9 +28,7 @@ export {
   getThemeColor,
   getThemePreferences,
   onThemeChange,
-  applyTheme,
-  applyColorMode,
-  VALID_THEME_COLORS,
+  type ColorBlindMode,
   type ThemePreferences,
 } from './ThemeController';
 
@@ -40,3 +38,6 @@ export * from './types/types';
 // Presets & Colors
 export * from './presets';
 export * from './colors';
+export * from './runtimeContracts';
+export * from './rollout';
+export * from './rolloutMonitoring';

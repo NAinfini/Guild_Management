@@ -1,0 +1,364 @@
+/**
+ * Theme Customization Utilities
+ * ==============================
+ * User preference controls for dynamic theme adjustments
+ */
+
+/* Custom color palette builder */
+:root {
+  /* Customization multipliers (0.0 - 1.0) */
+  --custom-saturation: 1.0;
+  --custom-brightness: 1.0;
+  --custom-contrast: 1.0;
+  --custom-pattern-intensity: 1.0;
+  --custom-animation-speed: 1.0;
+  --custom-shadow-intensity: 1.0;
+  --custom-border-intensity: 1.0;
+}
+
+/* Color adjustments based on user preferences */
+[data-theme] {
+  /* Apply saturation multiplier */
+  filter:
+    saturate(var(--custom-saturation, 1.0))
+    brightness(var(--custom-brightness, 1.0))
+    contrast(var(--custom-contrast, 1.0));
+}
+
+/* Pattern intensity control */
+[data-theme]::before,
+[data-theme] .ui-card::before,
+[data-theme] .ui-button::before {
+  opacity: calc(var(--custom-pattern-intensity, 1.0) * var(--base-pattern-opacity, 0.6));
+}
+
+/* Animation speed multiplier */
+[data-theme] * {
+  animation-duration: calc(var(--base-animation-duration, 300ms) / var(--custom-animation-speed, 1.0)) !important;
+  transition-duration: calc(var(--base-transition-duration, 200ms) / var(--custom-animation-speed, 1.0)) !important;
+}
+
+/* Shadow intensity control */
+[data-theme] .ui-button,
+[data-theme] .ui-card,
+[data-theme] .ui-chip {
+  --shadow-multiplier: var(--custom-shadow-intensity, 1.0);
+  box-shadow:
+    0
+    calc(var(--shadow-y, 2px) * var(--shadow-multiplier))
+    calc(var(--shadow-blur, 4px) * var(--shadow-multiplier))
+    rgba(0, 0, 0, calc(var(--shadow-opacity, 0.1) * var(--shadow-multiplier)));
+}
+
+/* Border intensity control */
+[data-theme] .ui-button,
+[data-theme] .ui-card,
+[data-theme] .ui-chip,
+[data-theme] .ui-input {
+  border-width: calc(var(--theme-border-width, 1px) * var(--custom-border-intensity, 1.0));
+}
+
+/* Preset customization levels */
+[data-customization-level="minimal"] {
+  --custom-saturation: 0.7;
+  --custom-pattern-intensity: 0.3;
+  --custom-animation-speed: 0.5;
+  --custom-shadow-intensity: 0.5;
+  --custom-border-intensity: 0.8;
+}
+
+[data-customization-level="moderate"] {
+  --custom-saturation: 1.0;
+  --custom-pattern-intensity: 0.7;
+  --custom-animation-speed: 1.0;
+  --custom-shadow-intensity: 1.0;
+  --custom-border-intensity: 1.0;
+}
+
+[data-customization-level="intense"] {
+  --custom-saturation: 1.3;
+  --custom-pattern-intensity: 1.2;
+  --custom-animation-speed: 1.5;
+  --custom-shadow-intensity: 1.3;
+  --custom-border-intensity: 1.2;
+}
+
+/* Color palette overrides */
+[data-custom-accent] {
+  --sys-interactive-accent: var(--custom-accent-color);
+  --sys-interactive-accent-hover: color-mix(in srgb, var(--custom-accent-color) 80%, black);
+  --sys-interactive-accent-pressed: color-mix(in srgb, var(--custom-accent-color) 60%, black);
+}
+
+[data-custom-surface] {
+  --sys-surface-default: var(--custom-surface-color);
+  --sys-surface-elevated: color-mix(in srgb, var(--custom-surface-color) 95%, white);
+  --sys-surface-sunken: color-mix(in srgb, var(--custom-surface-color) 105%, black);
+}
+
+/* Typography customization */
+[data-custom-font-scale] {
+  font-size: calc(16px * var(--custom-font-scale, 1.0));
+}
+
+[data-custom-letter-spacing] {
+  letter-spacing: calc(var(--theme-letter-spacing, 0) + var(--custom-letter-spacing-offset, 0));
+}
+
+[data-custom-line-height] {
+  line-height: calc(1.5 * var(--custom-line-height, 1.0));
+}
+
+/* Motion sensitivity presets */
+[data-motion-preference="none"] {
+  --custom-animation-speed: 0;
+  --theme-motion-hover-lift: 0px;
+  --theme-motion-card-lift: 0px;
+  --theme-motion-press-y: 0px;
+  --theme-motion-press-scale: 1.0;
+}
+
+[data-motion-preference="reduced"] {
+  --custom-animation-speed: 0.5;
+  --theme-motion-hover-lift: -0.5px;
+  --theme-motion-card-lift: -0.5px;
+  --theme-motion-press-y: 0.5px;
+  --theme-motion-press-scale: 0.998;
+}
+
+[data-motion-preference="standard"] {
+  --custom-animation-speed: 1.0;
+}
+
+[data-motion-preference="enhanced"] {
+  --custom-animation-speed: 1.5;
+  --theme-motion-hover-lift: calc(var(--theme-motion-hover-lift) * 1.5);
+  --theme-motion-card-lift: calc(var(--theme-motion-card-lift) * 1.5);
+}
+
+/* Color temperature adjustment */
+[data-color-temperature="warm"] {
+  filter: sepia(0.15) saturate(1.1);
+}
+
+[data-color-temperature="neutral"] {
+  filter: none;
+}
+
+[data-color-temperature="cool"] {
+  filter: hue-rotate(5deg) saturate(0.95);
+}
+
+/* Accessibility overrides */
+[data-high-contrast="true"] {
+  --custom-contrast: 1.3;
+  --custom-saturation: 1.4;
+  --custom-border-intensity: 1.5;
+  --cmp-input-focus-ring-width: 4px;
+}
+
+[data-large-text="true"] {
+  --custom-font-scale: 1.25;
+  --custom-line-height: 1.2;
+}
+
+[data-dyslexia-friendly="true"] {
+  --theme-font-body: 'OpenDyslexic', 'Comic Sans MS', sans-serif;
+  --custom-letter-spacing-offset: 0.05em;
+  --custom-line-height: 1.3;
+}
+
+/* Focus mode (reduce distractions) */
+[data-focus-mode="true"] {
+  --custom-pattern-intensity: 0.2;
+  --custom-animation-speed: 0.3;
+  --custom-saturation: 0.6;
+  --custom-shadow-intensity: 0.4;
+}
+
+/* Theme-specific customization hints */
+.theme-cyberpunk {
+  --base-pattern-opacity: 0.4;
+  --base-animation-duration: 350ms;
+}
+
+.theme-neo-brutalism {
+  --base-pattern-opacity: 0;
+  --base-animation-duration: 200ms;
+}
+
+.theme-chibi {
+  --base-pattern-opacity: 0.3;
+  --base-animation-duration: 400ms;
+}
+
+.theme-royal {
+  --base-pattern-opacity: 0.2;
+  --base-animation-duration: 450ms;
+}
+
+.theme-minimalistic {
+  --base-pattern-opacity: 0.1;
+  --base-animation-duration: 300ms;
+}
+
+.theme-steampunk {
+  --base-pattern-opacity: 0.5;
+  --base-animation-duration: 380ms;
+}
+
+.theme-post-apocalyptic {
+  --base-pattern-opacity: 0.6;
+  --base-animation-duration: 400ms;
+}
+
+/* Smooth transitions for customization changes */
+:root {
+  transition:
+    --custom-saturation 300ms ease-out,
+    --custom-brightness 300ms ease-out,
+    --custom-contrast 300ms ease-out,
+    --custom-pattern-intensity 300ms ease-out,
+    --custom-animation-speed 300ms ease-out,
+    --custom-shadow-intensity 300ms ease-out,
+    --custom-border-intensity 300ms ease-out;
+}
+
+/* User preference persistence indicator */
+[data-preferences-saved="true"]::after {
+  content: "✓ Preferences Saved";
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  background: var(--sys-interactive-accent);
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  animation: preference-toast 3s ease-in-out forwards;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+@keyframes preference-toast {
+  0% { opacity: 0; transform: translateY(20px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Custom color picker integration */
+.custom-color-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 8px;
+  padding: 12px;
+  background: var(--sys-surface-elevated);
+  border-radius: 8px;
+  border: 1px solid var(--sys-border-default);
+}
+
+.custom-color-option {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--sys-border-default);
+  cursor: pointer;
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.custom-color-option:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.custom-color-option[data-selected="true"] {
+  transform: scale(1.15);
+  box-shadow:
+    0 0 0 3px var(--sys-surface-default),
+    0 0 0 5px var(--sys-interactive-accent),
+    0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Intensity slider styling */
+.customization-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    var(--sys-border-default) 0%,
+    var(--sys-interactive-accent) 100%
+  );
+  outline: none;
+  opacity: 0.9;
+  transition: opacity 150ms ease-out;
+}
+
+.customization-slider:hover {
+  opacity: 1;
+}
+
+.customization-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--sys-interactive-accent);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.customization-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.customization-slider::-webkit-slider-thumb:active {
+  transform: scale(1.05);
+}
+
+.customization-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--sys-interactive-accent);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.customization-slider::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Reset button styling */
+.customization-reset {
+  padding: 8px 16px;
+  background: var(--sys-surface-elevated);
+  border: 1px solid var(--sys-border-default);
+  border-radius: 6px;
+  color: var(--sys-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+
+.customization-reset:hover {
+  background: var(--sys-surface-sunken);
+  color: var(--sys-text-primary);
+  border-color: var(--sys-border-strong);
+}
+
+.customization-reset:active {
+  transform: scale(0.98);
+}

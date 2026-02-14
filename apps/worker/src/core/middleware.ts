@@ -3,28 +3,19 @@
  */
 
 import type { EventContext, Env, User, Session, RequestContext } from './types';
-import { getSession, getUser, getCookieValue, unauthorizedResponse, handleCors, setSessionCookie } from './utils';
+import { getSession, getUser, getCookieValue, unauthorizedResponse, handleCors } from './utils';
 
 // ============================================================
 // Authentication Middleware
 // ============================================================
 
-const SESSION_TTL_HOURS = 12;
-const SESSION_TTL_SECONDS = SESSION_TTL_HOURS * 60 * 60;
-const SESSION_EXPIRY_MS = SESSION_TTL_SECONDS * 1000;
-
 async function refreshSessionActivity(
   context: EventContext<Env, any, any>,
   sessionId: string
 ): Promise<void> {
-  const newExpiry = new Date(Date.now() + SESSION_EXPIRY_MS)
-    .toISOString()
-    .replace('T', ' ')
-    .substring(0, 19);
-
   await context.env.DB
-    .prepare("UPDATE sessions SET last_used_at_utc = datetime('now'), expires_at_utc = ?, updated_at_utc = datetime('now') WHERE session_id = ?")
-    .bind(newExpiry, sessionId)
+    .prepare("UPDATE sessions SET last_used_at_utc = datetime('now'), updated_at_utc = datetime('now') WHERE session_id = ?")
+    .bind(sessionId)
     .run();
 }
 
@@ -73,8 +64,7 @@ export async function withAuth(
     data: requestContext,
   });
 
-  // Refresh cookie TTL in browser (sliding session)
-  return setSessionCookie(response, sessionId, SESSION_TTL_SECONDS);
+  return response;
 }
 
 // ============================================================
@@ -119,11 +109,6 @@ export async function withOptionalAuth(
     ...context,
     data: requestContext,
   });
-
-  // Refresh cookie if authenticated (sliding session)
-  if (sessionId && user) {
-    return setSessionCookie(response, sessionId, SESSION_TTL_SECONDS);
-  }
 
   return response;
 }

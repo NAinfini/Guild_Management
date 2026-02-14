@@ -1,0 +1,190 @@
+/**
+ * Component Token Definitions
+ * These tokens bridge theme colors to specific component styles
+ * Each theme can override these for unique visual identities
+ */
+
+:root {
+  /* ============================================
+     BUTTON COMPONENT TOKENS
+     ============================================ */
+  --cmp-button-bg: var(--sys-interactive-accent);
+  --cmp-button-text: var(--sys-text-inverse);
+  --cmp-button-border: var(--sys-border-strong);
+  --cmp-button-hover-bg: color-mix(in srgb, var(--sys-interactive-accent) 86%, white);
+  --cmp-button-active-bg: color-mix(in srgb, var(--sys-interactive-accent) 76%, black);
+  /* IMPROVED: Better disabled state visibility with stronger contrast */
+  --cmp-button-disabled-bg: color-mix(in srgb, var(--sys-surface-elevated) 75%, var(--sys-border-default) 25%);
+  --cmp-button-disabled-text: color-mix(in srgb, var(--sys-text-primary) 45%, transparent);
+  --cmp-button-disabled-border: color-mix(in srgb, var(--sys-border-default) 70%, transparent);
+  --cmp-button-disabled-opacity: 0.6;
+  --cmp-button-radius: 12px;
+  --cmp-button-shadow: none;
+  --cmp-button-shadow-hover: none;
+
+  /* ============================================
+     CARD COMPONENT TOKENS
+     ============================================ */
+  --cmp-card-bg: var(--sys-surface-panel);
+  --cmp-card-text: var(--sys-text-primary);
+  --cmp-card-border: var(--sys-border-default);
+  --cmp-card-hover-border: var(--sys-border-strong);
+  --cmp-card-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
+  --cmp-card-radius: 14px;
+
+  /* ============================================
+     INPUT COMPONENT TOKENS
+     ============================================ */
+  --cmp-input-bg: var(--sys-surface-elevated);
+  --cmp-input-text: var(--sys-text-primary);
+  --cmp-input-border: var(--sys-border-default);
+  --cmp-input-hover-border: var(--sys-border-strong);
+  --cmp-input-focus-border: var(--sys-interactive-accent);
+  /* IMPROVED: Better placeholder contrast for WCAG AA compliance */
+  --cmp-input-placeholder: color-mix(in srgb, var(--sys-text-primary) 55%, transparent);
+  /* IMPROVED: More visible disabled state */
+  --cmp-input-disabled-bg: color-mix(in srgb, var(--sys-surface-elevated) 65%, var(--sys-border-default) 35%);
+  --cmp-input-disabled-text: color-mix(in srgb, var(--sys-text-primary) 48%, transparent);
+  --cmp-input-disabled-border: color-mix(in srgb, var(--sys-border-default) 65%, transparent);
+  --cmp-input-radius: 12px;
+  /* IMPROVED: Focus ring for better keyboard navigation */
+  --cmp-input-focus-ring-width: 2px;
+  --cmp-input-focus-ring-color: var(--sys-interactive-accent);
+  --cmp-input-focus-ring-offset: 2px;
+
+  /* ============================================
+     TABLE COMPONENT TOKENS
+     ============================================ */
+  --cmp-table-header-bg: var(--sys-surface-elevated);
+  --cmp-table-header-text: var(--sys-text-primary);
+  --cmp-table-row-bg: var(--sys-surface-panel);
+  --cmp-table-row-text: var(--sys-text-primary);
+  --cmp-table-row-hover-bg: var(--sys-interactive-hover);
+  --cmp-table-row-selected-bg: color-mix(in srgb, var(--sys-interactive-accent) 20%, transparent);
+  --cmp-table-border: var(--sys-border-default);
+
+  /* ============================================
+     CHIP / BADGE COMPONENT TOKENS
+     ============================================ */
+  --cmp-chip-bg: color-mix(in srgb, var(--sys-interactive-accent) 15%, transparent);
+  --cmp-chip-text: var(--sys-interactive-accent);
+  --cmp-chip-border: var(--sys-border-default);
+  --cmp-chip-hover-bg: color-mix(in srgb, var(--sys-interactive-accent) 25%, transparent);
+
+  /* ============================================
+     NAVIGATION COMPONENT TOKENS
+     ============================================ */
+  --cmp-nav-bg: var(--sys-surface-page);
+  --cmp-nav-item-bg: transparent;
+  --cmp-nav-item-text: var(--sys-text-primary);
+  --cmp-nav-item-hover-bg: var(--sys-interactive-hover);
+  --cmp-nav-item-active-bg: color-mix(in srgb, var(--sys-interactive-accent) 20%, transparent);
+  --cmp-nav-item-active-text: var(--sys-interactive-accent);
+  --cmp-nav-border: var(--sys-border-default);
+
+  /* ============================================
+     DIALOG / MODAL COMPONENT TOKENS
+     ============================================ */
+  --cmp-dialog-bg: var(--sys-surface-panel);
+  --cmp-dialog-text: var(--sys-text-primary);
+  --cmp-dialog-border: var(--sys-border-strong);
+  --cmp-dialog-shadow: 0 20px 52px rgba(0, 0, 0, 0.42);
+  --cmp-dialog-radius: 16px;
+  --cmp-dialog-backdrop: rgba(0, 0, 0, 0.7);
+
+  /* ============================================
+     TOGGLE / SWITCH COMPONENT TOKENS
+     ============================================ */
+  --cmp-toggle-bg: var(--sys-surface-elevated);
+  --cmp-toggle-active-bg: var(--sys-interactive-accent);
+  --cmp-toggle-thumb: white;
+  --cmp-toggle-border: var(--sys-border-default);
+
+  /* ============================================
+     SLIDER COMPONENT TOKENS
+     ============================================ */
+  --cmp-slider-track-bg: var(--sys-surface-elevated);
+  --cmp-slider-fill-bg: var(--sys-interactive-accent);
+  --cmp-slider-thumb-bg: white;
+  --cmp-slider-thumb-border: var(--sys-interactive-accent);
+
+  /* ============================================
+     TOOLTIP COMPONENT TOKENS
+     ============================================ */
+  --cmp-tooltip-bg: var(--sys-surface-elevated);
+  --cmp-tooltip-text: var(--sys-text-primary);
+  --cmp-tooltip-border: var(--sys-border-strong);
+  --cmp-tooltip-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+  /* ============================================
+     ICON BUTTON COMPONENT TOKENS
+     ============================================ */
+  --cmp-icon-button-bg: transparent;
+  --cmp-icon-button-text: var(--sys-text-primary);
+  --cmp-icon-button-hover-bg: var(--sys-interactive-hover);
+  --cmp-icon-button-active-bg: var(--sys-interactive-active);
+  --cmp-icon-button-overlay-bg: color-mix(in srgb, var(--sys-surface-panel) 88%, transparent);
+  --cmp-icon-button-overlay-text: var(--sys-text-primary);
+  --cmp-icon-button-overlay-hover-bg: color-mix(in srgb, var(--sys-surface-elevated) 92%, transparent);
+
+  /* ============================================
+     TAB COMPONENT TOKENS
+     ============================================ */
+  --cmp-tab-bg: transparent;
+  --cmp-tab-text: var(--sys-text-secondary);
+  --cmp-tab-hover-bg: var(--sys-interactive-hover);
+  --cmp-tab-active-bg: transparent;
+  --cmp-tab-active-text: var(--sys-interactive-accent);
+  --cmp-tab-active-border: var(--sys-interactive-accent);
+  --cmp-tab-border: var(--sys-border-default);
+
+  /* ============================================
+     CHECKBOX COMPONENT TOKENS
+     ============================================ */
+  --cmp-checkbox-bg: var(--sys-surface-elevated);
+  --cmp-checkbox-border: var(--sys-border-default);
+  --cmp-checkbox-checked-bg: var(--sys-interactive-accent);
+  --cmp-checkbox-checked-border: var(--sys-interactive-accent);
+  --cmp-checkbox-checkmark: white;
+
+  /* ============================================
+     RADIO COMPONENT TOKENS
+     ============================================ */
+  --cmp-radio-bg: var(--sys-surface-elevated);
+  --cmp-radio-border: var(--sys-border-default);
+  --cmp-radio-checked-bg: var(--sys-interactive-accent);
+  --cmp-radio-checked-border: var(--sys-interactive-accent);
+  --cmp-radio-dot: white;
+
+  /* ============================================
+     SELECT / DROPDOWN COMPONENT TOKENS
+     ============================================ */
+  --cmp-select-bg: var(--sys-surface-elevated);
+  --cmp-select-text: var(--sys-text-primary);
+  --cmp-select-border: var(--sys-border-default);
+  --cmp-select-hover-border: var(--sys-border-strong);
+  --cmp-select-focus-border: var(--sys-interactive-accent);
+  --cmp-select-option-hover-bg: var(--sys-interactive-hover);
+  --cmp-select-option-selected-bg: color-mix(in srgb, var(--sys-interactive-accent) 20%, transparent);
+
+  /* ============================================
+     PROGRESS BAR COMPONENT TOKENS
+     ============================================ */
+  --cmp-progress-bg: var(--sys-surface-elevated);
+  --cmp-progress-fill: var(--sys-interactive-accent);
+  --cmp-progress-text: var(--sys-text-primary);
+
+  /* ============================================
+     SEPARATOR / DIVIDER COMPONENT TOKENS
+     ============================================ */
+  --cmp-separator-color: var(--sys-border-default);
+  --cmp-separator-strong: var(--sys-border-strong);
+
+  /* ============================================
+     SIDEBAR COMPONENT TOKENS
+     ============================================ */
+  --cmp-sidebar-bg: var(--sys-surface-panel);
+  --cmp-sidebar-border: var(--sys-border-default);
+  --cmp-sidebar-item-hover-bg: var(--sys-interactive-hover);
+  --cmp-sidebar-item-active-bg: color-mix(in srgb, var(--sys-interactive-accent) 20%, transparent);
+}

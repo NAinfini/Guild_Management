@@ -1,5 +1,8 @@
 import { integer, primaryKey, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
+// This Drizzle schema is a typed subset used by Drizzle-based handlers.
+// Canonical D1 schema lives in infra/database/d1-schema/D1_Schema.sql.
+
 export const users = sqliteTable('users', {
   userId: text('user_id').primaryKey(),
   username: text('username').notNull(),

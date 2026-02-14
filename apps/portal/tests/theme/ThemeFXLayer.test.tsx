@@ -8,6 +8,7 @@ describe('ThemeFXLayer', () => {
   beforeEach(() => {
     localStorage.removeItem('baiye_fx_off');
     localStorage.removeItem('baiye_theme_motion_intensity');
+    localStorage.removeItem('baiye_theme_motion_mode');
   });
 
   it('mounts exactly once and keeps non-interactive fixed stacking semantics', () => {
@@ -67,5 +68,22 @@ describe('ThemeFXLayer', () => {
     expect(document.querySelectorAll('[data-theme-fx-content="active"]')).toHaveLength(0);
     const layer = document.querySelector('[data-theme-fx-layer="true"]') as HTMLElement | null;
     expect(layer?.dataset.heavy).toBe('false');
+  });
+
+  it('disables heavy fx content when motion mode is off', () => {
+    localStorage.setItem('baiye_theme_motion_mode', 'off');
+
+    render(
+      <ThemeControllerProvider>
+        <div style={{ position: 'relative', minHeight: '160px' }}>
+          <ThemeFXLayer />
+        </div>
+      </ThemeControllerProvider>,
+    );
+
+    expect(document.querySelectorAll('[data-theme-fx-content="active"]')).toHaveLength(0);
+    const layer = document.querySelector('[data-theme-fx-layer="true"]') as HTMLElement | null;
+    expect(layer?.dataset.reducedMotion).toBe('true');
+    expect(layer?.dataset.motionMode).toBe('off');
   });
 });

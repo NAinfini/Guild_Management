@@ -1,5 +1,6 @@
 ﻿import React, { useEffect } from 'react';
 import {
+  FormGroup,
   Box,
   Card,
   CardContent,
@@ -8,18 +9,18 @@ import {
   Grid,
   Stack,
   Typography,
-  Button,
   RadioGroup,
   FormControlLabel,
   Radio,
   useTheme,
   alpha,
-  Slider,
   Divider,
+  Switch as MuiSwitch,
 } from '@mui/material';
-import { Translate, FormatSize, Animation } from '@mui/icons-material';
+import { Translate, FormatSize, Animation, AccessibilityNew } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useUIStore } from '../../store';
+import { Button, Slider } from '@/components';
 import { ThemeSection, ColorSection, useThemeController } from '@/theme/ThemeController';
 
 const languageOptions = [
@@ -33,11 +34,33 @@ const FONT_SIZE_OPTIONS = [
   { value: 1.12, label: 'settings.font_size_large', caption: '112%' },
 ];
 
+const COLOR_BLIND_MODE_OPTIONS = [
+  { value: 'off', label: 'settings.color_blind_mode_off' },
+  { value: 'protanopia', label: 'settings.color_blind_mode_protanopia' },
+  { value: 'deuteranopia', label: 'settings.color_blind_mode_deuteranopia' },
+  { value: 'tritanopia', label: 'settings.color_blind_mode_tritanopia' },
+] as const;
+
 export function Settings() {
   const { t, i18n } = useTranslation();
   const { setPageTitle } = useUIStore();
-  const { fontScale, motionIntensity, setFontScale, setMotionIntensity } = useThemeController();
+  const {
+    currentTheme,
+    fontScale,
+    motionIntensity,
+    highContrast,
+    dyslexiaFriendly,
+    colorBlindMode,
+    setFontScale,
+    setMotionIntensity,
+    setHighContrast,
+    setDyslexiaFriendly,
+    setColorBlindMode,
+  } = useThemeController();
   const theme = useTheme();
+  const isChibiTheme = currentTheme === 'chibi';
+  const settingsCardRadius = isChibiTheme ? '12px' : 4;
+  const settingsOptionRadius = isChibiTheme ? '10px' : 3;
   const selectedLanguage = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const [motionIntensityDraft, setMotionIntensityDraft] = React.useState(motionIntensity);
 
@@ -58,12 +81,12 @@ export function Settings() {
     setFontScale(value);
   };
 
-  const handleMotionIntensityPreview = (_: Event, value: number | number[]) => {
+  const handleMotionIntensityPreview = (_: Event | React.SyntheticEvent, value: number | number[]) => {
     const next = Array.isArray(value) ? value[0] : value;
     setMotionIntensityDraft(Number(next.toFixed(2)));
   };
 
-  const handleMotionIntensityCommit = (_: Event, value: number | number[]) => {
+  const handleMotionIntensityCommit = (_: Event | React.SyntheticEvent, value: number | number[]) => {
     const next = Array.isArray(value) ? value[0] : value;
     const normalized = Number(next.toFixed(2));
     setMotionIntensityDraft(normalized);
@@ -71,7 +94,7 @@ export function Settings() {
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 8, px: { xs: 2, sm: 4 } }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 8, px: { xs: 2, sm: 4 }, position: 'relative', zIndex: 2 }}>
       <Stack spacing={{ xs: 3, sm: 4 }}>
         <Typography variant="h4" fontWeight={900} letterSpacing="0.02em">
           {t('settings.title')}
@@ -95,7 +118,14 @@ export function Settings() {
 
           {/* Language Section - Separate Card */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Card variant="outlined" sx={{ borderRadius: 4, borderColor: alpha(theme.palette.secondary.main, 0.2) }}>
+            <Card
+              variant="outlined"
+              sx={{
+                borderRadius: settingsCardRadius,
+                borderColor: alpha(theme.palette.secondary.main, 0.2),
+                overflow: 'visible',
+              }}
+            >
               <CardHeader
                 avatar={<Translate sx={{ fontSize: 20, color: theme.palette.secondary.main }} />}
                 title={
@@ -120,7 +150,7 @@ export function Settings() {
                         key={opt.key}
                         sx={{
                           border: `1px solid ${selectedLanguage === opt.key ? theme.palette.secondary.main : theme.palette.divider}`,
-                          borderRadius: 3,
+                          borderRadius: settingsOptionRadius,
                           p: 1.25,
                           display: 'flex',
                           alignItems: 'center',
@@ -151,8 +181,8 @@ export function Settings() {
                   </Stack>
                 </RadioGroup>
                 <Button
-                  variant="text"
-                  size="small"
+                  variant="ghost"
+                  size="sm"
                   sx={{ mt: 2, fontWeight: 800, letterSpacing: '0.05em' }}
                   onClick={() => handleLanguageChange(i18n.resolvedLanguage || 'en')}
                 >
@@ -164,7 +194,14 @@ export function Settings() {
 
           {/* Accessibility & Motion */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Card variant="outlined" sx={{ borderRadius: 4, borderColor: alpha(theme.palette.primary.main, 0.2) }}>
+            <Card
+              variant="outlined"
+              sx={{
+                borderRadius: settingsCardRadius,
+                borderColor: alpha(theme.palette.primary.main, 0.2),
+                overflow: 'visible',
+              }}
+            >
               <CardHeader
                 avatar={<FormatSize sx={{ fontSize: 20, color: theme.palette.primary.main }} />}
                 title={
@@ -191,7 +228,7 @@ export function Settings() {
                           key={opt.value}
                           sx={{
                             border: `1px solid ${selected ? theme.palette.primary.main : theme.palette.divider}`,
-                            borderRadius: 3,
+                            borderRadius: settingsOptionRadius,
                             p: 1.25,
                             display: 'flex',
                             alignItems: 'center',
@@ -233,7 +270,9 @@ export function Settings() {
                     </Typography>
                   </Stack>
                   <Typography variant="caption" color="text.secondary">
-                    {t('settings.motion_intensity_subtitle')}
+                    {t('settings.motion_intensity_single_control_subtitle', {
+                      defaultValue: 'One control for all animation strength across controls and backgrounds.',
+                    })}
                   </Typography>
                   <Slider
                     value={motionIntensityDraft}
@@ -252,6 +291,70 @@ export function Settings() {
                     onChangeCommitted={handleMotionIntensityCommit}
                     sx={{ pt: 2 }}
                   />
+                </Stack>
+
+                <Divider sx={{ my: 2.5 }} />
+
+                <Stack spacing={1.5}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <AccessibilityNew sx={{ fontSize: 20, color: theme.palette.primary.main }} />
+                    <Typography variant="subtitle1" fontWeight={800}>
+                      {t('settings.accessibility_plus')}
+                    </Typography>
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary">
+                    {t('settings.accessibility_plus_subtitle')}
+                  </Typography>
+                  <FormGroup>
+                    <FormControlLabel
+                      control={(
+                        <MuiSwitch
+                          data-testid="high-contrast-toggle"
+                          checked={highContrast}
+                          onChange={(_, checked) => setHighContrast(checked)}
+                        />
+                      )}
+                      label={t('settings.high_contrast_mode')}
+                    />
+                    <FormControlLabel
+                      control={(
+                        <MuiSwitch
+                          data-testid="dyslexia-toggle"
+                          checked={dyslexiaFriendly}
+                          onChange={(_, checked) => setDyslexiaFriendly(checked)}
+                        />
+                      )}
+                      label={t('settings.dyslexia_friendly_font')}
+                    />
+                  </FormGroup>
+                  <Stack spacing={0.5}>
+                    <Typography variant="caption" color="text.secondary">
+                      {t('settings.color_blind_mode')}
+                    </Typography>
+                    <Box
+                      component="select"
+                      data-testid="color-blind-mode-select"
+                      value={colorBlindMode}
+                      onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                        setColorBlindMode(event.target.value as typeof colorBlindMode)}
+                      sx={{
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: 1.5,
+                        px: 1.5,
+                        py: 1,
+                        backgroundColor: alpha(theme.palette.background.paper, 0.9),
+                        color: theme.palette.text.primary,
+                        fontSize: 14,
+                        outline: 'none',
+                      }}
+                    >
+                      {COLOR_BLIND_MODE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {t(option.label)}
+                        </option>
+                      ))}
+                    </Box>
+                  </Stack>
                 </Stack>
               </CardContent>
             </Card>

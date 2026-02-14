@@ -3,7 +3,7 @@ import zh from '@/i18n/locales/zh.json';
 
 describe('zh localization quality', () => {
   it('uses Chinese labels for primary navigation and account controls', () => {
-    expect(zh.nav.dashboard).toBe('仪表盘');
+    expect(zh.nav.dashboard).toBe('总览');
     expect(zh.nav.events).toBe('活动');
     expect(zh.nav.roster).toBe('成员');
     expect(zh.nav.guild_war).toBe('公会战');
@@ -29,4 +29,3 @@ describe('zh localization quality', () => {
     expect(zh.theme_menu.colors['default-violet'].label).toBe('默认紫');
   });
 });
-

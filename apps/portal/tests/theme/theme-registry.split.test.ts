@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createTheme } from '@mui/material/styles';
 import {
-  THEME_PRESETS,
   THEME_IDS,
   DEFAULT_THEME_MODE,
   getThemeOptions,
+  getThemeVisualSpec,
 } from '@/theme/presets';
 import {
   THEME_COLOR_PRESETS,
@@ -17,13 +16,13 @@ describe('nexus theme/color split registries', () => {
   it('keeps visual themes and color palettes in separate registries', () => {
     expect(THEME_IDS.length).toBeGreaterThan(0);
     expect(THEME_COLOR_IDS.length).toBeGreaterThan(0);
-    expect(THEME_PRESETS[DEFAULT_THEME_MODE]).toBeDefined();
+    expect(getThemeVisualSpec(DEFAULT_THEME_MODE)).toBeDefined();
     expect(THEME_COLOR_PRESETS[DEFAULT_THEME_COLOR]).toBeDefined();
   });
 
   it('maps each theme to a valid default color palette', () => {
     for (const themeId of THEME_IDS) {
-      const mappedColor = THEME_PRESETS[themeId].defaultColor;
+      const mappedColor = getThemeVisualSpec(themeId).defaultColor;
       expect(THEME_COLOR_PRESETS[mappedColor]).toBeDefined();
     }
   });
@@ -100,28 +99,19 @@ describe('nexus theme/color split registries', () => {
     expect((neoBrutalism.typography as any)?.button?.textTransform).toBe('none');
 
     expect((cyberpunk.typography as any)?.fontFamily).toBe("'Rajdhani', sans-serif");
-    expect((cyberpunk.typography as any)?.button?.textTransform).toBe('uppercase');
+    expect((cyberpunk.typography as any)?.button?.textTransform).toBe('none');
 
-    expect(chibi.shape?.borderRadius).toBe(24);
+    expect(chibi.shape?.borderRadius).toBe(14);
   });
 
-  it('applies cyberpunk button geometry and hover glitch signature', () => {
+  it('does not apply legacy cyberpunk button geometry or glitch hacks', () => {
     const cyberpunk = getThemeOptions('cyberpunk');
     const buttonRootOverride = cyberpunk.components?.MuiButton?.styleOverrides?.root;
 
-    expect(typeof buttonRootOverride).toBe('function');
-
-    const buttonRootStyles = (buttonRootOverride as (args: { theme: ReturnType<typeof createTheme> }) => Record<string, unknown>)(
-      { theme: createTheme() }
-    );
-
-    expect(buttonRootStyles.clipPath).toBeDefined();
-    expect(String(buttonRootStyles.clipPath)).toContain('calc(100% - 10px)');
-    expect(String(buttonRootStyles.borderLeft)).toContain('3px');
-
-    const hoverStyles = buttonRootStyles['&:hover'] as Record<string, unknown>;
-    expect(hoverStyles.animation).toBe('cyberpunk-glitch 0.2s steps(2) 1');
-    expect(hoverStyles.textShadow).toBeUndefined();
-    expect(hoverStyles.boxShadow).toBe('none');
+    expect(typeof buttonRootOverride).toBe('object');
+    const buttonRootStyles = buttonRootOverride as Record<string, unknown>;
+    expect(buttonRootStyles.clipPath).toBeUndefined();
+    expect(buttonRootStyles.borderLeft).toBeUndefined();
+    expect(buttonRootStyles['&:hover']).toBeUndefined();
   });
 });

@@ -16,7 +16,7 @@ interface ToggleActiveResponse {
 }
 
 export const onRequestPost = createEndpoint<ToggleActiveResponse>({
-  auth: 'moderator',
+  auth: 'admin',
   cacheControl: 'no-store',
 
   handler: async ({ env, user, params, request }) => {

@@ -35,6 +35,8 @@
   --cmp-chip-bg: color-mix(in srgb, var(--sys-interactive-accent) 18%, transparent);
   --cmp-nav-item-active-bg: color-mix(in srgb, var(--sys-interactive-accent) 20%, transparent);
   --cmp-dialog-shadow: 0 30px 80px rgba(0, 0, 0, 0.36);
+  --cmp-nav-label-transform: none;
+  --cmp-nav-label-letter-spacing: 0.03em;
 }
 
 .theme-royal :is(.ui-button, .ui-card, .ui-chip, .ui-nav, .control) {
@@ -42,33 +44,66 @@
   border-radius: var(--theme-border-radius);
   font-family: var(--theme-font-body);
   box-shadow: var(--theme-shadow-sm);
+  /* IMPROVED: Remove uppercase from all elements - better readability */
+  letter-spacing: 0.03em;
+}
+
+/* IMPROVED: Apply uppercase only to buttons for elegant emphasis */
+.theme-royal :is(.ui-button, .MuiButton-root) {
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  position: relative;
-  overflow: hidden; /* For shine effect */
+  letter-spacing: 0.08em;
+  font-weight: 600;
 }
 
-/* Shine Effect */
-.theme-royal :is(.ui-button, .ui-card, .ui-nav, .control)::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transform: skewX(-25deg);
-  transition: 0.5s;
-  pointer-events: none;
-}
-
-.theme-royal :is(.ui-button, .ui-card, .ui-nav, .control):hover::after {
-  left: 150%;
-  transition: 0.7s ease-in-out;
+/* Keep body/navigation copy readable in Royal. */
+.theme-royal :is(.MuiListItemText-primary, [data-ui="nav"] .MuiTypography-root, [data-ui="nav"] .MuiListItemText-root .MuiTypography-root) {
+  text-transform: none !important;
+  letter-spacing: var(--cmp-nav-label-letter-spacing) !important;
 }
 
 .theme-royal :is(.ui-button, .ui-card, .ui-chip, .ui-nav, .control):hover:not(:disabled) {
   background-color: var(--color-surface-elevated);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 0 15px var(--color-accent-primary);
+  /* IMPROVED: Warmer, more luxurious shadow with golden glow */
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.25),
+    0 0 20px color-mix(in srgb, var(--color-accent-primary) 40%, rgba(212, 175, 55, 0.3)),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   border-color: var(--color-accent-primary);
+  transform: translateY(var(--theme-motion-hover-lift));
+  transition: all var(--theme-motion-medium) var(--theme-motion-easing);
+}
+
+/* IMPROVED: Subtle gradient overlay for depth */
+.theme-royal .ui-card,
+.theme-royal [data-ui="card"] {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--sys-surface-panel) 100%, transparent) 0%,
+    color-mix(in srgb, var(--sys-surface-panel) 98%, var(--sys-interactive-accent) 2%) 100%
+  );
+}
+
+/* IMPROVED: Ornamental border accent on cards */
+.theme-royal .ui-card::after,
+.theme-royal [data-ui="card"]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--sys-interactive-accent) 50%,
+    transparent 100%
+  );
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* IMPROVED: Headings use display font for elegance */
+.theme-royal :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--theme-font-display);
+  font-weight: 700;
 }

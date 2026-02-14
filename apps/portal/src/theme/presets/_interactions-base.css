@@ -145,6 +145,31 @@
   box-shadow: var(--interaction-focus-ring-glow);
 }
 
+/* In-app motion mode controls */
+:root[data-motion-mode="off"] {
+  --interaction-fast: 0ms;
+  --interaction-med: 0ms;
+  --interaction-slow: 0ms;
+  --interaction-hover-lift: 0px;
+  --interaction-card-lift: 0px;
+  --interaction-input-lift: 0px;
+  --interaction-press-y: 0px;
+  --interaction-press-scale: 1;
+}
+
+:root[data-motion-mode="toned-down"] {
+  --interaction-hover-lift: calc(var(--theme-motion-hover-lift-effective, var(--theme-motion-hover-lift, -1px)) * 0.65);
+  --interaction-card-lift: calc(var(--theme-motion-card-lift-effective, var(--theme-motion-card-lift, -1px)) * 0.65);
+  --interaction-input-lift: calc(var(--theme-motion-input-lift-effective, var(--theme-motion-input-lift, -0.5px)) * 0.65);
+  --interaction-press-y: calc(var(--theme-motion-press-y-effective, var(--theme-motion-press-y, 1px)) * 0.7);
+}
+
+:root[data-motion-mode="off"] :is(.ui-button, .ui-card, .ui-input, .ui-chip, .ui-nav, .ui-table, .ui-dialog, .control, .MuiButton-root) {
+  transition-duration: 0ms !important;
+  animation-duration: 0ms !important;
+  transform: none !important;
+}
+
 /* Accessibility: reduce motion for users requesting it */
 @media (prefers-reduced-motion: reduce) {
   :is(.ui-button, .ui-card, .ui-input, .ui-chip, .ui-nav, .ui-table, .ui-dialog, .control, .MuiButton-root) {

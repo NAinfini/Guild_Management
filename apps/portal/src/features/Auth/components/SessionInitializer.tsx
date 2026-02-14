@@ -11,24 +11,31 @@ import { useAuthStore } from '@/store';
 export function SessionInitializer({ children }: { children: React.ReactNode }) {
   const { validateSession } = useAuth();
   const [sessionExpired, setSessionExpired] = useState(false);
-  const user = useAuthStore(state => state.user);
-  
+  const SESSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+
   useWebSocket(); // Initialize global real-time synchronization
 
   useEffect(() => {
-    // Validate session on mount
+    let active = true;
+
     const checkSession = async () => {
-      // Only check if we think we have a user/token potentially, or always check?
-      // validateSession handles internal checks.
+      const hadUser = !!useAuthStore.getState().user;
       const isValid = await validateSession();
-      if (!isValid && user) {
-        // If we had a user but validation failed, it's an expiry
+      if (active && hadUser && !isValid) {
         setSessionExpired(true);
       }
     };
-    
-    checkSession();
-  }, [validateSession, user]); // Added user to deps to run check if user state changes? Or keep minimal
+
+    void checkSession();
+    const intervalId = window.setInterval(() => {
+      void checkSession();
+    }, SESSION_CHECK_INTERVAL_MS);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, [validateSession]);
 
   const handleLoginRedirect = () => {
     setSessionExpired(false);

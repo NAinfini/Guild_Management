@@ -122,9 +122,9 @@ export const onRequestPost = createEndpoint<LoginResponse | Response, LoginBody>
     // Create session
     const sessionId = generateId('ses');
     const now = utcNow();
-    // If "Stay logged in" is checked (rememberMe = true), session lasts 30 days
-    // Otherwise, session lasts 12 hours (kept as 12h per user request)
-    const maxAge = body.rememberMe ? 30 * 24 * 60 * 60 : 12 * 60 * 60; // 30 days or 12 hours
+    // If "Stay logged in" is checked (rememberMe = true), session lasts 30 days.
+    // Otherwise, session lasts 2 hours and browser cookie is non-persistent.
+    const maxAge = body.rememberMe ? 30 * 24 * 60 * 60 : 2 * 60 * 60; // 30 days or 2 hours
     const expiresAt = new Date(Date.now() + maxAge * 1000).toISOString().replace('T', ' ').substring(0, 19);
 
     const userAgent = request.headers.get('User-Agent') || null;
@@ -166,7 +166,8 @@ export const onRequestPost = createEndpoint<LoginResponse | Response, LoginBody>
 
     // Return response with cookie
     const response = successResponse({ user: userData, sessionId });
-    return setSessionCookie(response, sessionId, maxAge);
+    const cookieMaxAge = body.rememberMe ? maxAge : undefined;
+    return setSessionCookie(response, sessionId, cookieMaxAge);
   },
 });
 

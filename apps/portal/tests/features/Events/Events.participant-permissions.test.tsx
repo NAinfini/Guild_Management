@@ -55,12 +55,14 @@ vi.mock('@/hooks/useServerState', () => ({
     isLoading: false,
   }),
   useMembers: () => ({ data: [], isLoading: false }),
-  useJoinEvent: () => ({ mutateAsync: vi.fn() }),
-  useLeaveEvent: () => ({ mutateAsync: vi.fn() }),
-  useArchiveEvent: () => ({ mutateAsync: vi.fn() }),
-  useTogglePinEvent: () => ({ mutateAsync: vi.fn() }),
-  useToggleLockEvent: () => ({ mutateAsync: vi.fn() }),
-  useDeleteEvent: () => ({ mutateAsync: vi.fn() }),
+  useCreateEvent: () => ({ mutate: vi.fn(), isPending: false }),
+  useUpdateEvent: () => ({ mutate: vi.fn(), isPending: false }),
+  useJoinEvent: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useLeaveEvent: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useArchiveEvent: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useTogglePinEvent: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useToggleLockEvent: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useDeleteEvent: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
 }));
 
 vi.mock('@/components/PageFilterBar', () => ({

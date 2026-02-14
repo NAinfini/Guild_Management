@@ -4,18 +4,18 @@
   --theme-font-body: 'Fredoka', sans-serif;
   --theme-letter-spacing: 0em;
 
-  /* Structure - Differentiated border radius */
-  --theme-border-width: 3px;
+  /* Structure - IMPROVED: Lighter borders for playful aesthetic */
+  --theme-border-width: 2px;
   --theme-border-radius-sm: 10px; /* Small elements (buttons, badges) */
   --theme-border-radius-md: 14px; /* Medium elements (cards) */
-  --theme-border-radius-lg: 10px; /* Large panels */
-  --theme-border-radius: 14px; /* Default fallback */
+  --theme-border-radius-lg: 16px; /* Large panels */
+  --theme-border-radius: 12px; /* Default fallback */
   --theme-border-style: solid;
 
-  /* Depth & Shadows */
-  --theme-shadow-sm: 0 4px 0 rgba(0,0,0,0.1);
-  --theme-shadow-md: 0 6px 0 rgba(0,0,0,0.15);
-  --theme-shadow-lg: 0 8px 0 rgba(0,0,0,0.2);
+  /* Depth & Shadows - IMPROVED: Lighter for more playful feel */
+  --theme-shadow-sm: 0 3px 0 rgba(0,0,0,0.08);
+  --theme-shadow-md: 0 5px 0 rgba(0,0,0,0.12);
+  --theme-shadow-lg: 0 7px 0 rgba(0,0,0,0.15);
 
   /* Motion */
   --theme-duration: 0.3s;
@@ -31,13 +31,13 @@
   --theme-motion-press-scale: 0.975;
 
   /* Component token overrides */
-  --cmp-button-radius: 12px;
-  --cmp-card-radius: 14px;
-  --cmp-input-radius: 12px;
+  --cmp-button-radius: 10px;
+  --cmp-card-radius: 10px;
+  --cmp-input-radius: 10px;
   --cmp-chip-border: color-mix(in srgb, var(--sys-interactive-accent) 42%, transparent);
   --cmp-nav-item-hover-bg: color-mix(in srgb, var(--sys-interactive-accent) 18%, transparent);
   --cmp-nav-item-active-bg: color-mix(in srgb, var(--sys-interactive-accent) 26%, transparent);
-  --cmp-dialog-radius: 16px;
+  --cmp-dialog-radius: 12px;
 }
 
 /* Component-targeted soft playful behavior */
@@ -86,5 +86,66 @@
   .control[data-ui="chip"],
   .control[data-ui="nav"]
 ):active:not(:disabled) {
-  box-shadow: var(--theme-shadow-sm);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+  transform: translateY(2px);
+}
+
+/* IMPROVED: Subtle polka dot pattern on cards for playful touch */
+.theme-chibi .ui-card,
+.theme-chibi [data-ui="card"] {
+  position: relative;
+  background-image: radial-gradient(
+    circle at 2px 2px,
+    color-mix(in srgb, var(--sys-interactive-accent) 4%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+}
+
+/* IMPROVED: Rounded corners with subtle glow */
+.theme-chibi .ui-button:not(:disabled),
+.theme-chibi [data-ui="button"]:not(:disabled) {
+  box-shadow:
+    0 3px 0 rgba(0,0,0,0.08),
+    inset 0 -1px 0 rgba(255,255,255,0.2);
+}
+
+.theme-chibi .ui-button:hover:not(:disabled),
+.theme-chibi [data-ui="button"]:hover:not(:disabled) {
+  box-shadow:
+    0 5px 0 rgba(0,0,0,0.12),
+    inset 0 -1px 0 rgba(255,255,255,0.3),
+    0 0 12px color-mix(in srgb, var(--sys-interactive-accent) 20%, transparent);
+}
+
+/* IMPROVED: Bouncy animation on success */
+@keyframes chibi-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.theme-chibi [data-success-event="true"] {
+  animation: chibi-bounce 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* IMPROVED: Soft borders with inner glow */
+.theme-chibi :is(.ui-input, input, textarea, select) {
+  box-shadow:
+    0 2px 0 rgba(0,0,0,0.06),
+    inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.theme-chibi :is(.ui-input, input, textarea, select):focus {
+  box-shadow:
+    0 3px 0 color-mix(in srgb, var(--sys-interactive-accent) 40%, transparent),
+    inset 0 1px 2px rgba(0,0,0,0.05),
+    0 0 8px color-mix(in srgb, var(--sys-interactive-accent) 15%, transparent);
+}
+
+/* IMPROVED: Playful headings with tighter spacing */
+.theme-chibi :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--theme-font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: color-mix(in srgb, var(--sys-text-primary) 95%, var(--sys-interactive-accent) 5%);
 }

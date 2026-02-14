@@ -1,0 +1,305 @@
+/**
+ * ACCESSIBILITY & UX ENHANCEMENTS
+ *
+ * This file contains:
+ * 1. Consistent border radius system
+ * 2. Enhanced interactive states
+ * 3. Better focus indicators
+ * 4. Improved hover feedback
+ *
+ * All changes are WCAG AA compliant
+ */
+
+/* ============================================
+   BORDER RADIUS SYSTEM
+   ============================================ */
+
+:root {
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+}
+
+/* Theme-specific radius overrides */
+[data-theme="neo-brutalism"] {
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+}
+
+[data-theme="minimalistic"] {
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+}
+
+[data-theme="royal"],
+[data-theme="chibi"] {
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+}
+
+[data-theme="cyberpunk"] {
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-2xl: 10px;
+}
+
+[data-theme="steampunk"] {
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+}
+
+[data-theme="post-apocalyptic"] {
+  --radius-sm: 0;
+  --radius-md: 2px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+}
+
+/* ============================================
+   ENHANCED INTERACTIVE STATES
+   ============================================ */
+
+/* All clickable elements should have cursor pointer */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+label[for],
+input[type="checkbox"],
+input[type="radio"],
+select,
+.clickable {
+  cursor: pointer;
+}
+
+/* Disabled cursor */
+button:disabled,
+[role="button"][aria-disabled="true"],
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Focus visible states (keyboard navigation) */
+*:focus-visible {
+  outline: 3px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+/* Remove focus outline for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Button hover states */
+button:not(:disabled):hover,
+[role="button"]:not([aria-disabled="true"]):hover {
+  filter: brightness(1.05);
+  transition: all 150ms ease-out;
+}
+
+/* Button active states */
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active {
+  filter: brightness(0.95);
+  transform: translateY(1px);
+  transition: all 50ms ease-out;
+}
+
+/* Link hover states */
+a:hover {
+  text-decoration: underline;
+  transition: all 150ms ease-out;
+}
+
+/* Input focus states */
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 3px var(--color-accent-primary-subtle);
+  outline: none;
+}
+
+/* ============================================
+   COMPONENT-SPECIFIC ENHANCEMENTS
+   ============================================ */
+
+/* Cards should have consistent radius */
+.ui-card,
+[data-ui="card"] {
+  border-radius: var(--radius-lg);
+}
+
+/* Buttons should have consistent radius */
+button,
+[role="button"],
+.ui-button,
+[data-ui="button"] {
+  border-radius: var(--radius-md);
+}
+
+/* Inputs should have consistent radius */
+input,
+textarea,
+select,
+.ui-input,
+[data-ui="input"] {
+  border-radius: var(--radius-md);
+}
+
+/* Chips/badges should use pill shape */
+.ui-chip,
+.ui-badge,
+[class*="Chip"],
+[class*="chip"],
+[class*="Badge"],
+[class*="badge"] {
+  border-radius: var(--radius-full);
+}
+
+/* Modal/dialog corners */
+[role="dialog"],
+[role="alertdialog"],
+.ui-dialog,
+[class*="Dialog"],
+[class*="dialog"] {
+  border-radius: var(--radius-xl);
+}
+
+/* ============================================
+   IMPROVED CONTRAST FOR BORDERS
+   ============================================ */
+
+/* Ensure borders are always visible */
+.ui-card,
+.ui-input,
+.ui-button,
+[data-ui="card"],
+[data-ui="input"],
+[data-ui="button"] {
+  border: 1px solid var(--color-border-default);
+}
+
+/* Stronger borders on focus/hover for better affordance */
+[data-ui="input"]:focus-within,
+[data-ui="input"]:hover {
+  border-color: var(--color-border-strong);
+}
+
+/* ============================================
+   ACCESSIBILITY HELPERS
+   ============================================ */
+
+/* Screen reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Skip to content link */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-accent-primary);
+  color: var(--color-accent-primary-fg);
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  z-index: 9999;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  * {
+    border-color: currentColor;
+  }
+
+  button,
+  a {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
+/* ============================================
+   CONSISTENT SPACING SYSTEM
+   ============================================ */
+
+:root {
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+}
+
+/* ============================================
+   TOUCH TARGET SIZES (44x44px minimum)
+   ============================================ */
+
+/* Ensure minimum touch target size for mobile */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  a,
+  input[type="checkbox"],
+  input[type="radio"],
+  label[for] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Exception for text links */
+  a:not([role="button"]) {
+    min-width: auto;
+    min-height: auto;
+    padding: 8px 4px;
+  }
+}

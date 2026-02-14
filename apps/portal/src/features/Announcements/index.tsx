@@ -48,11 +48,13 @@ import { useOnline } from '@/hooks/useOnline';
 import { Announcement } from '../../types';
 import { isAfter } from 'date-fns';
 import { Skeleton } from '@mui/material';
-import { 
+import {
   CardGridSkeleton, 
   TiptapEditor,
   MarkdownRenderer,
+  Tooltip,
 } from '@/components';
+import { ThemedIconButton } from '@/components/controls/ThemedIconButton';
 import { PageFilterBar, type FilterOption } from '@/components';
 import {
   useAnnouncements,
@@ -72,6 +74,7 @@ import {
   canPinAnnouncement,
   getEffectiveRole,
 } from '../../lib/permissions';
+import { mediaAPI } from '../../lib/api/media';
 
 type FilterType = 'all' | 'pinned' | 'archived';
 
@@ -228,7 +231,7 @@ export function Announcements() {
       />
 
       {/* Feed List */}
-      <Stack spacing={2}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
         {filteredAnnouncements.map((ann) => {
           const isNew = hasNewContent(ann.created_at);
           return (
@@ -312,10 +315,12 @@ export function Announcements() {
         {filteredAnnouncements.length === 0 && (
             <Box sx={{ py: 10, textAlign: 'center', opacity: 0.5, border: `2px dashed ${theme.palette.divider}`, borderRadius: 5 }}>
                <Campaign sx={{ fontSize: 48, color: 'text.secondary', display: 'block', margin: '0 auto', marginBottom: 2 }} />
-               <Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.2em" color="text.secondary">NO ANNOUNCEMENTS FOUND</Typography>
+               <Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.2em" color="text.secondary">
+                 {t('announcements.signal_silence')}
+               </Typography>
             </Box>
         )}
-      </Stack>
+      </Box>
 
       {/* View Modal */}
       {selectedAnnouncement && (
@@ -338,10 +343,29 @@ export function Announcements() {
                           <AccessTime sx={{ fontSize: 12, color: 'text.secondary' }} />
                           <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">{formatDateTime(selectedAnnouncement.created_at, timezoneOffset)}</Typography>
                       </Stack>
-                      <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">POSTED BY: {selectedAnnouncement.author_id}</Typography>
+                      <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">
+                        {t('announcements.agent')}: {selectedAnnouncement.author_id}
+                      </Typography>
                   </Stack>
                </Box>
-               <IconButton onClick={() => setSelectedAnnouncement(null)}><Close /></IconButton>
+               <Tooltip content={t('common.close')}>
+                 <IconButton
+                   onClick={() => setSelectedAnnouncement(null)}
+                   sx={{
+                     width: 36,
+                     height: 36,
+                     borderRadius: 'var(--cmp-button-radius)',
+                     border: '1px solid var(--cmp-input-border)',
+                     bgcolor: 'transparent',
+                     color: 'var(--sys-text-primary)',
+                     '&:hover': {
+                       bgcolor: 'var(--sys-interactive-hover)',
+                     },
+                   }}
+                 >
+                   <Close />
+                 </IconButton>
+               </Tooltip>
             </Box>
 
             <DialogContent sx={{ p: 5 }}>
@@ -361,10 +385,10 @@ export function Announcements() {
                {selectedAnnouncement.media_urls && selectedAnnouncement.media_urls.length > 0 && (
                   <Box mt={4}>
                      <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.disabled" display="block" mb={2} letterSpacing="0.1em">{t('announcements.intel_attached')}</Typography>
-                     <Grid container spacing={2}>
+                     <Grid container spacing={1.5}>
                         {selectedAnnouncement.media_urls.map((url, i) => (
-                           <Grid size={{ xs: 12, sm: 6 }} key={i}>
-                              <Box sx={{ aspectRatio: '16/9', borderRadius: 3, overflow: 'hidden', bgcolor: 'black' }}>
+                           <Grid size={{ xs: 12, sm: 4, md: 3 }} key={i}>
+                              <Box sx={{ aspectRatio: '4/3', borderRadius: 2, overflow: 'hidden', bgcolor: 'black' }}>
                                  <img src={getOptimizedMediaUrl(url, 'image')} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               </Box>
                            </Grid>
@@ -445,24 +469,8 @@ function EditorModal({ isOpen, onClose, initialData, onSubmit }: any) {
     // Handle image upload for Tiptap paste
     const handleImageUpload = async (file: File): Promise<string> => {
         try {
-            // Create FormData for file upload
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('context', 'announcement');
-
-            // Upload to media API
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/media`, {
-                method: 'POST',
-                body: formData,
-                credentials: 'include',
-            });
-
-            if (!response.ok) {
-                throw new Error('Upload failed');
-            }
-
-            const data = await response.json();
-            return data.url;
+            const uploaded = await mediaAPI.uploadImage(file, 'gallery');
+            return `/api/media/${encodeURIComponent(uploaded.r2Key)}`;
         } catch (error) {
             console.error('Image upload failed:', error);
             throw error;
@@ -500,7 +508,7 @@ function EditorModal({ isOpen, onClose, initialData, onSubmit }: any) {
                                 onClick={() => setShowPreview(false)}
                                 sx={{ fontWeight: 700, fontSize: '0.7rem' }}
                             >
-                                Edit
+                                {t('common.edit')}
                             </Button>
                             <Button
                                 size="small"
@@ -508,7 +516,7 @@ function EditorModal({ isOpen, onClose, initialData, onSubmit }: any) {
                                 onClick={() => setShowPreview(true)}
                                 sx={{ fontWeight: 700, fontSize: '0.7rem' }}
                             >
-                                Preview
+                                {t('tools.preview_label')}
                             </Button>
                         </Stack>
 
@@ -530,6 +538,7 @@ function EditorModal({ isOpen, onClose, initialData, onSubmit }: any) {
                             <TiptapEditor
                                 content={content}
                                 onChange={setContent}
+                                onImageUpload={handleImageUpload}
                                 placeholder={t('announcements.tx_body')}
                                 className="min-h-[250px]"
                             />
@@ -538,18 +547,34 @@ function EditorModal({ isOpen, onClose, initialData, onSubmit }: any) {
                     
                     <Box>
                          <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary" mb={2} display="block">{t('announcements.attached_media')}</Typography>
-                         <Grid container spacing={2}>
+                         <Grid container spacing={1.5}>
                              {existingMedia.map((url: string, i: number) => (
-                                 <Grid size={3} key={i}>
-                                      <Box sx={{ aspectRatio: '1/1', borderRadius: 2, overflow: 'hidden', position: 'relative' }}>
+                                 <Grid size={{ xs: 4, sm: 3, md: 2 }} key={i}>
+                                      <Box sx={{ aspectRatio: '4/3', borderRadius: 2, overflow: 'hidden', position: 'relative' }}>
                                           <img src={getOptimizedMediaUrl(url, 'image')} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                                          <IconButton size="small" sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'error.main' }}><Delete sx={{ fontSize: 14 }} /></IconButton>
+                                          <Tooltip content={t('common.delete')}>
+                                            <ThemedIconButton
+                                              size="small"
+                                              variant="overlayDanger"
+                                              sx={{
+                                                position: 'absolute',
+                                                top: 4,
+                                                right: 4,
+                                                width: 24,
+                                                height: 24,
+                                                minWidth: 24,
+                                                borderRadius: '6px',
+                                              }}
+                                            >
+                                              <Delete sx={{ fontSize: 14 }} />
+                                            </ThemedIconButton>
+                                          </Tooltip>
                                       </Box>
                                  </Grid>
                              ))}
-                              <Grid size={3}>
-                                  <Box sx={{ aspectRatio: '1/1', borderRadius: 2, border: '2px dashed', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' } }}>
-                                      <Add sx={{ fontSize: 24, color: 'gray' }} />
+                              <Grid size={{ xs: 4, sm: 3, md: 2 }}>
+                                  <Box sx={{ aspectRatio: '4/3', borderRadius: 2, border: '2px dashed', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' } }}>
+                                      <Add sx={{ fontSize: 24, color: 'var(--color-text-secondary)' }} />
                                   </Box>
                               </Grid>
                          </Grid>

@@ -1,0 +1,266 @@
+/**
+ * Member Card Theme-Specific Colors
+ *
+ * Each theme defines unique color palettes for the 4 game classes:
+ * - mingjin (鸣金) - Blue archetype
+ * - qiansi (牵丝) - Green archetype
+ * - pozhu (破竹) - Purple archetype
+ * - lieshi (裂石) - Red/Brown archetype
+ *
+ * Colors are defined as CSS variables that can be accessed via theme context
+ */
+
+/* ============================================
+   BASE LAYER - Default Class Colors
+   ============================================ */
+:root {
+  /* Base class colors (fallback) */
+  --member-card-mingjin: #3b82f6;
+  --member-card-mingjin-bg: rgba(59, 130, 246, 0.24);
+  --member-card-mingjin-border: rgba(59, 130, 246, 0.42);
+  --member-card-mingjin-text: #dbeafe;
+
+  --member-card-qiansi: #22c55e;
+  --member-card-qiansi-bg: rgba(34, 197, 94, 0.24);
+  --member-card-qiansi-border: rgba(34, 197, 94, 0.42);
+  --member-card-qiansi-text: #dcfce7;
+
+  --member-card-pozhu: #a855f7;
+  --member-card-pozhu-bg: rgba(168, 85, 247, 0.24);
+  --member-card-pozhu-border: rgba(168, 85, 247, 0.42);
+  --member-card-pozhu-text: #f3e8ff;
+
+  --member-card-lieshi: #7f1d1d;
+  --member-card-lieshi-bg: rgba(127, 29, 29, 0.28);
+  --member-card-lieshi-border: rgba(127, 29, 29, 0.48);
+  --member-card-lieshi-text: #fee2e2;
+}
+
+/* ============================================
+   NEO-BRUTALISM - Bold Primary Colors
+   High contrast, pure saturated colors
+   ============================================ */
+.theme-neo-brutalism,
+[data-theme="neo-brutalism"] {
+  /* Mingjin - Electric Blue */
+  --member-card-mingjin: #2563eb;
+  --member-card-mingjin-bg: rgba(37, 99, 235, 0.16);
+  --member-card-mingjin-border: rgba(37, 99, 235, 0.55);
+  --member-card-mingjin-text: #eff6ff;
+
+  /* Qiansi - Vibrant Green */
+  --member-card-qiansi: #16a34a;
+  --member-card-qiansi-bg: rgba(22, 163, 74, 0.16);
+  --member-card-qiansi-border: rgba(22, 163, 74, 0.55);
+  --member-card-qiansi-text: #f0fdf4;
+
+  /* Pozhu - Bold Purple */
+  --member-card-pozhu: #9333ea;
+  --member-card-pozhu-bg: rgba(147, 51, 234, 0.16);
+  --member-card-pozhu-border: rgba(147, 51, 234, 0.55);
+  --member-card-pozhu-text: #faf5ff;
+
+  /* Lieshi - Hot Red */
+  --member-card-lieshi: #dc2626;
+  --member-card-lieshi-bg: rgba(220, 38, 38, 0.16);
+  --member-card-lieshi-border: rgba(220, 38, 38, 0.55);
+  --member-card-lieshi-text: #fef2f2;
+}
+
+/* ============================================
+   CYBERPUNK - Neon Glow Colors
+   Electric neon with glow effects
+   ============================================ */
+.theme-cyberpunk,
+[data-theme="cyberpunk"] {
+  /* Mingjin - Cyan Neon */
+  --member-card-mingjin: #06b6d4;
+  --member-card-mingjin-bg: rgba(6, 182, 212, 0.14);
+  --member-card-mingjin-border: rgba(6, 182, 212, 0.48);
+  --member-card-mingjin-text: #cffafe;
+
+  /* Qiansi - Lime Neon */
+  --member-card-qiansi: #84cc16;
+  --member-card-qiansi-bg: rgba(132, 204, 22, 0.14);
+  --member-card-qiansi-border: rgba(132, 204, 22, 0.48);
+  --member-card-qiansi-text: #f7fee7;
+
+  /* Pozhu - Magenta Neon */
+  --member-card-pozhu: #d946ef;
+  --member-card-pozhu-bg: rgba(217, 70, 239, 0.14);
+  --member-card-pozhu-border: rgba(217, 70, 239, 0.48);
+  --member-card-pozhu-text: #fae8ff;
+
+  /* Lieshi - Hot Pink Neon */
+  --member-card-lieshi: #f43f5e;
+  --member-card-lieshi-bg: rgba(244, 63, 94, 0.14);
+  --member-card-lieshi-border: rgba(244, 63, 94, 0.48);
+  --member-card-lieshi-text: #ffe4e6;
+}
+
+/* ============================================
+   MINIMALISTIC - Muted Elegant Colors
+   Subtle, refined palette with low saturation
+   ============================================ */
+.theme-minimalistic,
+[data-theme="minimalistic"] {
+  /* Mingjin - Slate Blue */
+  --member-card-mingjin: #475569;
+  --member-card-mingjin-bg: rgba(71, 85, 105, 0.12);
+  --member-card-mingjin-border: rgba(71, 85, 105, 0.36);
+  --member-card-mingjin-text: #f1f5f9;
+
+  /* Qiansi - Stone Green */
+  --member-card-qiansi: #57534e;
+  --member-card-qiansi-bg: rgba(87, 83, 78, 0.12);
+  --member-card-qiansi-border: rgba(87, 83, 78, 0.36);
+  --member-card-qiansi-text: #fafaf9;
+
+  /* Pozhu - Zinc Purple */
+  --member-card-pozhu: #71717a;
+  --member-card-pozhu-bg: rgba(113, 113, 122, 0.12);
+  --member-card-pozhu-border: rgba(113, 113, 122, 0.36);
+  --member-card-pozhu-text: #fafafa;
+
+  /* Lieshi - Neutral Brown */
+  --member-card-lieshi: #78716c;
+  --member-card-lieshi-bg: rgba(120, 113, 108, 0.12);
+  --member-card-lieshi-border: rgba(120, 113, 108, 0.36);
+  --member-card-lieshi-text: #fafaf9;
+}
+
+/* ============================================
+   STEAMPUNK - Bronze & Brass Metallics
+   Aged metals with verdigris patina
+   ============================================ */
+.theme-steampunk,
+[data-theme="steampunk"] {
+  /* Mingjin - Brass Blue */
+  --member-card-mingjin: #0284c7;
+  --member-card-mingjin-bg: rgba(2, 132, 199, 0.18);
+  --member-card-mingjin-border: rgba(2, 132, 199, 0.44);
+  --member-card-mingjin-text: #e0f2fe;
+
+  /* Qiansi - Verdigris Green */
+  --member-card-qiansi: #059669;
+  --member-card-qiansi-bg: rgba(5, 150, 105, 0.18);
+  --member-card-qiansi-border: rgba(5, 150, 105, 0.44);
+  --member-card-qiansi-text: #d1fae5;
+
+  /* Pozhu - Bronze Purple */
+  --member-card-pozhu: #7c2d12;
+  --member-card-pozhu-bg: rgba(124, 45, 18, 0.18);
+  --member-card-pozhu-border: rgba(124, 45, 18, 0.44);
+  --member-card-pozhu-text: #ffedd5;
+
+  /* Lieshi - Rusted Iron */
+  --member-card-lieshi: #92400e;
+  --member-card-lieshi-bg: rgba(146, 64, 14, 0.18);
+  --member-card-lieshi-border: rgba(146, 64, 14, 0.44);
+  --member-card-lieshi-text: #fed7aa;
+}
+
+/* ============================================
+   ROYAL - Rich Jewel Tones
+   Deep saturated colors with gold accents
+   ============================================ */
+.theme-royal,
+[data-theme="royal"] {
+  /* Mingjin - Sapphire Blue */
+  --member-card-mingjin: #1e40af;
+  --member-card-mingjin-bg: rgba(30, 64, 175, 0.22);
+  --member-card-mingjin-border: rgba(30, 64, 175, 0.52);
+  --member-card-mingjin-text: #dbeafe;
+
+  /* Qiansi - Emerald Green */
+  --member-card-qiansi: #047857;
+  --member-card-qiansi-bg: rgba(4, 120, 87, 0.22);
+  --member-card-qiansi-border: rgba(4, 120, 87, 0.52);
+  --member-card-qiansi-text: #d1fae5;
+
+  /* Pozhu - Amethyst Purple */
+  --member-card-pozhu: #7e22ce;
+  --member-card-pozhu-bg: rgba(126, 34, 206, 0.22);
+  --member-card-pozhu-border: rgba(126, 34, 206, 0.52);
+  --member-card-pozhu-text: #f3e8ff;
+
+  /* Lieshi - Ruby Red */
+  --member-card-lieshi: #991b1b;
+  --member-card-lieshi-bg: rgba(153, 27, 27, 0.22);
+  --member-card-lieshi-border: rgba(153, 27, 27, 0.52);
+  --member-card-lieshi-text: #fee2e2;
+}
+
+/* ============================================
+   CHIBI - Pastel Candy Colors
+   Soft, playful colors with high lightness
+   ============================================ */
+.theme-chibi,
+[data-theme="chibi"] {
+  /* Mingjin - Sky Blue */
+  --member-card-mingjin: #60a5fa;
+  --member-card-mingjin-bg: rgba(96, 165, 250, 0.26);
+  --member-card-mingjin-border: rgba(96, 165, 250, 0.58);
+  --member-card-mingjin-text: #1e3a8a;
+
+  /* Qiansi - Mint Green */
+  --member-card-qiansi: #4ade80;
+  --member-card-qiansi-bg: rgba(74, 222, 128, 0.26);
+  --member-card-qiansi-border: rgba(74, 222, 128, 0.58);
+  --member-card-qiansi-text: #14532d;
+
+  /* Pozhu - Lavender Purple */
+  --member-card-pozhu: #c084fc;
+  --member-card-pozhu-bg: rgba(192, 132, 252, 0.26);
+  --member-card-pozhu-border: rgba(192, 132, 252, 0.58);
+  --member-card-pozhu-text: #581c87;
+
+  /* Lieshi - Coral Pink */
+  --member-card-lieshi: #fb7185;
+  --member-card-lieshi-bg: rgba(251, 113, 133, 0.26);
+  --member-card-lieshi-border: rgba(251, 113, 133, 0.58);
+  --member-card-lieshi-text: #881337;
+}
+
+/* ============================================
+   POST-APOCALYPTIC - Desaturated Wasteland
+   Dusty, weathered colors with rust
+   ============================================ */
+.theme-post-apocalyptic,
+[data-theme="post-apocalyptic"] {
+  /* Mingjin - Dusty Slate */
+  --member-card-mingjin: #64748b;
+  --member-card-mingjin-bg: rgba(100, 116, 139, 0.20);
+  --member-card-mingjin-border: rgba(100, 116, 139, 0.46);
+  --member-card-mingjin-text: #e2e8f0;
+
+  /* Qiansi - Olive Drab */
+  --member-card-qiansi: #65a30d;
+  --member-card-qiansi-bg: rgba(101, 163, 13, 0.20);
+  --member-card-qiansi-border: rgba(101, 163, 13, 0.46);
+  --member-card-qiansi-text: #ecfccb;
+
+  /* Pozhu - Weathered Purple */
+  --member-card-pozhu: #6b21a8;
+  --member-card-pozhu-bg: rgba(107, 33, 168, 0.20);
+  --member-card-pozhu-border: rgba(107, 33, 168, 0.46);
+  --member-card-pozhu-text: #ede9fe;
+
+  /* Lieshi - Rust Orange */
+  --member-card-lieshi: #c2410c;
+  --member-card-lieshi-bg: rgba(194, 65, 12, 0.20);
+  --member-card-lieshi-border: rgba(194, 65, 12, 0.46);
+  --member-card-lieshi-text: #fed7aa;
+}
+
+/* ============================================
+   UTILITY - Data Attributes for JS Access
+   ============================================ */
+
+/* Allow JavaScript to read computed theme colors */
+:root {
+  --theme-member-card-mingjin: var(--member-card-mingjin);
+  --theme-member-card-qiansi: var(--member-card-qiansi);
+  --theme-member-card-pozhu: var(--member-card-pozhu);
+  --theme-member-card-lieshi: var(--member-card-lieshi);
+}

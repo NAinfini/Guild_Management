@@ -35,7 +35,9 @@ import {
   Input,
   InputAdornment,
   TextField,
-  IconButton
+  IconButton,
+  ImageList,
+  ImageListItem
 } from '@mui/material';
 import { 
   Label,
@@ -89,7 +91,7 @@ import { warsAPI, membersAPI, mediaAPI } from '../../lib/api';
 import { type User, type Role, type ClassType, type ProgressionData, type AuditLogEntry } from '../../types';
 import { useForm, Controller } from 'react-hook-form';
 import { AuditLogs } from './components/AuditLogs';
-import { HealthStatus, MediaUpload, MediaReorder } from '@/components';
+import { HealthStatus } from '@/components';
 import { ProtectedRoute } from '../Auth/components/ProtectedRoute';
 import { 
   canAccessAdminArea, 
@@ -105,9 +107,10 @@ const getClassGroups = (theme: any) => [
   {
     id: 'mingjin',
     label: '鸣金',
-    color: theme.custom?.classes.mingjin.text,
-    borderColor: alpha(theme.custom?.classes.mingjin.main, 0.3),
-    bgColor: theme.custom?.classes.mingjin.bg,
+    mainColor: theme.custom?.classes?.mingjin?.main || theme.palette.primary.main,
+    color: theme.custom?.classes?.mingjin?.text || theme.palette.text.primary,
+    borderColor: alpha(theme.custom?.classes?.mingjin?.main || theme.palette.primary.main, 0.35),
+    bgColor: theme.custom?.classes?.mingjin?.bg || alpha(theme.custom?.classes?.mingjin?.main || theme.palette.primary.main, 0.14),
     options: [
       { id: 'mingjin_hong', label: '鸣金虹' },
       { id: 'mingjin_ying', label: '鸣金影' }
@@ -116,9 +119,10 @@ const getClassGroups = (theme: any) => [
   {
     id: 'qiansi',
     label: '牵丝',
-    color: theme.custom?.classes.qiansi.text,
-    borderColor: alpha(theme.custom?.classes.qiansi.main, 0.3),
-    bgColor: theme.custom?.classes.qiansi.bg,
+    mainColor: theme.custom?.classes?.qiansi?.main || theme.palette.primary.main,
+    color: theme.custom?.classes?.qiansi?.text || theme.palette.text.primary,
+    borderColor: alpha(theme.custom?.classes?.qiansi?.main || theme.palette.primary.main, 0.35),
+    bgColor: theme.custom?.classes?.qiansi?.bg || alpha(theme.custom?.classes?.qiansi?.main || theme.palette.primary.main, 0.14),
     options: [
       { id: 'qiansi_yu', label: '牵丝玉' },
       { id: 'qiansi_lin', label: '牵丝霖' }
@@ -127,9 +131,10 @@ const getClassGroups = (theme: any) => [
   {
     id: 'pozhu',
     label: '破竹',
-    color: theme.custom?.classes.pozhu.text,
-    borderColor: alpha(theme.custom?.classes.pozhu.main, 0.3),
-    bgColor: theme.custom?.classes.pozhu.bg,
+    mainColor: theme.custom?.classes?.pozhu?.main || theme.palette.primary.main,
+    color: theme.custom?.classes?.pozhu?.text || theme.palette.text.primary,
+    borderColor: alpha(theme.custom?.classes?.pozhu?.main || theme.palette.primary.main, 0.35),
+    bgColor: theme.custom?.classes?.pozhu?.bg || alpha(theme.custom?.classes?.pozhu?.main || theme.palette.primary.main, 0.14),
     options: [
       { id: 'pozhu_feng', label: '破竹风' },
       { id: 'pozhu_chen', label: '破竹尘' },
@@ -139,9 +144,10 @@ const getClassGroups = (theme: any) => [
   {
     id: 'lieshi',
     label: '裂石',
-    color: theme.custom?.classes.lieshi.text,
-    borderColor: alpha(theme.custom?.classes.lieshi.main, 0.3),
-    bgColor: theme.custom?.classes.lieshi.bg,
+    mainColor: theme.custom?.classes?.lieshi?.main || theme.palette.primary.main,
+    color: theme.custom?.classes?.lieshi?.text || theme.palette.text.primary,
+    borderColor: alpha(theme.custom?.classes?.lieshi?.main || theme.palette.primary.main, 0.35),
+    bgColor: theme.custom?.classes?.lieshi?.bg || alpha(theme.custom?.classes?.lieshi?.main || theme.palette.primary.main, 0.14),
     options: [
       { id: 'lieshi_wei', label: '裂石威' },
       { id: 'lieshi_jun', label: '裂石钧' }
@@ -153,8 +159,8 @@ export function Admin() {
   const { user } = useAuth();
   const { viewRole } = useAuthStore();
 
-  // ✅ TanStack Query: Server state
-  const { data: members = [], isLoading: isLoadingMembers } = useMembers();
+  // 鉁?TanStack Query: Server state
+  const { data: members = [], isLoading: isLoadingMembers, isError: isMembersError } = useMembers();
   const { data: auditLogs = [], isLoading: isLoadingAudits } = useAuditLogs();
   const isLoading = isLoadingMembers || isLoadingAudits;
 
@@ -166,6 +172,11 @@ export function Admin() {
   const [activeTab, setActiveTab] = useState<AdminTab>('members');
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
+  const cardToken = theme.custom?.components?.card;
+  const inputToken = theme.custom?.components?.input;
+  const tableToken = theme.custom?.components?.table;
+  const buttonToken = theme.custom?.components?.button;
+  const segmentedToken = theme.custom?.components?.segmentedControl;
 
 
 
@@ -181,7 +192,7 @@ export function Admin() {
     );
   }
 
-  if (!isLoading && members.length === 0) {
+  if (!isLoading && !isMembersError && members.length === 0) {
     return (
       <Box sx={{ p: { xs: 2, sm: 3 }, textAlign: 'center' }}>
         <Typography variant="h6" fontWeight={900}>{t('admin.empty_title')}</Typography>
@@ -198,9 +209,68 @@ export function Admin() {
   }
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: 'auto', pb: 10, px: { xs: 2, sm: 4 } }}>
+    <Box
+      sx={{
+        maxWidth: 1400,
+        mx: 'auto',
+        pb: 10,
+        px: { xs: 2, sm: 4 },
+        '& .MuiCard-root': {
+          bgcolor: cardToken?.bg || 'background.paper',
+          border: '1px solid',
+          borderColor: cardToken?.border || 'divider',
+          boxShadow: cardToken?.shadow || 'none',
+        },
+        '& .MuiOutlinedInput-root': {
+          bgcolor: inputToken?.bg || 'background.paper',
+          color: inputToken?.text || 'text.primary',
+          '& fieldset': {
+            borderColor: inputToken?.border || 'divider',
+          },
+          '&:hover fieldset': {
+            borderColor: inputToken?.focusBorder || 'primary.main',
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: inputToken?.focusBorder || 'primary.main',
+          },
+        },
+        '& .MuiTableHead-root': {
+          bgcolor: tableToken?.headerBg || 'action.hover',
+        },
+        '& .MuiTableBody-root .MuiTableRow-root': {
+          bgcolor: tableToken?.rowBg || 'transparent',
+          '&:hover': {
+            bgcolor: tableToken?.rowHoverBg || 'action.hover',
+          },
+        },
+        '& .MuiButton-contained': {
+          bgcolor: buttonToken?.bg || 'primary.main',
+          color: buttonToken?.text || 'primary.contrastText',
+          borderColor: buttonToken?.border || 'transparent',
+          '&:hover': {
+            bgcolor: buttonToken?.hoverBg || 'primary.dark',
+          },
+        },
+        '& .MuiButton-outlined': {
+          borderColor: buttonToken?.border || 'divider',
+          color: buttonToken?.text || 'text.primary',
+          '&:hover': {
+            bgcolor: buttonToken?.hoverBg || 'action.hover',
+            borderColor: buttonToken?.border || 'divider',
+          },
+        },
+      }}
+    >
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'flex-end' }}>
-        <Box sx={{ bgcolor: 'action.hover', p: 0.5, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+        <Box
+          sx={{
+            bgcolor: segmentedToken?.bg || 'action.hover',
+            p: 0.5,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: segmentedToken?.border || 'divider',
+          }}
+        >
             <Tabs 
                value={activeTab} 
                onChange={(_, v) => setActiveTab(v)}
@@ -213,9 +283,15 @@ export function Admin() {
                        fontWeight: 900, 
                        letterSpacing: '0.1em',
                        textTransform: 'uppercase',
-                       px: 2
+                       px: 2,
+                       color: segmentedToken?.text || 'text.secondary',
+                       transition: 'all 160ms ease',
                    },
-                   '& .Mui-selected': { bgcolor: 'background.paper', color: 'primary.main', boxShadow: 1 },
+                   '& .Mui-selected': {
+                     bgcolor: segmentedToken?.selectedBg || 'background.paper',
+                     color: segmentedToken?.selectedText || 'primary.main',
+                     boxShadow: 1,
+                   },
                    '& .MuiTabs-indicator': { display: 'none' }
                }}
             >
@@ -243,8 +319,13 @@ export function AdminProtected() {
 }
 
 function MemberManagement() {
-   // ✅ TanStack Query: Server state and mutations
-   const { data: members = [] } = useMembers();
+   // 鉁?TanStack Query: Server state and mutations
+   const {
+     data: members = [],
+     isError: isMembersError,
+     error: membersError,
+     refetch: refetchMembers,
+   } = useMembers();
    const updateMemberMutation = useUpdateMember();
    const updateMember = async (id: string, data: any) => {
      await updateMemberMutation.mutateAsync({ id, data });
@@ -256,6 +337,7 @@ function MemberManagement() {
 
    const theme = useTheme();
    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+   const tableToken = theme.custom?.components?.table;
 
    const filteredMembers = useMemo(() => {
      return members.filter(m => {
@@ -263,6 +345,34 @@ function MemberManagement() {
         return matchesSearch;
      });
    }, [members, search]);
+
+   if (isMembersError && members.length === 0) {
+     return (
+       <Card variant="outlined" sx={{ borderRadius: 3 }}>
+         <CardContent>
+           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+             <Box>
+               <Typography variant="subtitle2" fontWeight={900}>
+                 {t('admin.empty_title')}
+               </Typography>
+               <Typography variant="caption" color="text.secondary">
+                 {membersError instanceof Error ? membersError.message : t('admin.empty_hint')}
+               </Typography>
+             </Box>
+             <Button
+               variant="outlined"
+               size="small"
+               startIcon={<RefreshCw sx={{ fontSize: 14 }} />}
+               onClick={() => void refetchMembers()}
+               sx={{ fontWeight: 800 }}
+             >
+               {t('admin.recheck')}
+             </Button>
+           </Stack>
+         </CardContent>
+       </Card>
+     );
+   }
 
    return (
       <Stack spacing={4}>
@@ -334,9 +444,18 @@ function MemberManagement() {
             )}
           </Grid>
         ) : (
-          <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, overflow: 'hidden' }}>
+          <TableContainer
+            component={Paper}
+            elevation={0}
+            sx={{
+              border: '1px solid',
+              borderColor: tableToken?.border || 'divider',
+              borderRadius: 4,
+              overflow: 'hidden',
+            }}
+          >
              <Table>
-                <TableHead sx={{ bgcolor: 'action.hover' }}>
+                <TableHead sx={{ bgcolor: tableToken?.headerBg || 'action.hover' }}>
                    <TableRow>
                       {['identity', 'role', 'spec', 'power', 'status'].map(head => (
                          <TableCell key={head} sx={{ py: 2, fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'text.secondary' }}>
@@ -391,7 +510,7 @@ function MemberManagement() {
                          <TableCell>
                             <Stack direction="row" alignItems="center" spacing={1}>
                                {m.active_status === 'vacation' ? <AlertTriangle sx={{ fontSize: 14, color: theme.custom?.status.vacation.main }} /> : <CheckCircle2 sx={{ fontSize: 14, color: theme.custom?.status.active.main }} />}
-                               <Typography variant="caption" fontWeight={900} textTransform="uppercase" color={m.active_status === 'vacation' ? theme.custom?.status.vacation.main : theme.custom?.status.vacation.main}>
+                               <Typography variant="caption" fontWeight={900} textTransform="uppercase" color={m.active_status === 'vacation' ? theme.custom?.status.vacation.main : theme.custom?.status.active.main}>
                                   {m.active_status === 'vacation' ? t('admin.status_vacation') : t('admin.status_active')}
                                </Typography>
                             </Stack>
@@ -426,16 +545,39 @@ function MemberManagement() {
 
 function getClassStyle(classId: string | undefined, theme: any) {
     // Simple placeholder logic
-    if (!classId) return { borderColor: theme.palette.divider };
-    return { borderColor: alpha(theme.palette.primary.main, 0.3), color: theme.palette.text.secondary };
+    if (!classId) {
+      return {
+        borderColor: theme.custom?.components?.chip?.border || theme.palette.divider,
+      };
+    }
+    return {
+      borderColor: theme.custom?.components?.chip?.border || alpha(theme.palette.primary.main, 0.3),
+      color: theme.custom?.components?.chip?.text || theme.palette.text.secondary,
+    };
 }
 
 function MemberDetailModal({ member, onClose, onUpdate }: { member: User, onClose: () => void, onUpdate: (u: Partial<User>) => void }) {
    const { user: currentUser } = useAuthStore();
    const { t } = useTranslation();
    const theme = useTheme();
+   const cardToken = theme.custom?.components?.card;
+   const tableToken = theme.custom?.components?.table;
+   const segmentedToken = theme.custom?.components?.segmentedControl;
+   const iconButtonToken = theme.custom?.components?.iconButton;
+   const dialogToken = theme.custom?.components?.dialog;
    const [tab, setTab] = useState<'overview' | 'profile' | 'progression' | 'media' | 'admin'>('overview');
+   const canManageMemberAccount =
+     canManageMemberRoles(currentUser?.role) || canManageMemberActivation(currentUser?.role);
+   const detailTabs: Array<'overview' | 'profile' | 'progression' | 'media' | 'admin'> = canManageMemberAccount
+     ? ['overview', 'profile', 'progression', 'media', 'admin']
+     : ['overview', 'profile', 'progression', 'media'];
    const online = typeof navigator !== 'undefined' ? navigator.onLine : true;
+
+   useEffect(() => {
+      if (!canManageMemberAccount && tab === 'admin') {
+         setTab('overview');
+      }
+   }, [canManageMemberAccount, tab]);
    
    return (
       <Dialog 
@@ -443,9 +585,31 @@ function MemberDetailModal({ member, onClose, onUpdate }: { member: User, onClos
          onClose={onClose} 
          maxWidth="lg" 
          fullWidth
-         PaperProps={{ sx: { bgcolor: 'background.paper', borderRadius: 4, overflow: 'hidden', height: '85vh', display: 'flex', flexDirection: 'column' } }}
+         PaperProps={{
+           sx: {
+             bgcolor: dialogToken?.bg || cardToken?.bg || 'background.paper',
+             borderRadius: 'var(--cmp-dialog-radius, 16px)',
+             border: '1px solid',
+             borderColor: dialogToken?.border || cardToken?.border || 'divider',
+             boxShadow: dialogToken?.shadow || cardToken?.shadow || 'none',
+             overflow: 'hidden',
+             height: '85vh',
+             display: 'flex',
+             flexDirection: 'column',
+           }
+         }}
       >
-         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.default', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+         <Box
+           sx={{
+             p: 3,
+             borderBottom: 1,
+             borderColor: tableToken?.border || 'divider',
+             bgcolor: tableToken?.headerBg || 'background.default',
+             display: 'flex',
+             alignItems: 'flex-start',
+             justifyContent: 'space-between'
+           }}
+         >
              <Stack direction="row" spacing={3} alignItems="center">
                  <Avatar src={member.avatar_url} alt={member.username} variant="rounded" sx={{ width: 64, height: 64, boxShadow: 3 }} />
                  <Box>
@@ -468,23 +632,60 @@ function MemberDetailModal({ member, onClose, onUpdate }: { member: User, onClos
                      </Stack>
                  </Box>
              </Stack>
-             <IconButton onClick={onClose}><X sx={{ fontSize: 20 }} /></IconButton>
+             <IconButton
+               onClick={onClose}
+               sx={{
+                 bgcolor: iconButtonToken?.bg || 'action.hover',
+                 color: iconButtonToken?.text || 'text.primary',
+                 '&:hover': { bgcolor: iconButtonToken?.hoverBg || 'action.selected' },
+               }}
+             >
+               <X sx={{ fontSize: 20 }} />
+             </IconButton>
          </Box>
 
-         <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3, bgcolor: 'background.paper' }}>
-             <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto">
-                {['overview', 'profile', 'progression', 'media', 'admin'].map(key => (
+         <Box
+           sx={{
+             borderBottom: 1,
+             borderColor: segmentedToken?.border || 'divider',
+             px: 3,
+             py: 1,
+             bgcolor: segmentedToken?.bg || 'background.paper'
+           }}
+         >
+             <Tabs
+               value={tab}
+               onChange={(_, v) => setTab(v)}
+               variant="scrollable"
+               scrollButtons="auto"
+               sx={{
+                 '& .MuiTab-root': {
+                   minHeight: 40,
+                   borderRadius: 2,
+                   fontWeight: 800,
+                   color: segmentedToken?.text || 'text.secondary',
+                 },
+                 '& .Mui-selected': {
+                   bgcolor: segmentedToken?.selectedBg || 'background.paper',
+                   color: segmentedToken?.selectedText || 'text.primary',
+                 },
+                 '& .MuiTabs-indicator': { display: 'none' },
+               }}
+             >
+                {detailTabs.map(key => (
                    <Tab key={key} label={t(`admin.tab_${key}`)} value={key} sx={{ fontWeight: 900, minHeight: 60 }} />
                 ))}
              </Tabs>
          </Box>
 
-         <DialogContent sx={{ p: 4, overflowY: 'auto', bgcolor: 'background.default' }}>
+         <DialogContent sx={{ p: 4, overflowY: 'auto', bgcolor: theme.custom?.semantic?.surface?.sunken || 'background.default' }}>
             {tab === 'overview' && <MemberOverview member={member} onUpdate={onUpdate} />}
             {tab === 'profile' && <MemberProfileEditor member={member} onUpdate={onUpdate} canEdit={true} />}
             {tab === 'progression' && <MemberProgressionEditor member={member} onUpdate={onUpdate} />}
             {tab === 'media' && <MemberMediaManager member={member} onUpdate={onUpdate} />}
-            {tab === 'admin' && <MemberAdminActions member={member} onUpdate={onUpdate} currentUser={currentUser!} />}
+            {tab === 'admin' && canManageMemberAccount && (
+              <MemberAdminActions member={member} onUpdate={onUpdate} currentUser={currentUser!} />
+            )}
          </DialogContent>
       </Dialog>
    );
@@ -493,6 +694,9 @@ function MemberDetailModal({ member, onClose, onUpdate }: { member: User, onClos
 function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Partial<User>) => void }) {
    const { t } = useTranslation();
    const theme = useTheme();
+   const tableToken = theme.custom?.components?.table;
+   const iconButtonToken = theme.custom?.components?.iconButton;
+   const segmentedToken = theme.custom?.components?.segmentedControl;
    const { register, handleSubmit, control, setValue, watch, formState: { isDirty } } = useForm({
       defaultValues: { power: member.power, classes: member.classes || [], avatar_url: member.avatar_url || '' }
    });
@@ -526,7 +730,14 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                               <IconButton 
                                  component="label" 
                                  size="small" 
-                                 sx={{ position: 'absolute', bottom: -8, right: -8, bgcolor: 'primary.main', color: 'primary.contrastText', '&:hover': { bgcolor: 'primary.dark' } }}
+                                 sx={{
+                                   position: 'absolute',
+                                   bottom: -8,
+                                   right: -8,
+                                   bgcolor: iconButtonToken?.bg || 'primary.main',
+                                   color: iconButtonToken?.text || 'primary.contrastText',
+                                   '&:hover': { bgcolor: iconButtonToken?.hoverBg || 'primary.dark' }
+                                 }}
                               >
                                  <Upload sx={{ fontSize: 14 }} />
 
@@ -585,28 +796,57 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                                name="classes"
                                control={control}
                                render={({ field }) => (
-                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                     {getClassGroups(theme).map((group: any) => group.options.map((opt: any) => (
-                                        <Chip
-                                           key={opt.id}
-                                           label={opt.label}
-                                           onClick={() => {
+                                  <Box
+                                    sx={{
+                                      display: 'flex',
+                                      flexWrap: 'wrap',
+                                      gap: 1,
+                                      p: 1.25,
+                                      borderRadius: 2,
+                                      border: '1px solid',
+                                      borderColor: segmentedToken?.border || tableToken?.border || 'divider',
+                                      bgcolor: segmentedToken?.bg || tableToken?.headerBg || 'action.hover',
+                                    }}
+                                  >
+                                     {getClassGroups(theme).map((group: any) => group.options.map((opt: any) => {
+                                        const isSelected = field.value?.includes(opt.id as ClassType);
+                                        const selectedBg = group.mainColor || theme.palette.primary.main;
+                                        const selectedText = theme.palette.getContrastText(selectedBg);
+
+                                        return (
+                                          <Chip
+                                            key={opt.id}
+                                            label={opt.label}
+                                            onClick={() => {
                                               const current = field.value || [];
                                               const classId = opt.id as ClassType;
                                               if (current.includes(classId)) field.onChange(current.filter((c: ClassType) => c !== classId));
                                               else field.onChange([...current, classId]);
-                                           }}
-                                           variant={field.value?.includes(opt.id as ClassType) ? 'filled' : 'outlined'}
-                                           size="small"
-                                           sx={{
-                                             fontWeight: 800,
-                                             fontSize: '0.65rem',
-                                             bgcolor: field.value?.includes(opt.id as ClassType) ? group.bgColor : 'transparent',
-                                             color: field.value?.includes(opt.id as ClassType) ? group.color : 'text.secondary',
-                                             borderColor: group.borderColor
-                                           }}
-                                        />
-                                      )))}
+                                            }}
+                                            variant={isSelected ? 'filled' : 'outlined'}
+                                            size="small"
+                                            sx={{
+                                              fontWeight: 800,
+                                              fontSize: '0.68rem',
+                                              borderWidth: 1.5,
+                                              borderColor: isSelected ? selectedBg : group.borderColor,
+                                              bgcolor: isSelected ? selectedBg : 'transparent',
+                                              color: isSelected ? selectedText : 'text.secondary',
+                                              transition: 'all 160ms ease',
+                                              cursor: 'pointer',
+                                              '&:hover': {
+                                                borderColor: selectedBg,
+                                                bgcolor: isSelected ? selectedBg : group.bgColor,
+                                                color: isSelected ? selectedText : (group.color || 'text.primary'),
+                                              },
+                                              '&.Mui-focusVisible': {
+                                                outline: `2px solid ${alpha(selectedBg, 0.5)}`,
+                                                outlineOffset: '1px',
+                                              },
+                                            }}
+                                          />
+                                        );
+                                      }))}
                                    </Box>
                                )}
                             />
@@ -622,9 +862,9 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
 
             <Box sx={{ mt: 3, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
                 {[
-                    { icon: Zap, count: Object.keys(member.progression?.qishu || {}).length, label: 'Qishu', color: 'orange' },
-                    { icon: Swords, count: Object.keys(member.progression?.wuxue || {}).length, label: 'Wuxue', color: 'red' },
-                    { icon: Heart, count: Object.keys(member.progression?.xinfa || {}).length, label: 'Xinfa', color: 'blue' }
+                    { icon: Zap, count: Object.keys(member.progression?.qishu || {}).length, label: t('progression.categories.qishu'), color: theme.palette.info.main },
+                    { icon: Swords, count: Object.keys(member.progression?.wuxue || {}).length, label: t('progression.categories.wuxue'), color: theme.palette.error.main },
+                    { icon: Heart, count: Object.keys(member.progression?.xinfa || {}).length, label: t('progression.categories.xinfa'), color: theme.palette.success.main }
                 ].map((stat, i) => (
                     <Card key={i} sx={{ p: 2, textAlign: 'center', borderRadius: 3 }}>
                         <stat.icon sx={{ fontSize: 20, color: stat.color, margin: '0 auto', marginBottom: 1 }} />
@@ -642,7 +882,7 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                      <Stack spacing={1}>
                         {member.availability && member.availability.some(d => d.blocks.length > 0) ? (
                             member.availability.map(day => day.blocks.length > 0 && (
-                                <Box key={day.day} sx={{ display: 'flex', justifyContent: 'space-between', p: 1.5, bgcolor: 'action.hover', borderRadius: 2 }}>
+                                <Box key={day.day} sx={{ display: 'flex', justifyContent: 'space-between', p: 1.5, bgcolor: tableToken?.rowBg || 'action.hover', borderRadius: 2 }}>
                                     <Typography variant="caption" fontWeight={900} textTransform="uppercase">{day.day}</Typography>
                                     <Stack direction="row" spacing={1}>
                                         {day.blocks.map((b, i) => (
@@ -663,19 +903,24 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
 }
 
 function MemberProgressionEditor({ member, onUpdate }: { member: User, onUpdate: (u: Partial<User>) => void }) {
-   const { t } = useTranslation();
+   const { t, i18n } = useTranslation();
+   const theme = useTheme();
+   const segmentedToken = theme.custom?.components?.segmentedControl;
+   const cardToken = theme.custom?.components?.card;
+   const buttonToken = theme.custom?.components?.button;
    const [category, setCategory] = useState<'qishu' | 'wuxue' | 'xinfa'>('qishu');
    const [progression, setProgression] = useState<ProgressionData>(member.progression || { qishu: {}, wuxue: {}, xinfa: {} });
    const [isDirty, setIsDirty] = useState(false);
+   const isChineseLocale = i18n.resolvedLanguage?.toLowerCase().startsWith('zh') ?? false;
 
    const categories = useMemo(
      () =>
        PROGRESSION_CATEGORIES.map((c) => ({
          id: c.id,
-         label: `${t(c.titleKey)} (${c.id.toUpperCase()})`,
+         label: isChineseLocale ? t(c.titleKey) : `${t(c.titleKey)} (${c.id.toUpperCase()})`,
          groups: c.groups,
        })),
-     [t],
+     [isChineseLocale, t],
    );
    const online = typeof navigator !== 'undefined' ? navigator.onLine : true;
 
@@ -696,14 +941,33 @@ function MemberProgressionEditor({ member, onUpdate }: { member: User, onUpdate:
    return (
       <Stack spacing={3}>
          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <Box sx={{ bgcolor: 'action.hover', p: 0.5, borderRadius: 2 }}>
+             <Box
+               sx={{
+                 bgcolor: segmentedToken?.bg || 'action.hover',
+                 p: 0.5,
+                 borderRadius: 2,
+                 border: '1px solid',
+                 borderColor: segmentedToken?.border || 'divider',
+               }}
+             >
                  {categories.map(c => (
                      <Button 
                         key={c.id} 
                         size="small" 
-                        variant={category === c.id ? 'contained' : 'text'} 
+                        variant="text"
                         onClick={() => setCategory(c.id as any)}
-                        sx={{ fontWeight: 900, minWidth: 100 }}
+                        sx={{
+                          fontWeight: 900,
+                          minWidth: 100,
+                          color: category === c.id ? (segmentedToken?.selectedText || 'text.primary') : (segmentedToken?.text || 'text.secondary'),
+                          bgcolor: category === c.id ? (segmentedToken?.selectedBg || 'background.paper') : 'transparent',
+                          borderRadius: 1.5,
+                          '&:hover': {
+                            bgcolor: category === c.id
+                              ? (segmentedToken?.selectedBg || 'background.paper')
+                              : alpha(theme.palette.primary.main, 0.08),
+                          },
+                        }}
                      >
                         {c.label}
                      </Button>
@@ -726,19 +990,67 @@ function MemberProgressionEditor({ member, onUpdate }: { member: User, onUpdate:
                   {group.items.map((item) => {
                     const level = progression[category][item.key] || 0;
                     return (
-                      <Card key={item.key} variant="outlined" sx={{ p: 1.5, borderRadius: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <Card
+                        key={item.key}
+                        variant="outlined"
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 3,
+                          borderColor: cardToken?.border || 'divider',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: 1
+                        }}
+                      >
                         <Box sx={{ position: 'relative' }}>
-                           <Avatar variant="rounded" src={item.icon} alt={item.key} sx={{ width: 48, height: 48, bgcolor: 'background.default' }}>
+                           <Avatar variant="rounded" src={item.icon} alt={item.key} sx={{ width: 48, height: 48, bgcolor: theme.custom?.semantic?.surface?.elevated || 'background.default' }}>
                             <Zap sx={{ fontSize: 18 }} />
                            </Avatar>
-                           <Box sx={{ position: 'absolute', bottom: -6, right: -6, width: 22, height: 22, borderRadius: '50%', bgcolor: 'primary.main', color: 'primary.contrastText', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900 }}>
+                           <Box
+                             sx={{
+                               position: 'absolute',
+                               bottom: -6,
+                               right: -6,
+                               width: 22,
+                               height: 22,
+                               borderRadius: '50%',
+                               bgcolor: buttonToken?.bg || 'primary.main',
+                               color: buttonToken?.text || 'primary.contrastText',
+                               display: 'flex',
+                               alignItems: 'center',
+                               justifyContent: 'center',
+                               fontSize: '0.7rem',
+                               fontWeight: 900
+                             }}
+                           >
                               {level}
                            </Box>
                         </Box>
                         <Typography variant="caption" fontWeight={900} textAlign="center" lineHeight={1.2}>{t(item.nameKey)}</Typography>
                         <Stack direction="row" spacing={1} mt={0.5}>
-                           <IconButton size="small" onClick={() => updateLevel(category, item.key, -1)} sx={{ border: '1px solid', borderColor: 'divider' }}><Minus sx={{ fontSize: 12 }} /></IconButton>
-                           <IconButton size="small" onClick={() => updateLevel(category, item.key, 1)} sx={{ border: '1px solid', borderColor: 'divider' }}><Plus sx={{ fontSize: 12 }} /></IconButton>
+                           <IconButton
+                             size="small"
+                             onClick={() => updateLevel(category, item.key, -1)}
+                             sx={{
+                               border: '1px solid',
+                               borderColor: buttonToken?.border || 'divider',
+                               '&:hover': { bgcolor: buttonToken?.hoverBg || 'action.hover' },
+                             }}
+                           >
+                             <Minus sx={{ fontSize: 12 }} />
+                           </IconButton>
+                           <IconButton
+                             size="small"
+                             onClick={() => updateLevel(category, item.key, 1)}
+                             sx={{
+                               border: '1px solid',
+                               borderColor: buttonToken?.border || 'divider',
+                               '&:hover': { bgcolor: buttonToken?.hoverBg || 'action.hover' },
+                             }}
+                           >
+                             <Plus sx={{ fontSize: 12 }} />
+                           </IconButton>
                         </Stack>
                       </Card>
                     );
@@ -799,9 +1111,16 @@ function MemberProfileEditor({ member, onUpdate, canEdit }: { member: User, onUp
 
 function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: Partial<User>) => void }) {
    const { t } = useTranslation();
+   const theme = useTheme();
+   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+   const cardToken = theme.custom?.components?.card;
+   const tableToken = theme.custom?.components?.table;
+   const inputToken = theme.custom?.components?.input;
+   const iconButtonToken = theme.custom?.components?.iconButton;
    const [media, setMedia] = useState(member.media || []);
    const [audioUrl, setAudioUrl] = useState((member.media || []).find((m) => m.type === 'audio')?.url || member.audio_url || '');
    const [uploadingAudio, setUploadingAudio] = useState(false);
+   const mediaInputRef = React.useRef<HTMLInputElement | null>(null);
    const audioInputRef = React.useRef<HTMLInputElement | null>(null);
 
    useEffect(() => {
@@ -820,15 +1139,23 @@ function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: 
       onUpdate({ media: next as any });
    };
 
-   const handleReorder = (next: any[]) => {
-      setMedia(next);
-      onUpdate({ media: next as any });
-   };
-
    const handleDelete = (index: number) => {
       const next = media.filter((_, i) => i !== index);
       setMedia(next);
       onUpdate({ media: next as any });
+   };
+
+   const visualMedia = useMemo(
+      () => media.filter((item: any) => item?.type === 'image' || item?.type === 'video'),
+      [media],
+   );
+
+   const handleVisualDelete = (item: any) => {
+      const idx = media.findIndex((m: any) => {
+         if (m?.id && item?.id) return m.id === item.id;
+         return m?.url === item?.url && m?.type === item?.type;
+      });
+      if (idx >= 0) handleDelete(idx);
    };
 
    const handleAudioUpload = async (file: File) => {
@@ -860,17 +1187,105 @@ function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: 
 
    return (
       <Stack spacing={4}>
-         <MediaUpload 
-            label={t('admin.tab_media')} 
-            onUpload={handleUpload} 
-            onRemove={handleDelete}
-            media={media as any}
+         <input
+            ref={mediaInputRef}
+            type="file"
+            accept="image/*,video/*"
+            hidden
+            multiple
+            onChange={(e) => {
+               const files = e.target.files ? Array.from(e.target.files) : [];
+               if (files.length > 0) {
+                  handleUpload(files);
+                  e.currentTarget.value = '';
+               }
+            }}
          />
-         <MediaReorder 
-            media={media as any} 
-            onReorder={handleReorder} 
-            onRemove={handleDelete} 
-         />
+         <Box>
+            <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+               {t('admin.tab_media')}
+            </Typography>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2,
+                bgcolor: cardToken?.bg || 'background.paper',
+                borderColor: tableToken?.border || cardToken?.border || 'divider',
+              }}
+            >
+               <ImageList sx={{ m: 0 }} cols={isMobile ? 2 : 4} gap={10}>
+                  {visualMedia.map((item: any, index: number) => (
+                     <ImageListItem key={item.id || `${item.url}-${index}`} sx={{ position: 'relative', borderRadius: 2, overflow: 'hidden' }}>
+                        {item.type === 'video' ? (
+                           <video
+                              src={getOptimizedMediaUrl(item.url, 'video')}
+                              controls
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                           />
+                        ) : (
+                           <img
+                              src={getOptimizedMediaUrl(item.url, 'image')}
+                              alt={`${t('admin.tab_media')} ${index + 1}`}
+                              loading="lazy"
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                           />
+                        )}
+                        <Box
+                           sx={{
+                              position: 'absolute',
+                              top: 6,
+                              right: 6,
+                              bgcolor: iconButtonToken?.overlayBg || 'var(--sys-surface-overlay)',
+                              borderRadius: 1.5,
+                           }}
+                        >
+                           <Tooltip title={t('common.delete')}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleVisualDelete(item)}
+                                sx={{
+                                  color: iconButtonToken?.text || 'common.white',
+                                  '&:hover': { bgcolor: iconButtonToken?.overlayHoverBg || 'var(--sys-surface-overlay-hover)' },
+                                }}
+                              >
+                                 <Trash2 fontSize="small" />
+                              </IconButton>
+                           </Tooltip>
+                        </Box>
+                     </ImageListItem>
+                  ))}
+                  <ImageListItem
+                     onClick={() => mediaInputRef.current?.click()}
+                     sx={{
+                        cursor: 'pointer',
+                        borderRadius: 2,
+                        border: '2px dashed',
+                        borderColor: inputToken?.border || tableToken?.border || 'divider',
+                        minHeight: 128,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: tableToken?.rowBg || 'action.hover',
+                        transition: 'all 0.18s ease',
+                        '&:hover': {
+                           borderColor: inputToken?.focusBorder || 'primary.main',
+                           bgcolor: tableToken?.rowHoverBg || 'action.selected',
+                        },
+                     }}
+                  >
+                     <Stack spacing={0.5} alignItems="center" textAlign="center" sx={{ px: 1 }}>
+                        <Plus sx={{ fontSize: 24, color: 'text.secondary' }} />
+                        <Typography variant="caption" fontWeight={800}>
+                           {t('profile.add_media')}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                           {t('media.upload_formats')}
+                        </Typography>
+                     </Stack>
+                  </ImageListItem>
+               </ImageList>
+            </Paper>
+         </Box>
          <input
             ref={audioInputRef}
             type="file"
@@ -884,6 +1299,9 @@ function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: 
             }}
          />
          <Stack spacing={1.5}>
+            <Typography variant="subtitle2" fontWeight="bold">
+               {t('profile.audio_identity')}
+            </Typography>
             <Button
                variant="outlined"
                startIcon={<Upload sx={{ fontSize: 16 }} />}
@@ -908,25 +1326,53 @@ function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: 
 
 function MemberAdminActions({ member, onUpdate, currentUser }: { member: User, onUpdate: (u: Partial<User>) => void, currentUser: User }) {
    const { t } = useTranslation();
+   const theme = useTheme();
+   const segmentedToken = theme.custom?.components?.segmentedControl;
+   const dialogToken = theme.custom?.components?.dialog;
    const [password, setPassword] = useState('');
    const canManageRole = canManageMemberRoles(currentUser.role) && currentUser.id !== member.id;
    const canDeactivate = canManageMemberActivation(currentUser.role) && currentUser.id !== member.id;
    const [pendingRole, setPendingRole] = useState<Role | null>(null);
    const online = typeof navigator !== 'undefined' ? navigator.onLine : true;
+   const isActive = member.active_status === 'active';
+   const actionStatusToken = isActive ? theme.custom?.status?.inactive : theme.custom?.status?.active;
+   const actionColor = actionStatusToken?.main || (isActive ? theme.palette.error.main : theme.palette.success.main);
+   const actionHoverColor = alpha(actionColor, 0.88);
+   const actionText = actionStatusToken?.text || theme.palette.getContrastText(actionColor);
 
    return (
       <Stack spacing={4}>
          <Card variant="outlined">
             <CardHeader title={<Typography variant="subtitle2" fontWeight={900}>{t('admin.authority_level')}</Typography>} />
             <CardContent>
-               <Stack direction="row" spacing={1}>
-                  {(['admin', 'moderator', 'member', 'external'] as Role[]).map(r => (
+               <Stack
+                 direction="row"
+                 spacing={1}
+                 sx={{
+                   p: 0.5,
+                   borderRadius: 2,
+                   border: '1px solid',
+                   borderColor: segmentedToken?.border || 'divider',
+                   bgcolor: segmentedToken?.bg || 'action.hover',
+                   width: 'fit-content',
+                 }}
+               >
+                  {(['admin', 'moderator', 'member'] as Role[]).map(r => (
                      <Button 
                         key={r} 
-                        variant={member.role === r ? 'contained' : 'outlined'} 
+                        variant="text"
                         disabled={!canManageRole || !online} 
                         onClick={() => setPendingRole(r)}
-                        sx={{ textTransform: 'uppercase', fontWeight: 900 }}
+                        sx={{
+                          textTransform: 'uppercase',
+                          fontWeight: 900,
+                          color: member.role === r ? (segmentedToken?.selectedText || 'text.primary') : (segmentedToken?.text || 'text.secondary'),
+                          bgcolor: member.role === r ? (segmentedToken?.selectedBg || 'background.paper') : 'transparent',
+                          borderRadius: 1.5,
+                          '&:hover': {
+                            bgcolor: member.role === r ? (segmentedToken?.selectedBg || 'background.paper') : alpha(theme.palette.primary.main, 0.08),
+                          }
+                        }}
                      >
                         {r}
                      </Button>
@@ -953,10 +1399,14 @@ function MemberAdminActions({ member, onUpdate, currentUser }: { member: User, o
                   <CardContent>
                      <Button 
                         fullWidth 
-                        variant="contained" 
-                        color={member.active_status === 'active' ? 'error' : 'success'} 
+                        variant="contained"
                         disabled={!canDeactivate || !online}
                         onClick={() => onUpdate({ active_status: member.active_status === 'active' ? 'inactive' : 'active' })}
+                        sx={{
+                          bgcolor: actionColor,
+                          color: actionText,
+                          '&:hover': { bgcolor: actionHoverColor },
+                        }}
                      >
                         {member.active_status === 'active' ? t('admin.deactivate') : t('admin.reactivate')}
                      </Button>
@@ -965,7 +1415,19 @@ function MemberAdminActions({ member, onUpdate, currentUser }: { member: User, o
             </Grid>
          </Grid>
 
-         <Dialog open={!!pendingRole} onClose={() => setPendingRole(null)}>
+         <Dialog
+           open={!!pendingRole}
+           onClose={() => setPendingRole(null)}
+           PaperProps={{
+             sx: {
+               bgcolor: dialogToken?.bg || 'background.paper',
+               border: '1px solid',
+               borderColor: dialogToken?.border || 'divider',
+               boxShadow: dialogToken?.shadow || 'none',
+               borderRadius: 'var(--cmp-dialog-radius, 16px)',
+             }
+           }}
+         >
             <DialogTitle>{t('admin.confirm_role_change') || 'Confirm role change'}</DialogTitle>
             <DialogContent>
                <Typography variant="body2">
@@ -995,3 +1457,4 @@ function AuditLogTab() {
 function StatusHealthTab() {
    return <HealthStatus />;
 }
+

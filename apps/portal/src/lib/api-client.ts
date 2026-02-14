@@ -28,7 +28,45 @@ export class APIError extends Error {
 }
 
 // Response cache for conditional requests (HTTP caching)
-const responseCache = new Map<string, { etag: string, data: any }>();
+type ResponseCacheEntry = {
+  etag: string;
+  data: any;
+  updatedAt: number;
+};
+
+const responseCache = new Map<string, ResponseCacheEntry>();
+const RESPONSE_CACHE_MAX_ENTRIES = 250;
+const RESPONSE_CACHE_TTL_MS = 5 * 60 * 1000;
+
+function getCachedResponse(requestUrl: string): ResponseCacheEntry | null {
+  const entry = responseCache.get(requestUrl);
+  if (!entry) return null;
+
+  if (Date.now() - entry.updatedAt > RESPONSE_CACHE_TTL_MS) {
+    responseCache.delete(requestUrl);
+    return null;
+  }
+
+  return entry;
+}
+
+function setCachedResponse(requestUrl: string, etag: string, data: any): void {
+  if (responseCache.has(requestUrl)) {
+    responseCache.delete(requestUrl);
+  }
+
+  responseCache.set(requestUrl, {
+    etag,
+    data,
+    updatedAt: Date.now(),
+  });
+
+  while (responseCache.size > RESPONSE_CACHE_MAX_ENTRIES) {
+    const oldestKey = responseCache.keys().next().value as string | undefined;
+    if (!oldestKey) break;
+    responseCache.delete(oldestKey);
+  }
+}
 
 // Get CSRF token from auth store
 function getCSRFToken(): string | null {
@@ -73,7 +111,7 @@ async function request<T>(
 
   // Add ETag for GET requests (conditional request)
   if (method === 'GET') {
-    const cached = responseCache.get(requestUrl);
+    const cached = getCachedResponse(requestUrl);
     if (cached?.etag) {
       headers['If-None-Match'] = cached.etag;
     }
@@ -92,7 +130,7 @@ async function request<T>(
 
     // Handle 304 Not Modified for GET requests
     if (resp.status === 304 && method === 'GET') {
-      const cached = responseCache.get(requestUrl);
+      const cached = getCachedResponse(requestUrl);
       if (cached?.data) {
         return cached.data as T;
       }
@@ -173,7 +211,7 @@ async function request<T>(
     if (method === 'GET') {
       const etag = resp.headers.get('ETag');
       if (etag) {
-        responseCache.set(requestUrl, { etag, data: finalData });
+        setCachedResponse(requestUrl, etag, finalData);
       }
     }
 

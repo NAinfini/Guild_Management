@@ -22,11 +22,13 @@ import type { WebSocketMessage } from '@guild/shared-api/contracts';
 
 export function useWebSocket() {
   const setPushConnected = useUIStore(state => state.setPushConnected);
+  const userId = useAuthStore(state => state.user?.id);
   const [isConnected, setIsConnected] = useState(false);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSeqRef = useRef<Record<string, number>>({});
+  const shouldReconnectRef = useRef(false);
   const queryClient = useQueryClient();
 
   const handleMessage = useCallback((message: WebSocketMessage) => {
@@ -154,6 +156,24 @@ export function useWebSocket() {
   }, [queryClient]);
 
   const connect = useCallback(() => {
+    if (!userId) {
+      return;
+    }
+
+    if (
+      wsRef.current &&
+      (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)
+    ) {
+      return;
+    }
+
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    shouldReconnectRef.current = true;
+
     const getWsUrl = () => {
       if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL;
 
@@ -175,6 +195,10 @@ export function useWebSocket() {
         setIsConnected(true);
         setPushConnected(true);
         setReconnectAttempts(0);
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
 
         // Subscribe to all entities by default
         ws.send(JSON.stringify({
@@ -196,6 +220,9 @@ export function useWebSocket() {
         setIsConnected(false);
         setPushConnected(false);
         wsRef.current = null;
+        if (!shouldReconnectRef.current) {
+          return;
+        }
         const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
         reconnectTimeoutRef.current = setTimeout(() => {
           setReconnectAttempts((prev) => prev + 1);
@@ -208,12 +235,21 @@ export function useWebSocket() {
     } catch (error) {
       console.error('[WebSocket] Connection error:', error);
     }
-  }, [reconnectAttempts, handleMessage, setPushConnected]);
+  }, [reconnectAttempts, handleMessage, setPushConnected, userId]);
 
   const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-    if (wsRef.current) wsRef.current.close();
+    shouldReconnectRef.current = false;
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    if (wsRef.current) {
+      const ws = wsRef.current;
+      wsRef.current = null;
+      ws.close();
+    }
     setIsConnected(false);
+    setReconnectAttempts(0);
     setPushConnected(false);
   }, [setPushConnected]);
 
@@ -231,9 +267,14 @@ export function useWebSocket() {
   }, []);
 
   useEffect(() => {
+    if (!userId) {
+      disconnect();
+      return;
+    }
+
     connect();
     return () => disconnect();
-  }, [connect, disconnect]);
+  }, [connect, disconnect, userId]);
 
   return { isConnected, reconnectAttempts, subscribe };
 }

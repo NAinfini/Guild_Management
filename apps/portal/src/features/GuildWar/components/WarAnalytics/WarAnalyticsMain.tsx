@@ -24,6 +24,7 @@ import { AnalyticsMode } from './types';
 import { Card } from '@/components/layout/Card';
 import { Alert, AlertDescription } from '@/components/feedback/Alert';
 import { ErrorOutline } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 
 export function WarAnalyticsMain({ canCopy = true }: { canCopy?: boolean }) {
   return (
@@ -34,6 +35,15 @@ export function WarAnalyticsMain({ canCopy = true }: { canCopy?: boolean }) {
 }
 
 function WarAnalyticsContent({ canCopy }: { canCopy: boolean }) {
+  const theme = useTheme();
+  const panel = theme.custom?.components?.panel;
+  const semanticSurface = theme.custom?.semantic?.surface;
+  const semanticBorder = theme.custom?.semantic?.border;
+  const panelSx = {
+    backgroundColor: panel?.bg ?? semanticSurface?.panel ?? theme.palette.background.paper,
+    borderColor: panel?.border ?? semanticBorder?.default ?? theme.palette.divider,
+  };
+
   const {
     filters,
     compareMode,
@@ -175,7 +185,7 @@ function WarAnalyticsContent({ canCopy }: { canCopy: boolean }) {
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
             <div className="md:col-span-3">
-              <Card className="h-full min-h-[400px] p-4">
+              <Card className="h-full min-h-[400px] p-4" sx={panelSx}>
                 <SubjectSelector
                   members={analyticsData?.memberStats || []}
                   wars={wars || []}
@@ -185,13 +195,13 @@ function WarAnalyticsContent({ canCopy }: { canCopy: boolean }) {
             </div>
 
             <div className="md:col-span-6">
-              <Card className="h-full min-h-[400px] p-4">
+              <Card className="h-full min-h-[400px] p-4" sx={panelSx}>
                 <ChartPanel wars={wars || []} analyticsData={analyticsData} />
               </Card>
             </div>
 
             <div className="md:col-span-3">
-              <Card className="h-full min-h-[400px] p-4">
+              <Card className="h-full min-h-[400px] p-4" sx={panelSx}>
                 <MetricsPanel analyticsData={analyticsData} canCopy={canCopy} />
               </Card>
             </div>

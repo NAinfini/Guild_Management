@@ -9,6 +9,7 @@ import { Tooltip, IconButton, Zoom, useTheme } from '@mui/material';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { useJoinEvent, useLeaveEvent } from '@/hooks/useServerState';
+import { TeamMemberCard } from '@/components/data-display';
 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -29,23 +30,6 @@ const getToneStyles = (tone: Tone): React.CSSProperties => ({
   borderColor: `color-mix(in srgb, var(--color-status-${tone}) 48%, transparent)`,
   color: `var(--color-status-${tone}-fg)`,
 });
-
-const getClassTokenColor = (className?: string | null) => {
-  const classKey = className ? className.split('_')[0] : null;
-  if (classKey && ['mingjin', 'qiansi', 'pozhu', 'lieshi'].includes(classKey)) {
-    return {
-      main: `var(--color-class-${classKey})`,
-      bg: `var(--color-class-${classKey}-bg)`,
-      text: `var(--color-class-${classKey}-text)`,
-    };
-  }
-
-  return {
-    main: 'var(--sys-interactive-accent)',
-    bg: 'color-mix(in srgb, var(--sys-interactive-accent) 24%, transparent)',
-    text: 'var(--sys-text-primary)',
-  };
-};
 
 const getEventTypeLabel = (t: (key: string) => string, type: Event['type']) => {
   if (type === 'guild_war') return t('events.filter_war');
@@ -92,18 +76,15 @@ export const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events }) => {
   }, [events]);
 
   return (
-    <Card className="h-full bg-[color:var(--cmp-card-bg)] backdrop-blur-md border border-[color:var(--cmp-card-border)] flex flex-col relative overflow-hidden">
+    <Card className="h-full bg-[color:var(--cmp-card-bg)] backdrop-blur-md border border-[color:var(--cmp-card-border)] flex flex-col relative overflow-hidden gap-0">
       <CardHeader
-        className="pb-4 border-b border-[color:var(--cmp-card-border)]"
-        style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 40%, transparent)' }}
+        className="px-4 pt-3 pb-2.5 border-b border-[color:var(--cmp-card-border)]"
       >
         <div className="flex items-center justify-between">
-          <div className="flex flex-col">
-            <h2 className="text-lg font-black uppercase tracking-widest text-foreground">{t('dashboard.upcoming_events')}</h2>
-            <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">
-              {t('dashboard.next_7_days')}
-            </span>
-          </div>
+          <span className="text-sm font-bold uppercase tracking-wide">{t('dashboard.upcoming_events')}</span>
+          <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">
+            {t('dashboard.next_7_days')}
+          </span>
         </div>
       </CardHeader>
 
@@ -247,42 +228,26 @@ export const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events }) => {
                   </div>
 
                   <div className="mb-4">
-                    <div className="grid grid-cols-5 gap-2">
-                      {Array.from({ length: 10 }).map((_, idx) => {
-                        const participant = (event.participants || [])[idx];
-
+                    <div className="grid grid-cols-3 gap-2">
+                      {(event.participants || []).slice(0, 6).map((participant) => {
                         if (!participant) {
                           return (
                             <div
-                              key={`empty-${idx}`}
-                              className="flex flex-col items-center justify-center p-2 rounded-md border border-dashed border-[color:var(--cmp-card-border)] h-[60px]"
-                              style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-elevated) 38%, transparent)' }}
+                              key={Math.random()}
+                              className="flex items-center justify-center p-2 rounded-md border border-dashed opacity-30 h-[60px]"
+                              style={{ borderColor: 'var(--sys-border-subtle)' }}
                             >
                               <span className="text-[10px] text-muted-foreground/30">--</span>
                             </div>
                           );
                         }
 
-                        const userClasses = participant.classes || [];
-                        const userClass = userClasses.length > 0 ? userClasses[0] : null;
-                        const classColor = getClassTokenColor(userClass);
-
                         return (
-                          <div
+                          <TeamMemberCard
                             key={participant.id}
-                            className="flex flex-col items-center justify-center p-2 rounded-md border transition-all h-[60px]"
-                            style={{
-                              backgroundColor: classColor.bg,
-                              borderColor: `color-mix(in srgb, ${classColor.main} 45%, transparent)`,
-                              color: classColor.text,
-                            }}
-                          >
-                            <span className="text-[10px] font-bold leading-tight truncate w-full text-center">{participant.username}</span>
-                            <span className="text-[8px] opacity-70 uppercase tracking-wider">{userClass || t('common.unknown')}</span>
-                            {participant.power && (
-                              <span className="text-[7px] font-mono opacity-50">{(participant.power / 1000).toFixed(0)}k</span>
-                            )}
-                          </div>
+                            member={participant}
+                            variant="compact"
+                          />
                         );
                       })}
                     </div>
@@ -302,8 +267,8 @@ export const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events }) => {
             );
           })
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <CalendarTodayIcon sx={{ fontSize: 48 }} className="text-muted-foreground/20 mb-3" />
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <CalendarTodayIcon sx={{ fontSize: 48, opacity: 0.2, mb: 2 }} />
             <p className="text-sm text-muted-foreground">{t('dashboard.no_upcoming_events')}</p>
           </div>
         )}

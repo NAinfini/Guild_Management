@@ -171,9 +171,9 @@ describe('WarAnalyticsMain modes', () => {
   it('shows only Compare, Rankings, and Teams tabs', () => {
     render(<WarAnalyticsMain canCopy={false} />);
 
-    expect(screen.getByRole('tab', { name: 'guild_war.analytics_mode_compare_desc' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'guild_war.analytics_mode_rankings_desc' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'guild_war.analytics_mode_teams_desc' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'guild_war.analytics_mode_compare' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'guild_war.analytics_mode_rankings' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'guild_war.analytics_mode_teams' })).toBeInTheDocument();
     expect(screen.queryByText(/^Player$/)).not.toBeInTheDocument();
   });
 

@@ -8,3 +8,4 @@ export * from './MetricCard';
 export * from './Separator';
 export * from './StatusBadge';
 export * from './Table';
+export * from './TeamMemberCard';

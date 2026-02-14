@@ -12,6 +12,7 @@
 
 interface ClientSession {
   ws: WebSocket;
+  userId: string;
   entities: Set<string>; // empty = subscribed to ALL (backwards compat)
 }
 
@@ -113,12 +114,17 @@ export class ConnectionManager {
     // Extract user ID from query params or session
     const userId = url.searchParams.get('userId') || 'anonymous';
 
+    const connectionId = crypto.randomUUID();
+
     // Store the connection with default subscription (all entities)
-    this.sessions.set(userId, {
+    this.sessions.set(connectionId, {
       ws: server as any,
+      userId,
       entities: new Set(), // empty = subscribed to ALL
     });
-    console.log(`[WebSocket] User ${userId} connected. Total connections: ${this.sessions.size}`);
+    console.log(
+      `[WebSocket] User ${userId} connected (${connectionId}). Total connections: ${this.sessions.size}`
+    );
 
     // Send current sequence numbers on connect (for gap detection on reconnect)
     const seqs = this.getCurrentSeqs();
@@ -134,7 +140,7 @@ export class ConnectionManager {
 
         // Handle subscribe messages for entity filtering
         if (message.type === 'subscribe' && Array.isArray(message.entities)) {
-          const session = this.sessions.get(userId);
+          const session = this.sessions.get(connectionId);
           if (session) {
             session.entities = new Set(message.entities);
           }
@@ -153,14 +159,14 @@ export class ConnectionManager {
 
     // Handle close
     (server as any).addEventListener('close', () => {
-      console.log(`[WebSocket] User ${userId} disconnected`);
-      this.sessions.delete(userId);
+      console.log(`[WebSocket] User ${userId} disconnected (${connectionId})`);
+      this.sessions.delete(connectionId);
     });
 
     // Handle errors
     (server as any).addEventListener('error', (error: any) => {
       console.error('[WebSocket] Error:', error);
-      this.sessions.delete(userId);
+      this.sessions.delete(connectionId);
     });
 
     // Set up alarm for cleanup (every 10 minutes)
@@ -186,8 +192,8 @@ export class ConnectionManager {
     let sent = 0;
     const entity = message.entity;
 
-    this.sessions.forEach((session, userId) => {
-      if (userId !== excludeUserId) {
+    this.sessions.forEach((session, connectionId) => {
+      if (session.userId !== excludeUserId) {
         // Check entity subscription: empty set = subscribed to ALL
         if (entity && session.entities.size > 0 && !session.entities.has(entity)) {
           return; // Client not subscribed to this entity
@@ -197,8 +203,8 @@ export class ConnectionManager {
           session.ws.send(messageStr);
           sent++;
         } catch (error) {
-          console.error(`[WebSocket] Failed to send to ${userId}:`, error);
-          this.sessions.delete(userId);
+          console.error(`[WebSocket] Failed to send to connection ${connectionId}:`, error);
+          this.sessions.delete(connectionId);
         }
       }
     });
@@ -210,18 +216,19 @@ export class ConnectionManager {
    * Send message to specific user
    */
   sendToUser(userId: string, message: any) {
-    const session = this.sessions.get(userId);
-    if (session) {
+    let delivered = false;
+    this.sessions.forEach((session, connectionId) => {
+      if (session.userId !== userId) return;
       try {
         session.ws.send(JSON.stringify(message));
-        return true;
+        delivered = true;
       } catch (error) {
-        console.error(`[WebSocket] Failed to send to ${userId}:`, error);
-        this.sessions.delete(userId);
-        return false;
+        console.error(`[WebSocket] Failed to send to connection ${connectionId}:`, error);
+        this.sessions.delete(connectionId);
       }
-    }
-    return false;
+    });
+
+    return delivered;
   }
 
   /**
@@ -287,12 +294,12 @@ export class ConnectionManager {
     this.sql.exec(`DELETE FROM rate_limits WHERE reset_at < ?`, now);
 
     // Close stale WebSocket connections
-    this.sessions.forEach((session, userId) => {
+    this.sessions.forEach((session, connectionId) => {
       try {
         session.ws.send(JSON.stringify({ type: 'ping', timestamp: now }));
       } catch (error) {
-        console.log(`[WebSocket] Removing stale connection: ${userId}`);
-        this.sessions.delete(userId);
+        console.log(`[WebSocket] Removing stale connection: ${connectionId}`);
+        this.sessions.delete(connectionId);
       }
     });
 

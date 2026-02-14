@@ -48,6 +48,7 @@ i18n
     },
     fallbackLng: 'en',
     debug: false,
+    showSupportNotice: false,
     load: 'languageOnly',
     interpolation: {
       escapeValue: false,

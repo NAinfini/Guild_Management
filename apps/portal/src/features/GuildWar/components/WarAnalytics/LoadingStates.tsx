@@ -6,6 +6,7 @@
  */
 
 import { Skeleton, Card, CardContent, Button } from '@/components';
+import { useTranslation } from 'react-i18next';
 
 // ============================================================================
 // Chart Loading Skeleton
@@ -145,19 +146,21 @@ export const LoadingPanel = FullPageLoading;
 import { ErrorOutline, Refresh } from '@mui/icons-material';
 
 export function ErrorPanel({ error, retry }: { error: any; retry?: () => void }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center h-full min-h-[400px]">
       <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
         <ErrorOutline className="w-8 h-8 text-destructive" />
       </div>
-      <h3 className="text-xl font-bold mb-2">Something went wrong</h3>
+      <h3 className="text-xl font-bold mb-2">{t('guild_war.analytics_error_title')}</h3>
       <p className="text-muted-foreground mb-6 max-w-md">
-        {error?.message || 'An unexpected error occurred while loading analytics data.'}
+        {error?.message || t('guild_war.analytics_error_body')}
       </p>
       {retry && (
         <Button onClick={retry} variant="outline" className="gap-2">
           <Refresh className="w-4 h-4" />
-          Retry
+          {t('common.retry')}
         </Button>
       )}
     </div>

@@ -77,6 +77,7 @@ export function TeamSelector({ teamStats }: TeamSelectorProps) {
                     <Checkbox 
                       checked={selected} 
                       onChange={() => toggleTeam(team.teamId)}
+                      onClick={(event) => event.stopPropagation()}
                       id={`team-${team.teamId}`}
                     />
                     <div className="flex-1 flex items-center justify-between">

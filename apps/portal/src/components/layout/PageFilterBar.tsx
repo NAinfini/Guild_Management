@@ -56,12 +56,28 @@ export function PageFilterBar({
   onEndDateChange,
   onAdvancedClick,
   advancedOpen = false,
+  hasAdvancedFilters = false,
   extraActions,
   resultsCount,
   isLoading,
   className,
 }: PageFilterBarProps) {
   const { t } = useTranslation();
+  const hasSearch = Boolean(search && search.trim().length > 0);
+  const hasDateRange = Boolean(startDate || endDate);
+  const hasCategory = Boolean(category && category !== 'all');
+  const hasAnyFilter = hasSearch || hasDateRange || hasCategory || hasAdvancedFilters;
+  const activeFilterCount = [hasSearch, hasDateRange, hasCategory, hasAdvancedFilters].filter(Boolean).length;
+
+  const resetAllFilters = () => {
+    onSearchChange?.('');
+    onStartDateChange?.('');
+    onEndDateChange?.('');
+    if (categories?.some((item) => item.value === 'all')) {
+      onCategoryChange?.('all');
+    }
+  };
+
   const selectedCategoryStyle: React.CSSProperties = {
     color: 'var(--sys-text-primary)',
     borderColor: 'var(--sys-interactive-accent)',
@@ -71,9 +87,10 @@ export function PageFilterBar({
   return (
     <div 
       className={cn(
-        "mb-4 p-2 bg-background/80 backdrop-blur-md rounded-xl border border-border/50 shadow-sm relative z-10",
+        "page-filter-bar mb-4 p-2 bg-background/84 backdrop-blur-md rounded-xl border border-border/50 shadow-sm relative z-10",
         className
       )}
+      data-active-filters={hasAnyFilter ? 'true' : 'false'}
     >
       <div className="flex flex-col gap-2">
         <div className="flex flex-col lg:flex-row gap-2 lg:items-center justify-between">
@@ -87,7 +104,7 @@ export function PageFilterBar({
                   value={search || ''}
                   onChange={(e) => onSearchChange?.(e.target.value)}
                   autoComplete="off"
-                  className="pl-9 pr-8 bg-background"
+                  className="pl-9 pr-8 bg-background/88"
                   startAdornment={
                     <SearchIcon sx={{ fontSize: 18 }} className="text-muted-foreground opacity-50" />
                   }
@@ -111,6 +128,13 @@ export function PageFilterBar({
                     return (
                     <Button
                       key={cat.value}
+                      className={cn(
+                        "filter-category-pill rounded-lg text-xs font-extrabold h-9 px-3 transition-all duration-200",
+                        isSelected
+                          ? "shadow-md shadow-primary/20"
+                          : "text-muted-foreground border-transparent bg-muted/30 hover:bg-muted/50"
+                      )}
+                      data-active={isSelected ? 'true' : 'false'}
                       size="sm"
                       variant="outline"
                       onClick={() => onCategoryChange?.(cat.value)}
@@ -120,12 +144,6 @@ export function PageFilterBar({
                         '&:hover': { transform: 'none' },
                         '&:active': { transform: 'none' },
                       }}
-                      className={cn(
-                        "rounded-lg text-xs font-extrabold h-9 px-3 transition-all duration-200",
-                        isSelected
-                          ? "shadow-md shadow-primary/20"
-                          : "text-muted-foreground border-transparent bg-muted/30 hover:bg-muted/50"
-                      )}
                     >
                       {cat.label}
                     </Button>
@@ -170,9 +188,45 @@ export function PageFilterBar({
             )}
           </div>
 
-          <div className="flex flex-row gap-2 items-center">
+          <div className="flex flex-row gap-2 items-center flex-wrap justify-end">
+            {onAdvancedClick && (
+              <Button
+                variant={advancedOpen ? 'default' : 'outline'}
+                size="sm"
+                onClick={onAdvancedClick}
+                aria-pressed={advancedOpen}
+                className={cn(
+                  "h-9 px-3 text-xs font-extrabold uppercase tracking-wide",
+                  advancedOpen && "shadow-md shadow-primary/20"
+                )}
+                startIcon={<FilterListIcon sx={{ fontSize: 16 }} />}
+              >
+                {t('common.active_filters')}
+              </Button>
+            )}
+            {hasAnyFilter && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetAllFilters}
+                className="h-9 px-3 text-xs font-extrabold text-muted-foreground hover:text-foreground"
+              >
+                {t('common.clear_filters')}
+              </Button>
+            )}
             {extraActions}
           </div>
+        </div>
+
+        <div className="page-filter-meta flex flex-wrap items-center justify-between gap-2 px-1 pb-0.5">
+          <span className="inline-flex items-center rounded-md border border-border/50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground">
+            {activeFilterCount} {t('common.active_filters')}
+          </span>
+          {typeof resultsCount === 'number' && (
+            <span className="inline-flex items-center rounded-md border border-border/50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground">
+              {isLoading ? t('common.searching') : `${resultsCount} ${t('common.results_found')}`}
+            </span>
+          )}
         </div>
       </div>
     </div>

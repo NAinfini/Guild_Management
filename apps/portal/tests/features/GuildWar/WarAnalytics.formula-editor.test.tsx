@@ -22,7 +22,6 @@ describe('MetricFormulaEditor', () => {
     render(
       <MetricFormulaEditor
         open
-        initialWeights={{ kda: 60, towers: 15, distance: 25 }}
         onClose={() => {}}
         onSave={onSave}
       />
@@ -30,57 +29,37 @@ describe('MetricFormulaEditor', () => {
 
     await user.click(screen.getByRole('button', { name: 'common.save' }));
 
-    expect(onSave).toHaveBeenCalledWith({
-      weights: { kda: 60, towers: 15, distance: 25 },
-      presetName: undefined,
-    });
+    expect(onSave).toHaveBeenCalledWith({ kda: 60, towers: 15, distance: 25 });
   });
 
-  it('applies selected preset and supports saving with a preset name', async () => {
+  it('removes preset controls and validates total equals 100', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
-    const onSelectPreset = vi.fn();
 
     render(
       <MetricFormulaEditor
         open
-        initialWeights={{ kda: 60, towers: 15, distance: 25 }}
-        presets={[
-          {
-            id: 'default',
-            name: 'Default',
-            version: 1,
-            weights: { kda: 60, towers: 15, distance: 25 },
-            createdAt: '1970-01-01T00:00:00.000Z',
-            isDefault: true,
-          },
-          {
-            id: 'v2',
-            name: 'Aggressive',
-            version: 2,
-            weights: { kda: 70, towers: 10, distance: 20 },
-            createdAt: '2026-02-09T00:00:00.000Z',
-            isDefault: false,
-          },
-        ]}
-        selectedPresetId="default"
-        onSelectPreset={onSelectPreset}
-        onDeletePreset={() => {}}
         onClose={() => {}}
         onSave={onSave}
       />
     );
 
-    await user.click(screen.getAllByRole('combobox')[0]);
-    await user.click(screen.getByRole('option', { name: 'Aggressive v2' }));
-    expect(onSelectPreset).toHaveBeenCalledWith('v2');
+    expect(screen.queryByText('guild_war.analytics_formula_preset')).not.toBeInTheDocument();
+    expect(screen.queryByText('guild_war.analytics_formula_preset_name')).not.toBeInTheDocument();
 
-    await user.type(screen.getByLabelText('guild_war.analytics_formula_preset_name'), 'My Formula');
+    const inputs = screen.getAllByRole('spinbutton');
+    await user.clear(inputs[0]);
+    await user.type(inputs[0], '80');
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(onSave).not.toHaveBeenCalled();
+
+    await user.clear(inputs[1]);
+    await user.type(inputs[1], '10');
+    await user.clear(inputs[2]);
+    await user.type(inputs[2], '10');
+    expect(screen.getByRole('button', { name: 'common.save' })).not.toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'common.save' }));
 
-    expect(onSave).toHaveBeenCalledWith({
-      weights: { kda: 60, towers: 15, distance: 25 },
-      presetName: 'My Formula',
-    });
+    expect(onSave).toHaveBeenCalledWith({ kda: 80, towers: 10, distance: 10 });
   });
 });

@@ -6,12 +6,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const portalSrc = path.resolve(__dirname, '../../src');
 
-describe('Theme background effects disabled contracts', () => {
-  it('does not render ambient theme background effects in app shell', () => {
+describe('Theme background effects contracts', () => {
+  it('renders ambient theme background effects in app shell', () => {
     const appShellPath = path.resolve(portalSrc, 'layouts/AppShell.tsx');
     const appShellSource = fs.readFileSync(appShellPath, 'utf8');
 
-    expect(appShellSource).not.toContain('ThemeAmbientEffects');
+    expect(appShellSource).toContain('ThemeAmbientEffects');
   });
 
   it('does not render decorative background overlays on login page', () => {

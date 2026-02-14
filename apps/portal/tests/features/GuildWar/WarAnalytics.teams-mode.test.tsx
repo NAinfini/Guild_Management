@@ -38,7 +38,7 @@ describe('WarAnalytics teams mode', () => {
     const user = userEvent.setup();
     render(<WarAnalyticsMain canCopy={false} />);
 
-    await user.click(screen.getByRole('tab', { name: 'guild_war.analytics_mode_teams_desc' }));
+    await user.click(screen.getByRole('tab', { name: 'guild_war.analytics_mode_teams' }));
 
     expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
   });

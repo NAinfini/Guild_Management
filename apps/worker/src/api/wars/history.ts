@@ -109,7 +109,13 @@ export const onRequestGet = createEndpoint<WarHistoryDTO[], WarHistoryQuery>({
           wms.war_id,
           wms.user_id,
           u.username,
-          u.class_code,
+          (
+            SELECT mc.class_code
+            FROM member_classes mc
+            WHERE mc.user_id = u.user_id
+            ORDER BY mc.sort_order
+            LIMIT 1
+          ) AS class_code,
           wms.kills,
           wms.deaths,
           wms.assists,

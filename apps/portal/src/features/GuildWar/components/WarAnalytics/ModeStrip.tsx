@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils';
 interface ModeConfig {
   id: AnalyticsMode;
   labelKey: string;
-  icon: React.ElementType;
+  icon: React.ElementType<{ sx?: { fontSize?: number }; className?: string }>;
   descriptionKey: string;
 }
 
@@ -127,13 +127,14 @@ export function ModeDescription() {
   const { t } = useTranslation();
   const { filters } = useAnalytics();
   const currentMode = MODES.find((m) => m.id === filters.mode);
+  const CurrentIcon = currentMode?.icon;
 
-  if (!currentMode) return null;
+  if (!currentMode || !CurrentIcon) return null;
 
   return (
     <Alert className="bg-muted/50 border-none">
         <div className="flex items-center gap-3">
-            <currentMode.icon className="w-4 h-4 text-primary" />
+            <CurrentIcon className="w-4 h-4 text-primary" />
             <div>
                 <h4 className="font-bold text-sm leading-none mb-1">
                     {t('guild_war.analytics_mode_title', { mode: t(currentMode.labelKey) })}

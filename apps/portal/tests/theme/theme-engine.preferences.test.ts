@@ -14,15 +14,21 @@ describe('theme-engine preferences', () => {
     document.documentElement.removeAttribute('data-theme-color');
   });
 
-  it('migrates legacy theme-only storage and infers a paired color', () => {
+  it('rejects unknown theme IDs and falls back to default theme/color', () => {
     localStorage.setItem('baiye_theme', 'redgold');
 
     const prefs = initThemePreferences();
 
-    expect(prefs).toEqual({ theme: 'royal', color: 'red-gold', fontScale: 1, motionIntensity: 1 });
-    expect(localStorage.getItem('baiye_theme_color')).toBe('red-gold');
-    expect(document.documentElement.dataset.theme).toBe('royal');
-    expect(document.documentElement.dataset.themeColor).toBe('red-gold');
+    expect(prefs).toEqual({
+      theme: 'neo-brutalism',
+      color: 'default-violet',
+      fontScale: 1,
+      motionIntensity: 1,
+    });
+    expect(localStorage.getItem('baiye_theme')).toBe('neo-brutalism');
+    expect(localStorage.getItem('baiye_theme_color')).toBe('default-violet');
+    expect(document.documentElement.dataset.theme).toBe('neo-brutalism');
+    expect(document.documentElement.dataset.themeColor).toBe('default-violet');
   });
 
   it('persists and exposes color updates independently from theme style', () => {

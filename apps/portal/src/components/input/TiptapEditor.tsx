@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { cn } from "@/lib/utils";
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -34,6 +34,7 @@ import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 
 interface MenuBarProps {
   editor: Editor | null;
+  onImageUpload?: (file: File) => Promise<string>;
 }
 
 const MenuButton = ({ 
@@ -56,6 +57,8 @@ const MenuButton = ({
         size="sm"
         onClick={onClick}
         disabled={disabled}
+        aria-label={tooltip}
+        title={tooltip}
         className={cn(
           "h-8 w-8 p-0",
           active && "bg-accent text-accent-foreground"
@@ -67,7 +70,10 @@ const MenuButton = ({
   </Tooltip>
 );
 
-const MenuBar = ({ editor }: MenuBarProps) => {
+const MenuBar = ({ editor, onImageUpload }: MenuBarProps) => {
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
   if (!editor) {
     return null;
   }
@@ -80,14 +86,48 @@ const MenuBar = ({ editor }: MenuBarProps) => {
   }, [editor]);
 
   const addImage = useCallback(() => {
+    if (onImageUpload) {
+      imageInputRef.current?.click();
+      return;
+    }
+
     const url = window.prompt('Image URL');
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
     }
-  }, [editor]);
+  }, [editor, onImageUpload]);
+
+  const handleImageFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+
+      if (!file || !onImageUpload) return;
+
+      try {
+        setIsUploadingImage(true);
+        const uploadedUrl = await onImageUpload(file);
+        if (uploadedUrl) {
+          editor.chain().focus().setImage({ src: uploadedUrl }).run();
+        }
+      } catch (error) {
+        console.error('Failed to upload image for editor:', error);
+      } finally {
+        setIsUploadingImage(false);
+      }
+    },
+    [editor, onImageUpload],
+  );
 
   return (
     <div className="flex flex-wrap gap-0.5 p-1 border-b bg-background/50 sticky top-0 z-10">
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={handleImageFileChange}
+      />
       <MenuButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         disabled={!editor.can().chain().focus().toggleBold().run()}
@@ -187,6 +227,7 @@ const MenuBar = ({ editor }: MenuBarProps) => {
       </MenuButton>
       <MenuButton
         onClick={addImage}
+        disabled={isUploadingImage}
         tooltip="Add Image"
       >
         <ImageIcon sx={{ fontSize: 18 }} />
@@ -216,12 +257,14 @@ export function TiptapEditor({
   content, 
   onChange,
   className,
-  placeholder = "Write something..."
+  placeholder = "Write something...",
+  onImageUpload,
 }: { 
   content: string; 
   onChange: (content: string) => void;
   className?: string;
   placeholder?: string;
+  onImageUpload?: (file: File) => Promise<string>;
 }) {
   const editor = useEditor({
     extensions: [
@@ -247,7 +290,7 @@ export function TiptapEditor({
 
   return (
     <div className="border rounded-md bg-background focus-within:ring-1 focus-within:ring-ring overflow-hidden">
-      <MenuBar editor={editor} />
+      <MenuBar editor={editor} onImageUpload={onImageUpload} />
       <EditorContent editor={editor} />
     </div>
   );

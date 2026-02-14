@@ -1,0 +1,459 @@
+﻿/**
+ * Theme Component Token Enhancements
+ * ==================================
+ * This file extends each theme with complete component token definitions
+ * to ensure consistent, theme-aware styling across all controls.
+ *
+ * Enhancements:
+ * - Complete component token coverage for all themes
+ * - WCAG AA contrast compliance
+ * - Consistent hover/active/disabled states
+ * - Theme-specific visual signatures
+ */
+
+/* ============================================
+   APP SHELL THEME ATMOSPHERES
+   ============================================ */
+[data-theme="neo-brutalism"],
+.theme-neo-brutalism {
+  --app-shell-ambient:
+    linear-gradient(160deg, color-mix(in srgb, var(--sys-interactive-accent) 20%, transparent) 0%, transparent 40%),
+    linear-gradient(15deg, color-mix(in srgb, var(--sys-border-strong) 22%, transparent) 0%, transparent 50%);
+  --app-shell-overlay-opacity: 0.36;
+  --app-shell-texture-opacity: 0.12;
+  --app-shell-topbar-bg: linear-gradient(90deg, color-mix(in srgb, var(--sys-surface-panel) 90%, transparent), color-mix(in srgb, var(--sys-interactive-accent) 10%, var(--sys-surface-panel)));
+}
+
+[data-theme="steampunk"],
+.theme-steampunk {
+  --app-shell-ambient:
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, #c89b3c 16%, transparent) 0%, transparent 52%),
+    radial-gradient(circle at 100% 20%, color-mix(in srgb, #7a4b21 22%, transparent) 0%, transparent 58%);
+  --app-shell-overlay-opacity: 0.45;
+  --app-shell-texture-opacity: 0.1;
+  --app-shell-topbar-bg: linear-gradient(180deg, color-mix(in srgb, #1b150f 92%, transparent), color-mix(in srgb, #2f2012 85%, transparent));
+}
+
+[data-theme="cyberpunk"],
+.theme-cyberpunk {
+  --app-shell-ambient:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, #00f5ff 20%, transparent) 0%, transparent 45%),
+    radial-gradient(circle at 86% 8%, color-mix(in srgb, #ff2ef0 16%, transparent) 0%, transparent 48%),
+    linear-gradient(180deg, color-mix(in srgb, #090016 70%, transparent), transparent 60%);
+  --app-shell-overlay-opacity: 0.4;
+  --app-shell-texture-opacity: 0.15;
+  --app-shell-topbar-bg: linear-gradient(90deg, color-mix(in srgb, #12002b 90%, transparent), color-mix(in srgb, #00f5ff 10%, #100025));
+}
+
+[data-theme="post-apocalyptic"],
+.theme-post-apocalyptic {
+  --app-shell-ambient:
+    radial-gradient(circle at 6% 0%, color-mix(in srgb, #c55c2a 20%, transparent) 0%, transparent 45%),
+    linear-gradient(140deg, color-mix(in srgb, #6f5a43 24%, transparent) 0%, transparent 56%);
+  --app-shell-overlay-opacity: 0.48;
+  --app-shell-texture-opacity: 0.18;
+  --app-shell-topbar-bg: linear-gradient(180deg, color-mix(in srgb, #21180f 94%, transparent), color-mix(in srgb, #3b2a1a 88%, transparent));
+}
+
+[data-theme="chibi"],
+.theme-chibi {
+  --app-shell-ambient:
+    radial-gradient(circle at 14% 0%, color-mix(in srgb, #ff9ad1 20%, transparent) 0%, transparent 45%),
+    radial-gradient(circle at 86% 0%, color-mix(in srgb, #8acbff 18%, transparent) 0%, transparent 44%),
+    linear-gradient(180deg, color-mix(in srgb, #fff3fb 82%, transparent), transparent 64%);
+  --app-shell-overlay-opacity: 0.34;
+  --app-shell-texture-opacity: 0.06;
+  --app-shell-topbar-bg: linear-gradient(90deg, color-mix(in srgb, #fff6fd 88%, transparent), color-mix(in srgb, #f7ecff 88%, transparent));
+}
+
+[data-theme="royal"],
+.theme-royal {
+  --app-shell-ambient:
+    radial-gradient(circle at 16% 0%, color-mix(in srgb, #d8bf7a 20%, transparent) 0%, transparent 48%),
+    radial-gradient(circle at 94% 12%, color-mix(in srgb, #5b3a8c 24%, transparent) 0%, transparent 52%);
+  --app-shell-overlay-opacity: 0.46;
+  --app-shell-texture-opacity: 0.09;
+  --app-shell-topbar-bg: linear-gradient(180deg, color-mix(in srgb, #1b1630 90%, transparent), color-mix(in srgb, #2b1e45 90%, transparent));
+}
+
+[data-theme="minimalistic"],
+.theme-minimalistic {
+  --app-shell-ambient:
+    radial-gradient(circle at 12% -4%, color-mix(in srgb, #5b6474 10%, transparent) 0%, transparent 52%),
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, #b9c1cf 10%, transparent) 0%, transparent 56%);
+  --app-shell-overlay-opacity: 0.24;
+  --app-shell-texture-opacity: 0.05;
+  --app-shell-topbar-bg: linear-gradient(180deg, color-mix(in srgb, #fbfcfe 86%, transparent), color-mix(in srgb, #f0f3f8 88%, transparent));
+}
+
+/* ============================================
+   MINIMALISTIC THEME ENHANCEMENTS
+   ============================================ */
+[data-theme="minimalistic"],
+.theme-minimalistic {
+  /* Enhanced component tokens */
+  --cmp-button-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --cmp-button-shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+  --cmp-toggle-bg: color-mix(in srgb, var(--sys-border-default) 30%, transparent);
+  --cmp-toggle-active-bg: var(--sys-interactive-accent);
+  --cmp-toggle-thumb: white;
+
+  --cmp-slider-thumb-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  --cmp-tab-border-bottom: 2px;
+  --cmp-tab-active-border-width: 2px;
+
+  --cmp-checkbox-radius: 4px;
+  --cmp-radio-size: 18px;
+
+  --cmp-icon-button-radius: 8px;
+
+  /* Status indicators with good contrast */
+  --cmp-status-success-fg: #065f46;
+  --cmp-status-warning-fg: #92400e;
+  --cmp-status-error-fg: #991b1b;
+  --cmp-status-info-fg: #1e3a8a;
+}
+
+/* ============================================
+   NEO-BRUTALISM THEME ENHANCEMENTS
+   ============================================ */
+[data-theme="neo-brutalism"],
+.theme-neo-brutalism {
+  /* Brutalist-specific enhancements */
+  --cmp-button-border-width: 3px;
+  --cmp-button-shadow: 4px 4px 0 var(--sys-text-primary);
+  --cmp-button-shadow-hover: 6px 6px 0 var(--sys-text-primary);
+  --cmp-button-shadow-active: 2px 2px 0 var(--sys-text-primary);
+
+  --cmp-card-border-width: 3px;
+  --cmp-card-shadow: 6px 6px 0 var(--sys-text-primary);
+  --cmp-card-hover-shadow: 8px 8px 0 var(--sys-text-primary);
+
+  --cmp-input-border-width: 2px;
+  --cmp-input-focus-shadow: 3px 3px 0 var(--sys-interactive-accent);
+
+  --cmp-toggle-border: 2px solid var(--sys-text-primary);
+  --cmp-toggle-active-border: 2px solid var(--sys-interactive-accent);
+  --cmp-toggle-shadow: 2px 2px 0 var(--sys-text-primary);
+
+  --cmp-checkbox-border-width: 3px;
+  --cmp-checkbox-radius: 4px;
+  --cmp-checkbox-shadow: 2px 2px 0 var(--sys-text-primary);
+
+  --cmp-tab-border-width: 3px;
+  --cmp-tab-active-shadow: 3px 3px 0 var(--sys-interactive-accent);
+
+  --cmp-dialog-border-width: 4px;
+  --cmp-dialog-shadow: 12px 12px 0 var(--sys-text-primary);
+}
+
+/* ============================================
+   CYBERPUNK THEME ENHANCEMENTS
+   ============================================ */
+[data-theme="cyberpunk"],
+.theme-cyberpunk {
+  /* Neon glow effects */
+  --cmp-button-glow: 0 0 8px var(--sys-interactive-accent);
+  --cmp-button-glow-hover: 0 0 16px var(--sys-interactive-accent), 0 0 4px var(--sys-interactive-accent) inset;
+  --cmp-button-shadow: var(--cmp-button-glow);
+  --cmp-button-shadow-hover: var(--cmp-button-glow-hover);
+
+  --cmp-card-glow: 0 0 12px color-mix(in srgb, var(--sys-interactive-accent) 50%, transparent);
+  --cmp-card-hover-glow: 0 0 20px var(--sys-interactive-accent);
+
+  --cmp-input-focus-glow: 0 0 12px var(--sys-interactive-accent), 0 0 4px var(--sys-interactive-accent) inset;
+
+  --cmp-toggle-active-glow: 0 0 8px var(--sys-interactive-accent);
+
+  --cmp-tab-active-glow: 0 0 6px var(--sys-interactive-accent);
+  --cmp-tab-active-border-color: var(--sys-interactive-accent);
+
+  --cmp-checkbox-checked-glow: 0 0 6px var(--sys-interactive-accent);
+
+  /* Scanline overlay for authenticity */
+  --cmp-scanline-opacity: 0.03;
+  --cmp-glitch-intensity: 0.02;
+}
+
+[data-theme="cyberpunk"] .ui-button,
+[data-theme="cyberpunk"] .control[data-ui="button"] {
+  box-shadow: var(--cmp-button-glow);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+[data-theme="cyberpunk"] .ui-button:hover:not(:disabled),
+[data-theme="cyberpunk"] .control[data-ui="button"]:hover:not(:disabled) {
+  box-shadow: var(--cmp-button-glow-hover);
+  animation: cyberpunk-pulse 420ms ease-out 1;
+}
+
+@keyframes cyberpunk-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.1); }
+}
+
+/* ============================================
+   ROYAL THEME ENHANCEMENTS
+   ============================================ */
+[data-theme="royal"],
+.theme-royal {
+  /* Luxurious refinements */
+  --cmp-button-bg-gradient: linear-gradient(135deg, var(--sys-interactive-accent) 0%, color-mix(in srgb, var(--sys-interactive-accent) 80%, black) 100%);
+  --cmp-button-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --cmp-button-shadow-hover: 0 10px 20px rgba(0, 0, 0, 0.25), 0 0 20px color-mix(in srgb, var(--sys-interactive-accent) 60%, transparent);
+
+  --cmp-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --cmp-card-hover-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px color-mix(in srgb, var(--sys-interactive-accent) 40%, transparent);
+
+  --cmp-input-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  --cmp-input-focus-shadow: 0 0 0 3px color-mix(in srgb, var(--sys-interactive-accent) 30%, transparent), inset 0 2px 4px rgba(0, 0, 0, 0.15);
+
+  --cmp-toggle-track-gradient: linear-gradient(to right, var(--sys-surface-elevated), var(--sys-interactive-accent));
+
+  --cmp-tab-ornament-size: 4px;
+  --cmp-tab-active-ornament: "*";
+}
+
+/* ============================================
+   CHIBI THEME ENHANCEMENTS
+   ============================================ */
+[data-theme="chibi"],
+.theme-chibi {
+  /* Playful & Bouncy */
+  --cmp-button-bg-pattern: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+  --cmp-button-shadow: 0 4px 0 color-mix(in srgb, var(--sys-text-primary) 30%, transparent);
+  --cmp-button-shadow-hover: 0 6px 0 color-mix(in srgb, var(--sys-text-primary) 30%, transparent);
+  --cmp-button-shadow-active: 0 2px 0 color-mix(in srgb, var(--sys-text-primary) 30%, transparent);
+
+  --cmp-card-shadow: 0 6px 0 rgba(0, 0, 0, 0.1);
+  --cmp-card-hover-shadow: 0 8px 0 rgba(0, 0, 0, 0.15);
+
+  --cmp-toggle-track-height: 24px;
+  --cmp-toggle-thumb-size: 20px;
+  --cmp-toggle-bounce-easing: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  --cmp-checkbox-radius: 8px;
+  --cmp-checkbox-border-width: 3px;
+
+  /* Kawaii sparkles */
+  --cmp-sparkle-color: color-mix(in srgb, var(--sys-interactive-accent) 70%, white);
+}
+
+[data-theme="chibi"] .ui-button:active:not(:disabled),
+[data-theme="chibi"] .control[data-ui="button"]:active:not(:disabled) {
+  animation: chibi-bounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes chibi-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+}
+
+/* ============================================
+   STEAMPUNK THEME ENHANCEMENTS
+   ============================================ */
+[data-theme="steampunk"],
+.theme-steampunk {
+  /* Industrial machinery aesthetics */
+  --cmp-button-texture: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 0, 0, 0.03) 10px, rgba(0, 0, 0, 0.03) 20px);
+  --cmp-button-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 2px 0 rgba(255, 255, 255, 0.1);
+  --cmp-button-shadow-hover: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3);
+  --cmp-button-shadow-active: inset 0 4px 8px rgba(0, 0, 0, 0.5);
+
+  --cmp-card-border-style: double;
+  --cmp-card-border-width: 4px;
+  --cmp-card-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.4);
+
+  --cmp-toggle-border-style: double;
+  --cmp-toggle-border-width: 3px;
+
+  --cmp-input-border-style: solid;
+  --cmp-input-border-width: 3px;
+  --cmp-input-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.3);
+
+  /* Brass & copper tones */
+  --cmp-metal-shine: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+  --cmp-gear-shadow: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* ============================================
+   POST-APOCALYPTIC THEME ENHANCEMENTS
+   ============================================ */
+[data-theme="post-apocalyptic"],
+.theme-post-apocalyptic {
+  /* Weathered & distressed */
+  --cmp-button-border-style: dashed;
+  --cmp-button-border-width: 2px;
+  --cmp-button-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+  --cmp-button-shadow-hover: 5px 5px 0 rgba(0, 0, 0, 0.6);
+  --cmp-button-shadow-active: 1px 1px 0 rgba(0, 0, 0, 0.6);
+
+  --cmp-card-border-style: solid;
+  --cmp-card-border-width: 2px;
+  --cmp-card-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+  --cmp-card-texture: repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.02) 2px, rgba(0, 0, 0, 0.02) 4px);
+
+  --cmp-input-border-style: dashed;
+  --cmp-input-texture: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" /></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.05" /></svg>');
+
+  --cmp-toggle-border-style: dashed;
+
+  /* Rust & grime effects */
+  --cmp-rust-overlay: rgba(139, 69, 19, 0.1);
+  --cmp-dust-shadow: 2px 2px 4px rgba(101, 67, 33, 0.4);
+}
+
+/* ============================================
+   ENHANCED CONTROL STYLING
+   Apply theme-aware enhancements to all controls
+   ============================================ */
+
+/* Buttons */
+.ui-button,
+.control[data-ui="button"],
+.MuiButton-root[data-ui="button"] {
+  background-image: var(--cmp-button-bg-pattern, none);
+  box-shadow: var(--cmp-button-shadow, none);
+  transition:
+    background-color var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out),
+    box-shadow var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out),
+    border-color var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out),
+    transform var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out);
+}
+
+.ui-button:hover:not(:disabled),
+.control[data-ui="button"]:hover:not(:disabled) {
+  box-shadow: var(--cmp-button-shadow-hover, var(--cmp-button-shadow, none));
+}
+
+.ui-button:active:not(:disabled),
+.control[data-ui="button"]:active:not(:disabled) {
+  box-shadow: var(--cmp-button-shadow-active, var(--cmp-button-shadow, none));
+}
+
+/* Cards */
+.ui-card,
+.control[data-ui="card"] {
+  background-image: var(--cmp-card-texture, none);
+  box-shadow: var(--cmp-card-shadow, none);
+  transition:
+    box-shadow var(--theme-motion-medium, 240ms) var(--theme-motion-easing, ease-out),
+    border-color var(--theme-motion-medium, 240ms) var(--theme-motion-easing, ease-out),
+    transform var(--theme-motion-medium, 240ms) var(--theme-motion-easing, ease-out);
+}
+
+.ui-card:hover,
+.control[data-ui="card"]:hover {
+  box-shadow: var(--cmp-card-hover-shadow, var(--cmp-card-shadow, none));
+}
+
+/* Inputs */
+.ui-input,
+.control[data-ui="input"],
+.MuiOutlinedInput-root {
+  background-image: var(--cmp-input-texture, none);
+  box-shadow: var(--cmp-input-shadow, none);
+}
+
+.ui-input:focus-within,
+.control[data-ui="input"]:focus-within,
+.MuiOutlinedInput-root.Mui-focused {
+  box-shadow: var(--cmp-input-focus-shadow, var(--cmp-input-focus-ring, none));
+}
+
+/* Toggles & Switches */
+.ui-toggle,
+.control[data-ui="toggle"],
+.MuiSwitch-root {
+  --toggle-transition: var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out);
+}
+
+/* Tabs */
+.ui-tab,
+.control[data-ui="tab"],
+.MuiTab-root {
+  position: relative;
+  transition:
+    color var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out),
+    background-color var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out),
+    border-color var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out);
+}
+
+[data-theme="royal"] .ui-tab.Mui-selected::before,
+[data-theme="royal"] .MuiTab-root.Mui-selected::before {
+  content: var(--cmp-tab-active-ornament, '');
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  transform: translateX(-50%);
+  color: var(--sys-interactive-accent);
+  font-size: var(--cmp-tab-ornament-size, 12px);
+}
+
+/* Icon Buttons */
+.ui-icon-button,
+.control[data-ui="icon-button"],
+.MuiIconButton-root {
+  border-radius: var(--cmp-icon-button-radius, 50%);
+  transition:
+    background-color var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out),
+    color var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out),
+    transform var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out);
+}
+
+/* Checkboxes */
+.ui-checkbox,
+.control[data-ui="checkbox"],
+.MuiCheckbox-root {
+  border-radius: var(--cmp-checkbox-radius, 4px);
+}
+
+/* ============================================
+   ACCESSIBILITY ENHANCEMENTS
+   Ensure WCAG AA compliance
+   ============================================ */
+
+/* Focus indicators */
+.ui-button:focus-visible,
+.ui-input:focus-visible,
+.ui-toggle:focus-visible,
+.control:focus-visible {
+  outline: 2px solid var(--sys-interactive-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Disabled states must maintain 3:1 contrast */
+.ui-button:disabled,
+.ui-input:disabled,
+.control:disabled {
+  cursor: not-allowed;
+  opacity: 1; /* Don't use opacity alone - use color tokens */
+}
+
+/* High contrast borders for better visibility */
+@media (prefers-contrast: high) {
+  .ui-button,
+  .ui-card,
+  .ui-input,
+  .control {
+    border-width: 2px;
+    border-color: var(--sys-text-primary) !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .ui-button,
+  .ui-card,
+  .ui-input,
+  .ui-toggle,
+  .control {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+

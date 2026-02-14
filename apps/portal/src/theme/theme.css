@@ -59,6 +59,8 @@
   --cmp-nav-item-bg: var(--sys-surface-panel);
   --cmp-nav-item-hover-bg: var(--sys-interactive-hover);
   --cmp-nav-item-active-bg: var(--sys-interactive-active);
+  --cmp-nav-label-transform: uppercase;
+  --cmp-nav-label-letter-spacing: 0.1em;
   --cmp-nav-border: var(--sys-border-default);
   --cmp-dialog-bg: var(--sys-surface-panel);
   --cmp-dialog-border: var(--sys-border-strong);
@@ -72,6 +74,30 @@ html {
 
 [data-theme-switching="true"] * {
   transition-duration: 220ms !important;
+}
+
+html.theme-transitioning {
+  scroll-behavior: auto;
+}
+
+body.theme-transitioning {
+  animation: theme-controller-morph 520ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+@keyframes theme-controller-morph {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  50% {
+    opacity: 0.96;
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+  }
 }
 
 .theme-scope[data-theme] {

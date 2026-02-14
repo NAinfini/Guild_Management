@@ -5,6 +5,12 @@
  * Import order: base interactions → individual themes
  */
 
+/* Component token definitions (base layer) */
+@import './_component-tokens.css';
+
+/* Global visual improvements (accessibility, consistency, polish) */
+@import './_global-improvements.css';
+
 /* Base interaction styles (shared across all themes) */
 @import './_interactions-base.css';
 
@@ -19,3 +25,27 @@
 @import './chibi.css';
 @import './royal.css';
 @import './minimalistic.css';
+
+/* Member card theme-specific colors */
+@import './_member-card-colors.css';
+
+/* Theme enhancements (comprehensive token overrides + control styling) */
+@import './_theme-enhancements.css';
+
+/* Shape unification (consistent border-radius + overflow management) */
+@import './_shape-unification.css';
+
+/* Control animations (theme-specific interactive animations) */
+@import './_control-animations.css';
+
+/* Theme transitions (smooth theme switching) */
+@import './_theme-transitions.css';
+
+/* Theme customization (user preference controls) */
+@import './_theme-customization.css';
+
+/* Context-aware theming (time-based, event-based adjustments) */
+@import './_context-aware-theming.css';
+
+/* Performance optimizations (GPU acceleration, batching) */
+@import './_performance-optimizations.css';

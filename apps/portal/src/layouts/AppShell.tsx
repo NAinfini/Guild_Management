@@ -56,10 +56,12 @@ import { useMobileOptimizations } from '@/hooks';
 import { Role } from '@/types';
 import { useMotionTokens } from '@/theme/useMotionTokens';
 import { ThemeFXLayer } from '@/theme/fx/ThemeFXLayer';
+import { ThemeAmbientEffects } from '@/components/layout/ThemeAmbientEffects';
 import {
   useThemeController,
   NEXUS_THEME_OPTIONS,
   NEXUS_COLOR_OPTIONS,
+  getThemeModeIcon,
 } from '@/theme/ThemeController';
 
 const DRAWER_WIDTH = 260;
@@ -78,14 +80,20 @@ export function AppShell() {
   } = useUIStore();
   const theme = useTheme();
   const mobile = useMobileOptimizations();
-  const isMobile = mobile.isMobile || useMediaQuery(theme.breakpoints.down('lg'));
+  const isLgDown = useMediaQuery(theme.breakpoints.down('lg'));
+  const isMobile = mobile.isMobile || isLgDown;
   
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const prefersReducedMotion = useReducedMotion();
-  const motionTokens = useMotionTokens();
+  const routeSurface = React.useMemo(() => {
+    const trimmed = location.pathname.replace(/^\/+|\/+$/g, '');
+    if (!trimmed) return 'dashboard';
+    return trimmed.replace(/[^a-z0-9-]/gi, '-').toLowerCase();
+  }, [location.pathname]);
   const themeController = useThemeController();
+  const prefersReducedMotion = useReducedMotion() || themeController.reducedMotion;
+  const motionTokens = useMotionTokens();
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [submenuAnchor, setSubmenuAnchor] = useState<null | HTMLElement>(null);
   const [submenuType, setSubmenuType] = useState<'theme' | 'color' | 'language' | null>(null);
@@ -114,6 +122,26 @@ export function AppShell() {
   const motionMediumSec = motionMediumMs / 1000;
   const navDelayStepSec = motionFastSec / 5;
   const navDelayCapSec = motionMediumSec;
+  const profileMenuItemClassName = 'profile-menu-item';
+  const profileMenuPaperSx = {
+    width: 220,
+    borderRadius: 2,
+    border: theme.custom?.border,
+    '& .profile-menu-item': {
+      border: '0 !important',
+      boxShadow: 'none !important',
+    },
+  };
+  const profileSubmenuPaperSx = {
+    minWidth: 260,
+    borderRadius: 2,
+    border: theme.custom?.border,
+    mr: 0.5,
+    '& .profile-menu-item': {
+      border: '0 !important',
+      boxShadow: 'none !important',
+    },
+  };
 
   const effectiveRole = getEffectiveRole(user?.role, viewRole);
   const canSeeAdmin = canAccessAdminArea(effectiveRole);
@@ -287,9 +315,10 @@ export function AppShell() {
                   justifyContent: sidebarCollapsed && !isMobile ? 'center' : 'flex-start',
                   px: sidebarCollapsed && !isMobile ? 1 : 2,
                   '&.active': {
-                    background: `var(--nav-active-bg)`,
+                    background: `var(--cmp-nav-item-active-bg, var(--nav-active-bg))`,
                     opacity: 1,
-                    color: 'var(--text0)',
+                    color: 'var(--cmp-nav-item-active-text, var(--text0))',
+                    borderLeft: '3px solid var(--accent1)',
                     borderRight: 'var(--stroke) solid var(--accent1)',
                   },
                   '&:hover': {
@@ -315,8 +344,8 @@ export function AppShell() {
                     primaryTypographyProps={{
                       variant: 'body2',
                       fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.1em',
+                      textTransform: 'var(--cmp-nav-label-transform, uppercase)',
+                      letterSpacing: 'var(--cmp-nav-label-letter-spacing, 0.1em)',
                       fontSize: '0.7rem'
                     }}
                   />
@@ -342,21 +371,24 @@ export function AppShell() {
                           key={r}
                           data-ui="button"
                           onClick={() => setViewRole(r === user?.role ? null : r as Role)}
-                          sx={{ 
-                             flex: 1, 
-                             py: 0.5, 
+                          sx={{
+                             flex: 1,
+                             py: 0.5,
                              fontSize: '0.6rem',
                              fontWeight: 900,
                              bgcolor: isActive ? (roleColors[r] || theme.palette.primary.main) : 'transparent',
                              color: isActive
                                ? theme.palette.getContrastText(roleColors[r] || theme.palette.primary.main)
-                               : (roleColors[r] || theme.palette.primary.main),
+                               : theme.palette.text.primary, // FIXED: Use primary text color for better visibility
                              borderColor: roleColors[r] || theme.palette.primary.main,
                              '&:hover': {
                                 bgcolor: isActive
                                   ? (roleColors[r] || theme.palette.primary.main)
                                   : alpha(roleColors[r] || theme.palette.primary.main, 0.15),
-                                borderColor: roleColors[r] || theme.palette.primary.main
+                                borderColor: roleColors[r] || theme.palette.primary.main,
+                                color: isActive
+                                  ? theme.palette.getContrastText(roleColors[r] || theme.palette.primary.main)
+                                  : theme.palette.text.primary // FIXED: Ensure hover text is visible
                              }
                           }}
                         >
@@ -382,7 +414,16 @@ export function AppShell() {
 
   return (
     <>
-    <Box sx={{ display: 'flex', height: '100vh', overflow: 'visible', position: 'relative', zIndex: 1 }}>
+    <Box
+      className="app-shell"
+      data-route={routeSurface}
+      sx={{ display: 'flex', height: '100vh', overflow: 'visible', position: 'relative', zIndex: 1 }}
+    >
+      <ThemeAmbientEffects
+        theme={themeController.currentTheme}
+        reducedMotion={themeController.reducedMotion}
+        motionIntensity={themeController.motionIntensity ?? 1}
+      />
       <ThemeFXLayer />
       {/* Mobile Sidebar (Drawer) */}
       {isMobile && (
@@ -410,6 +451,7 @@ export function AppShell() {
       {!isMobile && (
         <Box
           component="aside"
+          className="app-shell-sidebar"
           sx={{
             width: desktopDrawerWidth,
             flexShrink: 0,
@@ -428,11 +470,14 @@ export function AppShell() {
       )}
 
       <Box component="main" sx={{ flexGrow: 1, height: '100vh', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <AppBar position="sticky" elevation={0} color="transparent" sx={{ 
-            borderBottom: theme.custom?.border, 
-            background: theme.palette.mode === 'dark' 
-              ? `linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.7))`
-              : 'rgba(255,255,255,0.8)',
+        <AppBar
+          className="app-shell-topbar"
+          position="sticky"
+          elevation={0}
+          color="transparent"
+          sx={{
+            background: 'var(--sys-surface-panel)',
+            borderBottom: '1px solid var(--sys-border-default)',
             backdropFilter: 'blur(16px)',
             zIndex: theme.zIndex.drawer + 1,
             transition: `all ${motionMediumMs}ms ${motionTokens.ease}`,
@@ -490,8 +535,8 @@ export function AppShell() {
                              width: { xs: 28, sm: 32 },
                              height: { xs: 28, sm: 32 },
                              borderRadius: 1,
-                             border: `1px solid ${theme.palette.primary.main}`,
-                             bgcolor: user ? 'transparent' : alpha(theme.palette.primary.main, 0.1)
+                             border: '2px solid var(--sys-interactive-accent)',
+                             bgcolor: user ? 'transparent' : 'color-mix(in srgb, var(--sys-interactive-accent) 10%, transparent)'
                           }}
                         >
                            {!user && <ManageAccounts sx={{ fontSize: 18 }} />}
@@ -513,94 +558,94 @@ export function AppShell() {
                         </Typography>
                      </Box>
                    </Button>
-                   <Menu
-                      anchorEl={userMenuAnchor}
-                      open={Boolean(userMenuAnchor)}
-                      onClose={handleCloseUserMenu}
-                      slotProps={{ paper: { sx: { width: 220, borderRadius: 2, border: theme.custom?.border } } }}
-                   >
+                    <Menu
+                       anchorEl={userMenuAnchor}
+                       open={Boolean(userMenuAnchor)}
+                       onClose={handleCloseUserMenu}
+                       slotProps={{ paper: { sx: profileMenuPaperSx } }}
+                    >
                       {user ? (
                          [
                             <Box key="header" sx={{ px: 2, py: 1 }}>
                               <Typography variant="overline" sx={{ fontWeight: 900, color: 'text.disabled' }}>{t('nav.account')}</Typography>
                             </Box>,
-                            <MenuItem key="profile" component={Link} to="/profile" onClick={handleCloseUserMenu}>
+                            <MenuItem key="profile" className={profileMenuItemClassName} component={Link} to="/profile" onClick={handleCloseUserMenu}>
                                <ListItemIcon><ManageAccounts sx={{ fontSize: 16 }} /></ListItemIcon>
                                <ListItemText primary={t('nav.profile')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
-                            </MenuItem>,
-                            <MenuItem key="theme-toggle" onClick={(e) => handleOpenSubmenu('theme', e.currentTarget)}>
-                               <ListItemIcon><Palette sx={{ fontSize: 16 }} /></ListItemIcon>
-                               <ListItemText
-                                 primary={t('settings.interface_theme', { defaultValue: t('settings.visual_theme') })}
-                                 primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                               />
-                               <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            </MenuItem>,
-                            <MenuItem key="color-toggle" onClick={(e) => handleOpenSubmenu('color', e.currentTarget)}>
-                               <ListItemIcon><ColorLens sx={{ fontSize: 16 }} /></ListItemIcon>
-                               <ListItemText
-                                 primary={t('settings.color_palette')}
-                                 primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                               />
-                               <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            </MenuItem>,
-                            <MenuItem key="language-toggle" onClick={(e) => handleOpenSubmenu('language', e.currentTarget)}>
-                               <ListItemIcon><Translate sx={{ fontSize: 16 }} /></ListItemIcon>
-                               <ListItemText
-                                 primary={t('settings.language')}
-                                 primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                               />
-                               <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            </MenuItem>,
-                            <MenuItem key="settings" component={Link} to="/settings" onClick={handleCloseUserMenu}>
-                               <ListItemIcon><Settings sx={{ fontSize: 16 }} /></ListItemIcon>
-                               <ListItemText primary={t('nav.settings')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
-                            </MenuItem>
+                             </MenuItem>,
+                             <MenuItem key="theme-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('theme', e.currentTarget)}>
+                                <ListItemIcon><Palette sx={{ fontSize: 16 }} /></ListItemIcon>
+                                <ListItemText
+                                  primary={t('settings.interface_theme', { defaultValue: t('settings.visual_theme') })}
+                                  primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                                />
+                                <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
+                             </MenuItem>,
+                             <MenuItem key="color-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('color', e.currentTarget)}>
+                                <ListItemIcon><ColorLens sx={{ fontSize: 16 }} /></ListItemIcon>
+                                <ListItemText
+                                  primary={t('settings.color_palette')}
+                                  primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                                />
+                                <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
+                             </MenuItem>,
+                             <MenuItem key="language-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('language', e.currentTarget)}>
+                                <ListItemIcon><Translate sx={{ fontSize: 16 }} /></ListItemIcon>
+                                <ListItemText
+                                  primary={t('settings.language')}
+                                  primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                                />
+                                <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
+                             </MenuItem>,
+                             <MenuItem key="settings" className={profileMenuItemClassName} component={Link} to="/settings" onClick={handleCloseUserMenu}>
+                                <ListItemIcon><Settings sx={{ fontSize: 16 }} /></ListItemIcon>
+                                <ListItemText primary={t('nav.settings')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
+                             </MenuItem>
                          ]
                       ) : (
                          [
-                           <MenuItem key="guest-theme-toggle" onClick={(e) => handleOpenSubmenu('theme', e.currentTarget)}>
-                             <ListItemIcon><Palette sx={{ fontSize: 16 }} /></ListItemIcon>
-                             <ListItemText
-                               primary={t('settings.interface_theme', { defaultValue: t('settings.visual_theme') })}
-                               primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                             />
-                             <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                           </MenuItem>,
-                           <MenuItem key="guest-color-toggle" onClick={(e) => handleOpenSubmenu('color', e.currentTarget)}>
-                             <ListItemIcon><ColorLens sx={{ fontSize: 16 }} /></ListItemIcon>
-                             <ListItemText
-                               primary={t('settings.color_palette')}
-                               primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                             />
-                             <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                           </MenuItem>,
-                           <MenuItem key="guest-language-toggle" onClick={(e) => handleOpenSubmenu('language', e.currentTarget)}>
-                             <ListItemIcon><Translate sx={{ fontSize: 16 }} /></ListItemIcon>
-                             <ListItemText
-                               primary={t('settings.language')}
-                               primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                             />
-                             <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                           </MenuItem>,
-                           <MenuItem key="guest-settings" component={Link} to="/settings" onClick={handleCloseUserMenu}>
-                             <ListItemIcon><Settings sx={{ fontSize: 16 }} /></ListItemIcon>
-                             <ListItemText primary={t('nav.settings')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
-                           </MenuItem>,
+                           <MenuItem key="guest-theme-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('theme', e.currentTarget)}>
+                              <ListItemIcon><Palette sx={{ fontSize: 16 }} /></ListItemIcon>
+                              <ListItemText
+                                primary={t('settings.interface_theme', { defaultValue: t('settings.visual_theme') })}
+                                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                              />
+                              <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            </MenuItem>,
+                            <MenuItem key="guest-color-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('color', e.currentTarget)}>
+                              <ListItemIcon><ColorLens sx={{ fontSize: 16 }} /></ListItemIcon>
+                              <ListItemText
+                                primary={t('settings.color_palette')}
+                                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                              />
+                              <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            </MenuItem>,
+                            <MenuItem key="guest-language-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('language', e.currentTarget)}>
+                              <ListItemIcon><Translate sx={{ fontSize: 16 }} /></ListItemIcon>
+                              <ListItemText
+                                primary={t('settings.language')}
+                                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                              />
+                              <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            </MenuItem>,
+                            <MenuItem key="guest-settings" className={profileMenuItemClassName} component={Link} to="/settings" onClick={handleCloseUserMenu}>
+                              <ListItemIcon><Settings sx={{ fontSize: 16 }} /></ListItemIcon>
+                              <ListItemText primary={t('nav.settings')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
+                            </MenuItem>,
                            <Divider key="guest-login-div" sx={{ my: 1 }} />,
-                           <MenuItem key="guest-login" component={Link} to="/login" onClick={handleCloseUserMenu}>
-                             <ListItemIcon><Login sx={{ fontSize: 16 }} /></ListItemIcon>
-                             <ListItemText primary={t('auth.login_title')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
-                           </MenuItem>,
+                            <MenuItem key="guest-login" className={profileMenuItemClassName} component={Link} to="/login" onClick={handleCloseUserMenu}>
+                              <ListItemIcon><Login sx={{ fontSize: 16 }} /></ListItemIcon>
+                              <ListItemText primary={t('auth.login_title')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
+                            </MenuItem>,
                          ]
                       )}
                       
                       {user && [
                            <Divider key="logout-div" sx={{ my: 1 }} />,
-                           <MenuItem key="logout" onClick={handleLogout} sx={{ color: 'error.main' }}>
-                              <ListItemIcon><Logout sx={{ fontSize: 16, color: 'inherit' }} /></ListItemIcon>
-                              <ListItemText primary={t('account.logout')} primaryTypographyProps={{ variant: 'body2', fontWeight: 700 }} />
-                           </MenuItem>
+                            <MenuItem key="logout" className={profileMenuItemClassName} onClick={handleLogout} sx={{ color: 'error.main' }}>
+                               <ListItemIcon><Logout sx={{ fontSize: 16, color: 'inherit' }} /></ListItemIcon>
+                               <ListItemText primary={t('account.logout')} primaryTypographyProps={{ variant: 'body2', fontWeight: 700 }} />
+                            </MenuItem>
                       ]}
                     </Menu>
                     <Menu
@@ -611,35 +656,46 @@ export function AppShell() {
                       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                       slotProps={{
                         paper: {
-                          sx: {
-                            minWidth: 260,
-                            borderRadius: 2,
-                            border: theme.custom?.border,
-                            mr: 0.5,
-                          },
+                          sx: profileSubmenuPaperSx,
                         },
                       }}
                     >
-                      {submenuType === 'theme' && NEXUS_THEME_OPTIONS.map((opt: any) => (
-                        <MenuItem
-                          key={`submenu-theme-opt-${opt.id}`}
-                          onClick={() => {
-                            themeController.setTheme(opt.id);
-                            handleCloseSubmenu();
-                          }}
-                          selected={themeController.currentTheme === opt.id}
-                        >
-                          <ListItemText
-                            primary={t(`theme_menu.themes.${opt.id}.label`, { defaultValue: opt.label })}
-                            secondary={t(`theme_menu.themes.${opt.id}.description`, { defaultValue: opt.description })}
-                            primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                            secondaryTypographyProps={{ variant: 'caption' }}
-                          />
-                        </MenuItem>
-                      ))}
+                      {submenuType === 'theme' && NEXUS_THEME_OPTIONS.map((opt: any) => {
+                        const ThemeIcon = getThemeModeIcon(opt.id);
+                        const isSelected = themeController.currentTheme === opt.id;
+
+                        return (
+                          <MenuItem
+                            key={`submenu-theme-opt-${opt.id}`}
+                            className={profileMenuItemClassName}
+                            onClick={() => {
+                              themeController.setTheme(opt.id);
+                              handleCloseSubmenu();
+                            }}
+                            selected={isSelected}
+                          >
+                            <Stack direction="row" spacing={1.25} alignItems="center" sx={{ width: '100%' }}>
+                              <ThemeIcon
+                                sx={{
+                                  fontSize: 16,
+                                  color: isSelected ? 'primary.main' : 'text.secondary',
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <ListItemText
+                                primary={t(`theme_menu.themes.${opt.id}.label`, { defaultValue: opt.label })}
+                                secondary={t(`theme_menu.themes.${opt.id}.description`, { defaultValue: opt.description })}
+                                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                                secondaryTypographyProps={{ variant: 'caption' }}
+                              />
+                            </Stack>
+                          </MenuItem>
+                        );
+                      })}
                       {submenuType === 'color' && NEXUS_COLOR_OPTIONS.map((opt: any) => (
                         <MenuItem
                           key={`submenu-color-opt-${opt.id}`}
+                          className={profileMenuItemClassName}
                           onClick={() => {
                             themeController.setColor(opt.id);
                             handleCloseSubmenu();
@@ -657,6 +713,7 @@ export function AppShell() {
                       {submenuType === 'language' && [
                         <MenuItem
                           key="submenu-language-en"
+                          className={profileMenuItemClassName}
                           onClick={() => {
                             handleLanguageChange('en');
                             handleCloseSubmenu();
@@ -667,6 +724,7 @@ export function AppShell() {
                         </MenuItem>,
                         <MenuItem
                           key="submenu-language-zh"
+                          className={profileMenuItemClassName}
                           onClick={() => {
                             handleLanguageChange('zh');
                             handleCloseSubmenu();
@@ -685,21 +743,26 @@ export function AppShell() {
 
         <Box
           id="main-content"
+          className="app-page-surface custom-scrollbar"
+          data-route={routeSurface}
           sx={{
              flexGrow: 1,
-             p: { xs: mobile.spacing.page, md: 3, lg: 4 },
-             pb: { xs: 'calc(96px + env(safe-area-inset-bottom))', lg: 4 },
+             p: { xs: mobile.spacing.page, md: 2, lg: 2.5 },
+             pb: { xs: 'calc(96px + env(safe-area-inset-bottom))', lg: 2.5 },
              overflowY: 'auto',
              overflowX: 'visible',
              bgcolor: 'transparent',
              WebkitOverflowScrolling: 'touch',
              position: 'relative',
              isolation: 'isolate',
+             width: '100%',
+             maxWidth: '100%',
           }}
-          className="custom-scrollbar"
         >
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
+              className="app-route-frame"
+              data-route={routeSurface}
               key={location.pathname}
               initial={prefersReducedMotion ? false : { opacity: 0, y: 14, filter: 'blur(5px)' }}
               animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, filter: 'blur(0px)' }}

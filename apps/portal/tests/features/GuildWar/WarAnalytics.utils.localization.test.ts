@@ -13,6 +13,8 @@ describe('WarAnalytics utils localization', () => {
       await i18next.init({
         lng: 'en',
         fallbackLng: 'en',
+        debug: false,
+        showSupportNotice: false,
         interpolation: { escapeValue: false },
         resources: {
           en: {

@@ -482,7 +482,9 @@ export function formatMetricName(metric: MetricType): string {
     assists: 'guild_war.analytics_metric_assists',
     kda: 'guild_war.analytics_metric_kda',
   };
-  return i18next.t(keyMap[metric]);
+  return i18next.t(keyMap[metric], {
+    defaultValue: METRICS[metric]?.label ?? metric,
+  });
 }
 
 export function isMetricHigherBetter(metric: MetricType): boolean {
@@ -496,17 +498,17 @@ export function calculateKDA(kills: number | null, deaths: number | null, assist
 }
 
 export function formatKDA(kda: number | null): string {
-  if (kda === null) return 'N/A';
+  if (kda === null) return i18next.t('common.unknown');
   return kda.toFixed(2);
 }
 
 export function formatNumber(value: number | null): string {
-  if (value === null) return 'N/A';
+  if (value === null) return i18next.t('common.unknown');
   return value.toLocaleString();
 }
 
 export function formatCompactNumber(value: number | null): string {
-  if (value === null) return 'N/A';
+  if (value === null) return i18next.t('common.unknown');
 
   if (value >= 1000000) {
     return `${(value / 1000000).toFixed(1)}M`;

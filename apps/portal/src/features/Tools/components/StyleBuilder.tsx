@@ -50,6 +50,8 @@ export function StyleBuilder() {
     { name: 'Gold', hex: '#fbbf24' },
     { name: 'Silver', hex: '#94a3b8' },
   ];
+  const cardRadius = 'var(--cmp-card-radius)';
+  const surfaceRadius = 'var(--cmp-input-radius)';
 
   const generatedHtml = useMemo(() => {
     let styles = `color: ${color};`;
@@ -88,7 +90,7 @@ export function StyleBuilder() {
     <Grid container spacing={4}>
          {/* Editor Side */}
          <Grid size={{ xs: 12, lg: 6 }}>
-            <Card sx={{ borderRadius: 5 }}>
+            <Card sx={{ borderRadius: cardRadius }}>
                <CardHeader 
                   title={<Typography variant="h6" fontWeight={900} fontStyle="italic" textTransform="uppercase">{t('tools.builder_title')}</Typography>}
                   subheader={<Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.1em" color="text.secondary">{t('tools.builder_subtitle')}</Typography>}
@@ -156,7 +158,7 @@ export function StyleBuilder() {
          {/* Preview Side */}
          <Grid size={{ xs: 12, lg: 6 }}>
              <Stack spacing={3}>
-                <Card sx={{ borderRadius: 5, overflow: 'hidden', position: 'relative' }}>
+                <Card sx={{ borderRadius: cardRadius, overflow: 'hidden', position: 'relative' }}>
                     <Box sx={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: alpha('#000', 0.8), p: 4, position: 'relative' }}>
                         <Box sx={{ position: 'absolute', top: 16, left: 16 }}>
                            <Chip label={t('tools.preview_label')} size="small" variant="outlined" sx={{ fontWeight: 900, fontSize: '0.6rem' }} />
@@ -168,7 +170,7 @@ export function StyleBuilder() {
                     </Box>
                 </Card>
 
-                <Card sx={{ borderRadius: 5 }}>
+                <Card sx={{ borderRadius: cardRadius }}>
                    <CardHeader 
                       title={<Chip label={t('tools.output_label')} size="small" color="primary" sx={{ fontWeight: 900, borderRadius: 1 }} />}
                       action={
@@ -185,7 +187,7 @@ export function StyleBuilder() {
                       sx={{ borderBottom: 1, borderColor: 'divider', p: 3 }}
                    />
                    <CardContent sx={{ p: 3 }}>
-                      <Box sx={{ p: 3, bgcolor: 'background.default', borderRadius: 3, border: `1px solid ${theme.palette.divider}` }}>
+                      <Box sx={{ p: 3, bgcolor: 'background.default', borderRadius: surfaceRadius, border: `1px solid ${theme.palette.divider}` }}>
                            <Typography variant="caption" fontFamily="monospace" sx={{ wordBreak: 'break-all', color: 'primary.light' }}>
                                {generatedHtml}
                            </Typography>

@@ -9,6 +9,9 @@ declare module '@mui/material/styles' {
           panel: string;
           elevated: string;
           sunken: string;
+          scrim: string;
+          overlay: string;
+          overlayHover: string;
         };
         text: {
           primary: string;
@@ -71,6 +74,33 @@ declare module '@mui/material/styles' {
           bg: string;
           border: string;
           shadow: string;
+        };
+        iconButton: {
+          bg: string;
+          text: string;
+          hoverBg: string;
+          overlayBg: string;
+          overlayHoverBg: string;
+          dangerText: string;
+        };
+        segmentedControl: {
+          bg: string;
+          border: string;
+          text: string;
+          selectedBg: string;
+          selectedText: string;
+        };
+        sortArrows: {
+          active: string;
+          inactive: string;
+        };
+        panel: {
+          bg: string;
+          headerBg: string;
+          border: string;
+          dropTargetBg: string;
+          dropTargetBorder: string;
+          controlBg: string;
         };
       };
       // Visual effects

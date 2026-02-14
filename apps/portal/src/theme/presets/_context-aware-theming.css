@@ -1,0 +1,373 @@
+/**
+ * Context-Aware Theming
+ * ======================
+ * Dynamic theme adjustments based on time, events, and user activity
+ */
+
+/* Time-of-day adaptive theming */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --time-brightness-multiplier: 0.85;
+    --time-saturation-multiplier: 0.9;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --time-brightness-multiplier: 1.0;
+    --time-saturation-multiplier: 1.0;
+  }
+}
+
+/* Evening mode (18:00 - 22:00) - warmer colors */
+[data-time-mode="evening"] {
+  filter: sepia(0.08) hue-rotate(-5deg);
+  --sys-surface-page: color-mix(in srgb, var(--sys-surface-page) 98%, #ffa500);
+}
+
+/* Night mode (22:00 - 06:00) - blue light reduction */
+[data-time-mode="night"] {
+  filter: sepia(0.15) saturate(0.8);
+  --custom-saturation: 0.75;
+  --custom-brightness: 0.9;
+}
+
+/* Morning mode (06:00 - 12:00) - brighter, energetic */
+[data-time-mode="morning"] {
+  --custom-saturation: 1.1;
+  --custom-brightness: 1.05;
+}
+
+/* Afternoon mode (12:00 - 18:00) - standard */
+[data-time-mode="afternoon"] {
+  --custom-saturation: 1.0;
+  --custom-brightness: 1.0;
+}
+
+/* Event-based theming */
+[data-event-type="war"] {
+  --context-accent: #ff4444;
+  --context-glow: rgba(255, 68, 68, 0.3);
+}
+
+[data-event-type="raid"] {
+  --context-accent: #8844ff;
+  --context-glow: rgba(136, 68, 255, 0.3);
+}
+
+[data-event-type="social"] {
+  --context-accent: #44ff88;
+  --context-glow: rgba(68, 255, 136, 0.3);
+}
+
+[data-event-type="training"] {
+  --context-accent: #ffaa44;
+  --context-glow: rgba(255, 170, 68, 0.3);
+}
+
+/* Event urgency indicators */
+[data-event-urgency="critical"] {
+  animation: urgent-pulse 2s ease-in-out infinite;
+}
+
+@keyframes urgent-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--context-glow, rgba(255, 0, 0, 0.7));
+  }
+  50% {
+    box-shadow: 0 0 0 8px var(--context-glow, rgba(255, 0, 0, 0));
+  }
+}
+
+[data-event-urgency="high"] .ui-card {
+  border-left: 4px solid var(--context-accent, var(--sys-interactive-accent));
+}
+
+[data-event-urgency="medium"] .ui-card {
+  border-left: 2px solid color-mix(in srgb, var(--context-accent, var(--sys-interactive-accent)) 60%, transparent);
+}
+
+/* Activity-based theme intensity */
+[data-activity-level="high"] {
+  --custom-animation-speed: 1.3;
+  --custom-pattern-intensity: 1.2;
+}
+
+[data-activity-level="normal"] {
+  --custom-animation-speed: 1.0;
+  --custom-pattern-intensity: 1.0;
+}
+
+[data-activity-level="idle"] {
+  --custom-animation-speed: 0.7;
+  --custom-pattern-intensity: 0.6;
+  --custom-saturation: 0.85;
+}
+
+/* Battery-saving mode */
+[data-battery-saver="true"] {
+  --custom-animation-speed: 0.3;
+  --custom-pattern-intensity: 0.2;
+  --custom-shadow-intensity: 0.5;
+  animation: none !important;
+  transition: none !important;
+}
+
+[data-battery-saver="true"] ::before,
+[data-battery-saver="true"] ::after {
+  animation: none !important;
+  display: none;
+}
+
+/* Focus time indicator */
+[data-focus-time="true"]::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    to right,
+    var(--sys-interactive-accent) 0%,
+    var(--sys-interactive-accent) var(--focus-progress, 0%),
+    transparent var(--focus-progress, 0%),
+    transparent 100%
+  );
+  z-index: 10001;
+  pointer-events: none;
+}
+
+/* Performance mode detection */
+@media (prefers-reduced-data: reduce) {
+  [data-theme] {
+    --custom-pattern-intensity: 0.1;
+    --custom-shadow-intensity: 0.3;
+  }
+
+  [data-theme]::before,
+  [data-theme] .ui-card::before {
+    display: none;
+  }
+}
+
+/* Connection quality indicator */
+[data-connection="slow"] {
+  --custom-animation-speed: 0.5;
+}
+
+[data-connection="offline"]::after {
+  content: "⚠ Offline";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  background: rgba(255, 152, 0, 0.95);
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  pointer-events: none;
+}
+
+/* Seasonal theming */
+[data-season="spring"] {
+  --seasonal-tint: rgba(144, 238, 144, 0.05);
+}
+
+[data-season="summer"] {
+  --seasonal-tint: rgba(255, 215, 0, 0.05);
+}
+
+[data-season="autumn"] {
+  --seasonal-tint: rgba(255, 140, 0, 0.05);
+}
+
+[data-season="winter"] {
+  --seasonal-tint: rgba(173, 216, 230, 0.05);
+}
+
+[data-season] {
+  background-color: color-mix(in srgb, var(--sys-surface-page) 95%, var(--seasonal-tint, transparent));
+}
+
+/* Guild event countdown */
+[data-countdown-active="true"] .event-timer {
+  animation: countdown-tick 1s steps(1) infinite;
+}
+
+@keyframes countdown-tick {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* Member status indicators */
+[data-member-status="online"] .member-card {
+  border-left: 3px solid #44ff88;
+  box-shadow: -3px 0 8px rgba(68, 255, 136, 0.2);
+}
+
+[data-member-status="away"] .member-card {
+  border-left: 3px solid #ffaa44;
+  opacity: 0.85;
+}
+
+[data-member-status="offline"] .member-card {
+  opacity: 0.6;
+  filter: grayscale(0.3);
+}
+
+/* War preparation mode */
+[data-war-prep="true"] {
+  --theme-motion-easing: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+  --custom-animation-speed: 1.4;
+}
+
+[data-war-prep="true"] .ui-button {
+  animation: war-ready-pulse 2s ease-in-out infinite;
+}
+
+@keyframes war-ready-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.02);
+    filter: brightness(1.1);
+  }
+}
+
+/* Achievement celebration mode */
+[data-achievement-unlocked="true"] {
+  animation: achievement-flash 1s ease-out;
+}
+
+@keyframes achievement-flash {
+  0% { filter: brightness(1); }
+  25% { filter: brightness(1.3) saturate(1.5); }
+  100% { filter: brightness(1); }
+}
+
+/* Stress detection (high activity + many events) */
+[data-stress-level="high"] {
+  --custom-saturation: 0.7;
+  --custom-pattern-intensity: 0.3;
+  --custom-animation-speed: 0.6;
+  filter: blur(0.3px) contrast(0.95);
+}
+
+/* Reading mode enhancement */
+[data-reading-mode="true"] {
+  --custom-saturation: 0.5;
+  --custom-pattern-intensity: 0.1;
+  --custom-shadow-intensity: 0.3;
+  --custom-line-height: 1.4;
+}
+
+[data-reading-mode="true"] .ui-card {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 24px 32px;
+}
+
+/* Notification priority theming */
+[data-notification-priority="critical"] {
+  --notification-bg: #ff4444;
+  --notification-text: white;
+  animation: critical-shake 0.5s ease-out;
+}
+
+@keyframes critical-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+[data-notification-priority="high"] {
+  --notification-bg: #ffaa44;
+  --notification-text: #000;
+}
+
+[data-notification-priority="normal"] {
+  --notification-bg: var(--sys-surface-elevated);
+  --notification-text: var(--sys-text-primary);
+}
+
+/* Context-specific motion profiles */
+[data-context="dashboard"] {
+  --theme-motion-easing: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+[data-context="battle"] {
+  --theme-motion-easing: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+  --custom-animation-speed: 1.5;
+}
+
+[data-context="social"] {
+  --theme-motion-easing: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --custom-animation-speed: 1.2;
+}
+
+[data-context="settings"] {
+  --theme-motion-easing: ease-out;
+  --custom-animation-speed: 0.8;
+}
+
+/* Page transition context */
+[data-page-transition="true"] {
+  animation: page-fade-in 400ms ease-out;
+}
+
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Auto dark mode with system preference */
+@media (prefers-color-scheme: dark) {
+  [data-auto-theme="true"] {
+    --custom-brightness: 0.9;
+    --custom-saturation: 0.85;
+  }
+}
+
+/* Reduced transparency mode */
+[data-reduced-transparency="true"] {
+  --custom-pattern-intensity: 0;
+}
+
+[data-reduced-transparency="true"] ::before,
+[data-reduced-transparency="true"] ::after {
+  opacity: 0 !important;
+}
+
+/* Color blindness accommodations */
+[data-color-blind-mode="protanopia"] {
+  filter:
+    url('#protanopia-filter')
+    contrast(1.1);
+}
+
+[data-color-blind-mode="deuteranopia"] {
+  filter:
+    url('#deuteranopia-filter')
+    contrast(1.1);
+}
+
+[data-color-blind-mode="tritanopia"] {
+  filter:
+    url('#tritanopia-filter')
+    contrast(1.1);
+}

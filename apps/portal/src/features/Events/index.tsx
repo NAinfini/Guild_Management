@@ -40,7 +40,9 @@ import {
   Badge, 
   ScrollArea, 
   PageFilterBar, 
-  type PageFilterOption 
+  type PageFilterOption,
+  type MarkdownRenderer,
+  TeamMemberCard
 } from "@/components";
 import { 
   AccessTime as AccessTimeIcon, 
@@ -65,7 +67,8 @@ import {
   MilitaryTech as MilitaryTechIcon,
   CalendarToday as CalendarDaysIcon,
   FilterList as FilterIcon,
-  LockOpen as LockOpenIcon
+  LockOpen as LockOpenIcon,
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
 import { formatDateTime, formatPower, formatClassDisplayName, getMemberCardAccentColors, getClassPillTone, cn } from '../../lib/utils';
 import { useAuthStore, useUIStore } from '../../store';
@@ -654,15 +657,18 @@ function EventOperationCard({
     navigator.clipboard.writeText(text);
   };
 
-  const { visibleParticipants, hiddenCount } = getVisibleParticipants(
-    event.participants,
-    showAllParticipants,
-  );
+  const limit = 10;
   const participantCount = event.participants?.length || 0;
-  const canToggleParticipants = participantCount > 10;
-  const showExpandControl = hiddenCount > 0 && !showAllParticipants;
-  const showCollapseControl = canToggleParticipants && showAllParticipants;
-  const showActionColumn = showExpandControl || showCollapseControl || canManageParticipants;
+  const isOverflowing = participantCount > limit;
+  const showOverflowCard = isOverflowing && !showAllParticipants;
+  // If showing overflow card, we show limit-1 participants, so the Nth card is the overflow card.
+  const displayLimit = showOverflowCard ? limit - 1 : limit;
+  
+  const visibleParticipants = showAllParticipants 
+    ? event.participants || []
+    : (event.participants || []).slice(0, displayLimit);
+    
+  const overflowCount = participantCount - displayLimit;
   
   return (
     <Card sx={{ 
@@ -769,133 +775,56 @@ function EventOperationCard({
                <Box
                  sx={{
                    display: 'grid',
-                   gridTemplateColumns: { xs: '1fr', md: showActionColumn ? '1fr auto' : '1fr' },
+                   gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(5, 1fr)' },
                    gap: 1.5,
                  }}
+                 data-testid="participant-grid"
                >
-                 <Box
-                   sx={{
-                     display: 'grid',
-                     gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(5, minmax(0, 1fr))' },
-                     gap: 1.5,
-                   }}
-                   data-testid="participant-grid"
-                 >
-                  {visibleParticipants.map((p) => {
+                  {visibleParticipants.map((p: any) => { // Fixed: explicit type for p
                      const participant = p as User;
-                     const primaryClass = participant.classes?.[0] as ClassType | undefined;
-                     const accentColors = getMemberCardAccentColors(participant.classes as ClassType[] | undefined, theme);
-                     const cardBaseColor = accentColors[0];
-                     const classTone = getClassPillTone(primaryClass, theme);
-                     const classLabel = primaryClass ? formatClassDisplayName(primaryClass) : t('common.unknown');
-
                      return (
-                     <Box
-                        key={participant.id} 
+                        <TeamMemberCard
+                          key={participant.id}
+                          member={participant}
+                          canManage={canManageParticipants}
+                          onKick={() => onKick(participant.id, participant.username)}
+                        />
+                     );
+                  })}
+                  
+                  {showOverflowCard && (
+                     <Button
+                        variant="outline"
+                        onClick={() => setShowAllParticipants(true)}
+                        className="flex-col gap-1 rounded-lg text-muted-foreground border-dashed border-border hover:border-solid hover:bg-accent/50"
                         sx={{ 
-                            position: 'relative',
-                            p: 1.25,
-                            pr: 1,
-                            borderRadius: 2, 
-                            overflow: 'hidden',
-                            bgcolor: alpha(cardBaseColor, 0.24),
-                            border: '1px solid', 
-                            borderColor: alpha(cardBaseColor, 0.42),
-                            transition: 'all 0.2s',
-                            '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                inset: 0,
-                                background: buildMemberAccentGradient(accentColors),
-                                pointerEvents: 'none',
-                            },
-                            '&:hover': {
-                                boxShadow: 1.5,
-                                transform: 'translateY(-1px)'
-                            }
+                            p: 0, 
+                            borderRadius: 2,
+                            height: '100%',
+                            minHeight: 60,
+                            aspectRatio: 'unset' 
                         }}
                      >
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1.2} sx={{ position: 'relative', zIndex: 1 }}>
-                           <Box sx={{ minWidth: 0, flex: 1 }}>
-                             <Typography variant="body2" noWrap sx={{ fontWeight: 900, color: 'common.white', mb: 0.5 }}>
-                               {participant.username}
-                             </Typography>
-                             <Stack direction="row" spacing={0.6} sx={{ alignItems: 'center', flexWrap: 'nowrap' }}>
-                               <Box sx={{
-                                   px: 1, py: 0.15, borderRadius: 6,
-                                   fontSize: '0.62rem', fontWeight: 900, lineHeight: 1.2,
-                                   bgcolor: classTone.bg,
-                                   color: classTone.text,
-                                   border: 1,
-                                   borderColor: alpha(classTone.main, 0.55)
-                               }}>
-                                   {classLabel}
-                               </Box>
-                               <Box sx={{
-                                   px: 1, py: 0.15, borderRadius: 6,
-                                   fontSize: '0.62rem', fontWeight: 800, lineHeight: 1.2, fontFamily: 'monospace',
-                                  bgcolor: alpha(theme.palette.primary.light, 0.14),
-                                  color: 'common.white',
-                                  border: 1,
-                                  borderColor: alpha(theme.palette.primary.light, 0.4),
-                                  flexShrink: 0,
-                               }}>
-                                   {formatPower(participant.power)}
-                                </Box>
-                             </Stack>
-                           </Box>
-                           {canManageParticipants && (
-                             <Button 
-                                size="icon"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onKick(participant.id, participant.username);
-                                }}
-                                className="h-7 w-7 rounded-md bg-destructive/10 border-destructive/75 text-destructive hover:bg-destructive/20"
-                              >
-                                <LogoutIcon sx={{ fontSize: 12 }} />
-                              </Button>
-                           )}
-                        </Stack>
-                     </Box>
-                  )})}
-                 </Box>
-
-                 {showActionColumn && (
-                   <Stack sx={{ minWidth: { md: 92 } }} spacing={1}>
-                     {showExpandControl && (
-                       <Button
-                         variant="outline"
-                         onClick={() => setShowAllParticipants(true)}
-                         className="border-dashed rounded-lg text-muted-foreground border-border min-h-[80px] font-black"
-                       >
-                         {t('events.expand_members', { count: hiddenCount })}
-                       </Button>
-                     )}
-
-                     {showCollapseControl && (
-                       <Button
-                         variant="outline"
-                         onClick={() => setShowAllParticipants(false)}
-                         className="border-dashed rounded-lg text-muted-foreground border-border min-h-[80px] font-black"
-                       >
-                         {t('events.collapse_members')}
-                       </Button>
-                     )}
-
-                     {canManageParticipants && (
-                       <Button
-                          variant="outline"
-                          onClick={onAdd}
-                          className="border-dashed flex-col gap-1 rounded-lg text-muted-foreground border-border min-h-[80px] font-black"
-                       >
-                           <AddIcon sx={{ fontSize: 16 }} />
-                           <Typography variant="caption" fontWeight={900}>{t('events.add_operative')}</Typography>
-                       </Button>
-                     )}
-                   </Stack>
-                 )}
+                        <Typography variant="h6" fontWeight={900}>+{overflowCount}</Typography>
+                        <Typography variant="caption" fontWeight={700}>{t('common.more')}</Typography>
+                     </Button>
+                  )}
+                  {showAllParticipants && participantCount > limit && (
+                     <Button
+                        variant="outline"
+                        onClick={() => setShowAllParticipants(false)}
+                         className="flex-col gap-1 rounded-lg text-muted-foreground border-dashed border-border hover:border-solid hover:bg-accent/50"
+                        sx={{ 
+                           p: 0, 
+                           borderRadius: 2,
+                           height: '100%',
+                           minHeight: 60
+                        }}
+                     >
+                        <ExpandLessIcon sx={{ fontSize: 20 }} />
+                        <Typography variant="caption" fontWeight={700}>{t('common.show_less')}</Typography>
+                     </Button>
+                  )}
                </Box>
             </Box>
             
@@ -922,11 +851,28 @@ function EventOperationCard({
                      {isJoined ? t('events.withdraw') : t('events.enlist')}
                   </Button>
                )}
-               {(canEdit || canPin || canLock || canArchive || canDelete) && (
-                   <Stack direction="row" spacing={1} justifyContent="center">
+               {(canManageParticipants || canEdit || canPin || canLock || canArchive || canDelete) && (
+                   <Box 
+                      display="grid" 
+                      gridTemplateColumns="repeat(3, 1fr)" 
+                      gap={1}
+                      sx={{ width: '100%' }}
+                   >
+                      {canManageParticipants && (
+                        <Tooltip content={t('events.add_operative')}>
+                          <Button 
+                             size="icon" 
+                             variant="outline"
+                             onClick={onAdd}
+                             className="h-9 w-full bg-accent/50 border-border"
+                           >
+                              <AddIcon sx={{ fontSize: 16 }} />
+                           </Button>
+                        </Tooltip>
+                      )}
                        {canEdit && (
                          <Tooltip content={t('common.edit')}>
-                          <Button size="icon" variant="outline" className="h-7 w-7 bg-accent/50 border-border">
+                          <Button size="icon" variant="outline" className="h-9 w-full bg-accent/50 border-border">
                              <EditIcon sx={{ fontSize: 16 }} />
                           </Button>
                         </Tooltip>
@@ -937,7 +883,7 @@ function EventOperationCard({
                              size="icon" 
                              variant="outline"
                              onClick={onTogglePin}
-                             className={cn("h-7 w-7 border", event.is_pinned ? "bg-primary/20 border-primary/50 text-primary" : "bg-accent/50 border-border text-muted-foreground")}
+                             className={cn("h-9 w-full border", event.is_pinned ? "bg-primary/20 border-primary/50 text-primary" : "bg-accent/50 border-border text-muted-foreground")}
                            >
                               <PushPinIcon sx={{ fontSize: 16 }} />
                            </Button>
@@ -949,7 +895,7 @@ function EventOperationCard({
                              size="icon" 
                              variant="outline"
                              onClick={onToggleLock}
-                             className={cn("h-7 w-7 border", event.is_locked ? "bg-destructive/20 border-destructive/50 text-destructive" : "bg-accent/50 border-border text-muted-foreground")}
+                             className={cn("h-9 w-full border", event.is_locked ? "bg-destructive/20 border-destructive/50 text-destructive" : "bg-accent/50 border-border text-muted-foreground")}
                            >
                               {event.is_locked ? <LockIcon sx={{ fontSize: 16 }} /> : <LockOpenIcon sx={{ fontSize: 16 }} />}
                            </Button>
@@ -961,7 +907,7 @@ function EventOperationCard({
                              size="icon" 
                              variant="outline"
                              onClick={onToggleArchive}
-                             className={cn("h-7 w-7 border", event.is_archived ? "bg-warning-main/18 border-warning-main/50 text-warning-main" : "bg-accent/50 border-border text-muted-foreground")}
+                             className={cn("h-9 w-full border", event.is_archived ? "bg-warning-main/18 border-warning-main/50 text-warning-main" : "bg-accent/50 border-border text-muted-foreground")}
                            >
                               <ArchiveIcon sx={{ fontSize: 16 }} />
                            </Button>
@@ -973,13 +919,13 @@ function EventOperationCard({
                              size="icon" 
                              variant="outline"
                              onClick={onDelete}
-                             className="h-7 w-7 bg-destructive/5 border-destructive/20 text-destructive hover:bg-destructive/10 hover:border-destructive"
+                             className="h-9 w-full bg-destructive/5 border-destructive/20 text-destructive hover:bg-destructive/10 hover:border-destructive"
                            >
                               <DeleteIcon sx={{ fontSize: 16 }} />
                            </Button>
                         </Tooltip>
                       )}
-                   </Stack>
+                   </Box>
                )}
             </Stack>
          </Stack>

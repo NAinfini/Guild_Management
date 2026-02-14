@@ -54,7 +54,7 @@ export const TeamTrendChart = ({ teamStats, wars, onSelectWar }: TeamTrendChartP
           </div>
           <div>
             <h3 className="font-bold text-sm uppercase tracking-wider">{t('guild_war.analytics_team_trends')}</h3>
-            <p className="text-xs text-muted-foreground">Historical performance by Tactical Squad</p>
+            <p className="text-xs text-muted-foreground">{t('guild_war.analytics_team_history_subtitle')}</p>
           </div>
         </div>
       </div>
@@ -71,10 +71,9 @@ export const TeamTrendChart = ({ teamStats, wars, onSelectWar }: TeamTrendChartP
           }]}
           series={selectedTeamIds.map(id => ({
             data: chartData.map(d => (d[`team_${id}`] as number) ?? null),
-            label: `Team ${id}`,
+            label: t('guild_war.analytics_team_fallback', { id }),
             color: getUserColor(id),
             showMark: true,
-            area: true,
             valueFormatter: (value: number | null) => formatNumber(value ?? 0)
           }))}
           yAxis={[{
@@ -86,9 +85,6 @@ export const TeamTrendChart = ({ teamStats, wars, onSelectWar }: TeamTrendChartP
           }]}
           grid={{ horizontal: true }}
           sx={{
-            '.MuiAreaElement-root': {
-              fillOpacity: 0.1,
-            },
             '.MuiLineElement-root': {
               strokeWidth: 3,
             }

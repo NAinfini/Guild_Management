@@ -36,6 +36,8 @@
   --cmp-chip-bg: color-mix(in srgb, var(--sys-interactive-accent) 26%, transparent);
   --cmp-nav-item-active-bg: color-mix(in srgb, var(--sys-interactive-accent) 32%, transparent);
   --cmp-dialog-border: color-mix(in srgb, var(--sys-interactive-accent) 55%, var(--sys-border-default));
+  --cmp-nav-label-transform: none;
+  --cmp-nav-label-letter-spacing: 0.04em;
 }
 
 .theme-cyberpunk :is(
@@ -53,18 +55,105 @@
   border: var(--theme-border-width) var(--theme-border-style) var(--color-accent-primary);
   border-radius: var(--theme-border-radius);
   font-family: var(--theme-font-body);
+  /* IMPROVED: Only uppercase buttons and chips, not all text */
+  letter-spacing: 0.05em;
+  /* IMPROVED: Semi-transparent background with accent tint for depth */
+  background: color-mix(in srgb, var(--sys-surface-elevated) 94%, var(--sys-interactive-accent) 6%);
+  color: var(--sys-text-primary);
+  /* IMPROVED: Subtle text shadow for neon effect without compromising readability */
+  text-shadow: 0 0 3px color-mix(in srgb, var(--sys-interactive-accent) 16%, transparent);
+}
+
+/* Apply uppercase only to buttons and chips for cyberpunk aesthetic */
+.theme-cyberpunk :is(.ui-button, .ui-chip, .MuiButton-root, .MuiChip-root) {
   text-transform: uppercase;
-  clip-path: polygon(
-    var(--theme-cut-corner-size) 0,
-    100% 0, 
-    100% calc(100% - var(--theme-cut-corner-size)),
-    calc(100% - var(--theme-cut-corner-size)) 100%,
-    0 100%,
-    0 var(--theme-cut-corner-size)
-  );
-  background: rgba(0,0,0,0.2);
 }
 
 .theme-cyberpunk :is(.ui-button, .ui-chip, .ui-input, .ui-nav, .control):hover:not(:disabled) {
   border-color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--sys-surface-elevated) 90%, var(--sys-interactive-accent) 10%);
+}
+
+/* Ensure dialog buttons have proper contrast */
+.theme-cyberpunk .MuiDialog-root .MuiButton-root {
+  background: var(--sys-surface-elevated);
+  color: var(--sys-text-primary);
+  border-color: var(--sys-interactive-accent);
+}
+
+.theme-cyberpunk .MuiDialog-root .MuiButton-root:hover {
+  background: color-mix(in srgb, var(--sys-surface-elevated) 85%, var(--sys-interactive-accent) 15%);
+  box-shadow: 0 0 12px var(--sys-interactive-accent);
+}
+
+/* Primary/action buttons should stand out */
+.theme-cyberpunk .MuiButton-root.MuiButton-contained,
+.theme-cyberpunk button[type="submit"]:not(.MuiButton-text) {
+  background: color-mix(in srgb, var(--sys-interactive-accent) 80%, var(--sys-surface-elevated) 20%);
+  color: var(--sys-text-inverse);
+  border-color: var(--sys-interactive-accent);
+}
+
+.theme-cyberpunk .MuiButton-root.MuiButton-contained:hover,
+.theme-cyberpunk button[type="submit"]:hover {
+  background: var(--sys-interactive-accent);
+  box-shadow: 0 0 16px var(--sys-interactive-accent);
+}
+
+/* IMPROVED: Scanline overlay for authentic cyberpunk aesthetic */
+.theme-cyberpunk::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.03) 0px,
+    transparent 1px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 3px
+  );
+  opacity: 0.12;
+}
+
+/* IMPROVED: Better card hover effects with neon edge lighting */
+.theme-cyberpunk .ui-card:hover,
+.theme-cyberpunk [data-ui="card"]:hover {
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--sys-interactive-accent) 42%, transparent),
+    inset 0 0 8px color-mix(in srgb, var(--sys-interactive-accent) 8%, transparent);
+  border-color: var(--sys-interactive-accent);
+  transform: translateY(-0.5px);
+  transition: all var(--theme-motion-medium) var(--theme-motion-easing);
+}
+
+/* IMPROVED: Glitch effect on primary headings (optional, subtle) */
+.theme-cyberpunk h1,
+.theme-cyberpunk h2,
+.theme-cyberpunk h3 {
+  position: relative;
+  font-family: var(--theme-font-display);
+}
+
+/* IMPROVED: Better focus rings for keyboard navigation */
+.theme-cyberpunk *:focus-visible {
+  outline: 2px solid var(--sys-interactive-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--sys-interactive-accent) 65%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-cyberpunk::before {
+    opacity: 0;
+  }
+
+  .theme-cyberpunk .ui-card:hover,
+  .theme-cyberpunk [data-ui="card"]:hover {
+    box-shadow: 0 0 8px color-mix(in srgb, var(--sys-interactive-accent) 26%, transparent);
+    transform: none;
+  }
 }

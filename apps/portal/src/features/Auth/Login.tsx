@@ -8,11 +8,8 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ErrorIcon from '@mui/icons-material/Error';
-import CheckIcon from '@mui/icons-material/Check';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import LoginIcon from '@mui/icons-material/Login';
-import GppMaybeIcon from '@mui/icons-material/GppMaybe';
-import { cn } from '../../lib/utils';
 import {
   Input,
   Label,
@@ -48,7 +45,7 @@ export function Login() {
     if (isLoading) return;
     
     try {
-      await login({ username, password });
+      await login({ username, password, rememberMe });
     } catch (err) {
       console.error('Login failed:', err);
     }
@@ -76,7 +73,7 @@ export function Login() {
                 <VerifiedUserIcon sx={{ fontSize: 32 }} />
               </div>
             </div>
-            <h1 className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">
+            <h1 className="mx-auto max-w-[30ch] text-2xl sm:text-3xl font-black tracking-tight uppercase leading-tight text-balance">
               {t('login.title')}
             </h1>
             <p className="text-sm text-muted-foreground font-medium">
@@ -114,13 +111,10 @@ export function Login() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between ml-1">
+                <div className="flex items-center ml-1">
                   <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest">
                     {t('login.password')}
                   </Label>
-                  <Button variant="link" className="text-[10px] font-black uppercase tracking-widest h-auto p-0 opacity-50 hover:opacity-100">
-                    {t('login.forgot_password')}
-                  </Button>
                 </div>
                 <div className="relative group">
                   <LockIcon sx={{ fontSize: 20 }} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
@@ -183,21 +177,6 @@ export function Login() {
                 </div>
                 <div className="absolute inset-0 bg-primary-foreground/10 translate-y-12 group-hover:translate-y-0 transition-transform duration-300" />
               </Button>
-
-              <div className="flex items-center gap-4 py-2">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                  {t('login.secure_access')}
-                </span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-
-              <div className="flex items-center justify-center gap-2 text-primary opacity-80">
-                <GppMaybeIcon sx={{ fontSize: 16 }} />
-                <span className="text-[10px] font-black uppercase tracking-widest">
-                  {t('login.protection_enabled')}
-                </span>
-              </div>
             </CardFooter>
           </form>
         </Card>

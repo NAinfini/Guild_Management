@@ -106,6 +106,19 @@ const mapStatsToDomain = (dto: WarMemberStatDTO): WarMemberStat => ({
     note: dto.note || undefined
 });
 
+const mapMemberStatToRequest = (data: WarMemberStat) => ({
+  userId: data.id,
+  kills: data.kills,
+  deaths: data.deaths,
+  assists: data.assists,
+  damage: data.damage,
+  healing: data.healing,
+  buildingDamage: data.building_damage,
+  damageTaken: data.damage_taken,
+  credits: data.credits,
+  note: data.note,
+});
+
 // ============================================================================
 // API Service
 // ============================================================================
@@ -244,20 +257,21 @@ export const warsAPI = {
   },
 
   updateMemberStats: async (warId: string, data: WarMemberStat, ifMatch?: string): Promise<void> => {
-    // Map domain -> DTO params
     await api.put(
       `/wars/history/${warId}/member-stats`,
       {
-      userId: data.id,
-      kills: data.kills,
-      deaths: data.deaths,
-      assists: data.assists,
-      damage: data.damage,
-      healing: data.healing,
-      buildingDamage: data.building_damage,
-      damageTaken: data.damage_taken,
-      credits: data.credits,
-      note: data.note,
+        stats: [mapMemberStatToRequest(data)],
+      },
+      undefined,
+      { headers: ifMatch ? { 'If-Match': ifMatch } : undefined }
+    );
+  },
+
+  updateMemberStatsBatch: async (warId: string, data: WarMemberStat[], ifMatch?: string): Promise<void> => {
+    await api.put(
+      `/wars/history/${warId}/member-stats`,
+      {
+        stats: data.map(mapMemberStatToRequest),
       },
       undefined,
       { headers: ifMatch ? { 'If-Match': ifMatch } : undefined }
@@ -294,10 +308,95 @@ export const warsAPI = {
   getAnalyticsData: async (params?: AnalyticsRequestParams): Promise<{ memberStats: any[]; perWarStats: any[]; teamStats: any[]; meta?: any }> => {
     const query = serializeAnalyticsQuery(params);
     const response = await typedAPI.wars.analytics<AnalyticsResponseDTO>({ query: query as any });
+
+    const toNumber = (value: unknown): number => {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const toNullableNumber = (value: unknown): number | null => {
+      if (value === null || value === undefined || value === '') return null;
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const memberStats = (response.memberStats || []).map((row: any) => ({
+      ...row,
+      user_id: toNumber(row.user_id),
+      wars_participated: toNumber(row.wars_participated),
+      total_kills: toNumber(row.total_kills),
+      total_deaths: toNumber(row.total_deaths),
+      total_assists: toNumber(row.total_assists),
+      total_damage: toNumber(row.total_damage),
+      total_healing: toNumber(row.total_healing),
+      total_building_damage: toNumber(row.total_building_damage),
+      total_damage_taken: toNumber(row.total_damage_taken),
+      total_credits: toNumber(row.total_credits),
+      avg_kills: toNumber(row.avg_kills),
+      avg_deaths: toNumber(row.avg_deaths),
+      avg_assists: toNumber(row.avg_assists),
+      avg_damage: toNumber(row.avg_damage),
+      avg_healing: toNumber(row.avg_healing),
+      avg_building_damage: toNumber(row.avg_building_damage),
+      avg_damage_taken: toNumber(row.avg_damage_taken),
+      avg_credits: toNumber(row.avg_credits),
+      kda_ratio: toNullableNumber(row.kda_ratio),
+      best_war_id: row.best_war_id === null || row.best_war_id === undefined ? undefined : toNumber(row.best_war_id),
+      best_war_value: toNullableNumber(row.best_war_value),
+    }));
+
+    const perWarStats = (response.perWarStats || []).map((row: any) => ({
+      ...row,
+      war_id: toNumber(row.war_id),
+      user_id: toNumber(row.user_id),
+      kills: toNullableNumber(row.kills),
+      deaths: toNullableNumber(row.deaths),
+      assists: toNullableNumber(row.assists),
+      damage: toNullableNumber(row.damage),
+      healing: toNullableNumber(row.healing),
+      building_damage: toNullableNumber(row.building_damage),
+      damage_taken: toNullableNumber(row.damage_taken),
+      credits: toNullableNumber(row.credits),
+      kda: toNullableNumber(row.kda),
+      raw_kills: toNullableNumber(row.raw_kills),
+      raw_deaths: toNullableNumber(row.raw_deaths),
+      raw_assists: toNullableNumber(row.raw_assists),
+      raw_damage: toNullableNumber(row.raw_damage),
+      raw_healing: toNullableNumber(row.raw_healing),
+      raw_building_damage: toNullableNumber(row.raw_building_damage),
+      raw_credits: toNullableNumber(row.raw_credits),
+      raw_kda: toNullableNumber(row.raw_kda),
+      normalization_factor: toNullableNumber(row.normalization_factor),
+      enemy_strength_index: toNullableNumber(row.enemy_strength_index),
+    }));
+
+    const teamStats = ((response as any).teamStats || []).map((row: any) => ({
+      ...row,
+      team_id: toNumber(row.team_id),
+      war_id: toNumber(row.war_id),
+      member_count: toNumber(row.member_count),
+      total_kills: toNumber(row.total_kills),
+      total_deaths: toNumber(row.total_deaths),
+      total_assists: toNumber(row.total_assists),
+      total_damage: toNumber(row.total_damage),
+      total_healing: toNumber(row.total_healing),
+      total_building_damage: toNumber(row.total_building_damage),
+      total_credits: toNumber(row.total_credits),
+      avg_kills: toNumber(row.avg_kills),
+      avg_deaths: toNumber(row.avg_deaths),
+      avg_assists: toNumber(row.avg_assists),
+      avg_damage: toNumber(row.avg_damage),
+      avg_healing: toNumber(row.avg_healing),
+      avg_building_damage: toNumber(row.avg_building_damage),
+      avg_credits: toNumber(row.avg_credits),
+      normalization_factor: toNullableNumber(row.normalization_factor),
+      enemy_strength_index: toNullableNumber(row.enemy_strength_index),
+    }));
+
     return {
-      memberStats: response.memberStats || [],
-      perWarStats: response.perWarStats || [],
-      teamStats: (response as any).teamStats || [],
+      memberStats,
+      perWarStats,
+      teamStats,
       meta: (response as any).meta,
     };
   },

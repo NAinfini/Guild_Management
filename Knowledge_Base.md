@@ -1,139 +1,138 @@
 # Knowledge Base
 
-## Must Follow Rules
-- Start every response with `\u4E3B\u4EBA`.
-- End every response with `\u597D\u4E86\u55B5`.
-- If a task is completed in one loop, record what worked about the implementation.
-- If a task is a bug fix (or had issues), record `issue`, `cause`, and `fix`; do not log routine work.
-- Merge overlapping knowledge and remove smaller duplicates.
-- Use relevant skills; if a needed skill is missing, use `Find Skills` and install it and MCP tools when available.
+## Concrete rules(DO NOT MODIFY)
+- Rules in this section must be followed
+- DO NOT EDIT THIS SECTION
+- Start every response with `主人`
+- End every response with `好了喵`
+- Use skills and mcp for each task; when a skill is missing, use `find-skills` and install what is needed.
+- Update repository-structure.md in docs/engineering folder when making changes to structural of the repo
 
-## Core Lessons Learned
+## Purpose
+- Keep this file as reusable engineering guidance, not a changelog.
+- Capture durable patterns that prevent regressions.
+- Prefer concise rules over historical narration.
 
-### Knowledge Base Hygiene
-**Learning:** Keep this file as reusable engineering guidance, not a changelog.
+## Maintenance Rules
+- Record bugfixes as `issue`, `cause`, and `fix pattern`.
+- For non-bug work, record only durable implementation patterns.
+- Merge overlapping entries into one canonical rule.
+- Remove stale process snapshots, completion counts, and status narration.
 
-**Fix Pattern:**
-1. Keep durable principles and prevention patterns only.
-2. Remove progress snapshots, completion counts, and status narration.
-3. Merge similar entries into one canonical rule.
+## Workflow Discipline
 
-### Rule Activation and Encoding Integrity
-**Learning:** When asked to follow Knowledge Base rules, apply them immediately and keep files UTF-8 clean.
+### Scope and Discovery
+- Pin scope before implementation.
+- Ask one targeted scoping question when intent is ambiguous.
+- For cross-page issues, inspect shared components/theme/runtime layers first.
 
-**Issue Pattern:** Response format drift or mojibake in instruction/localization files.
+### Encoding and Localization Integrity
+- Keep instruction and locale files UTF-8 clean.
+- Re-read key lines after edits to catch mojibake early.
+- Ensure keys exist in both `en` and `zh` for touched UI.
+- Replace hardcoded UI strings with `t(...)` keys.
+- Add regression tests for high-visibility localized labels.
 
-**Fix Pattern:**
-1. Re-read `Knowledge_Base.md` before responding when rule compliance is requested.
-2. Apply response format in the same turn.
-3. Save locale/knowledge files as UTF-8 and verify by re-reading key lines.
-4. If terminal encoding corrupts non-ASCII literals, patch via UTF-8-safe writer (or Unicode escapes) and verify output.
+### Verification Discipline
+- Prefer explicit tests for new behavior and regressions.
+- Keep assertions behavior-focused with stable mocks.
+- Verify with targeted suites first, then a broader regression command when risk is cross-cutting.
 
-### Scope and Discovery Discipline
-**Learning:** UI work quality improves when scope is pinned before implementation.
+## Theme Runtime Principles
 
-**Fix Pattern:**
-1. Ask one targeted scoping question when intent is ambiguous.
-2. When user selects an option, confirm briefly and proceed without re-asking.
-3. For audits/reviews, confirm exact file/feature scope first.
-4. When an issue spans multiple pages, trace shared components/theme overrides first.
+### Token and Architecture Rules
+- Use runtime token injection as the source of truth for semantic (`--sys-*`) and component (`--cmp-*`) variables.
+- Bridge utility token systems to active runtime palette consistently.
+- Apply token usage at primitive/component layer first so features inherit consistency.
+- Avoid hardcoded palette classes in feature UIs.
 
-### Localization Reliability
-**Issue:** Chinese mode showing English labels or mixed-language UI.
+### Motion and FX Governance
+- Scope motion/effects by component category, not wildcard selectors.
+- Keep one transform owner per state to avoid stacking artifacts.
+- Use reduced-motion-safe guards for CSS and JS-triggered effects.
+- Scale motion amplitude by intensity; do not increase duration with intensity.
+- For expensive theme state, preview on `onChange` and commit on `onChangeCommitted`.
 
-**Cause:** Missing locale keys, fallback to `defaultValue`, and hardcoded strings in components.
+### Ambient Rendering and Performance
+- Use layered scene composition (`scene shell`, semantic objects, post overlays) instead of monolithic loops.
+- Prefer demand-driven invalidation with sparse ambient ticks over continuous RAF loops.
+- Track diagnostics (`invalidations/sec`, `avg frame ms`, `max frame ms`) to keep idle cost predictable.
 
-**Fix Pattern:**
-1. Ensure required keys exist in both `en` and `zh` for target surfaces.
-2. Replace hardcoded UI strings with `t(...)` keys.
-3. For shared settings/theme primitives, never render preset `opt.label` directly; resolve `theme_menu.*` keys with `defaultValue` fallback.
-4. Localize status labels/chips too (for example `settings.active`).
-5. Add regression tests for high-visibility localized labels and key coverage.
-6. Include feature-specific filter labels in audits (for example history/archived filters).
+## Theme Identity Patterns
+- Minimalistic: restrained depth, low-amplitude drift, subtle grain/vignette only.
+- Neo-brutalism: high-contrast print stack, step-based impact, localized clunk feedback.
+- Cyberpunk: event-only glitch/chromatic bursts, strict reduced-motion suppression.
+- Steampunk: localized mechanical one-shots (lever recoil, gauge vibration), short settle windows.
+- Royal: sparse, low-frequency premium motion; keep identity via materials under reduced mode.
+- Chibi: playful short one-shots, event-only celebration effects.
+- Post-apocalyptic: texture-first grit identity, rare hazard cues, localized friction signatures.
 
-### Theme System and Token Architecture
-**Learning:** Runtime token-driven theming is required for consistency and fast switching.
+## Reduced Motion and Accessibility
+- Treat large drift, shake, flicker, and heavy glitch as Fancy FX and suppress in reduced mode.
+- Maintain deterministic reduced-profile markers and static fallback overlays per theme.
+- Preserve readability and contrast when motion signatures are disabled.
 
-**Fix Pattern:**
-1. Keep palette and visual specs in a single source of truth.
-2. Inject semantic (`--sys-*`) and component (`--cmp-*`) tokens at runtime.
-3. Bridge utility token systems (`--foreground`, `--primary`, etc.) to the active runtime palette.
-4. Apply token usage at primitive/component layer first so features inherit consistency.
-5. Avoid hardcoded palette classes in feature UIs.
+## Control Animation Discipline
+- Use contract-driven adapters with explicit states, one-shots, and settle timeouts.
+- Prevent idle/decorative infinite loops with watchdog checks.
+- Use theme animation maps and skin/material variants without duplicating control logic.
+- issue: Theme-scoped control signature tests can miss expected markers on first interaction.
+  cause: controls resolved active theme from document-level selectors during render before the mounted node was available.
+  fix pattern: initialize from document theme, then re-resolve in `useLayoutEffect` from mounted element scope via `closest('[data-theme]')`, keeping forwarded refs synchronized.
 
-### Theme Effects and Motion Control
-**Learning:** Theme personality must be scoped and composable, not global/noisy.
+## Hardening and Testing Patterns
+- Map each hardening objective to dedicated, named test artifacts.
+- Keep visual baselines centralized and reviewable.
+- Validate runtime motion resolution, FX gating, Fancy FX suppression, one-shot settle, and performance budgets.
 
-**Issue Pattern:** Cross-component hover bleed, double transforms, scrollbar artifacts, laggy motion.
+## Rollout and Operations
+- Treat rollout policy as runtime data, not compile-time assumptions.
+- Centralize rollout controls for theme allow-list, FX quality cap, and baseline-only fallback.
+- Expose runtime monitoring metadata on ambient/FX layers for QA and operations.
+- Keep an emergency baseline-only switch available throughout rollout.
 
-**Fix Pattern:**
-1. Scope motion/effects to component categories (`button`, `chip`, `card`, `input`, `nav`, `table`), not wildcard selectors.
-2. Keep one transform owner per state (avoid base + theme hover transform stacking).
-3. Use a shared ambient scene scaffold with per-theme render helpers.
-4. Keep effects overflow-safe (`contain: paint`, `overflow: clip/hidden`) and reduced-motion safe.
-5. Scale motion amplitude by intensity; do not increase duration with intensity.
-6. For sliders controlling expensive theme state, preview locally on `onChange` and commit on `onChangeCommitted`.
-7. Keep motif count/size data-driven for fast tuning.
-8. For cinematic quality, build per-theme scenes as layered composition (`scene shell + grid/HUD + semantic objects + noise/vignette`) rather than single-icon loops.
-9. For high-end ambient backgrounds, use a dedicated canvas layer with per-theme rendering schemes and keep DOM overlays (cursor rings, click bursts, labels) as a separate layer for clarity and maintainability.
+## UI Semantics and Component Integrity
+- Use semantic color mappings consistently for outcomes/status.
+- Ensure selected and active controls have explicit readable foreground/background tokens.
+- Keep disabled button readability by tuning disabled foreground/background tokens instead of relying on global opacity fades.
+- Keep shared primitives API-consistent and remove deprecated upstream props.
+- Add opt-out hooks in shared primitives for screen-specific layout needs.
+- Render theme-mode options with shared semantic icons (single resolver) instead of per-screen color blocks to keep selector affordances consistent across settings, studio, and navigation menus.
+- For shared accessibility CSS, avoid broad `[class*="..."]` selectors on primitives; scope to explicit hooks like `data-ui` or `.ui-*` to prevent styling nested framework internals.
 
-### Theme UX Semantics and Contrast
-**Learning:** Visual semantics must map clearly to meaning and preserve readability.
-
-**Fix Pattern:**
-1. Use semantic color mappings consistently (for example damage/tank/heal/status outcomes).
-2. Use high-contrast foreground tokens for status surfaces.
-3. Ensure selected/active controls have explicit readable foreground/background tokens.
-4. For charts, use valid concrete token formats (no mismatched wrappers like `hsl(var(--token))` when tokens are not HSL channels).
-
-### Account Menu and Settings Discoverability
-**Issue:** Missing Theme/Color/Language controls in some account menu branches.
-
-**Cause:** Inconsistent menu rendering between desktop/mobile/guest states.
-
-**Fix Pattern:**
-1. Keep Theme/Color/Language/Settings consistent across all account menu branches.
-2. Keep `Login` as additional guest action.
-3. Use submenu placement that avoids viewport-edge overlap.
-4. Add regression tests for desktop and mobile account-menu paths.
-
-### Component API and Layout Boundaries
-**Learning:** Shared UI primitives need API parity and clear ownership boundaries.
-
-**Fix Pattern:**
-1. Keep reusable blocks under shared `components` ownership.
-2. Extract shared components when reuse is stable and frequent.
-3. Preserve wrapper API behavior (`className` is data, not callable).
-4. Remove deprecated/unsupported props when upstream UI library APIs change.
-5. Add opt-out hooks in shared primitives (for example hide default close button) for screen-specific layout needs.
-6. Prefer token-based radius/surface styling over hardcoded values in composite containers.
-7. For tool workspaces, place global selectors (theme/color) in compact header dropdowns and keep content in a responsive 2-column grid to avoid half-empty canvases.
-
-### Data and Contract Reliability
-**Learning:** Frontend/backend alignment and parsing formats are common hidden failure points.
-
-**Fix Pattern:**
-1. Audit worker routes, shared contracts, and frontend usage together.
-2. Normalize date/time formats at API mapping boundaries before UI parsing.
-3. Gate privileged actions by permission at render level (not only icon/state level).
-
-### Quality Gates and Delivery Discipline
-**Learning:** Quality should be enforced incrementally with explicit gates.
-
-**Fix Pattern:**
-1. Use phased guardrails: strict-zero in migrated areas, baseline-capped in legacy areas.
-2. Promote baseline-managed folders to strict once they reach zero.
-3. Run accessibility contrast checks for default/hover/active/disabled states.
-4. Prefer existing dependencies before adding new ones.
-5. Keep null safety and explicit typing at data boundaries.
-6. Write behavior-focused tests with stable mocks and focused assertions.
-7. Apply mobile-first defaults and verify narrow viewports.
-8. Migrate currently rendered routes first for fastest user-visible impact.
+## Data and Contract Reliability
+- Audit backend routes, shared contracts, and frontend usage together.
+- For endpoint changes, update shared `ENDPOINTS` and worker `ROUTE_MAP` in the same change set to prevent contract/route drift.
+- Normalize date/time at mapping boundaries before rendering/parsing.
+- Gate privileged actions by permission at render level, not icon/state only.
+- issue: theme preferences sync logs repeated 404 errors and keeps retrying persistence.
+  cause: frontend expects `/auth/preferences`, but deployed backend can lag route availability.
+  fix pattern: treat 404 as capability absence for optional endpoints, disable remote sync for that session, and continue local-state behavior without warning spam.
+- issue: editor image upload handler exists but users still get URL prompt flow.
+  cause: upload callback was not wired into the editor toolbar interaction path.
+  fix pattern: expose explicit `onImageUpload` on shared editor primitives, prefer upload flow when provided, keep prompt fallback only when callback is absent, and add focused tests for both paths.
 
 ## Portable Rules
 1. Prefer token-driven styling over hardcoded palette utilities.
 2. Keep hooks unconditional and in stable render order.
-3. Use phased migrations with verification gates.
+3. Use phased migrations with explicit verification gates.
 4. Keep shared imports package-based instead of deep relative paths.
 5. Record principles and prevention patterns, not work logs.
 6. Derive next priorities from unchecked plan items first.
+
+## Event and Dashboard UI Patterns
+- Participant cards: keep fixed internal hierarchy (`name -> class/power pills -> action`), reserve right-side action space up front, and anchor icon-only actions at the top-right with consistent hit area.
+- Participant cards in dense grids: isolate destructive/action icons from metadata rows (separate row/column owner) so class/power pills cannot overlap with actions at narrow widths.
+- Participant card visuals: combine class-derived accent gradients with semantic surface/border tokens; avoid raw white/black text assumptions and derive readable text from event/theme tokens.
+- Dense stat panels (recent war): prioritize information compression with reduced typography scale, tabular numerals for metrics, and tighter spacing before introducing new visual effects.
+- Grid behavior for roster-style cards: prefer responsive stepped columns (`1/2/3/4/5`) and uniform card min-height to prevent jumpy layout across breakpoints.
+- Timeline markers: place `00:00` labels on the same baseline as the day timeline rail and avoid extra adjacent marker lines unless they encode additional meaning.
+
+## Member Card Theme Colors (2026-02-13)
+- Issue: Member cards used hardcoded colors (`GAME_CLASS_COLORS`) that didn't adapt to theme aesthetics, creating visual inconsistency (e.g., Cyberpunk had neon buttons but normal-colored cards).
+- Cause: `getClassBaseColor()` always returned static hex values regardless of active theme.
+- Fix pattern: Created CSS variable system (`_member-card-colors.css`) with 28 unique palettes (4 classes × 7 themes). Updated `getClassBaseColor()` to read `--member-card-{classType}` CSS variables with fallback to hardcoded colors. Zero component changes needed - colors update automatically via CSS cascade.
+- Architecture: Each theme defines 4 variables per class (main, bg, border, text) matching theme identity (e.g., Cyberpunk uses neon colors, Minimalistic uses muted tones, Chibi uses pastels).
+- Implementation: Single CSS import in `presets/index.css`, utility function reads CSS variables at runtime, WCAG AA compliant, zero performance cost.
+- Testing: Playwright test suite validates all 28 color combinations, CSS variable existence, fallback behavior, contrast ratios, and theme switching.
+- Documentation: `docs/MEMBER_CARD_THEME_COLORS.md` (technical guide), `docs/MEMBER_CARD_COLOR_REFERENCE.md` (quick reference), `docs/MEMBER_CARD_COLOR_IMPLEMENTATION_SUMMARY.md` (summary).

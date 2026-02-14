@@ -1,0 +1,541 @@
+/**
+ * Control Shape Unification
+ * =========================
+ * Ensures consistent border-radius and overflow handling
+ * across all controls and themes to prevent clipping issues.
+ *
+ * Rules:
+ * 1. Similar controls use consistent border-radius
+ * 2. Shadows are not clipped (use overflow: visible or inset shadows)
+ * 3. Container shapes match child shapes
+ * 4. Pill shapes use 999px, circular use 50%
+ * 5. Theme-specific radius overrides are respected
+ */
+
+/* ============================================
+   CONTROL SHAPE DEFINITIONS
+   ============================================ */
+
+:root {
+  /* Base shape radii */
+  --shape-none: 0;
+  --shape-sm: 4px;
+  --shape-md: 8px;
+  --shape-lg: 12px;
+  --shape-xl: 16px;
+  --shape-pill: 999px;
+  --shape-circle: 50%;
+
+  /* Control-specific shapes (defaults) */
+  --shape-button: var(--cmp-button-radius, var(--shape-md));
+  --shape-input: var(--cmp-input-radius, var(--shape-md));
+  --shape-card: var(--cmp-card-radius, var(--shape-lg));
+  --shape-dialog: var(--cmp-dialog-radius, var(--shape-xl));
+  --shape-chip: var(--shape-pill);
+  --shape-icon-button: var(--shape-circle);
+  --shape-checkbox: var(--shape-sm);
+  --shape-radio: var(--shape-circle);
+  --shape-toggle: var(--shape-pill);
+  --shape-slider-thumb: var(--shape-circle);
+  --shape-tab: var(--shape-md);
+  --shape-tooltip: var(--shape-md);
+}
+
+/* ============================================
+   OVERFLOW & CLIPPING MANAGEMENT
+   ============================================ */
+
+/**
+ * Default: Allow overflow for shadows
+ * Only clip when necessary (e.g., animations, effects)
+ */
+
+.ui-button,
+.ui-card,
+.ui-input,
+.ui-chip,
+.ui-tab,
+[data-ui="button"],
+[data-ui="card"],
+[data-ui="input"],
+[data-ui="chip"],
+[data-ui="tab"] {
+  /* Allow shadows to render properly */
+  overflow: visible;
+  /* Ensure proper bounds for effects */
+  position: relative;
+}
+
+/**
+ * Containers that need clipping for visual effects
+ * Use overflow:clip for better performance than hidden
+ */
+
+[data-clip-content="true"],
+[data-theme-signature] {
+  overflow: clip;
+}
+
+/**
+ * Special case: Steampunk steam effects need containment
+ * Use pseudo-element for effect while keeping overflow visible on parent
+ */
+
+.theme-steampunk :is(.ui-button, .ui-card, .ui-nav, .control)::before {
+  overflow: clip; /* Clip the steam effect, not the parent */
+}
+
+.theme-steampunk :is(.ui-button, .ui-chip, .ui-card, .ui-input, .ui-table, .ui-nav, .control) {
+  overflow: visible !important; /* Override - let shadows render */
+}
+
+/* ============================================
+   SHAPE CONSISTENCY BY CONTROL TYPE
+   ============================================ */
+
+/**
+ * Buttons: Consistent radius from theme or default
+ */
+
+.ui-button,
+button:not(.MuiIconButton-root),
+.MuiButton-root:not(.MuiIconButton-root),
+[data-ui="button"] {
+  border-radius: var(--shape-button) !important;
+}
+
+/**
+ * Icon Buttons: Always circular
+ * Exception: Square icon buttons (e.g., kick/remove buttons in cards)
+ */
+
+.ui-icon-button:not([data-ui="square-icon-button"]),
+.MuiIconButton-root:not([data-ui="square-icon-button"]),
+button[aria-label*="icon"]:not([data-ui="square-icon-button"]),
+button[aria-label*="menu"]:not([data-ui="square-icon-button"]),
+button[aria-label*="close"]:not([data-ui="square-icon-button"]),
+[data-ui="icon-button"]:not([data-ui="square-icon-button"]) {
+  border-radius: var(--shape-icon-button) !important;
+  /* Ensure aspect ratio for perfect circle */
+  aspect-ratio: 1 / 1;
+}
+
+/**
+ * Square Icon Buttons: Small action buttons (kick, remove, etc.)
+ */
+
+[data-ui="square-icon-button"] {
+  border-radius: var(--shape-sm) !important;
+  aspect-ratio: unset; /* Allow flexible dimensions */
+}
+
+/**
+ * Input Fields: Consistent with button radius
+ */
+
+.ui-input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+textarea,
+.MuiOutlinedInput-root,
+.MuiInputBase-root,
+[data-ui="input"] {
+  border-radius: var(--shape-input) !important;
+}
+
+/**
+ * Cards: Larger radius for hierarchy
+ */
+
+.ui-card,
+.card,
+.MuiCard-root,
+.MuiPaper-root,
+[data-ui="card"] {
+  border-radius: var(--shape-card) !important;
+}
+
+/**
+ * Dialogs/Modals: Largest radius
+ */
+
+.ui-dialog,
+.MuiDialog-paper,
+[role="dialog"],
+[data-ui="dialog"] {
+  border-radius: var(--shape-dialog) !important;
+}
+
+/**
+ * Chips/Badges: Pill shape
+ */
+
+.ui-chip,
+.MuiChip-root,
+.badge,
+[data-ui="chip"],
+[data-ui="badge"] {
+  border-radius: var(--shape-chip) !important;
+}
+
+/**
+ * Checkboxes: Small rounded square
+ */
+
+.ui-checkbox,
+.MuiCheckbox-root .MuiSvgIcon-root,
+input[type="checkbox"],
+[data-ui="checkbox"] {
+  border-radius: var(--shape-checkbox) !important;
+}
+
+/**
+ * Radio Buttons: Always circular
+ */
+
+.ui-radio,
+.MuiRadio-root .MuiSvgIcon-root,
+input[type="radio"],
+[data-ui="radio"] {
+  border-radius: var(--shape-radio) !important;
+}
+
+/**
+ * Toggle/Switch Track: Pill shape
+ */
+
+.ui-toggle,
+.MuiSwitch-track,
+[data-ui="toggle"] {
+  border-radius: var(--shape-toggle) !important;
+}
+
+/**
+ * Toggle/Switch Thumb: Circular
+ */
+
+.MuiSwitch-thumb,
+[data-ui="toggle-thumb"] {
+  border-radius: var(--shape-circle) !important;
+}
+
+/**
+ * Slider Thumb: Circular
+ */
+
+.MuiSlider-thumb,
+[data-ui="slider-thumb"] {
+  border-radius: var(--shape-slider-thumb) !important;
+}
+
+/**
+ * Tabs: Match button radius
+ */
+
+.ui-tab,
+.MuiTab-root,
+[data-ui="tab"] {
+  border-radius: var(--shape-tab) !important;
+}
+
+/**
+ * Tooltips: Small radius
+ */
+
+.ui-tooltip,
+.MuiTooltip-tooltip,
+[data-ui="tooltip"] {
+  border-radius: var(--shape-tooltip) !important;
+}
+
+/* ============================================
+   CONTAINER-CHILD SHAPE MATCHING
+   ============================================ */
+
+/**
+ * Ensure children don't extend beyond rounded parents
+ * Method: Match child radius to parent or use smaller
+ */
+
+/* Card images/media */
+.ui-card > img:first-child,
+.ui-card > video:first-child,
+.MuiCard-root > .MuiCardMedia-root {
+  border-radius: var(--shape-card) var(--shape-card) 0 0;
+}
+
+.ui-card > img:last-child,
+.ui-card > video:last-child {
+  border-radius: 0 0 var(--shape-card) var(--shape-card);
+}
+
+/* Button icons */
+.ui-button > .MuiSvgIcon-root,
+button > svg {
+  /* Icons inside buttons don't need rounding */
+  border-radius: 0;
+}
+
+/* Input adornments */
+.MuiOutlinedInput-root .MuiInputAdornment-root {
+  /* Match input radius */
+  border-radius: inherit;
+}
+
+/* Chip delete icon */
+.MuiChip-root .MuiChip-deleteIcon {
+  border-radius: var(--shape-circle);
+}
+
+/* ============================================
+   THEME-SPECIFIC SHAPE OVERRIDES
+   ============================================ */
+
+/**
+ * Neo-Brutalism: Sharp corners mostly, slight rounding
+ */
+
+[data-theme="neo-brutalism"] {
+  --shape-button: 8px;
+  --shape-input: 8px;
+  --shape-card: 10px;
+  --shape-tab: 8px;
+}
+
+/**
+ * Minimalistic: Gentle rounding
+ */
+
+[data-theme="minimalistic"] {
+  --shape-button: 8px;
+  --shape-input: 8px;
+  --shape-card: 10px;
+  --shape-tab: 6px;
+}
+
+/**
+ * Cyberpunk: Sharp, minimal rounding
+ */
+
+[data-theme="cyberpunk"] {
+  --shape-button: 2px;
+  --shape-input: 2px;
+  --shape-card: 2px;
+  --shape-tab: 2px;
+  --shape-checkbox: 0;
+}
+
+/**
+ * Royal: Moderate, elegant rounding
+ */
+
+[data-theme="royal"] {
+  --shape-button: 4px;
+  --shape-input: 6px;
+  --shape-card: 8px;
+  --shape-tab: 4px;
+}
+
+/**
+ * Chibi: Maximum rounding, playful
+ */
+
+[data-theme="chibi"] {
+  --shape-button: 10px;
+  --shape-input: 10px;
+  --shape-card: 10px;
+  --shape-tab: 10px;
+  --shape-checkbox: 8px;
+}
+
+/**
+ * Steampunk: Moderate rounding
+ */
+
+[data-theme="steampunk"] {
+  --shape-button: 4px;
+  --shape-input: 3px;
+  --shape-card: 6px;
+  --shape-tab: 4px;
+}
+
+/**
+ * Post-Apocalyptic: Sharp, distressed
+ */
+
+[data-theme="post-apocalyptic"] {
+  --shape-button: 2px;
+  --shape-input: 2px;
+  --shape-card: 3px;
+  --shape-tab: 2px;
+  --shape-checkbox: 0;
+}
+
+/* ============================================
+   SHADOW CLIPPING FIX
+   ============================================ */
+
+/**
+ * For controls with box-shadow, ensure overflow doesn't clip
+ */
+
+.ui-button:not([data-clip-content="true"]),
+.ui-card:not([data-clip-content="true"]),
+[data-ui="button"]:not([data-clip-content="true"]),
+[data-ui="card"]:not([data-clip-content="true"]) {
+  overflow: visible;
+}
+
+/**
+ * For themes using inset shadows, clipping is OK
+ */
+
+[data-theme="steampunk"] .ui-button,
+[data-theme="steampunk"] .ui-card {
+  /* Steampunk uses inset shadows, safe to clip */
+  overflow: visible; /* Still visible to allow external glow if needed */
+}
+
+/* ============================================
+   SPECIAL CASES & EDGE CASES
+   ============================================ */
+
+/**
+ * Dropdown menus: Match trigger button shape at top
+ */
+
+.MuiMenu-paper,
+.MuiPopover-paper,
+[role="menu"] {
+  border-radius: var(--shape-md) !important;
+}
+
+/**
+ * Select dropdowns: Match input shape
+ */
+
+.MuiSelect-select {
+  border-radius: inherit !important;
+}
+
+/**
+ * Avatar: Always circular
+ */
+
+.MuiAvatar-root,
+[data-ui="avatar"] {
+  border-radius: var(--shape-circle) !important;
+}
+
+/**
+ * Progress bars: Pill or none
+ */
+
+.MuiLinearProgress-root {
+  border-radius: var(--shape-pill) !important;
+}
+
+.MuiLinearProgress-bar {
+  border-radius: inherit !important;
+}
+
+/**
+ * Skeleton loaders: Match content shape
+ */
+
+.MuiSkeleton-root {
+  border-radius: inherit !important;
+}
+
+/* ============================================
+   DEBUG MODE (Optional)
+   ============================================ */
+
+/**
+ * Add visual debugging for shape issues
+ * Enable with data-debug-shapes="true" on <html>
+ */
+
+[data-debug-shapes="true"] * {
+  outline: 1px dashed rgba(255, 0, 0, 0.3);
+}
+
+[data-debug-shapes="true"] *[style*="overflow: hidden"],
+[data-debug-shapes="true"] *[style*="overflow:hidden"] {
+  outline: 2px solid red !important;
+}
+
+[data-debug-shapes="true"] *[style*="border-radius"],
+[data-debug-shapes="true"] *[style*="borderRadius"] {
+  outline: 2px solid blue !important;
+}
+
+/* ============================================
+   ACCESSIBILITY: MAINTAIN INTERACTION AREAS
+   ============================================ */
+
+/**
+ * Ensure clickable areas match visual bounds
+ * No clipping that would reduce hit targets
+ */
+
+.ui-button,
+.ui-icon-button,
+button,
+[role="button"] {
+  /* Minimum touch target: 44x44px per WCAG */
+  min-width: 44px;
+  min-height: 44px;
+
+  /* Ensure padding doesn't get clipped */
+  box-sizing: border-box;
+}
+
+/* Small buttons/icons can use padding to reach minimum */
+.ui-icon-button.size-small,
+.MuiIconButton-sizeSmall {
+  padding: 8px;
+}
+
+/* ============================================
+   RESPONSIVE SHAPE ADJUSTMENTS
+   ============================================ */
+
+/**
+ * On mobile, slightly reduce radius for more screen space
+ */
+
+@media (max-width: 640px) {
+  :root {
+    --shape-md: 6px;
+    --shape-lg: 10px;
+    --shape-xl: 12px;
+  }
+}
+
+/**
+ * On large screens, can afford more generous rounding
+ */
+
+@media (min-width: 1920px) {
+  :root {
+    --shape-md: 10px;
+    --shape-lg: 14px;
+    --shape-xl: 18px;
+  }
+}
+
+/* ============================================
+   PRINT STYLES: SIMPLIFY SHAPES
+   ============================================ */
+
+@media print {
+  * {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+}

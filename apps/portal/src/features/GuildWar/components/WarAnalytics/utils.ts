@@ -40,7 +40,9 @@ export function transformForTimeline(
   );
 
   const data = sortedWars.map(war => {
-    const stats = perWarStats.find(s => s.war_id === war.war_id);
+    const stats = perWarStats.find(
+      (s) => Number(s.war_id) === Number(war.war_id)
+    );
 
     const point: TimelineDataPoint = {
       war_id: war.war_id,
@@ -92,7 +94,7 @@ export function transformForCompare(
   const selectedMetrics: MetricType[] = metrics.length > 0 ? metrics : ['damage'];
 
   return sortedWars.map(war => {
-    const warMeta = perWarStats.find((s) => s.war_id === war.war_id);
+    const warMeta = perWarStats.find((s) => Number(s.war_id) === Number(war.war_id));
     const point: CompareDataPoint = {
       war_id: war.war_id,
       war_date: war.war_date,
@@ -108,7 +110,9 @@ export function transformForCompare(
 
     // Add data for each user
     userIds.forEach(userId => {
-      const stats = perWarStats.find(s => s.war_id === war.war_id && s.user_id === userId);
+      const stats = perWarStats.find(
+        (s) => Number(s.war_id) === Number(war.war_id) && Number(s.user_id) === Number(userId)
+      );
       selectedMetrics.forEach((metric) => {
         point[`user_${userId}__${metric}`] = stats?.[metric] ?? null;
         const rawMetricKey = `raw_${metric}` as keyof PerWarMemberStats;
@@ -202,7 +206,9 @@ export function transformForTeams(
     };
 
     teamIds.forEach(teamId => {
-      const stats = teamStats.find(s => s.war_id === war.war_id && s.team_id === teamId);
+      const stats = teamStats.find(
+        (s) => Number(s.war_id) === Number(war.war_id) && Number(s.team_id) === Number(teamId)
+      );
       if (stats) {
         const key = `team_${teamId}`;
         point[key] = showTotal

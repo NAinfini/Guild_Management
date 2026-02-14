@@ -21,6 +21,7 @@ import {
   TextField,
   MenuItem,
   Alert,
+  useTheme,
 } from '@mui/material';
 import { TableSkeleton } from '@/components';
 import {
@@ -42,6 +43,11 @@ const ACTION_COLORS: Record<string, 'success' | 'error' | 'warning' | 'info' | '
 
 export function AuditLogs() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const cardToken = theme.custom?.components?.card;
+  const tableToken = theme.custom?.components?.table;
+  const inputToken = theme.custom?.components?.input;
+  const buttonToken = theme.custom?.components?.button;
   const [entityType, setEntityType] = useState<string>('');
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [limit] = useState(50);
@@ -64,7 +70,25 @@ export function AuditLogs() {
   };
 
   return (
-    <Box>
+    <Box
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          bgcolor: inputToken?.bg || 'background.paper',
+          color: inputToken?.text || 'text.primary',
+          '& fieldset': { borderColor: inputToken?.border || 'divider' },
+          '&:hover fieldset': { borderColor: inputToken?.focusBorder || 'primary.main' },
+          '&.Mui-focused fieldset': { borderColor: inputToken?.focusBorder || 'primary.main' },
+        },
+        '& .MuiButton-outlined': {
+          borderColor: buttonToken?.border || 'divider',
+          color: buttonToken?.text || 'text.primary',
+          '&:hover': {
+            borderColor: buttonToken?.border || 'divider',
+            bgcolor: buttonToken?.hoverBg || 'action.hover',
+          },
+        },
+      }}
+    >
       <Stack direction="row" spacing={2} mb={3} alignItems="center">
         <TextField
           select
@@ -101,15 +125,27 @@ export function AuditLogs() {
         </Alert>
       )}
 
-      <Card>
+      <Card
+        sx={{
+          bgcolor: cardToken?.bg || 'background.paper',
+          border: '1px solid',
+          borderColor: cardToken?.border || 'divider',
+          boxShadow: cardToken?.shadow || 'none',
+        }}
+      >
         <CardContent sx={{ p: 0 }}>
           {isLoading ? (
             <TableSkeleton rows={10} cols={6} />
           ) : (
             <>
-              <TableContainer>
+              <TableContainer
+                sx={{
+                  borderTop: '1px solid',
+                  borderColor: tableToken?.border || 'divider',
+                }}
+              >
                 <Table size="small">
-                  <TableHead>
+                  <TableHead sx={{ bgcolor: tableToken?.headerBg || 'action.hover' }}>
                     <TableRow>
                       <TableCell>{t('admin.label_timestamp')}</TableCell>
                       <TableCell>{t('admin.label_actor')}</TableCell>
@@ -121,7 +157,14 @@ export function AuditLogs() {
                   </TableHead>
                   <TableBody>
                     {data?.logs.map((log: any) => (
-                      <TableRow key={log.id} hover>
+                      <TableRow
+                        key={log.id}
+                        hover
+                        sx={{
+                          bgcolor: tableToken?.rowBg || 'transparent',
+                          '&:hover': { bgcolor: tableToken?.rowHoverBg || 'action.hover' },
+                        }}
+                      >
                         <TableCell>
                           <Typography variant="caption" fontFamily="monospace">
                             {formatDateTime(log.timestamp)}
@@ -169,7 +212,16 @@ export function AuditLogs() {
                 </Box>
               )}
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, borderTop: 1, borderColor: 'divider' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  borderTop: 1,
+                  borderColor: tableToken?.border || 'divider',
+                  bgcolor: tableToken?.headerBg || 'transparent',
+                }}
+              >
                 <Button
                   size="small"
                   startIcon={<ChevronLeftIcon sx={{ fontSize: 16 }} />}

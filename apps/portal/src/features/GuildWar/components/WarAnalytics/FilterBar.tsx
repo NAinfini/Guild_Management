@@ -10,7 +10,7 @@
  * - Rankings/Teams mode-specific controls
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import PeopleIcon from '@mui/icons-material/People';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -74,7 +74,7 @@ interface ModeConfig {
   id: AnalyticsMode;
   labelKey: string;
   descriptionKey: string;
-  icon: React.ElementType;
+  icon: React.ElementType<{ sx?: { fontSize?: number } }>;
 }
 
 const MODES: ModeConfig[] = [
@@ -97,6 +97,29 @@ const MODES: ModeConfig[] = [
     icon: ShieldIcon,
   },
 ];
+
+const ANALYTICS_SELECTED_ROW_STYLE: CSSProperties = {
+  backgroundColor: 'color-mix(in srgb, var(--color-status-success-bg) 76%, transparent)',
+  border: '1px solid color-mix(in srgb, var(--color-status-success) 45%, transparent)',
+};
+
+const ANALYTICS_SELECTED_BADGE_STYLE: CSSProperties = {
+  backgroundColor: 'color-mix(in srgb, var(--color-status-success-bg) 78%, transparent)',
+  borderColor: 'color-mix(in srgb, var(--color-status-success) 42%, transparent)',
+  color: 'var(--color-status-success-fg)',
+};
+
+const ANALYTICS_SWITCH_ON_BADGE_STYLE: CSSProperties = {
+  backgroundColor: 'color-mix(in srgb, var(--color-status-success-bg) 78%, transparent)',
+  borderColor: 'color-mix(in srgb, var(--color-status-success) 45%, transparent)',
+  color: 'var(--color-status-success-fg)',
+};
+
+const ANALYTICS_CHECKBOX_SELECTED_SX = {
+  '&.Mui-checked': {
+    color: 'var(--color-status-success)',
+  },
+};
 
 // ============================================================================
 // Main Component
@@ -168,14 +191,14 @@ export function FilterBar({ wars, members = [], isLoading = false }: FilterBarPr
       <div className="space-y-4">
         {/* Mode Tabs */}
         <Tabs value={filters.mode} onValueChange={handleModeChange} className="w-full">
-          <TabsList className="w-full justify-start h-auto p-1 bg-muted/50">
+          <TabsList className="w-full justify-start h-auto p-1 bg-muted/50 !rounded-full">
             {MODES.map((mode) => {
               const Icon = mode.icon;
               return (
                 <TabsTrigger
                   key={mode.id}
                   value={mode.id}
-                  className="flex-1 data-[state=active]:bg-background data-[state=active]:shadow-sm py-2"
+                  className="flex-1 !rounded-full data-[state=active]:bg-background data-[state=active]:shadow-sm py-2"
                 >
                   <div className="flex items-center gap-2">
                     <Icon sx={{ fontSize: 16 }} />
@@ -212,6 +235,13 @@ export function FilterBar({ wars, members = [], isLoading = false }: FilterBarPr
               <Label htmlFor="participation-only" className="cursor-pointer text-xs font-medium">
                 {t('guild_war.analytics_participated_only')}
               </Label>
+              <Badge
+                variant={filters.participationOnly ? 'secondary' : 'outline'}
+                className="h-5 px-1.5 text-[10px]"
+                style={filters.participationOnly ? ANALYTICS_SWITCH_ON_BADGE_STYLE : undefined}
+              >
+                {filters.participationOnly ? t('common.on') : t('common.off')}
+              </Badge>
             </div>
 
             <div className="h-4 w-px bg-border" />
@@ -225,6 +255,25 @@ export function FilterBar({ wars, members = [], isLoading = false }: FilterBarPr
               <Label htmlFor="opponent-normalized" className="cursor-pointer text-xs font-medium">
                 {t('guild_war.analytics_opponent_normalized')}
               </Label>
+              <Badge
+                variant={filters.opponentNormalized ? 'secondary' : 'outline'}
+                className="h-5 px-1.5 text-[10px]"
+                style={filters.opponentNormalized ? ANALYTICS_SWITCH_ON_BADGE_STYLE : undefined}
+              >
+                {filters.opponentNormalized ? t('common.on') : t('common.off')}
+              </Badge>
+              {canManageFormula && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 min-w-8 rounded-md p-0"
+                  onClick={() => setFormulaEditorOpen(true)}
+                  title={t('guild_war.analytics_formula_editor_title')}
+                  aria-label={t('guild_war.analytics_formula_editor_title')}
+                >
+                  <SettingsIcon sx={{ fontSize: 16 }} />
+                </Button>
+              )}
             </div>
           </div>
 
@@ -352,16 +401,6 @@ export function FilterBar({ wars, members = [], isLoading = false }: FilterBarPr
               {t('common.reset')}
             </Button>
 
-            {canManageFormula && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setFormulaEditorOpen(true)}
-                title={t('guild_war.analytics_formula_editor_title')}
-              >
-                <SettingsIcon sx={{ fontSize: 16 }} />
-              </Button>
-            )}
           </div>
 
         </div>
@@ -369,14 +408,11 @@ export function FilterBar({ wars, members = [], isLoading = false }: FilterBarPr
 
       <MetricFormulaEditor
         open={formulaEditorOpen}
-        initialWeights={filters.normalizationWeights}
         onClose={() => setFormulaEditorOpen(false)}
-        onSave={({ weights }) => {
+        onSave={(weights) => {
           updateFilters({ normalizationWeights: weights });
           setFormulaEditorOpen(false);
         }}
-        // Add required props if MetricFormulaEditor expects them
-        // Assuming defaults handle missing logic for now as simplified in rewrite
       />
     </Card>
   );
@@ -527,13 +563,16 @@ export function WarMultiSelector({ wars, selected, onChange, isLoading }: WarMul
                     "flex items-start space-x-2 px-3 py-2 cursor-pointer hover:bg-accent transition-colors",
                     isSelected && "bg-accent/50"
                   )}
+                  style={isSelected ? ANALYTICS_SELECTED_ROW_STYLE : undefined}
                   onClick={() => handleToggle(war.war_id)}
                 >
                   <Checkbox
                     id={`war-${war.war_id}`}
                     checked={isSelected}
                     onChange={() => handleToggle(war.war_id)}
+                    onClick={(event) => event.stopPropagation()}
                     className="mt-1"
+                    sx={isSelected ? ANALYTICS_CHECKBOX_SELECTED_SX : undefined}
                   />
                   <div className="flex-1 space-y-1">
                     <Label
@@ -602,7 +641,12 @@ function MetricMultiSelector({
            <div className="flex gap-1 overflow-hidden">
               {selected.length > 0 ? (
                  selected.slice(0, 2).map(m => (
-                    <Badge key={m} variant="secondary" className="px-1 py-0 h-5 text-[10px]">
+                    <Badge
+                      key={m}
+                      variant="secondary"
+                      className="px-1 py-0 h-5 text-[10px]"
+                      style={ANALYTICS_SELECTED_BADGE_STYLE}
+                    >
                       {formatMetricName(m)}
                     </Badge>
                  ))
@@ -626,10 +670,19 @@ function MetricMultiSelector({
                return (
                   <div 
                     key={metric}
-                    className="flex items-center space-x-2 p-2 hover:bg-accent rounded-sm cursor-pointer"
+                    className={cn(
+                      "flex items-center space-x-2 p-2 hover:bg-accent rounded-sm cursor-pointer border border-transparent",
+                      isSelected && "bg-accent/50"
+                    )}
+                    style={isSelected ? ANALYTICS_SELECTED_ROW_STYLE : undefined}
                     onClick={() => onChange(metric)}
                   >
-                     <Checkbox checked={isSelected} id={`metric-${metric}`} />
+                     <Checkbox
+                       checked={isSelected}
+                       id={`metric-${metric}`}
+                       onClick={(event) => event.stopPropagation()}
+                       sx={isSelected ? ANALYTICS_CHECKBOX_SELECTED_SX : undefined}
+                     />
                      <Label htmlFor={`metric-${metric}`} className="flex-1 cursor-pointer">
                         {formatMetricName(metric)}
                      </Label>

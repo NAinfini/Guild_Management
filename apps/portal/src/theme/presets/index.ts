@@ -9,9 +9,7 @@ export type { ThemeMode, ThemeVisualSpec } from '../tokens';
 
 export { THEME_VISUAL_SPEC_LIST };
 
-// Export compatibility aliases
-export const THEME_PRESETS = THEME_VISUAL_SPECS;
-export const DEFAULT_THEME_MODE: ThemeMode = THEME_VISUAL_SPEC_LIST[0]?.id as ThemeMode || ('system' as ThemeMode);
+export const DEFAULT_THEME_MODE: ThemeMode = THEME_VISUAL_SPEC_LIST[0]?.id ?? 'neo-brutalism';
 
 export const THEME_IDS = THEME_VISUAL_SPEC_LIST.map((p) => p.id);
 
@@ -29,8 +27,7 @@ export function getThemeVisualSpec(mode: ThemeMode): ThemeVisualSpec {
  */
 export function getThemeOptions(mode: ThemeMode): ThemeOptions {
   const spec = getThemeVisualSpec(mode);
-  const usesCanvasFxProfile = spec.capabilities.backgroundMode === 'canvas';
-  const buttonTextTransform = usesCanvasFxProfile ? 'uppercase' : 'none';
+  const buttonTextTransform = 'none';
 
   return {
     typography: {
@@ -52,19 +49,11 @@ export function getThemeOptions(mode: ThemeMode): ThemeOptions {
     components: {
       MuiButton: {
         styleOverrides: {
-          root: ({ theme }) => ({
+          root: {
             borderRadius: spec.shape.buttonRadius,
             fontWeight: 600,
             textTransform: buttonTextTransform,
-            ...(usesCanvasFxProfile && {
-                clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)',
-                borderLeft: '3px solid var(--color-accent-primary)',
-                '&:hover': {
-                  animation: 'cyberpunk-glitch 0.2s steps(2) 1',
-                  boxShadow: 'none',
-                },
-            }),
-          }),
+          },
         },
       },
       MuiCard: {

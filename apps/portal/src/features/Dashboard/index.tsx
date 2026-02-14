@@ -26,10 +26,10 @@ import { Link } from '@tanstack/react-router';
 import { parseISO, isAfter, isValid, isBefore } from 'date-fns';
 import { Tooltip, IconButton } from '@mui/material';
 
-import { IntelFeed } from './components/IntelFeed';
+import { Notifications } from './components/Notifications';
 import { RecentWars } from './components/RecentWars';
 import { UpcomingEvents } from './components/UpcomingEvents';
-import { MySignups } from './components/MySignups';
+import { Timeline } from './components/Timeline';
 
 export function Dashboard() {
   const { t } = useTranslation();
@@ -62,15 +62,15 @@ export function Dashboard() {
   }, [t, setPageTitle]);
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 relative min-h-screen overflow-x-hidden">
+    <div className="flex-1 space-y-5 p-3 md:p-5 pt-4 relative min-h-screen overflow-x-hidden">
       {/* Main Grid: 2 Columns */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,460px)] xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,500px)]">
         
         {/* Left Column: My Signups + Upcoming Events */}
         <div className="flex flex-col gap-6 min-w-0">
-            {/* My Signups Timeline */}
+            {/* Timeline */}
             <div className="h-[280px] shrink-0">
-                <MySignups events={events} userId={currentUser?.id || ''} />
+                <Timeline events={events} userId={currentUser?.id || ''} />
             </div>
             
             {/* Upcoming Events (Detailed) */}
@@ -81,9 +81,9 @@ export function Dashboard() {
 
         {/* Right Column: Sidebar (Notifications, Stats, History) */}
         <div className="flex flex-col gap-6 lg:justify-self-end w-full">
-           {/* Notifications / Intel Feed */}
+           {/* Notifications */}
            <div className="h-[280px] shrink-0">
-               <IntelFeed announcements={announcements} newMembers={newMembers} recentEvents={recentEvents} />
+               <Notifications announcements={announcements} newMembers={newMembers} recentEvents={recentEvents} />
            </div>
 
            {/* War History - Last 4 Wars */}

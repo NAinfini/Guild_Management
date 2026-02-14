@@ -200,11 +200,23 @@ export function getCookieValue(request: Request, name: string): string | null {
   return cookie.substring(name.length + 1);
 }
 
-export function setSessionCookie(response: Response, sessionId: string, maxAge: number): Response {
+export function setSessionCookie(response: Response, sessionId: string, maxAge?: number): Response {
   const newResponse = new Response(response.body, response);
+  const cookieParts = [
+    `session_id=${sessionId}`,
+    'HttpOnly',
+    'Secure',
+    'SameSite=None',
+    'Path=/',
+  ];
+
+  if (typeof maxAge === 'number' && Number.isFinite(maxAge) && maxAge > 0) {
+    cookieParts.push(`Max-Age=${Math.floor(maxAge)}`);
+  }
+
   newResponse.headers.set(
     'Set-Cookie',
-    `session_id=${sessionId}; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=${maxAge}`
+    cookieParts.join('; ')
   );
   return newResponse;
 }

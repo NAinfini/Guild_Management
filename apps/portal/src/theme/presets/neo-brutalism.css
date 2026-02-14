@@ -4,12 +4,12 @@
   --theme-font-body: 'Inter', sans-serif;
   --theme-letter-spacing: -0.01em;
   
-  /* Structure - Refined for "Modern" Neo-Brutalism (Neubrutalism) */
-  --theme-border-width: 2px;
-  --theme-border-radius: 8px; /* Slightly rounded as per images */
+  /* Structure - IMPROVED: More authentic brutalism with sharper edges */
+  --theme-border-width: 3px;
+  --theme-border-radius: 4px; /* Reduced for more brutalist feel */
   --theme-border-style: solid;
-  
-  /* Depth & Shadows */
+
+  /* Depth & Shadows - IMPROVED: Offset shadows for better alignment */
   --theme-shadow-sm: 2px 2px 0px currentColor;
   --theme-shadow-md: 4px 4px 0px currentColor;
   --theme-shadow-lg: 6px 6px 0px currentColor;
@@ -27,17 +27,14 @@
   --theme-motion-press-y: 1px;
   --theme-motion-press-scale: 0.985;
 
-  /* Component token overrides */
-  --cmp-button-radius: 8px;
-  --cmp-card-radius: 10px;
-  --cmp-card-shadow: 4px 4px 0 currentColor;
-  --cmp-input-radius: 8px;
+  /* Component token overrides - IMPROVED: Sharper, bolder */
+  --cmp-button-radius: 4px;
+  --cmp-card-radius: 4px;
+  --cmp-card-shadow: 3px 3px 0 var(--sys-text-primary);
+  --cmp-input-radius: 4px;
   --cmp-chip-border: var(--sys-border-strong);
-  --cmp-nav-item-active-bg: var(--sys-interactive-active);
-  
-  /* Theme Specific */
-  background-image: radial-gradient(var(--color-border-subtle) 1px, transparent 1px);
-  background-size: 20px 20px;
+  --cmp-nav-item-active-bg: var(--sys-interactive-accent);
+  --cmp-dialog-radius: 4px;
 }
 
 .theme-neo-brutalism :is(.ui-button, .ui-chip, .ui-card, .ui-table, .control) {
@@ -52,8 +49,68 @@
 
 .theme-neo-brutalism :is(.ui-card, .ui-table):hover {
   box-shadow: var(--theme-shadow-md);
+  transform: translateY(-1px);
 }
 
 .theme-neo-brutalism :is(.ui-button, .ui-chip):active:not(:disabled) {
   box-shadow: 1px 1px 0 currentColor;
+  transform: translate(2px, 2px);
+}
+
+/* IMPROVED: Color blocking technique for bold visual impact */
+.theme-neo-brutalism .ui-button:not([class*="variant"]),
+.theme-neo-brutalism [data-ui="button"]:not([class*="variant"]) {
+  position: relative;
+  overflow: visible;
+}
+
+/* Accent color block behind primary buttons */
+.theme-neo-brutalism .ui-button:not([class*="variant"])::before,
+.theme-neo-brutalism [data-ui="button"]:not([class*="variant"])::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: var(--sys-interactive-accent);
+  z-index: -1;
+  transform: translate(4px, 4px);
+  border-radius: inherit;
+  transition: transform var(--theme-motion-fast) var(--theme-easing);
+}
+
+.theme-neo-brutalism .ui-button:hover:not([class*="variant"])::before,
+.theme-neo-brutalism [data-ui="button"]:hover:not([class*="variant"])::before {
+  transform: translate(6px, 6px);
+}
+
+.theme-neo-brutalism .ui-button:active:not([class*="variant"])::before,
+.theme-neo-brutalism [data-ui="button"]:active:not([class*="variant"])::before {
+  transform: translate(2px, 2px);
+}
+
+/* IMPROVED: Cards get accent color stripe */
+.theme-neo-brutalism .ui-card,
+.theme-neo-brutalism [data-ui="card"] {
+  position: relative;
+  border-left: 6px solid var(--sys-interactive-accent);
+}
+
+/* IMPROVED: Active nav items with bold accent block */
+.theme-neo-brutalism [data-active="true"],
+.theme-neo-brutalism [aria-current="page"] {
+  position: relative;
+  background: color-mix(in srgb, var(--sys-interactive-accent) 15%, transparent);
+  border-left: 4px solid var(--sys-interactive-accent);
+}
+
+/* IMPROVED: Bolder borders on hover */
+.theme-neo-brutalism :is(.ui-button, .ui-chip, .ui-card):hover:not(:disabled) {
+  border-width: 3px;
+}
+
+/* IMPROVED: Typography - bold headings with tight spacing */
+.theme-neo-brutalism :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--theme-font-display);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }

@@ -26,8 +26,9 @@ const formatDistance = (value?: number) => (typeof value === 'number' ? `${value
 type Tone = 'success' | 'warning' | 'error' | 'info';
 
 const getToneCardStyle = (tone: Tone): React.CSSProperties => ({
-  borderColor: `color-mix(in srgb, var(--color-status-${tone}) 62%, transparent)`,
-  backgroundColor: `color-mix(in srgb, var(--color-status-${tone}) 16%, var(--sys-surface-panel))`,
+  borderColor: `color-mix(in srgb, var(--color-status-${tone}) 45%, var(--cmp-card-border))`,
+  backgroundColor: `color-mix(in srgb, var(--color-status-${tone}) 10%, var(--sys-surface-panel))`,
+  boxShadow: `inset 0 1px 0 color-mix(in srgb, var(--color-status-${tone}) 18%, transparent)`,
 });
 
 const getToneIconStyle = (tone: Tone): React.CSSProperties => ({
@@ -48,17 +49,12 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
     setCurrentIndex(prev => (prev >= recentWars.length ? 0 : prev));
   }, [recentWars.length]);
 
-  const getLocalizedRole = (role: string) => {
-    const key = `common.class.${role}`;
-    const translated = t(key);
-    return translated === key ? formatRole(role) : translated;
-  };
   const currentWar = recentWars[currentIndex];
 
   if (!currentWar) {
     return (
-      <Card className="h-full border border-[color:var(--cmp-card-border)] bg-[color:var(--cmp-card-bg)] backdrop-blur-sm">
-        <CardHeader className="px-5 pt-5 pb-4 border-b border-[color:var(--cmp-card-border)]">
+      <Card className="h-full border border-[color:var(--cmp-card-border)] bg-[color:var(--cmp-card-bg)] backdrop-blur-sm gap-0">
+        <CardHeader className="px-3.5 pt-2 pb-1.5 border-b border-[color:var(--cmp-card-border)]">
           <h3 className="text-sm font-semibold tracking-wide text-foreground">
             {t('dashboard.recent_wars.title')}
           </h3>
@@ -95,20 +91,20 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
   const opponentGuildName = getOpponentGuildName(currentWar, t);
 
   return (
-    <Card className="h-full border border-[color:var(--cmp-card-border)] bg-[color:var(--cmp-card-bg)] backdrop-blur-sm flex flex-col">
+    <Card className="h-full border border-[color:var(--cmp-card-border)] bg-[color:var(--cmp-card-bg)] backdrop-blur-sm flex flex-col gap-0">
       <CardHeader
-        className="px-5 pt-5 pb-4 border-b border-[color:var(--cmp-card-border)]"
+        className="px-3.5 pt-2 pb-1.5 border-b border-[color:var(--cmp-card-border)]"
         style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-elevated) 35%, transparent)' }}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <SportsMmaIcon sx={{ fontSize: 18 }} className="text-foreground/80" />
+            <SportsMmaIcon sx={{ fontSize: 16 }} className="text-foreground/80" />
             <div className="flex flex-col">
-              <h3 className="text-[1.35rem] leading-none font-semibold text-foreground">
+              <h3 className="text-[0.85rem] leading-none font-semibold text-foreground">
                 {t('dashboard.recent_wars.title')}
               </h3>
               {warDateTime && (
-                <span className="text-[0.72rem] text-muted-foreground font-mono mt-1">
+                <span className="text-[0.6rem] text-muted-foreground font-mono mt-0.5">
                   {warDateTime}
                 </span>
               )}
@@ -116,15 +112,15 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
             <Link
               to="/guild-war"
               aria-label={t('dashboard.view_history')}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-[color:var(--sys-interactive-hover)] transition-colors"
+              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-[color:var(--sys-interactive-hover)] transition-colors"
             >
-              <OpenInNewIcon sx={{ fontSize: 18 }} />
+              <OpenInNewIcon sx={{ fontSize: 16 }} />
             </Link>
           </div>
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                'rounded-full px-3 py-1 text-xs font-semibold border'
+                'rounded-full px-2 py-0 text-[8px] font-semibold border uppercase tracking-[0.08em]'
               )}
               style={
                 isVictory
@@ -169,9 +165,9 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
         </div>
       </CardHeader>
 
-      <CardContent className="px-5 pt-3 pb-5 flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3">
+      <CardContent className="px-4 pt-3 pb-4 flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             <GuildScoreCard
               name={t('dashboard.war.our_guild')}
               kills={currentWar.own_stats.kills}
@@ -186,7 +182,7 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <StatsColumn
               creditsLabel={t('dashboard.stats.credits')}
               towersLabel={t('dashboard.stats.towers')}
@@ -209,38 +205,34 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
             />
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div className="flex items-center gap-2">
-              <EmojiEventsIcon sx={{ fontSize: 18 }} style={getToneIconStyle('warning')} />
-              <span className="text-[1.1rem] font-semibold text-foreground">{t('dashboard.recent_wars.mvp')}</span>
+              <EmojiEventsIcon sx={{ fontSize: 16 }} style={getToneIconStyle('warning')} />
+              <span className="text-[0.95rem] font-semibold text-foreground">{t('dashboard.recent_wars.mvp')}</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <HighlightCard
                   label={t('dashboard.recent_wars.top_kda')}
                   member={topKDA}
-                  classLabel={topKDA ? getLocalizedRole(topKDA.class) : '--'}
                   value={topKDAValue}
                   tone="info"
                 />
                 <HighlightCard
                   label={t('dashboard.recent_wars.top_damage')}
                   member={topDamage}
-                  classLabel={topDamage ? getLocalizedRole(topDamage.class) : '--'}
                   value={topDamageValue}
                   tone="error"
                 />
                 <HighlightCard
                   label={t('dashboard.recent_wars.top_tank')}
                   member={topTank}
-                  classLabel={topTank ? getLocalizedRole(topTank.class) : '--'}
                   value={topTankValue}
                   tone="warning"
                 />
                 <HighlightCard
                   label={t('dashboard.recent_wars.top_healing')}
                   member={topHealing}
-                  classLabel={topHealing ? getLocalizedRole(topHealing.class) : '--'}
                   value={topHealingValue}
                   tone="success"
                 />
@@ -266,7 +258,7 @@ const GuildScoreCard = ({
 }) => (
   <div
     className={cn(
-      'rounded-2xl border px-4 py-4 min-h-[110px] flex flex-col justify-between',
+      'rounded-xl border px-3 py-2.5 min-h-[88px] flex flex-col justify-between',
       variant === 'ours'
         ? 'border-[color:var(--color-status-success)] bg-[color:var(--color-status-success-bg)]'
         : variant === 'opponent'
@@ -282,19 +274,19 @@ const GuildScoreCard = ({
             : 'var(--sys-border-default)',
       backgroundColor:
         variant === 'ours'
-          ? 'color-mix(in srgb, var(--color-status-success-bg) 84%, transparent)'
+          ? 'color-mix(in srgb, var(--color-status-success-bg) 66%, var(--sys-surface-panel))'
           : variant === 'opponent'
-            ? 'color-mix(in srgb, var(--color-status-error-bg) 84%, transparent)'
-            : 'color-mix(in srgb, var(--sys-surface-panel) 90%, transparent)',
+            ? 'color-mix(in srgb, var(--color-status-error-bg) 66%, var(--sys-surface-panel))'
+            : 'color-mix(in srgb, var(--sys-surface-panel) 94%, transparent)',
     }}
   >
     <div className="flex items-center gap-2">
-      <span className="text-xl font-semibold leading-tight text-foreground">{name}</span>
-      {variant === 'ours' && <EmojiEventsOutlinedIcon sx={{ fontSize: 20 }} className="text-amber-400" />}
+      <span className="text-base font-semibold leading-tight text-foreground truncate">{name}</span>
+      {variant === 'ours' && <EmojiEventsOutlinedIcon sx={{ fontSize: 16 }} className="text-amber-400" />}
     </div>
     <div className="flex items-center justify-between">
-      <span className="text-[1.05rem] text-muted-foreground">{killsLabel}</span>
-      <span className="text-[1.9rem] leading-none font-semibold text-foreground">{kills}</span>
+      <span className="text-[0.72rem] text-muted-foreground uppercase tracking-[0.08em]">{killsLabel}</span>
+      <span className="text-[1.25rem] leading-none font-bold text-foreground tabular-nums">{kills}</span>
     </div>
   </div>
 );
@@ -337,38 +329,43 @@ const StatRow = ({
   label: string;
   value: string | number;
 }) => (
-  <div className="flex items-center justify-between gap-2 text-base">
-    <div className="flex items-center gap-2 text-muted-foreground">
+  <div className="flex items-center justify-between gap-2 text-[0.92rem]">
+    <div className="flex items-center gap-2 text-muted-foreground min-w-0">
       {icon}
-      <span>{label}:</span>
+      <span className="truncate">{label}:</span>
     </div>
-    <span className="font-semibold text-foreground">{value}</span>
+    <span className="font-semibold text-foreground tabular-nums shrink-0">{value}</span>
   </div>
 );
 
 const HighlightCard = ({
   label,
   member,
-  classLabel,
   value,
   tone
 }: {
   label: string;
   member?: WarMemberStat;
-  classLabel: string;
   value: string;
   tone: Tone;
 }) => (
-  <div className={cn('rounded-2xl border p-3')} style={getToneCardStyle(tone)}>
-    <div className="flex items-center justify-between gap-2">
-      <div className="text-[0.95rem] font-medium" style={getToneTextStyle(tone)}>{label}</div>
-      <div className="text-[0.95rem] font-semibold" style={getToneTextStyle(tone)}>{value}</div>
+  <div
+    className={cn('rounded-lg border-2 p-3 transition-all hover:shadow-md')}
+    style={{
+      ...getToneCardStyle(tone),
+      borderStyle: 'solid', // Force solid border
+    }}
+  >
+    <div className="flex items-center justify-between gap-2 mb-2">
+      <div className="text-[0.72rem] font-bold uppercase tracking-wider" style={getToneTextStyle(tone)}>
+        {label}
+      </div>
+      <div className="text-base font-bold tabular-nums" style={getToneTextStyle(tone)}>
+        {value}
+      </div>
     </div>
-    <div className="text-[1.9rem] leading-none font-semibold text-foreground mt-1">
-      {member?.username || '0'}
-    </div>
-    <div className="text-[1rem] text-foreground/80 mt-1">
-      {classLabel}
+    <div className="text-lg font-bold text-foreground truncate">
+      {member?.username || '--'}
     </div>
   </div>
 );
@@ -382,12 +379,6 @@ const getTopKDA = (members: WarMemberStat[]) =>
 
 const getKDA = (member: WarMemberStat) =>
   member.deaths > 0 ? (member.kills + member.assists) / member.deaths : member.kills + member.assists;
-
-const formatRole = (role: string) =>
-  role
-    .split('_')
-    .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ');
 
 const getOpponentGuildName = (
   war: WarHistoryEntry | undefined,

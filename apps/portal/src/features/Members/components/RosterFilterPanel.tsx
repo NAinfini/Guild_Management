@@ -12,8 +12,8 @@ import {
   Button,
   Badge,
   Separator,
-  Switch,
   Slider,
+  Toggle,
   Select,
   SelectItem,
   Input,
@@ -300,9 +300,9 @@ export function RosterFilterPanel({
                  <Label className="text-base">Only show media</Label>
                  <p className="text-xs text-muted-foreground">Members with uploaded images/videos</p>
                </div>
-               <Switch
-                 checked={filters.hasMedia}
-                 onChange={(_e, checked) => onChange({ ...filters, hasMedia: checked })}
+               <Toggle
+                 pressed={filters.hasMedia}
+                 onPressedChange={(pressed) => onChange({ ...filters, hasMedia: pressed })}
                />
             </div>
 
@@ -337,7 +337,12 @@ export function RosterFilterPanel({
            </div>
            <DialogFooter>
              <Button variant="ghost" onClick={() => setSaveDialogOpen(false)}>Cancel</Button>
-             <Button onClick={handleSavePreset} disabled={!presetName.trim()}>Save</Button>
+             <Button
+               onClick={handleSavePreset}
+               disabled={!presetName.trim()}
+             >
+               Save
+             </Button>
            </DialogFooter>
         </DialogContent>
       </Dialog>

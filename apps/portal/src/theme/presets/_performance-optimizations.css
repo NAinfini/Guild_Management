@@ -1,0 +1,292 @@
+/**
+ * Performance Optimizations
+ * =========================
+ * CSS layers, GPU acceleration, and rendering optimizations
+ * for smooth 60fps animations across all themes
+ */
+
+/* Define CSS cascade layers for better performance */
+@layer reset, base, tokens, components, themes, utilities, overrides;
+
+/* GPU-accelerated properties for smooth animations */
+.ui-button,
+.ui-card,
+.ui-chip,
+[data-ui] {
+  /* Use transform and opacity for animations (GPU-accelerated) */
+  will-change: transform, opacity;
+  /* Promote to own layer for better compositing */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Optimize hover states with containment */
+.ui-card,
+[data-ui="card"] {
+  /* Limit layout recalculations */
+  contain: layout style paint;
+}
+
+/* Optimize animations with hardware acceleration */
+@keyframes optimized-fade {
+  from {
+    opacity: 0;
+    transform: translateZ(0) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateZ(0) translateY(0);
+  }
+}
+
+/* Batch repaints for list items */
+.list-item,
+.table-row,
+[role="listitem"] {
+  /* Contain repaints to individual items */
+  contain: layout style;
+  /* Promote to own layer if animating */
+  transform: translateZ(0);
+}
+
+/* Optimize scroll performance */
+.scrollable-container {
+  /* Use scroll snap for smooth scrolling */
+  scroll-behavior: smooth;
+  /* Contain scroll repaints */
+  contain: layout style paint;
+  /* Enable momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Debounce expensive operations */
+.debounced-hover:hover {
+  /* Delay hover effects slightly to reduce repaints */
+  transition-delay: 50ms;
+}
+
+/* Optimize shadow rendering */
+.ui-card,
+[data-ui="card"] {
+  /* Use will-change for shadows that animate */
+  will-change: box-shadow;
+}
+
+/* Remove will-change after animation */
+.ui-card:not(:hover),
+[data-ui="card"]:not(:hover) {
+  will-change: auto;
+}
+
+/* Optimize theme overlay rendering */
+.theme-post-apocalyptic::before,
+.theme-cyberpunk::before {
+  /* Fixed overlays should use fixed positioning wisely */
+  will-change: opacity;
+  /* Reduce paint area */
+  contain: strict;
+}
+
+/* Lazy-load heavy theme assets */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable expensive animations */
+  .theme-post-apocalyptic::before,
+  .theme-cyberpunk::before,
+  .theme-steampunk .ui-button::before {
+    display: none;
+  }
+}
+
+/* Optimize for low-end devices */
+@media (max-width: 768px) {
+  /* Reduce animation complexity on mobile */
+  * {
+    animation-duration: calc(var(--theme-duration) * 0.7) !important;
+  }
+
+  /* Simplify shadows on mobile */
+  .ui-card,
+  [data-ui="card"] {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Disable expensive overlays */
+  .theme-post-apocalyptic::before,
+  .theme-minimalistic .ui-card::before {
+    opacity: 0.3;
+  }
+}
+
+/* Optimize repaints with content-visibility */
+.lazy-render {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* Batch layout updates */
+.batch-layout {
+  /* Prevent individual reflows */
+  contain: layout;
+}
+
+/* Optimize font rendering */
+html {
+  /* Enable font smoothing */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Optimize text rendering */
+  text-rendering: optimizeLegibility;
+  /* Prevent font size adjustments */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Optimize backdrop filters (if used) */
+.backdrop-blur {
+  /* Isolate backdrop-filter */
+  isolation: isolate;
+  /* GPU acceleration */
+  transform: translateZ(0);
+}
+
+/* Prevent layout thrashing */
+.measure-first {
+  /* Read layout properties before writing */
+  contain: size layout style;
+}
+
+/* Optimize for 60fps animations */
+@media (prefers-reduced-motion: no-preference) {
+  /* Ensure animations run at 60fps */
+  .animated {
+    animation-timing-function: linear;
+    /* Use frame-perfect timing */
+    animation-duration: calc(16.67ms * round(var(--theme-duration) / 16.67ms));
+  }
+}
+
+/* Critical rendering path optimization */
+.above-fold {
+  /* Prioritize above-the-fold content */
+  content-visibility: visible;
+}
+
+.below-fold {
+  /* Lazy-render below-the-fold content */
+  content-visibility: auto;
+}
+
+/* Reduce repaints during scroll */
+.fixed-header {
+  /* Contain header repaints */
+  contain: layout style;
+  /* Promote to own layer */
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Optimize button interactions */
+.ui-button:active {
+  /* Use transform instead of margin/padding for press */
+  transform: translateY(var(--theme-motion-press-y)) scale(var(--theme-motion-press-scale));
+  /* Avoid layout recalculation */
+  margin: 0;
+  padding: inherit;
+}
+
+/* Memory optimization for long lists */
+.virtualized-list {
+  /* Only render visible items */
+  contain: strict;
+  /* Define size hints */
+  contain-intrinsic-size: auto 50px;
+}
+
+/* Optimize gradient rendering */
+.gradient-background {
+  /* Cache gradient */
+  will-change: background-image;
+  /* Use transform for position changes */
+  background-attachment: fixed;
+}
+
+/* Debounce resize events */
+@media (min-width: 769px) {
+  /* Desktop-only optimizations */
+  .resize-optimized {
+    resize: none;
+    overflow: auto;
+  }
+}
+
+/* Optimize for high DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Use subpixel rendering on high DPI */
+  * {
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+}
+
+/* Prevent paint on hidden elements */
+[hidden],
+[style*="display: none"] {
+  content-visibility: hidden;
+}
+
+/* Optimize theme-specific expensive effects */
+.theme-cyberpunk .ui-card {
+  /* Limit glow shadow repaints */
+  contain: layout style;
+}
+
+.theme-steampunk .ui-card::after {
+  /* Optimize rivet rendering */
+  will-change: box-shadow;
+  transform: translateZ(0);
+}
+
+/* Animation batching */
+.batch-animations {
+  /* Group animation updates */
+  animation-composition: accumulate;
+}
+
+/* Optimize for dark mode */
+@media (prefers-color-scheme: dark) {
+  /* Reduce color blending on dark backgrounds */
+  * {
+    color-scheme: dark;
+  }
+}
+
+/* Critical CSS inline hint */
+.critical {
+  /* Mark for inline CSS extraction */
+  font-display: swap;
+}
+
+/* Defer non-critical fonts */
+@font-face {
+  font-display: swap;
+  /* Load fonts asynchronously */
+}
+
+/* Optimize intersection observers */
+.observe-intersection {
+  /* Prepare for visibility tracking */
+  contain: layout style;
+}
+
+/* Reduce motion for battery saving */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    /* Disable will-change on reduced motion */
+    will-change: auto !important;
+  }
+}
+
+/* Performance monitoring hints */
+.performance-marker {
+  /* Mark for performance measurement */
+  view-timeline-name: --performance-marker;
+}

@@ -1,9 +1,9 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Link } from '@tanstack/react-router';
 import { 
   Person, 
   AccessTime, 
-  ElectricBolt, 
   VpnKey, 
   Security, 
   Logout, 
@@ -49,9 +49,6 @@ import {
   Button,
   Badge,
   Input,
-  Avatar, 
-  AvatarFallback, 
-  AvatarImage,
   Tabs, 
   TabsList, 
   TabsTrigger,
@@ -112,13 +109,22 @@ const translateClassGroup = (labelKey: string, t: any) => {
   return labelKey;
 };
 
+const translateClassLabel = (labelKey: string, classId: string, t: any) => {
+  const keys = [`common.${labelKey}`, labelKey];
+  for (const key of keys) {
+    const value = t(key);
+    if (value !== key) return value;
+  }
+  return formatClassDisplayName(classId);
+};
+
 const getClassMeta = (classId: string, t: any) => {
   for (const group of CLASS_GROUPS_CONFIG) {
     const opt = group.options.find(o => o.id === classId);
     if (opt) {
       const colors = GAME_CLASS_COLORS[group.id as keyof typeof GAME_CLASS_COLORS] || GAME_CLASS_COLORS.mingjin;
       return {
-        fullLabel: formatClassDisplayName(classId),
+        fullLabel: translateClassLabel(opt.labelKey, classId, t),
         groupLabel: translateClassGroup(group.labelKey, t),
         ...group,
         colors
@@ -131,6 +137,64 @@ const getClassMeta = (classId: string, t: any) => {
       colors: { main: '#94a3b8', bg: 'rgba(148, 163, 184, 0.1)', text: '#94a3b8' }
   };
 };
+
+const getPrimaryAvailabilitySummary = (availability: DayAvailability[] | undefined, t: any): string | null => {
+  if (!availability || availability.length === 0) return null;
+
+  for (const day of DAYS) {
+    const dayAvailability = availability.find((entry) => entry.day === day);
+    const firstBlock = dayAvailability?.blocks?.[0];
+    if (!firstBlock) continue;
+    const dayLabel = t(`common.day_${day}`);
+    const localizedDay = dayLabel !== `common.day_${day}` ? dayLabel : day;
+    return `${localizedDay} ${firstBlock.start}-${firstBlock.end} UTC`;
+  }
+
+  return null;
+};
+
+function ProfileGuestState() {
+  const { t } = useTranslation();
+
+  return (
+    <div className="max-w-[920px] mx-auto pb-10 px-4 sm:px-8">
+      <Card
+        className="overflow-hidden border"
+        style={{
+          borderColor: 'color-mix(in srgb, var(--sys-interactive-accent) 35%, var(--cmp-card-border))',
+          background:
+            'linear-gradient(145deg, color-mix(in srgb, var(--sys-surface-panel) 96%, transparent), color-mix(in srgb, var(--sys-surface-elevated) 92%, transparent))',
+        }}
+      >
+        <CardHeader className="space-y-2 border-b">
+          <CardTitle className="text-2xl font-black uppercase tracking-tight">{t('profile.title')}</CardTitle>
+          <CardDescription className="font-semibold text-muted-foreground">{t('login.subtitle')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5 py-8">
+          <Alert className="border" variant="default">
+            <Security className="h-4 w-4" />
+            <AlertTitle className="text-sm font-black uppercase">{t('login.title')}</AlertTitle>
+            <AlertDescription className="text-sm leading-relaxed text-muted-foreground">
+              {t('common.placeholder_msg')}
+            </AlertDescription>
+          </Alert>
+          <div className="flex flex-wrap gap-3">
+            <Link to="/login">
+              <Button className="font-black uppercase tracking-wide">
+                {t('login.action_login')}
+              </Button>
+            </Link>
+            <Link to="/settings">
+              <Button variant="outline" className="font-black uppercase tracking-wide">
+                {t('nav.settings')}
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export function Profile() {
   const { user, logout, isLoading } = useAuth();
@@ -156,15 +220,20 @@ export function Profile() {
     setPageTitle(t('profile.title'));
   }, [setPageTitle, t]);
 
-  if (isLoading || !user) return <PageHeaderSkeleton />;
+  if (isLoading) return <PageHeaderSkeleton />;
+  if (!user) return <ProfileGuestState />;
 
   return (
     <div className="max-w-[1400px] mx-auto pb-10 px-4 sm:px-8">
       <div className="mb-6 flex justify-end">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-             <TabsList className="w-full md:w-auto overflow-x-auto justify-start">
+             <TabsList className="w-full md:w-auto overflow-x-auto justify-start rounded-full p-1 gap-1">
                {['profile', 'availability', 'media', 'progression', 'account'].map((tab) => (
-                  <TabsTrigger key={tab} value={tab} className="text-[0.65rem] font-black tracking-widest uppercase min-w-20">
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                    className="!rounded-full whitespace-nowrap text-[0.7rem] font-black tracking-wide uppercase min-w-[7.5rem] px-4"
+                  >
                       {t(`profile.tab_${tab}`)}
                   </TabsTrigger>
                ))}
@@ -194,6 +263,8 @@ export function Profile() {
 
 function ProfilePreview({ user, onUpdate }: { user: User, onUpdate: (id: string, updates: Partial<User>) => void }) {
   const { t } = useTranslation();
+  const avatarInitial = (user.username || '?').trim().charAt(0).toUpperCase() || '?';
+  const availabilitySummary = getPrimaryAvailabilitySummary(user.availability, t);
 
   const handleAvatarClick = () => {
     const url = prompt(t('profile.prompt_avatar'), user.avatar_url || '');
@@ -203,11 +274,26 @@ function ProfilePreview({ user, onUpdate }: { user: User, onUpdate: (id: string,
   return (
     <Card className="overflow-hidden border-border bg-card">
        <div className="relative aspect-square bg-muted group">
-          <img
-             src={getOptimizedMediaUrl(user.avatar_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`, 'image')} 
-             alt={user.username}
-             className="w-full h-full object-cover"
-          />
+          {user.avatar_url ? (
+            <img
+               src={getOptimizedMediaUrl(user.avatar_url, 'image')}
+               alt={user.username}
+               className="w-full h-full object-cover"
+            />
+          ) : (
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{
+                background:
+                  'linear-gradient(135deg, color-mix(in srgb, var(--sys-accent-primary) 24%, var(--sys-surface-raised)) 0%, color-mix(in srgb, var(--sys-accent-secondary) 20%, var(--sys-surface-raised)) 100%)',
+                color: 'var(--sys-text-primary)',
+              }}
+            >
+              <span className="text-7xl font-black select-none" aria-hidden="true">
+                {avatarInitial}
+              </span>
+            </div>
+          )}
           <div 
              onClick={handleAvatarClick}
              className="absolute inset-0 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 cursor-pointer transition-opacity duration-200"
@@ -228,6 +314,19 @@ function ProfilePreview({ user, onUpdate }: { user: User, onUpdate: (id: string,
                 <Videocam className="w-3 h-3" />
                 <span className="text-xs font-bold leading-none">{user.media_counts?.videos || 0}</span>
              </div>
+             {availabilitySummary && (
+                <div
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full border"
+                  style={{
+                    color: 'var(--sys-text-primary)',
+                    backgroundColor: 'color-mix(in srgb, var(--sys-surface-raised) 92%, transparent)',
+                    borderColor: 'var(--cmp-input-border)',
+                  }}
+                >
+                   <AccessTime className="w-3 h-3" />
+                   <span className="text-[0.65rem] font-black leading-none">{availabilitySummary}</span>
+                </div>
+             )}
              <div className="flex-1" />
              <Badge 
                 variant={user.active_status === 'active' ? 'default' : 'secondary'}
@@ -615,7 +714,7 @@ function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, 
                                                   }
                                               }}
                                            >
-                                              {formatClassDisplayName(opt.id)}
+                                              {translateClassLabel(opt.labelKey, opt.id, t)}
                                            </Button>
                                         )
                                      })}
@@ -822,9 +921,19 @@ function AvailabilityEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
              </div>
          </div>
          
-         <Alert className="bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400 [&>svg]:text-sky-500">
-            <AccessTime className="w-4 h-4" />
-            <AlertDescription className="text-xs font-extrabold uppercase tracking-wide">
+         <Alert
+           className="border !grid !grid-cols-[auto_1fr] !items-center gap-x-2 [&>svg]:!translate-y-0 [&>svg]:!self-center"
+           style={{
+             borderColor: 'color-mix(in srgb, var(--color-status-warning) 45%, transparent)',
+             backgroundColor: 'color-mix(in srgb, var(--color-status-warning-bg) 84%, transparent)',
+             color: 'var(--color-status-warning-fg)',
+           }}
+         >
+            <AccessTime className="w-4 h-4" style={{ color: 'var(--color-status-warning-fg)' }} />
+            <AlertDescription
+              className="text-xs font-extrabold uppercase tracking-wide leading-none"
+              style={{ color: 'var(--color-status-warning-fg)' }}
+            >
                 {t('availability.utc_warning')}
             </AlertDescription>
          </Alert>
@@ -834,20 +943,21 @@ function AvailabilityEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
 }
 
 function ProgressionEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [category, setCategory] = useState<'qishu' | 'wuxue' | 'xinfa'>('qishu');
   const [progression, setProgression] = useState<ProgressionData>(user.progression || { qishu: {}, wuxue: {}, xinfa: {} });
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const isChineseLocale = i18n.resolvedLanguage?.toLowerCase().startsWith('zh') ?? false;
 
   const categories = useMemo(
     () =>
       PROGRESSION_CATEGORIES.map((c) => ({
         id: c.id,
-        label: `${t(c.titleKey)} (${c.id.toUpperCase()})`,
+        label: isChineseLocale ? t(c.titleKey) : `${t(c.titleKey)} (${c.id.toUpperCase()})`,
         groups: c.groups,
       })),
-    [t],
+    [isChineseLocale, t],
   );
 
   const updateLevel = (cat: 'qishu' | 'wuxue' | 'xinfa', key: string, delta: number) => {
@@ -905,10 +1015,15 @@ function ProgressionEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
                   return (
                     <div key={item.key} className="p-4 rounded-xl bg-card border border-border flex flex-col items-center gap-3 transition-colors hover:border-primary/50">
                         <div className="relative">
-                          <Avatar className="w-20 h-20 rounded-xl bg-muted border border-border">
-                             <AvatarImage src={item.icon} alt={item.key} />
-                             <AvatarFallback><ElectricBolt className="w-8 h-8 text-muted-foreground/50" /></AvatarFallback>
-                          </Avatar>
+                          <div className="w-24 h-24 rounded-xl bg-muted border border-border overflow-hidden">
+                            {item.icon ? (
+                              <img src={item.icon} alt={t(item.nameKey)} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-2xl font-black text-muted-foreground/60">
+                                {t(item.nameKey).trim().charAt(0)}
+                              </div>
+                            )}
+                          </div>
                           <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-background border-2 border-border flex items-center justify-center text-sm font-black shadow-sm">
                             {level}
                           </div>

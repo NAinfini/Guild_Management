@@ -3,6 +3,8 @@
   --theme-font-display: 'Inter', sans-serif;
   --theme-font-body: 'Inter', sans-serif;
   --theme-letter-spacing: -0.01em;
+  --minimal-gallery-letter-spacing-base: 0.01em;
+  --minimal-gallery-letter-spacing-hover: 0.025em;
   
   /* Structure */
   --theme-border-width: 1px;
@@ -30,6 +32,7 @@
   /* Component token overrides */
   --cmp-button-radius: 8px;
   --cmp-card-radius: 10px;
+  --cmp-card-border: color-mix(in srgb, var(--sys-border-strong) 72%, var(--sys-border-default));
   --cmp-card-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   --cmp-input-radius: 8px;
   --cmp-chip-bg: color-mix(in srgb, var(--sys-interactive-accent) 10%, transparent);
@@ -38,15 +41,198 @@
 }
 
 .theme-minimalistic :is(.ui-button, .ui-chip, .ui-card, .ui-input, .ui-table, .ui-nav, .control) {
-  border: var(--theme-border-width) var(--theme-border-style) transparent;
+  border: var(--theme-border-width) var(--theme-border-style) var(--sys-border-default);
   border-radius: var(--theme-border-radius);
   font-family: var(--theme-font-body);
+  letter-spacing: var(--minimal-gallery-letter-spacing-base);
+  transition:
+    letter-spacing var(--theme-motion-fast) var(--theme-motion-easing),
+    border-color var(--theme-motion-fast) var(--theme-motion-easing),
+    box-shadow var(--theme-motion-fast) var(--theme-motion-easing);
 }
 
 .theme-minimalistic :is(.ui-button, .ui-chip, .ui-input, .ui-nav, .control):hover:not(:disabled) {
   background-color: color-mix(in srgb, var(--color-surface-sunken) 82%, transparent);
+  letter-spacing: var(--minimal-gallery-letter-spacing-hover);
+  border-color: color-mix(in srgb, var(--sys-border-default) 150%, transparent);
+  box-shadow: var(--theme-shadow-sm);
 }
 
 .theme-minimalistic :is(.ui-card, .ui-table):hover {
   background-color: color-mix(in srgb, var(--color-surface-sunken) 72%, transparent);
+  border-color: var(--sys-border-strong);
+  box-shadow: var(--theme-shadow-md);
+}
+
+[data-theme="minimalistic"] :is(.ui-button, .control[data-ui="button"], .MuiButton-root[data-ui="button"], [data-minimal-typography-hover="true"]) {
+  letter-spacing: var(--minimal-gallery-letter-spacing-base);
+  transition: letter-spacing var(--theme-motion-fast, 170ms) var(--theme-motion-easing, ease-out);
+}
+
+[data-theme="minimalistic"] :is(.ui-button, .control[data-ui="button"], .MuiButton-root[data-ui="button"], [data-minimal-typography-hover="true"]):hover:not(:disabled) {
+  letter-spacing: var(--minimal-gallery-letter-spacing-hover);
+}
+
+@keyframes minimal-paper-grain-hit {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.14;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+[data-theme="minimalistic"] [data-theme-signature="paper-grain-hit"],
+.theme-minimalistic [data-theme-signature="paper-grain-hit"] {
+  position: relative;
+  overflow: clip;
+}
+
+[data-theme="minimalistic"] [data-theme-signature="paper-grain-hit"]::after,
+.theme-minimalistic [data-theme-signature="paper-grain-hit"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.3) 0 1px, transparent 2px),
+    radial-gradient(circle at 74% 62%, rgba(0, 0, 0, 0.28) 0 1px, transparent 2px);
+  background-size: 3px 3px, 4px 4px;
+  animation: minimal-paper-grain-hit 100ms linear forwards;
+}
+
+[data-theme="minimalistic"] [data-minimal-slider-orbit="true"],
+.theme-minimalistic [data-minimal-slider-orbit="true"] {
+  --minimal-slider-shadow-x: calc((var(--slider-progress, 0.5) - 0.5) * 10px);
+}
+
+[data-theme="minimalistic"] [data-minimal-slider-orbit="true"] .MuiSlider-thumb,
+.theme-minimalistic [data-minimal-slider-orbit="true"] .MuiSlider-thumb {
+  border: none;
+  box-shadow:
+    var(--minimal-slider-shadow-x) 6px 16px color-mix(in srgb, #000 18%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--color-surface-default) 45%, transparent);
+}
+
+/* IMPROVED: Subtle scale animation on button press */
+.theme-minimalistic .ui-button:active:not(:disabled),
+.theme-minimalistic [data-ui="button"]:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* IMPROVED: Ripple effect on interactive elements */
+@keyframes minimalistic-ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.theme-minimalistic .ui-button::after,
+.theme-minimalistic [data-ui="button"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sys-interactive-accent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-minimalistic .ui-button:active::after,
+.theme-minimalistic [data-ui="button"]:active::after {
+  animation: minimalistic-ripple 500ms ease-out;
+}
+
+/* IMPROVED: Card tilt on hover (subtle) */
+.theme-minimalistic .ui-card {
+  transition:
+    transform var(--theme-motion-medium) var(--theme-motion-easing),
+    box-shadow var(--theme-motion-medium) var(--theme-motion-easing),
+    border-color var(--theme-motion-fast) var(--theme-motion-easing);
+}
+
+.theme-minimalistic .ui-card:hover {
+  transform: translateY(-2px) rotateX(1deg);
+  transform-style: preserve-3d;
+}
+
+/* IMPROVED: Input field float label effect */
+.theme-minimalistic input:focus + label,
+.theme-minimalistic textarea:focus + label {
+  transform: translateY(-20px) scale(0.85);
+  color: var(--sys-interactive-accent);
+}
+
+/* IMPROVED: Smooth color transition on links */
+.theme-minimalistic a {
+  position: relative;
+  color: var(--sys-text-link);
+  text-decoration: none;
+  transition: color var(--theme-motion-fast) var(--theme-motion-easing);
+}
+
+.theme-minimalistic a::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--theme-motion-medium) var(--theme-motion-easing);
+}
+
+.theme-minimalistic a:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* IMPROVED: Icon rotation on hover */
+.theme-minimalistic .icon-button:hover svg,
+.theme-minimalistic [data-ui="icon-button"]:hover svg {
+  transform: rotate(15deg);
+  transition: transform var(--theme-motion-fast) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* IMPROVED: Fade-in for new content */
+@keyframes minimalistic-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.theme-minimalistic [data-animate="fade-in"] {
+  animation: minimalistic-fade-in 300ms ease-out;
+}
+
+/* IMPROVED: Skeleton shimmer effect */
+.theme-minimalistic .skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--sys-surface-elevated) 0%,
+    color-mix(in srgb, var(--sys-surface-elevated) 96%, white) 50%,
+    var(--sys-surface-elevated) 100%
+  );
+  background-size: 200% 100%;
+  animation: minimalistic-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes minimalistic-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

@@ -25,9 +25,18 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { buildWarCardMetrics } from './WarHistory.utils';
+import { useTheme } from '@mui/material/styles';
 
 export function WarHistory() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const panel = theme.custom?.components?.panel;
+  const semanticSurface = theme.custom?.semantic?.surface;
+  const semanticBorder = theme.custom?.semantic?.border;
+  const panelSx = {
+    backgroundColor: panel?.bg ?? semanticSurface?.panel ?? theme.palette.background.paper,
+    borderColor: panel?.border ?? semanticBorder?.default ?? theme.palette.divider,
+  };
   const { data = [], isLoading } = useWarHistory();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -128,7 +137,7 @@ export function WarHistory() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card sx={panelSx}>
         <CardContent className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-3 items-end p-4">
            <div className="space-y-1.5">
                <span className="text-xs font-medium text-muted-foreground">{t('guild_war.history_search_placeholder', 'Search Wars...')}</span>
@@ -177,7 +186,7 @@ export function WarHistory() {
 
       <WarHistoryPieCharts data={filtered} />
 
-      <Card>
+      <Card sx={panelSx}>
         <CardHeader className="pb-2">
             <CardTitle className="text-lg font-black uppercase tracking-tight">{t('guild_war.historical_archives')}</CardTitle>
         </CardHeader>

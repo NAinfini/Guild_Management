@@ -231,25 +231,6 @@ export function Roster() {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
-  if (isLoading && (!members || members.length === 0)) {
-     return (
-       <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-         {Array.from({ length: 12 }).map((_, i) => (
-           <Skeleton key={i} className="aspect-square rounded-xl h-full w-full" />
-         ))}
-       </div>
-     );
-  }
-
-  if (!isLoading && (!members || members.length === 0)) {
-    return (
-      <div className="p-8 text-center space-y-2">
-        <h3 className="text-xl font-black">{t('roster.empty_title')}</h3>
-        <p className="text-muted-foreground">{t('roster.empty_hint')}</p>
-      </div>
-    );
-  }
-
   const hasAdvancedFilters = (
     filters.roles.length +
     filters.classes.length +
@@ -284,6 +265,25 @@ export function Roster() {
     },
     [audioController]
   );
+
+  if (isLoading && (!members || members.length === 0)) {
+     return (
+       <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+         {Array.from({ length: 12 }).map((_, i) => (
+           <Skeleton key={i} className="aspect-square rounded-xl h-full w-full" />
+         ))}
+       </div>
+     );
+  }
+
+  if (!isLoading && (!members || members.length === 0)) {
+    return (
+      <div className="p-8 text-center space-y-2">
+        <h3 className="text-xl font-black">{t('roster.empty_title')}</h3>
+        <p className="text-muted-foreground">{t('roster.empty_hint')}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-0 sm:p-2 md:p-4 lg:p-8 pb-8 md:pb-0">

@@ -5,10 +5,7 @@ import * as React from "react";
 import { 
   ToggleButtonGroup, 
   ToggleButton,
-  ToggleButtonGroupProps,
-  ToggleButtonProps
 } from "@mui/material";
-import { VariantProps } from "class-variance-authority";
 import { toggleVariants } from "./Toggle";
 
 function ToggleGroup({
@@ -34,11 +31,16 @@ function ToggleGroup({
       onChange={handleChange}
       exclusive={type === "single"}
       className={cn(
-        "group/toggle-group flex w-fit items-center rounded-md border-none",
+        "group/toggle-group ui-nav control flex w-fit items-center rounded-[var(--cmp-card-radius)] border",
         className,
       )}
       sx={{
         gap: '0px',
+        padding: '2px',
+        borderColor: 'var(--cmp-segmented-border)',
+        backgroundColor: 'var(--cmp-segmented-bg)',
+        boxShadow: 'var(--cmp-card-shadow)',
+        borderRadius: 'var(--cmp-card-radius)',
         '& .MuiToggleButtonGroup-grouped': {
           border: 0,
           '&.Mui-disabled': {
@@ -46,15 +48,15 @@ function ToggleGroup({
           },
           '&:not(:first-of-type)': {
             borderRadius: 0,
-            borderLeft: variant === 'outline' ? '1px solid var(--border)' : 'none',
+            borderLeft: variant === 'outline' ? '1px solid var(--cmp-segmented-border)' : 'none',
           },
           '&:first-of-type': {
-            borderTopLeftRadius: 'var(--radius)',
-            borderBottomLeftRadius: 'var(--radius)',
+            borderTopLeftRadius: 'var(--cmp-card-radius)',
+            borderBottomLeftRadius: 'var(--cmp-card-radius)',
           },
           '&:last-of-type': {
-            borderTopRightRadius: 'var(--radius)',
-            borderBottomRightRadius: 'var(--radius)',
+            borderTopRightRadius: 'var(--cmp-card-radius)',
+            borderBottomRightRadius: 'var(--cmp-card-radius)',
           },
         },
       }}
@@ -89,17 +91,19 @@ function ToggleGroupItem({
       )}
       sx={{
         backgroundColor: 'transparent',
-        color: 'inherit',
+        color: 'var(--sys-text-secondary)',
         border: 'none',
         '&.Mui-selected': {
-          backgroundColor: 'var(--accent)',
-          color: 'var(--accent-foreground)',
+          backgroundColor: 'var(--cmp-segmented-selected-bg)',
+          color: 'var(--cmp-segmented-selected-text)',
+          boxShadow: 'inset 0 0 0 1px var(--cmp-segmented-border)',
           '&:hover': {
-            backgroundColor: 'var(--accent)',
+            backgroundColor: 'var(--cmp-segmented-selected-bg)',
           }
         },
         '&:hover': {
-          backgroundColor: 'var(--muted)',
+          backgroundColor: 'var(--sys-interactive-hover)',
+          color: 'var(--sys-text-primary)',
         }
       }}
       {...props}

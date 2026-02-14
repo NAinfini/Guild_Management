@@ -1,0 +1,269 @@
+/**
+ * Theme Transition Animations
+ * ===========================
+ * Smooth morphing animations when switching between themes
+ * Preserves scroll position and animates color/shape changes
+ */
+
+/* Enable smooth transitions for all theme-controlled properties */
+:root {
+  --theme-transition-duration: 600ms;
+  --theme-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --theme-transition-fast: 300ms;
+  --theme-transition-medium: 600ms;
+  --theme-transition-slow: 900ms;
+}
+
+/* Transition theme-specific CSS variables smoothly */
+@property --sys-surface-page {
+  syntax: '<color>';
+  initial-value: #ffffff;
+  inherits: true;
+}
+
+@property --sys-surface-panel {
+  syntax: '<color>';
+  initial-value: #ffffff;
+  inherits: true;
+}
+
+@property --sys-interactive-accent {
+  syntax: '<color>';
+  initial-value: #7c3aed;
+  inherits: true;
+}
+
+/* Apply transitions to all themeable elements */
+[data-theme] {
+  transition:
+    background-color var(--theme-transition-medium) var(--theme-transition-easing),
+    color var(--theme-transition-medium) var(--theme-transition-easing),
+    border-color var(--theme-transition-medium) var(--theme-transition-easing);
+}
+
+/* Smooth transitions for common theme-controlled properties */
+.ui-button,
+.ui-card,
+.ui-chip,
+.ui-input,
+.ui-nav,
+.control,
+[data-ui] {
+  transition:
+    background-color var(--theme-transition-medium) var(--theme-transition-easing),
+    color var(--theme-transition-medium) var(--theme-transition-easing),
+    border-color var(--theme-transition-medium) var(--theme-transition-easing),
+    border-width var(--theme-transition-fast) var(--theme-transition-easing),
+    border-radius var(--theme-transition-medium) var(--theme-transition-easing),
+    box-shadow var(--theme-transition-medium) var(--theme-transition-easing),
+    font-family var(--theme-transition-fast) var(--theme-transition-easing);
+}
+
+/* Smooth border-radius morphing */
+* {
+  transition: border-radius var(--theme-transition-medium) var(--theme-transition-easing);
+}
+
+/* Shadow morphing for depth changes */
+.ui-card,
+[data-ui="card"] {
+  transition:
+    box-shadow var(--theme-transition-medium) var(--theme-transition-easing),
+    border-radius var(--theme-transition-medium) var(--theme-transition-easing),
+    background-color var(--theme-transition-medium) var(--theme-transition-easing);
+}
+
+/* Typography transitions */
+h1, h2, h3, h4, h5, h6 {
+  transition:
+    font-family var(--theme-transition-medium) var(--theme-transition-easing),
+    font-weight var(--theme-transition-fast) var(--theme-transition-easing),
+    letter-spacing var(--theme-transition-medium) var(--theme-transition-easing),
+    color var(--theme-transition-medium) var(--theme-transition-easing);
+}
+
+/* Smooth pattern/texture transitions */
+.ui-card::before,
+.ui-card::after,
+[data-ui="card"]::before,
+[data-ui="card"]::after {
+  transition:
+    opacity var(--theme-transition-medium) var(--theme-transition-easing),
+    transform var(--theme-transition-medium) var(--theme-transition-easing);
+}
+
+/* Preserve scroll position during theme change */
+html.theme-transitioning {
+  overflow: hidden;
+  scroll-behavior: auto;
+}
+
+body.theme-transitioning {
+  pointer-events: none;
+}
+
+/* Fade overlay during transition */
+.theme-transition-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--sys-surface-page);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transition: opacity var(--theme-transition-fast) var(--theme-transition-easing);
+}
+
+.theme-transition-overlay.active {
+  opacity: 0.3;
+}
+
+/* Morphing animation for theme change */
+@keyframes theme-morph {
+  0% {
+    filter: blur(0px);
+    opacity: 1;
+  }
+  50% {
+    filter: blur(2px);
+    opacity: 0.95;
+  }
+  100% {
+    filter: blur(0px);
+    opacity: 1;
+  }
+}
+
+body.theme-transitioning {
+  animation: theme-morph var(--theme-transition-medium) var(--theme-transition-easing);
+}
+
+/* Color palette transition indicator */
+.theme-color-indicator {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  background: var(--sys-surface-panel);
+  border: 2px solid var(--sys-interactive-accent);
+  border-radius: 8px;
+  color: var(--sys-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateX(100px);
+  pointer-events: none;
+  z-index: 10000;
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease;
+}
+
+.theme-color-indicator.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Stagger animations for child elements */
+[data-theme-stagger] > * {
+  animation: theme-element-fade-in var(--theme-transition-medium) var(--theme-transition-easing);
+  animation-fill-mode: both;
+}
+
+[data-theme-stagger] > *:nth-child(1) { animation-delay: 0ms; }
+[data-theme-stagger] > *:nth-child(2) { animation-delay: 50ms; }
+[data-theme-stagger] > *:nth-child(3) { animation-delay: 100ms; }
+[data-theme-stagger] > *:nth-child(4) { animation-delay: 150ms; }
+[data-theme-stagger] > *:nth-child(5) { animation-delay: 200ms; }
+
+@keyframes theme-element-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reduce transitions when user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --theme-transition-duration: 0ms;
+    --theme-transition-fast: 0ms;
+    --theme-transition-medium: 0ms;
+    --theme-transition-slow: 0ms;
+  }
+
+  * {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+
+  body.theme-transitioning {
+    animation: none;
+  }
+
+  .theme-transition-overlay {
+    display: none;
+  }
+}
+
+/* Theme-specific transition overrides */
+[data-theme="neo-brutalism"] .ui-button,
+[data-theme="neo-brutalism"] .ui-card {
+  /* Faster transitions for brutalism (snappier) */
+  transition-duration: var(--theme-transition-fast);
+}
+
+[data-theme="chibi"] * {
+  /* Bouncier transitions for chibi */
+  transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+[data-theme="minimalistic"] * {
+  /* Subtle, smooth transitions */
+  transition-timing-function: ease-out;
+}
+
+/* Loading state during theme switch */
+.theme-loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px 32px;
+  background: var(--sys-surface-panel);
+  border: 2px solid var(--sys-interactive-accent);
+  border-radius: 12px;
+  color: var(--sys-text-primary);
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10001;
+  transition: opacity 200ms ease;
+}
+
+.theme-loading.show {
+  opacity: 1;
+}
+
+.theme-loading::after {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-left: 12px;
+  border: 2px solid var(--sys-interactive-accent);
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: theme-loading-spin 800ms linear infinite;
+}
+
+@keyframes theme-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

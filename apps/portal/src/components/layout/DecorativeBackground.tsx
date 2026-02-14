@@ -4,11 +4,16 @@ import { cn } from '@/lib/utils';
 type DecorativeVariant = 'default' | 'war-room' | 'arcane' | 'minimal' | 'neon';
 type DecorativeLayerType = 'icon' | 'orb' | 'ring';
 type DecorativeMotion = 'none' | 'drift' | 'parallax' | 'reactive';
+type DecorativeIconProps = {
+  sx?: Record<string, unknown>;
+  className?: string;
+  style?: CSSProperties;
+};
 
 interface DecorativeLayer {
   id?: string;
   type?: DecorativeLayerType;
-  icon?: ElementType;
+  icon?: ElementType<DecorativeIconProps>;
   color?: string;
   size?: number;
   opacity?: number;
@@ -26,7 +31,7 @@ interface DecorativeBackgroundProps {
   layers?: DecorativeLayer[];
   motion?: DecorativeMotion;
   motionStrength?: number;
-  icon?: ElementType;
+  icon?: ElementType<DecorativeIconProps>;
   color?: string; // legacy single-layer API
   size?: number;
   opacity?: number;

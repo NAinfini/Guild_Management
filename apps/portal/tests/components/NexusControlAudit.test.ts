@@ -12,7 +12,6 @@ describe('NexusControlStudio', () => {
 
     // Core categories that should be present
     const coreCategories = [
-      'cards',
       'buttons',
       'text-input',
       'choice-controls',
@@ -32,10 +31,10 @@ describe('NexusControlStudio', () => {
 
     NEXUS_CONTROL_CATEGORIES.forEach((category) => {
       expect(category).toHaveProperty('id');
-      expect(category).toHaveProperty('label');
+      expect(category).toHaveProperty('labelKey');
       expect(category).toHaveProperty('component');
       expect(typeof category.id).toBe('string');
-      expect(typeof category.label).toBe('string');
+      expect(typeof category.labelKey).toBe('string');
       expect(typeof category.component).toBe('function');
     });
   });

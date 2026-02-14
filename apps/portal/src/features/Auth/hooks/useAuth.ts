@@ -115,9 +115,14 @@ export function useAuth() {
       setCsrfToken(response.csrfToken || null);
       return !!response.user;
     } catch (error) {
-      setUser(null);
-      setCsrfToken(null);
-      return false;
+      if (error instanceof APIError && error.status === 401) {
+        setUser(null);
+        setCsrfToken(null);
+        return false;
+      }
+
+      // Network/transient errors should not force local logout.
+      return !!useAuthStore.getState().user;
     }
   }, [setUser, setCsrfToken]);
 

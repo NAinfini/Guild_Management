@@ -57,9 +57,15 @@ vi.mock('@/theme/ThemeController', () => ({
   useThemeController: () => ({
     currentTheme: 'neo-brutalism',
     currentColor: 'default-violet',
+    reducedMotion: false,
+    motionMode: 'full',
+    effectiveMotionMode: 'full',
     setTheme: vi.fn(),
     setColor: vi.fn(),
+    setMotionMode: vi.fn(),
   }),
+  getThemeModeIcon: () => () => <span data-testid="theme-mode-icon" />,
+  onThemeChange: () => () => undefined,
   NEXUS_THEME_OPTIONS: [
     { id: 'neo-brutalism', label: 'Neo-Brutalism', description: 'Bold styling' },
     { id: 'steampunk', label: 'Steampunk', description: 'Mechanical styling' },
@@ -94,6 +100,30 @@ vi.mock('react-i18next', () => ({
 }));
 
 describe('Layout account menu', () => {
+  it('renders profile dropdown menu items without stacked per-item borders', async () => {
+    mockUser = {
+      id: 1,
+      username: 'tester',
+      role: 'admin',
+      avatar_url: null,
+    };
+    const user = userEvent.setup();
+
+    render(<Layout />);
+
+    await user.click(screen.getByRole('button', { name: /tester/i }));
+    const menu = screen.getByRole('menu');
+    const themeToggle = within(menu).getByText('Interface Theme').closest('[role="menuitem"]');
+
+    expect(themeToggle).not.toBeNull();
+    expect(themeToggle).toHaveClass('profile-menu-item');
+    const style = window.getComputedStyle(themeToggle as Element);
+    expect(style.borderTopWidth).toBe('0px');
+    expect(style.borderRightWidth).toBe('0px');
+    expect(style.borderBottomWidth).toBe('0px');
+    expect(style.borderLeftWidth).toBe('0px');
+  });
+
   it('shows localized theme, color, language and settings in the top-right profile dropdown', async () => {
     mockUser = {
       id: 1,
