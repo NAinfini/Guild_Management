@@ -25,9 +25,9 @@
 - Pin scope before implementation.
 - Ask one targeted scoping question when intent is ambiguous.
 - For cross-page issues, inspect shared components/theme/runtime layers first.
-- Before any new repository investigation, read `docs/engineering/repository-structure.md` first as the canonical index.
-- After structural changes (files/folders/export boundaries), update `docs/engineering/repository-structure.md` in the same change set.
-- If a class becomes unused, mark it as `OBSOLETE` (or `OBSOLETE CANDIDATE`) in `docs/engineering/repository-structure.md` before removal/refactor.
+- Before any new repository investigation, read `Repo_Index.md` first as the canonical index.
+- After structural changes (files/folders/export boundaries), update `Repo_Index.md` in the same change set.
+- If a class becomes unused, mark it as `OBSOLETE` (or `OBSOLETE CANDIDATE`) in `Repo_Index.md` before removal/refactor.
 
 ### Encoding and Localization Integrity
 - Keep instruction and locale files UTF-8 clean.
