@@ -1,7 +1,7 @@
 
-import { Theme as MuiTheme, ThemeOptions as MuiThemeOptions } from '@mui/material/styles';
+import { Theme as MuiTheme, ThemeOptions as MuiThemeOptions } from '@/ui-bridge/material/styles';
 
-declare module '@mui/material/styles' {
+declare module '@/ui-bridge/material/styles' {
   interface CustomTheme {
       semantic?: {
         surface: {
@@ -190,7 +190,7 @@ declare module '@mui/material/styles' {
   }
 
   interface Theme {
-    custom?: CustomTheme;
+    custom?: Partial<CustomTheme>;
   }
 
   // Allow configuration using `createTheme`

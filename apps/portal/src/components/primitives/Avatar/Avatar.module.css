@@ -1,0 +1,53 @@
+/*
+ * Avatar styles provide consistent circular identity surfaces.
+ * Size classes are consumed by the Avatar primitive and inherited by composed profile UI.
+ */
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--radius-full, 9999px);
+  border: var(--border-width-default, 1px) solid var(--color-border-default, rgba(255, 255, 255, 0.12));
+  background-color: color-mix(in srgb, var(--color-bg-elevated, #14141a) 82%, transparent);
+  color: var(--color-text-primary, rgba(255, 255, 255, 0.95));
+  font-family: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fallback {
+  user-select: none;
+  letter-spacing: var(--tracking-wide, 0.05em);
+}
+
+.sm {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: var(--font-size-xs, 0.75rem);
+}
+
+.md {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.lg {
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: var(--font-size-base, 1rem);
+}
+
+.xl {
+  width: 3.25rem;
+  height: 3.25rem;
+  font-size: var(--font-size-lg, 1.125rem);
+}
+

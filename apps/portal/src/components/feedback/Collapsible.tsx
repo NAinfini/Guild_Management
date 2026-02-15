@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Collapse } from "@mui/material";
+import { Collapse } from "@/ui-bridge/material";
 
 interface CollapsibleContextValue {
   open: boolean;

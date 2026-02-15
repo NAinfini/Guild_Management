@@ -1,8 +1,8 @@
 import * as React from "react";
-import MuiCheckbox, { CheckboxProps } from "@mui/material/Checkbox";
-import Box from "@mui/material/Box";
-import CheckIcon from "@mui/icons-material/Check";
-import { useTheme, type SxProps, type Theme } from "@mui/material/styles";
+import MuiCheckbox, { CheckboxProps } from "@/ui-bridge/material/Checkbox";
+import Box from "@/ui-bridge/material/Box";
+import CheckIcon from "@/ui-bridge/icons-material/Check";
+import { useTheme, type SxProps, type Theme } from "@/ui-bridge/material/styles";
 import { cn } from "@/lib/utils";
 
 const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(

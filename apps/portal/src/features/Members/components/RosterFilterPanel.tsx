@@ -33,12 +33,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components';
-import CloseIcon from '@mui/icons-material/Close';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import SaveIcon from '@mui/icons-material/Save';
-import DeleteIcon from '@mui/icons-material/Delete';
-import CheckIcon from '@mui/icons-material/Check';
-import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
+import CloseIcon from '@/ui-bridge/icons-material/Close';
+import FilterListIcon from '@/ui-bridge/icons-material/FilterList';
+import SaveIcon from '@/ui-bridge/icons-material/Save';
+import DeleteIcon from '@/ui-bridge/icons-material/Delete';
+import CheckIcon from '@/ui-bridge/icons-material/Check';
+import UnfoldMoreIcon from '@/ui-bridge/icons-material/UnfoldMore';
 
 import { useMediaQuery } from '../../../hooks/use-media-query';
 import { RosterFilterState, useFilterPresets } from '../../../hooks/useFilterPresets';
@@ -330,9 +330,9 @@ export function RosterFilterPanel({
               <Input
                 id="preset-name"
                 value={presetName}
-                onChange={(e) => setPresetName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPresetName(e.target.value)}
                 placeholder="My Custom Filter"
-                onKeyDown={(e) => e.key === 'Enter' && handleSavePreset()}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleSavePreset()}
               />
            </div>
            <DialogFooter>

@@ -9,8 +9,8 @@ import {
   Chip,
   IconButton,
   InputAdornment,
-} from '@mui/material';
-import { Search as SearchIcon, Clear as ClearIcon, FilterList as FilterIcon } from '@mui/icons-material';
+} from '@/ui-bridge/material';
+import { Search as SearchIcon, Clear as ClearIcon, FilterList as FilterIcon } from '@/ui-bridge/icons-material';
 import { cn } from '@/lib/utils';
 
 export interface FilterOption {
@@ -35,7 +35,7 @@ export interface FilterBarProps {
   searchPlaceholder?: string;
   /** Filter configurations */
   filters?: FilterConfig[];
-  /** Active filter values (filterId → value(s)) */
+  /** Active filter values (filterId 鈫?value(s)) */
   activeFilters?: Record<string, string | string[]>;
   /** Filter change handler */
   onFilterChange?: (filterId: string, value: string | string[]) => void;
@@ -86,7 +86,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       <TextField
         fullWidth
         value={searchQuery}
-        onChange={(e) => onSearchChange?.(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSearchChange?.(e.target.value)}
         placeholder={searchPlaceholder}
         variant="outlined"
         size="small"
@@ -141,9 +141,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <Select
             multiple={filter.multiple}
             value={activeFilters[filter.id] || (filter.multiple ? [] : '')}
-            onChange={(e) => onFilterChange?.(filter.id, e.target.value as string | string[])}
+            onChange={(e: { target: { value: string | string[] } }) => onFilterChange?.(filter.id, e.target.value)}
             label={filter.label}
-            renderValue={(selected) => {
+            renderValue={(selected: string | string[]) => {
               if (filter.multiple && Array.isArray(selected)) {
                 return (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -158,7 +158,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                             const newValues = selected.filter((v) => v !== value);
                             onFilterChange?.(filter.id, newValues);
                           }}
-                          onMouseDown={(e) => e.stopPropagation()}
+                          onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
                         />
                       );
                     })}
@@ -222,3 +222,4 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     </Box>
   );
 };
+

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Stack, Typography, useTheme, alpha } from '@mui/material';
+import { Box, Stack, Typography, useTheme, alpha } from '@/ui-bridge/material';
 import { 
   EmojiEvents, 
   ElectricBolt, 
@@ -7,8 +7,8 @@ import {
   Favorite, 
   AutoAwesome,
   Logout
-} from '@mui/icons-material';
-import { ThemedIconButton } from '@/components/controls';
+} from '@/ui-bridge/icons-material';
+import { ThemedIconButton } from '@/components/primitives/themed-controls';
 import { 
   formatPower, 
   formatClassDisplayName, 
@@ -110,6 +110,7 @@ export function TeamMemberCard({
 
   return (
     <Box
+      data-testid={`participant-card-${member.id}`}
       ref={setNodeRef}
       {...(variant === 'draggable' && canManage ? listeners : {})}
       {...(variant === 'draggable' && canManage ? attributes : {})}
@@ -163,21 +164,9 @@ export function TeamMemberCard({
         } : undefined,
       }}
     >
-      {/* Content */}
-      <Stack 
-        direction="column" // Event style uses column layout (name on top, pills below) for the text part?
-        // Wait, Event style was: Stack direction="row" alignItems="center" ...
-        // Inside that Stack: Box minWidth 0 flex 1 -> Typography (name) -> Stack (pills)
-        // So the main container is a row (Left: Content, Right: Kick Button)
-        // Inside Content (Box): Name (mb 0.5) -> Pills (Stack row)
-        // TeamMemberCard original was Stack direction="row" with Name -> Pill -> Pill
-        // I need to change TeamMemberCard inner layout to match Event style.
-      >
-      </Stack>
-      
-      {/* Re-implementing inner content to match Event style */}
+      {/* Keep participant metadata in its own row so action controls cannot overlap in dense grids. */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1.2} sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
-         <Box sx={{ minWidth: 0, flex: 1 }}>
+         <Box sx={{ minWidth: 0, flex: 1 }} data-testid={`participant-meta-${member.id}`}>
              <Stack direction="row" alignItems="center" spacing={1}>
                  {variant === 'draggable' && role && (
                    <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'center', mr: 0.5 }}>
@@ -228,11 +217,11 @@ export function TeamMemberCard({
          
          {canManage && onKick && (
             <ThemedIconButton
-              data-testid={`member-kick-${member.id}`}
+              data-testid={`participant-kick-${member.id}`}
               size="small"
               variant="overlayDanger"
               data-ui="square-icon-button" // Override circular shape
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onKick();
               }}

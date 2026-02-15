@@ -9,8 +9,8 @@ import {
   IconButton,
   Typography,
   Fade
-} from "@mui/material";
-import { Close } from "@mui/icons-material";
+} from "@/ui-bridge/material";
+import { Close } from "@/ui-bridge/icons-material";
 
 // Context to manage dialog state for sub-components
 interface DialogContextValue {

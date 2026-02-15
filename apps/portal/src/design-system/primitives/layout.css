@@ -1,0 +1,23 @@
+﻿/**
+ * Layout utility classes used by upcoming primitive/layout components.
+ */
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--page-padding-x);
+  padding-right: var(--page-padding-x);
+}
+
+.container-narrow { max-width: var(--container-narrow); }
+.container-comfortable { max-width: var(--container-comfortable); }
+.container-standard { max-width: var(--container-standard); }
+.container-wide { max-width: var(--container-wide); }
+.container-full { max-width: var(--container-full); }
+
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-6 { gap: var(--space-6); }
+.gap-8 { gap: var(--space-8); }

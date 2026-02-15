@@ -9,7 +9,7 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
 import { formatNumber } from './utils';
-import { ArrowUpward, ArrowDownward, UnfoldMore, Search, ErrorOutline } from '@mui/icons-material';
+import { ArrowUpward, ArrowDownward, UnfoldMore, Search, ErrorOutline } from '@/ui-bridge/icons-material';
 import { cn } from '../../../../lib/utils'; // Assuming this utility exists
 
 import { Input } from '@/components/input/Input';
@@ -125,7 +125,7 @@ export function TableFallback({
             className="pl-9"
             placeholder={searchPlaceholder}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
           />
         </div>
       )}

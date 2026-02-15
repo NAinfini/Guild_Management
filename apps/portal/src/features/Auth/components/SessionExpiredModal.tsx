@@ -8,7 +8,7 @@ import {
   DialogFooter,
   Button
 } from '@/components';
-import LockIcon from "@mui/icons-material/Lock";
+import LockIcon from "@/ui-bridge/icons-material/Lock";
 import { useAuth } from '@/hooks';
 import { useTranslation } from 'react-i18next';
 

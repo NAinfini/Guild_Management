@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Skeleton } from '@mui/material';
+import { Card, CardContent, Typography, Box, Skeleton } from '@/ui-bridge/material';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 

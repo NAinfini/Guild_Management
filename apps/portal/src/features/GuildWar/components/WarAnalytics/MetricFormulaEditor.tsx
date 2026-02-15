@@ -70,7 +70,7 @@ export function MetricFormulaEditor({
               type="number"
               inputProps={{ min: 0, max: 100 }}
               value={kda}
-              onChange={(e) => setKda(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setKda(e.target.value)}
             />
           </div>
 
@@ -80,7 +80,7 @@ export function MetricFormulaEditor({
                type="number"
                inputProps={{ min: 0, max: 100 }}
                value={towers}
-               onChange={(e) => setTowers(e.target.value)}
+               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTowers(e.target.value)}
              />
           </div>
 
@@ -90,7 +90,7 @@ export function MetricFormulaEditor({
                type="number"
                inputProps={{ min: 0, max: 100 }}
                value={distance}
-               onChange={(e) => setDistance(e.target.value)}
+               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDistance(e.target.value)}
              />
           </div>
 

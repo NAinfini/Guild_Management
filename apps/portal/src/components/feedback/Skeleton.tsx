@@ -15,7 +15,7 @@ import {
   Paper,
   useTheme,
   alpha
-} from '@mui/material';
+} from '@/ui-bridge/material';
 
 export { Skeleton };
 

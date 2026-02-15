@@ -113,7 +113,8 @@ export function useMembers(options?: { includeInactive?: boolean; polling?: Poll
   return useQuery({
     queryKey: queryKeys.members.list(queryOptions),
     queryFn: () => membersAPI.list(queryOptions),
-    staleTime: 30 * 1000,
+    // Day 13 contract: member list changes infrequently, so keep it fresh for 10 minutes.
+    staleTime: 10 * 60 * 1000,
     placeholderData: (previousData) => previousData,
     refetchInterval,
     refetchIntervalInBackground: false,

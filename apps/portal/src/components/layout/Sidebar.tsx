@@ -15,8 +15,8 @@ import {
   ListItemText,
   Collapse,
   Divider
-} from "@mui/material";
-import { MenuOpen, KeyboardArrowDown } from "@mui/icons-material";
+} from "@/ui-bridge/material";
+import { MenuOpen, KeyboardArrowDown } from "@/ui-bridge/icons-material";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../feedback/Tooltip";
 
 const SIDEBAR_WIDTH = "16rem";

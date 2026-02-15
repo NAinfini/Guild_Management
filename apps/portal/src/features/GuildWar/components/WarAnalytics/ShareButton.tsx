@@ -12,7 +12,7 @@ import { generateAnalyticsSnapshot, copyToClipboard } from './utils';
 import type { WarSummary, MemberStats } from './types';
 import { Button } from '@/components/button';
 import { toast } from '@/lib/toast';
-import { Share, ContentCopy, Check } from '@mui/icons-material';
+import { Share, ContentCopy, Check } from '@/ui-bridge/icons-material';
 
 // ============================================================================
 // Main Component

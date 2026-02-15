@@ -4,16 +4,16 @@ import { Card, CardContent, CardHeader } from '@/components/layout/Card';
 import { Event } from '@/types';
 import { format, parseISO, addDays } from 'date-fns';
 import { enUS, zhCN } from 'date-fns/locale';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import GroupIcon from '@mui/icons-material/Group';
-import { Tooltip } from '@mui/material';
+import CalendarTodayIcon from '@/ui-bridge/icons-material/CalendarToday';
+import GroupIcon from '@/ui-bridge/icons-material/Group';
+import { Tooltip } from '@/ui-bridge/material';
 
 interface TimelineProps {
   events: Event[];
   userId: string;
 }
 
-const DAY_WIDTH_PX = 120;
+const DAY_WIDTH_PX = 140;
 const TIMELINE_DAYS = 7;
 const MINUTES_PER_DAY = 24 * 60;
 
@@ -138,7 +138,7 @@ export const Timeline: React.FC<TimelineProps> = ({ events, userId }) => {
       <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none" />
 
       <CardHeader
-        className="px-4 pt-3 pb-2.5 border-b border-[color:var(--cmp-card-border)] flex-shrink-0 relative z-10"
+        className="px-4 pt-4 pb-2 border-b border-[color:var(--cmp-card-border)] flex-shrink-0 relative z-10"
         style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 50%, transparent)' }}
       >
         <div className="flex items-center justify-between">
@@ -179,7 +179,7 @@ export const Timeline: React.FC<TimelineProps> = ({ events, userId }) => {
                 >
                   {/* Pulsing dot at top */}
                   <div
-                    className="absolute top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-2 animate-pulse"
+                    className="absolute top-4 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-2 animate-pulse"
                     style={{ 
                       borderColor: 'var(--cmp-card-bg)',
                       boxShadow: '0 0 16px 4px color-mix(in srgb, var(--sys-interactive-accent) 50%, transparent), 0 0 8px 2px var(--sys-interactive-accent)',
@@ -192,7 +192,7 @@ export const Timeline: React.FC<TimelineProps> = ({ events, userId }) => {
                   {/* Enhanced time label */}
                   <div
                     data-testid="dashboard-timeline-now-label-container"
-                    className="absolute top-8 left-full ml-2 whitespace-nowrap"
+                    className="absolute top-8 left-full ml-1 whitespace-nowrap"
                   >
                     <span
                       data-testid="dashboard-timeline-now-label"
@@ -219,12 +219,13 @@ export const Timeline: React.FC<TimelineProps> = ({ events, userId }) => {
                     <div
                       key={dateStr}
                       data-testid={`dashboard-timeline-day-${dateStr}`}
-                      className="relative flex flex-col items-center w-[120px] shrink-0"
+                      className="relative flex flex-col items-center shrink-0"
+                      style={{ width: `${DAY_WIDTH_PX}px` }}
                     >
                       {/* Enhanced day band with gradient */}
                       <div
                         data-testid={`dashboard-timeline-day-band-${dateStr}`}
-                        className="absolute top-5 bottom-0 left-0 right-0 pointer-events-none transition-all duration-300"
+                        className="absolute top-5 bottom-0 left-0 right-0 pointer-events-none transition-all duration-150"
                         style={{
                           borderLeft: dayIndex === 0 ? 'none' : '1px solid color-mix(in srgb, var(--sys-border-subtle) 40%, transparent)',
                           borderRight: '1px solid color-mix(in srgb, var(--sys-border-subtle) 30%, transparent)',
@@ -236,7 +237,7 @@ export const Timeline: React.FC<TimelineProps> = ({ events, userId }) => {
                       
                       {/* Enhanced day circle with shadow and gradient */}
                       <div
-                        className="w-11 h-11 rounded-full border-2 flex items-center justify-center relative z-10 mb-3 transition-all duration-300 hover:scale-110"
+                        className="w-11 h-11 rounded-full border-2 flex items-center justify-center relative z-10 mb-4 transition-all duration-150 hover:scale-110"
                         style={{
                           borderColor: hasEvents ? 'var(--sys-interactive-accent)' : 'color-mix(in srgb, var(--sys-border-subtle) 70%, transparent)',
                           backgroundColor: hasEvents
@@ -258,7 +259,7 @@ export const Timeline: React.FC<TimelineProps> = ({ events, userId }) => {
                           <div className={`text-[9px] font-black uppercase ${hasEvents ? 'text-primary' : 'text-muted-foreground/50'} leading-none`}>
                             {getLocalizedWeekday(t, date)}
                           </div>
-                          <div className="text-[8px] text-muted-foreground leading-none mt-0.5">
+                          <div className="text-[8px] text-muted-foreground leading-none mt-1">
                             {format(date, 'M/d')}
                           </div>
                         </div>
@@ -320,7 +321,7 @@ export const Timeline: React.FC<TimelineProps> = ({ events, userId }) => {
                       {/* Enhanced event cards */}
                       <div className="flex-1 w-full relative z-10">
                         {hasEvents && (
-                          <div className="space-y-1.5">
+                          <div className="space-y-2">
                             {dayEvents.map(event => {
                               const startOffset = calculateEventStartOffset(event.start_time);
                               return (
@@ -352,7 +353,7 @@ export const Timeline: React.FC<TimelineProps> = ({ events, userId }) => {
                                     arrow
                                   >
                                     <div
-                                      className="min-w-[140px] max-w-[220px] p-2 rounded-lg border backdrop-blur-sm cursor-pointer group/event transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                                      className="min-w-[140px] max-w-[220px] p-2 rounded-lg border backdrop-blur-sm cursor-pointer group/event transition-all duration-150 hover:scale-105 active:scale-[0.98] hover:shadow-lg"
                                       style={{ 
                                         backgroundColor: 'color-mix(in srgb, var(--sys-surface-elevated) 65%, transparent)',
                                         borderColor: 'color-mix(in srgb, var(--cmp-card-border) 80%, transparent)',
@@ -388,6 +389,14 @@ export const Timeline: React.FC<TimelineProps> = ({ events, userId }) => {
                                 </div>
                               );
                             })}
+                          </div>
+                        )}
+                        {!hasEvents && (
+                          <div
+                            data-testid={`dashboard-timeline-empty-${dateStr}`}
+                            className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] uppercase tracking-wider text-muted-foreground/40"
+                          >
+                            {t('dashboard.my_signups.no_events')}
                           </div>
                         )}
                       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { Suspense, lazy, useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useTheme,
@@ -38,7 +38,7 @@ import {
   IconButton,
   ImageList,
   ImageListItem
-} from '@mui/material';
+} from '@/ui-bridge/material';
 import { 
   Label,
   Separator,
@@ -78,7 +78,7 @@ import {
   Language as Globe,
   Add as Plus,
   Remove as Minus
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 import { useAuthStore, useUIStore } from '../../store';
 import { useAuth } from '../../hooks';
 import { Navigate } from '@tanstack/react-router';
@@ -90,6 +90,7 @@ import { convertToWebP } from '../../lib/media-conversion';
 import { warsAPI, membersAPI, mediaAPI } from '../../lib/api';
 import { type User, type Role, type ClassType, type ProgressionData, type AuditLogEntry } from '../../types';
 import { useForm, Controller } from 'react-hook-form';
+import { List, type RowComponentProps } from 'react-window';
 import { AuditLogs } from './components/AuditLogs';
 import { HealthStatus } from '@/components';
 import { ProtectedRoute } from '../Auth/components/ProtectedRoute';
@@ -99,58 +100,126 @@ import {
   canManageMemberRoles,
   getEffectiveRole 
 } from '../../lib/permissions';
+const AdminRoleChangeDialog = lazy(() => import('./components/AdminRoleChangeDialog'));
 
 type AdminTab = 'members' | 'audit' | 'status';
+
+const ADMIN_VIRTUAL_TABLE_THRESHOLD = 120;
+const ADMIN_VIRTUAL_TABLE_MAX_HEIGHT = 560;
+const ADMIN_VIRTUAL_TABLE_ROW_HEIGHT = 72;
+
+type RoleToken = { main: string; bg: string; text: string };
+type StatusToken = { main: string; bg: string; text: string };
+
+function getAdminRoleToken(theme: any, role: string): RoleToken {
+  const roleTokens = theme.custom?.roles;
+  const fallback: Record<string, RoleToken> = {
+    admin: {
+      main: theme.palette.error.main,
+      bg: alpha(theme.palette.error.main, 0.14),
+      text: theme.palette.error.main,
+    },
+    moderator: {
+      main: theme.palette.warning.main,
+      bg: alpha(theme.palette.warning.main, 0.14),
+      text: theme.palette.warning.main,
+    },
+    member: {
+      main: theme.palette.primary.main,
+      bg: alpha(theme.palette.primary.main, 0.14),
+      text: theme.palette.primary.main,
+    },
+    external: {
+      main: theme.palette.text.secondary,
+      bg: alpha(theme.palette.text.secondary, 0.14),
+      text: theme.palette.text.secondary,
+    },
+  };
+
+  return roleTokens?.[role as keyof typeof roleTokens] ?? fallback[role] ?? fallback.member;
+}
+
+function getAdminStatusToken(theme: any, status: 'active' | 'inactive' | 'vacation' | 'unknown'): StatusToken {
+  const statusTokens = theme.custom?.status;
+  const fallback: Record<'active' | 'inactive' | 'vacation' | 'unknown', StatusToken> = {
+    active: {
+      main: theme.palette.success.main,
+      bg: alpha(theme.palette.success.main, 0.14),
+      text: theme.palette.success.main,
+    },
+    inactive: {
+      main: theme.palette.error.main,
+      bg: alpha(theme.palette.error.main, 0.14),
+      text: theme.palette.error.main,
+    },
+    vacation: {
+      main: theme.palette.warning.main,
+      bg: alpha(theme.palette.warning.main, 0.14),
+      text: theme.palette.warning.main,
+    },
+    unknown: {
+      main: theme.palette.text.secondary,
+      bg: alpha(theme.palette.text.secondary, 0.12),
+      text: theme.palette.text.secondary,
+    },
+  };
+
+  return statusTokens?.[status] ?? fallback[status];
+}
+
+export function shouldUseVirtualAdminUserTable(totalMembers: number): boolean {
+  return totalMembers >= ADMIN_VIRTUAL_TABLE_THRESHOLD;
+}
 
 // Configuration for the Class Picker UI - now using theme colors
 const getClassGroups = (theme: any) => [
   {
     id: 'mingjin',
-    label: '鸣金',
+    label: '楦ｉ噾',
     mainColor: theme.custom?.classes?.mingjin?.main || theme.palette.primary.main,
     color: theme.custom?.classes?.mingjin?.text || theme.palette.text.primary,
     borderColor: alpha(theme.custom?.classes?.mingjin?.main || theme.palette.primary.main, 0.35),
     bgColor: theme.custom?.classes?.mingjin?.bg || alpha(theme.custom?.classes?.mingjin?.main || theme.palette.primary.main, 0.14),
     options: [
-      { id: 'mingjin_hong', label: '鸣金虹' },
-      { id: 'mingjin_ying', label: '鸣金影' }
+      { id: 'mingjin_hong', label: 'Mingjin Hong' },
+      { id: 'mingjin_ying', label: 'Mingjin Ying' }
     ]
   },
   {
     id: 'qiansi',
-    label: '牵丝',
+    label: '鐗典笣',
     mainColor: theme.custom?.classes?.qiansi?.main || theme.palette.primary.main,
     color: theme.custom?.classes?.qiansi?.text || theme.palette.text.primary,
     borderColor: alpha(theme.custom?.classes?.qiansi?.main || theme.palette.primary.main, 0.35),
     bgColor: theme.custom?.classes?.qiansi?.bg || alpha(theme.custom?.classes?.qiansi?.main || theme.palette.primary.main, 0.14),
     options: [
-      { id: 'qiansi_yu', label: '牵丝玉' },
-      { id: 'qiansi_lin', label: '牵丝霖' }
+      { id: 'qiansi_yu', label: 'Qiansi Yu' },
+      { id: 'qiansi_lin', label: 'Qiansi Lin' }
     ]
   },
   {
     id: 'pozhu',
-    label: '破竹',
+    label: '鐮寸',
     mainColor: theme.custom?.classes?.pozhu?.main || theme.palette.primary.main,
     color: theme.custom?.classes?.pozhu?.text || theme.palette.text.primary,
     borderColor: alpha(theme.custom?.classes?.pozhu?.main || theme.palette.primary.main, 0.35),
     bgColor: theme.custom?.classes?.pozhu?.bg || alpha(theme.custom?.classes?.pozhu?.main || theme.palette.primary.main, 0.14),
     options: [
-      { id: 'pozhu_feng', label: '破竹风' },
-      { id: 'pozhu_chen', label: '破竹尘' },
-      { id: 'pozhu_yuan', label: '破竹鸢' }
+      { id: 'pozhu_feng', label: 'Pozhu Feng' },
+      { id: 'pozhu_chen', label: 'Pozhu Chen' },
+      { id: 'pozhu_yuan', label: 'Pozhu Yuan' }
     ]
   },
   {
     id: 'lieshi',
-    label: '裂石',
+    label: '瑁傜煶',
     mainColor: theme.custom?.classes?.lieshi?.main || theme.palette.primary.main,
     color: theme.custom?.classes?.lieshi?.text || theme.palette.text.primary,
     borderColor: alpha(theme.custom?.classes?.lieshi?.main || theme.palette.primary.main, 0.35),
     bgColor: theme.custom?.classes?.lieshi?.bg || alpha(theme.custom?.classes?.lieshi?.main || theme.palette.primary.main, 0.14),
     options: [
-      { id: 'lieshi_wei', label: '裂石威' },
-      { id: 'lieshi_jun', label: '裂石钧' }
+      { id: 'lieshi_wei', label: 'Lieshi Wei' },
+      { id: 'lieshi_jun', label: 'Lieshi Jun' }
     ]
   }
 ];
@@ -159,7 +228,7 @@ export function Admin() {
   const { user } = useAuth();
   const { viewRole } = useAuthStore();
 
-  // 鉁?TanStack Query: Server state
+  // 閴?TanStack Query: Server state
   const { data: members = [], isLoading: isLoadingMembers, isError: isMembersError } = useMembers();
   const { data: auditLogs = [], isLoading: isLoadingAudits } = useAuditLogs();
   const isLoading = isLoadingMembers || isLoadingAudits;
@@ -273,7 +342,7 @@ export function Admin() {
         >
             <Tabs 
                value={activeTab} 
-               onChange={(_, v) => setActiveTab(v)}
+               onChange={(_event: React.SyntheticEvent, v: AdminTab) => setActiveTab(v)}
                sx={{ 
                    minHeight: 36,
                    '& .MuiTab-root': { 
@@ -319,7 +388,7 @@ export function AdminProtected() {
 }
 
 function MemberManagement() {
-   // 鉁?TanStack Query: Server state and mutations
+   // 閴?TanStack Query: Server state and mutations
    const {
      data: members = [],
      isError: isMembersError,
@@ -334,6 +403,7 @@ function MemberManagement() {
    const { t } = useTranslation();
    const [search, setSearch] = useState('');
    const [selectedMember, setSelectedMember] = useState<User | null>(null);
+   const hasActiveFilters = Boolean(search.trim());
 
    const theme = useTheme();
    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -345,12 +415,19 @@ function MemberManagement() {
         return matchesSearch;
      });
    }, [members, search]);
+   const useVirtualTable = shouldUseVirtualAdminUserTable(filteredMembers.length);
 
    if (isMembersError && members.length === 0) {
      return (
-       <Card variant="outlined" sx={{ borderRadius: 3 }}>
+       <Card variant="outlined" sx={{ borderRadius: 3 }} data-testid="admin-members-error-state">
          <CardContent>
-           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+           <Stack
+             data-testid="admin-members-error-actions"
+             direction={{ xs: 'column', sm: 'row' }}
+             spacing={2}
+             alignItems={{ xs: 'flex-start', sm: 'center' }}
+             justifyContent="space-between"
+           >
              <Box>
                <Typography variant="subtitle2" fontWeight={900}>
                  {t('admin.empty_title')}
@@ -366,7 +443,8 @@ function MemberManagement() {
                onClick={() => void refetchMembers()}
                sx={{ fontWeight: 800 }}
              >
-               {t('admin.recheck')}
+               {/* Retry triggers TanStack Query refetch so transient member-list failures can recover in-place. */}
+               {t('common.retry')}
              </Button>
            </Stack>
          </CardContent>
@@ -380,7 +458,7 @@ function MemberManagement() {
             <TextField
                placeholder={t('admin.search_placeholder')}
                value={search}
-               onChange={(e) => setSearch(e.target.value)}
+               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                size="small"
                InputProps={{
                   startAdornment: <InputAdornment position="start"><Search sx={{ fontSize: 16 }} /></InputAdornment>,
@@ -412,9 +490,9 @@ function MemberManagement() {
                           textTransform: 'uppercase',
                           fontSize: '0.6rem',
                           height: 20,
-                          bgcolor: theme.custom?.roles[m.role as keyof typeof theme.custom.roles]?.bg,
-                          color: theme.custom?.roles[m.role as keyof typeof theme.custom.roles]?.text,
-                          borderColor: theme.custom?.roles[m.role as keyof typeof theme.custom.roles]?.main
+                          bgcolor: getAdminRoleToken(theme, m.role).bg,
+                          color: getAdminRoleToken(theme, m.role).text,
+                          borderColor: getAdminRoleToken(theme, m.role).main
                         }}
                       />
                       <Chip 
@@ -425,8 +503,19 @@ function MemberManagement() {
                       />
                       <Typography variant="body2" fontFamily="monospace" fontWeight={700} color="primary.main">{formatPower(m.power)}</Typography>
                       <Stack direction="row" alignItems="center" spacing={0.5}>
-                        {m.active_status === 'vacation' ? <AlertTriangle sx={{ fontSize: 14, color: theme.custom?.status.vacation.main }} /> : <CheckCircle2 sx={{ fontSize: 14, color: theme.custom?.status.active.main }} />}
-                        <Typography variant="caption" fontWeight={900} textTransform="uppercase" color={m.active_status === 'vacation' ? theme.custom?.status.vacation.main : theme.custom?.status.active.main}>
+                        {m.active_status === 'vacation'
+                          ? <AlertTriangle sx={{ fontSize: 14, color: getAdminStatusToken(theme, 'vacation').main }} />
+                          : <CheckCircle2 sx={{ fontSize: 14, color: getAdminStatusToken(theme, 'active').main }} />}
+                        <Typography
+                          variant="caption"
+                          fontWeight={900}
+                          textTransform="uppercase"
+                          color={
+                            m.active_status === 'vacation'
+                              ? getAdminStatusToken(theme, 'vacation').main
+                              : getAdminStatusToken(theme, 'active').main
+                          }
+                        >
                           {m.active_status === 'vacation' ? t('admin.status_vacation') : t('admin.status_active')}
                         </Typography>
                       </Stack>
@@ -437,12 +526,93 @@ function MemberManagement() {
             ))}
             {filteredMembers.length === 0 && (
               <Grid size={{ xs: 12 }}>
-                <Typography variant="caption" fontWeight={900} color="text.secondary" letterSpacing="0.1em" align="center" display="block">
-                  {t('common.no_results')}
-                </Typography>
+                <Stack spacing={1.5} alignItems="center" data-testid="admin-members-empty-actions">
+                  <Typography variant="caption" fontWeight={900} color="text.secondary" letterSpacing="0.1em" align="center" display="block">
+                    {t('common.no_results')}
+                  </Typography>
+                  {hasActiveFilters ? (
+                    // Clear search returns the member list to its baseline unfiltered state.
+                    <Button variant="outlined" size="small" onClick={() => setSearch('')}>
+                      {t('common.clear_filters')}
+                    </Button>
+                  ) : null}
+                </Stack>
               </Grid>
             )}
           </Grid>
+        ) : useVirtualTable ? (
+          <Paper
+            data-testid="admin-users-virtual-table"
+            elevation={0}
+            sx={{
+              border: '1px solid',
+              borderColor: tableToken?.border || 'divider',
+              borderRadius: 4,
+              overflow: 'hidden',
+            }}
+          >
+            <Box
+              sx={{
+                px: 2,
+                py: 1.5,
+                display: 'grid',
+                gridTemplateColumns: 'minmax(280px, 2.2fr) minmax(84px, .8fr) minmax(96px, .95fr) minmax(80px, .8fr) minmax(120px, 1fr)',
+                gap: 2,
+                alignItems: 'center',
+                bgcolor: tableToken?.headerBg || 'action.hover',
+                borderBottom: '1px solid',
+                borderColor: tableToken?.border || 'divider',
+              }}
+            >
+              {['identity', 'role', 'spec', 'power', 'status'].map(head => (
+                <Typography
+                  key={head}
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.65rem',
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    color: 'text.secondary',
+                  }}
+                >
+                  {t(`admin.label_${head}`)}
+                </Typography>
+              ))}
+            </Box>
+            {filteredMembers.length === 0 ? (
+              <Box sx={{ py: 8, textAlign: 'center' }}>
+                <Stack spacing={1.5} alignItems="center" data-testid="admin-members-empty-actions">
+                  <Typography variant="caption" fontWeight={900} color="text.secondary" letterSpacing="0.1em">
+                    {t('common.no_results')}
+                  </Typography>
+                  {hasActiveFilters ? (
+                    // Clear search returns the member list to its baseline unfiltered state.
+                    <Button variant="outlined" size="small" onClick={() => setSearch('')}>
+                      {t('common.clear_filters')}
+                    </Button>
+                  ) : null}
+                </Stack>
+              </Box>
+            ) : (
+              <List
+                rowCount={filteredMembers.length}
+                rowHeight={ADMIN_VIRTUAL_TABLE_ROW_HEIGHT}
+                rowComponent={VirtualAdminMemberRow}
+                rowProps={{
+                  members: filteredMembers,
+                  onSelectMember: setSelectedMember,
+                  theme,
+                  tableToken,
+                  t: t as (key: string) => string,
+                }}
+                style={{
+                  height: Math.min(ADMIN_VIRTUAL_TABLE_MAX_HEIGHT, filteredMembers.length * ADMIN_VIRTUAL_TABLE_ROW_HEIGHT),
+                  width: '100%',
+                }}
+              />
+            )}
+          </Paper>
         ) : (
           <TableContainer
             component={Paper}
@@ -490,9 +660,9 @@ function MemberManagement() {
                                  textTransform: 'uppercase',
                                  fontSize: '0.6rem',
                                  height: 20,
-                                 bgcolor: theme.custom?.roles[m.role as keyof typeof theme.custom.roles]?.bg,
-                                 color: theme.custom?.roles[m.role as keyof typeof theme.custom.roles]?.text,
-                                 borderColor: theme.custom?.roles[m.role as keyof typeof theme.custom.roles]?.main
+                                 bgcolor: getAdminRoleToken(theme, m.role).bg,
+                                 color: getAdminRoleToken(theme, m.role).text,
+                                 borderColor: getAdminRoleToken(theme, m.role).main
                                }}
                             />
                          </TableCell>
@@ -509,8 +679,19 @@ function MemberManagement() {
                          </TableCell>
                          <TableCell>
                             <Stack direction="row" alignItems="center" spacing={1}>
-                               {m.active_status === 'vacation' ? <AlertTriangle sx={{ fontSize: 14, color: theme.custom?.status.vacation.main }} /> : <CheckCircle2 sx={{ fontSize: 14, color: theme.custom?.status.active.main }} />}
-                               <Typography variant="caption" fontWeight={900} textTransform="uppercase" color={m.active_status === 'vacation' ? theme.custom?.status.vacation.main : theme.custom?.status.active.main}>
+                               {m.active_status === 'vacation'
+                                 ? <AlertTriangle sx={{ fontSize: 14, color: getAdminStatusToken(theme, 'vacation').main }} />
+                                 : <CheckCircle2 sx={{ fontSize: 14, color: getAdminStatusToken(theme, 'active').main }} />}
+                               <Typography
+                                 variant="caption"
+                                 fontWeight={900}
+                                 textTransform="uppercase"
+                                 color={
+                                   m.active_status === 'vacation'
+                                     ? getAdminStatusToken(theme, 'vacation').main
+                                     : getAdminStatusToken(theme, 'active').main
+                                 }
+                               >
                                   {m.active_status === 'vacation' ? t('admin.status_vacation') : t('admin.status_active')}
                                </Typography>
                             </Stack>
@@ -520,7 +701,15 @@ function MemberManagement() {
                    {filteredMembers.length === 0 && (
                       <TableRow>
                          <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                            <Typography variant="caption" fontWeight={900} color="text.secondary" letterSpacing="0.1em">{t('common.no_results')}</Typography>
+                            <Stack spacing={1.5} alignItems="center" data-testid="admin-members-empty-actions">
+                              <Typography variant="caption" fontWeight={900} color="text.secondary" letterSpacing="0.1em">{t('common.no_results')}</Typography>
+                              {hasActiveFilters ? (
+                                // Clear search returns the member list to its baseline unfiltered state.
+                                <Button variant="outlined" size="small" onClick={() => setSearch('')}>
+                                  {t('common.clear_filters')}
+                                </Button>
+                              ) : null}
+                            </Stack>
                          </TableCell>
                       </TableRow>
                    )}
@@ -541,6 +730,104 @@ function MemberManagement() {
         )}
       </Stack>
    );
+}
+
+type VirtualAdminMemberRowData = {
+  members: User[];
+  onSelectMember: (member: User) => void;
+  theme: any;
+  tableToken: any;
+  t: (key: string) => string;
+};
+
+function VirtualAdminMemberRow({
+  ariaAttributes,
+  index,
+  style,
+  members,
+  onSelectMember,
+  theme,
+  tableToken,
+  t,
+}: RowComponentProps<VirtualAdminMemberRowData>) {
+  const member = members[index];
+
+  if (!member) {
+    return null;
+  }
+
+  return (
+    <Box
+      style={style}
+      {...ariaAttributes}
+      onClick={() => onSelectMember(member)}
+      sx={{
+        px: 2,
+        display: 'grid',
+        gridTemplateColumns: 'minmax(280px, 2.2fr) minmax(84px, .8fr) minmax(96px, .95fr) minmax(80px, .8fr) minmax(120px, 1fr)',
+        gap: 2,
+        alignItems: 'center',
+        cursor: 'pointer',
+        bgcolor: tableToken?.rowBg || 'transparent',
+        borderTop: '1px solid',
+        borderColor: tableToken?.border || 'divider',
+        '&:hover': {
+          bgcolor: tableToken?.rowHoverBg || 'action.hover',
+        },
+      }}
+    >
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Avatar src={member.avatar_url} alt={member.username} variant="rounded" sx={{ width: 36, height: 36 }} />
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="subtitle2" fontWeight={800} dangerouslySetInnerHTML={sanitizeHtml(member.username)} />
+          <Typography variant="caption" fontFamily="monospace" color="text.secondary" noWrap>
+            {member.wechat_name || t('admin.no_wechat')}
+          </Typography>
+        </Box>
+      </Stack>
+      <Chip
+        label={member.role}
+        size="small"
+        sx={{
+          fontWeight: 900,
+          textTransform: 'uppercase',
+          fontSize: '0.6rem',
+          height: 20,
+          bgcolor: getAdminRoleToken(theme, member.role).bg,
+          color: getAdminRoleToken(theme, member.role).text,
+          borderColor: getAdminRoleToken(theme, member.role).main,
+        }}
+      />
+      <Chip
+        label={member.classes?.[0] ? formatClassDisplayName(member.classes[0]) : 'NONE'}
+        size="small"
+        variant="outlined"
+        sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.6rem', height: 20, ...getClassStyle(member.classes?.[0], theme) }}
+      />
+      <Typography variant="body2" fontFamily="monospace" fontWeight={700} color="primary.main">
+        {formatPower(member.power)}
+      </Typography>
+      <Stack direction="row" alignItems="center" spacing={1}>
+        {member.active_status === 'vacation' ? (
+          <AlertTriangle sx={{ fontSize: 14, color: getAdminStatusToken(theme, 'vacation').main }} />
+        ) : (
+          <CheckCircle2 sx={{ fontSize: 14, color: getAdminStatusToken(theme, 'active').main }} />
+        )}
+        <Typography
+          variant="caption"
+          fontWeight={900}
+          textTransform="uppercase"
+          color={
+            member.active_status === 'vacation'
+              ? getAdminStatusToken(theme, 'vacation').main
+              : getAdminStatusToken(theme, 'active').main
+          }
+        >
+          {member.active_status === 'vacation' ? t('admin.status_vacation') : t('admin.status_active')}
+        </Typography>
+      </Stack>
+    </Box>
+  );
 }
 
 function getClassStyle(classId: string | undefined, theme: any) {
@@ -624,9 +911,9 @@ function MemberDetailModal({ member, onClose, onUpdate }: { member: User, onClos
                             fontSize: '0.6rem',
                             fontWeight: 900,
                             textTransform: 'uppercase',
-                            bgcolor: theme.custom?.roles[member.role as keyof typeof theme.custom.roles]?.bg,
-                            color: theme.custom?.roles[member.role as keyof typeof theme.custom.roles]?.text,
-                            borderColor: theme.custom?.roles[member.role as keyof typeof theme.custom.roles]?.main
+                            bgcolor: getAdminRoleToken(theme, member.role).bg,
+                            color: getAdminRoleToken(theme, member.role).text,
+                            borderColor: getAdminRoleToken(theme, member.role).main
                           }}
                         />
                      </Stack>
@@ -653,9 +940,12 @@ function MemberDetailModal({ member, onClose, onUpdate }: { member: User, onClos
              bgcolor: segmentedToken?.bg || 'background.paper'
            }}
          >
-             <Tabs
-               value={tab}
-               onChange={(_, v) => setTab(v)}
+            <Tabs
+              value={tab}
+              onChange={(
+                _event: React.SyntheticEvent,
+                v: 'overview' | 'profile' | 'progression' | 'media' | 'admin'
+              ) => setTab(v)}
                variant="scrollable"
                scrollButtons="auto"
                sx={{
@@ -770,9 +1060,9 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                                 size="small"
                                 sx={{
                                   fontWeight: 900,
-                                  bgcolor: theme.custom?.status.vacation.bg,
-                                  color: theme.custom?.status.vacation.text,
-                                  borderColor: theme.custom?.status.vacation.main
+                                  bgcolor: getAdminStatusToken(theme, 'vacation').bg,
+                                  color: getAdminStatusToken(theme, 'vacation').text,
+                                  borderColor: getAdminStatusToken(theme, 'vacation').main
                                 }}
                               />
                            ) : (
@@ -782,9 +1072,9 @@ function MemberOverview({ member, onUpdate }: { member: User, onUpdate: (u: Part
                                 size="small"
                                 sx={{
                                   fontWeight: 900,
-                                  bgcolor: theme.custom?.status.active.bg,
-                                  color: theme.custom?.status.active.text,
-                                  borderColor: theme.custom?.status.active.main
+                                  bgcolor: getAdminStatusToken(theme, 'active').bg,
+                                  color: getAdminStatusToken(theme, 'active').text,
+                                  borderColor: getAdminStatusToken(theme, 'active').main
                                 }}
                               />
                            )}
@@ -1226,7 +1516,10 @@ function MemberMediaManager({ member, onUpdate }: { member: User, onUpdate: (u: 
                            <img
                               src={getOptimizedMediaUrl(item.url, 'image')}
                               alt={`${t('admin.tab_media')} ${index + 1}`}
+                              width={640}
+                              height={640}
                               loading="lazy"
+                              decoding="async"
                               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                            />
                         )}
@@ -1387,7 +1680,14 @@ function MemberAdminActions({ member, onUpdate, currentUser }: { member: User, o
                   <CardHeader title={<Stack direction="row" gap={1}><KeyRound sx={{ fontSize: 16 }} /> <Typography variant="subtitle2" fontWeight={900}>{t('admin.reset_credentials')}</Typography></Stack>} />
                   <CardContent>
                      <Stack spacing={2}>
-                        <TextField type="password" placeholder={t('admin.temp_password_placeholder')} value={password} onChange={e => setPassword(e.target.value)} size="small" fullWidth />
+                        <TextField
+                          type="password"
+                          placeholder={t('admin.temp_password_placeholder')}
+                          value={password}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                          size="small"
+                          fullWidth
+                        />
                         <Button variant="contained" disabled={!password || !canManageRole || !online} onClick={() => { alert('Saved'); setPassword(''); }}>{t('admin.reset_password')}</Button>
                      </Stack>
                   </CardContent>
@@ -1415,37 +1715,23 @@ function MemberAdminActions({ member, onUpdate, currentUser }: { member: User, o
             </Grid>
          </Grid>
 
-         <Dialog
-           open={!!pendingRole}
-           onClose={() => setPendingRole(null)}
-           PaperProps={{
-             sx: {
-               bgcolor: dialogToken?.bg || 'background.paper',
-               border: '1px solid',
-               borderColor: dialogToken?.border || 'divider',
-               boxShadow: dialogToken?.shadow || 'none',
-               borderRadius: 'var(--cmp-dialog-radius, 16px)',
-             }
-           }}
-         >
-            <DialogTitle>{t('admin.confirm_role_change') || 'Confirm role change'}</DialogTitle>
-            <DialogContent>
-               <Typography variant="body2">
-                  {t('admin.confirm_role_body') || `Change ${member.username} to ${pendingRole}? This requires admin confirmation.`}
-               </Typography>
-            </DialogContent>
-            <DialogActions>
-               <Button onClick={() => setPendingRole(null)}>{t('common.cancel') || 'Cancel'}</Button>
-               <Button 
-                 variant="contained" 
-                 color="warning" 
-                 disabled={!online}
-                 onClick={() => { if (pendingRole && online) onUpdate({ role: pendingRole }); setPendingRole(null); }}
-               >
-                 {t('common.confirm') || 'Confirm'}
-               </Button>
-            </DialogActions>
-         </Dialog>
+         {pendingRole ? (
+           <Suspense fallback={null}>
+             <AdminRoleChangeDialog
+               open={Boolean(pendingRole)}
+               pendingRole={pendingRole}
+               memberUsername={member.username}
+               online={online}
+               dialogToken={dialogToken}
+               t={t}
+               onCancel={() => setPendingRole(null)}
+               onConfirm={(role: Role) => {
+                 if (online) onUpdate({ role });
+                 setPendingRole(null);
+               }}
+             />
+           </Suspense>
+         ) : null}
       </Stack>
    )
 }
@@ -1457,4 +1743,5 @@ function AuditLogTab() {
 function StatusHealthTab() {
    return <HealthStatus />;
 }
+
 

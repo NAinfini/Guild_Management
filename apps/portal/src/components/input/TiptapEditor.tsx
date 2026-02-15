@@ -11,26 +11,26 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../feedback/Tooltip';
-import FormatBoldIcon from '@mui/icons-material/FormatBold';
-import FormatItalicIcon from '@mui/icons-material/FormatItalic';
-import StrikethroughSIcon from '@mui/icons-material/StrikethroughS';
-import CodeIcon from '@mui/icons-material/Code';
-import LooksOneIcon from '@mui/icons-material/LooksOne';
-import LooksTwoIcon from '@mui/icons-material/LooksTwo';
-import Looks3Icon from '@mui/icons-material/Looks3';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
-import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
-import UndoIcon from '@mui/icons-material/Undo';
-import RedoIcon from '@mui/icons-material/Redo';
-import InsertLinkIcon from '@mui/icons-material/Link';
-import LinkOffIcon from '@mui/icons-material/LinkOff';
-import ImageIcon from '@mui/icons-material/Image';
-import RemoveIcon from '@mui/icons-material/Remove';
-import TextFieldsIcon from '@mui/icons-material/TextFields';
-import TerminalIcon from '@mui/icons-material/Terminal';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import GppMaybeIcon from '@mui/icons-material/GppMaybe';
+import FormatBoldIcon from '@/ui-bridge/icons-material/FormatBold';
+import FormatItalicIcon from '@/ui-bridge/icons-material/FormatItalic';
+import StrikethroughSIcon from '@/ui-bridge/icons-material/StrikethroughS';
+import CodeIcon from '@/ui-bridge/icons-material/Code';
+import LooksOneIcon from '@/ui-bridge/icons-material/LooksOne';
+import LooksTwoIcon from '@/ui-bridge/icons-material/LooksTwo';
+import Looks3Icon from '@/ui-bridge/icons-material/Looks3';
+import FormatListBulletedIcon from '@/ui-bridge/icons-material/FormatListBulleted';
+import FormatListNumberedIcon from '@/ui-bridge/icons-material/FormatListNumbered';
+import FormatQuoteIcon from '@/ui-bridge/icons-material/FormatQuote';
+import UndoIcon from '@/ui-bridge/icons-material/Undo';
+import RedoIcon from '@/ui-bridge/icons-material/Redo';
+import InsertLinkIcon from '@/ui-bridge/icons-material/Link';
+import LinkOffIcon from '@/ui-bridge/icons-material/LinkOff';
+import ImageIcon from '@/ui-bridge/icons-material/Image';
+import RemoveIcon from '@/ui-bridge/icons-material/Remove';
+import TextFieldsIcon from '@/ui-bridge/icons-material/TextFields';
+import TerminalIcon from '@/ui-bridge/icons-material/Terminal';
+import OpenInNewIcon from '@/ui-bridge/icons-material/OpenInNew';
+import GppMaybeIcon from '@/ui-bridge/icons-material/GppMaybe';
 
 interface MenuBarProps {
   editor: Editor | null;

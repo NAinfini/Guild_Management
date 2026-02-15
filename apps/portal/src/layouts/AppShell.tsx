@@ -1,10 +1,11 @@
-﻿
-import React, { useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router';
+
+import React from 'react';
+import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useAuthStore, useUIStore } from '@/store';
 import { useAuth } from '@/hooks';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { canAccessAdminArea, getEffectiveRole } from '@/lib/permissions';
 import { 
   Dashboard, 
@@ -25,7 +26,7 @@ import {
   Campaign,
   Visibility,
   Image as ImageIcon,
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 import { 
   Box, 
   Drawer, 
@@ -33,30 +34,23 @@ import {
   Toolbar, 
   Typography,
   IconButton, 
-  Button, 
-  Menu, 
-  MenuItem, 
-  Avatar, 
   Stack, 
-  Divider, 
   List, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText,
   useTheme,
   useMediaQuery,
-  ButtonGroup,
   alpha,
   Tooltip,
-} from '@mui/material';
-import { Palette, ColorLens, Translate } from '@mui/icons-material';
+} from '@/ui-bridge/material';
+import { Palette, ColorLens, Translate } from '@/ui-bridge/icons-material';
+import { Avatar as PrimitiveAvatar, Badge as PrimitiveBadge, Button as PrimitiveButton } from '@/components/primitives';
 import { BottomNavigation } from '@/components/navigation/BottomNavigation';
 import { OfflineBanner } from '@/components/feedback/OfflineBanner';
+import { ThemeAmbientEffects } from '@/components/layout/ThemeAmbientEffects';
+import { PageTransition } from '@/components/layout/PageTransition';
 import { useMobileOptimizations } from '@/hooks';
 import { Role } from '@/types';
 import { useMotionTokens } from '@/theme/useMotionTokens';
 import { ThemeFXLayer } from '@/theme/fx/ThemeFXLayer';
-import { ThemeAmbientEffects } from '@/components/layout/ThemeAmbientEffects';
 import {
   useThemeController,
   NEXUS_THEME_OPTIONS,
@@ -69,15 +63,15 @@ const DRAWER_COLLAPSED_WIDTH = 84;
 
 export function AppShell() {
   const { user, logout } = useAuth();
-  const { viewRole, setViewRole } = useAuthStore();
-  const {
-    sidebarOpen,
-    toggleSidebar,
-    closeSidebar,
-    sidebarCollapsed,
-    toggleSidebarCollapsed,
-    pageTitle,
-  } = useUIStore();
+  // Subscribe to narrow slices so AppShell avoids rerendering for unrelated store updates.
+  const viewRole = useAuthStore((state) => state.viewRole);
+  const setViewRole = useAuthStore((state) => state.setViewRole);
+  const sidebarOpen = useUIStore((state) => state.sidebarOpen);
+  const toggleSidebar = useUIStore((state) => state.toggleSidebar);
+  const closeSidebar = useUIStore((state) => state.closeSidebar);
+  const sidebarCollapsed = useUIStore((state) => state.sidebarCollapsed);
+  const toggleSidebarCollapsed = useUIStore((state) => state.toggleSidebarCollapsed);
+  const pageTitle = useUIStore((state) => state.pageTitle);
   const theme = useTheme();
   const mobile = useMobileOptimizations();
   const isLgDown = useMediaQuery(theme.breakpoints.down('lg'));
@@ -94,81 +88,19 @@ export function AppShell() {
   const themeController = useThemeController();
   const prefersReducedMotion = useReducedMotion() || themeController.reducedMotion;
   const motionTokens = useMotionTokens();
-  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
-  const [submenuAnchor, setSubmenuAnchor] = useState<null | HTMLElement>(null);
-  const [submenuType, setSubmenuType] = useState<'theme' | 'color' | 'language' | null>(null);
-
-  const motionEase = React.useMemo<[number, number, number, number]>(() => {
-    const match = motionTokens.ease.trim().match(/^cubic-bezier\(([^)]+)\)$/i);
-    if (!match?.[1]) {
-      return [0.22, 1, 0.36, 1];
-    }
-
-    const values = match[1]
-      .split(',')
-      .map((part) => Number.parseFloat(part.trim()))
-      .filter((part) => Number.isFinite(part));
-
-    if (values.length !== 4) {
-      return [0.22, 1, 0.36, 1];
-    }
-
-    return [values[0]!, values[1]!, values[2]!, values[3]!];
-  }, [motionTokens.ease]);
 
   const motionFastMs = Math.max(0, Math.round(motionTokens.fastMs));
   const motionMediumMs = Math.max(0, Math.round(motionTokens.mediumMs));
-  const motionFastSec = motionFastMs / 1000;
-  const motionMediumSec = motionMediumMs / 1000;
-  const navDelayStepSec = motionFastSec / 5;
-  const navDelayCapSec = motionMediumSec;
-  const profileMenuItemClassName = 'profile-menu-item';
-  const profileMenuPaperSx = {
-    width: 220,
-    borderRadius: 2,
-    border: theme.custom?.border,
-    '& .profile-menu-item': {
-      border: '0 !important',
-      boxShadow: 'none !important',
-    },
-  };
-  const profileSubmenuPaperSx = {
-    minWidth: 260,
-    borderRadius: 2,
-    border: theme.custom?.border,
-    mr: 0.5,
-    '& .profile-menu-item': {
-      border: '0 !important',
-      boxShadow: 'none !important',
-    },
-  };
 
   const effectiveRole = getEffectiveRole(user?.role, viewRole);
   const canSeeAdmin = canAccessAdminArea(effectiveRole);
   const hasPrivileges = canAccessAdminArea(user?.role);
+  // Notification center contract is pending; keep a visible badge slot for topbar parity.
+  const notificationCount = 0;
 
   const handleLogout = () => {
     logout();
     navigate({ to: '/' }); 
-  };
-
-  const handleCloseUserMenu = () => {
-    setUserMenuAnchor(null);
-    setSubmenuAnchor(null);
-    setSubmenuType(null);
-  };
-
-  const handleOpenSubmenu = (
-    type: 'theme' | 'color' | 'language',
-    target: EventTarget & HTMLElement,
-  ) => {
-    setSubmenuType(type);
-    setSubmenuAnchor(target);
-  };
-
-  const handleCloseSubmenu = () => {
-    setSubmenuAnchor(null);
-    setSubmenuType(null);
   };
 
   const handleLanguageChange = (lng: 'en' | 'zh') => {
@@ -176,21 +108,78 @@ export function AppShell() {
     localStorage.setItem('i18nextLng', lng);
   };
 
+  const isNavItemActive = React.useCallback(
+    (href: string) => location.pathname === href || (href !== '/' && location.pathname.startsWith(href)),
+    [location.pathname],
+  );
 
-  const navItems = [
-    { label: t('nav.dashboard'), href: '/', icon: Dashboard },
-    { label: t('nav.announcements'), href: '/announcements', icon: Campaign },
-    { label: t('nav.events'), href: '/events', icon: CalendarToday },
-    { label: t('nav.roster'), href: '/roster', icon: Groups },
-    { label: t('nav.guild_war'), href: '/guild-war', icon: Security },
-    { label: t('nav.wiki'), href: '/wiki', icon: Book },
-    { label: t('nav.tools'), href: '/tools', icon: Build },
-    { label: t('nav.gallery'), href: '/gallery', icon: ImageIcon },
-  ];
+  const menuContentStyle = React.useMemo<React.CSSProperties>(
+    () => ({
+      minWidth: 240,
+      padding: 8,
+      borderRadius: 12,
+      border: theme.custom?.border ?? `1px solid ${theme.palette.divider}`,
+      background: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+      boxShadow: `0 12px 30px ${alpha(theme.palette.common.black, 0.32)}`,
+      zIndex: theme.zIndex.modal + 2,
+    }),
+    [theme],
+  );
 
-  if (canSeeAdmin) {
-    navItems.push({ label: t('nav.admin'), href: '/admin', icon: ReportProblem });
-  }
+  const menuSubContentStyle = React.useMemo<React.CSSProperties>(
+    () => ({
+      minWidth: 260,
+      padding: 8,
+      borderRadius: 12,
+      border: theme.custom?.border ?? `1px solid ${theme.palette.divider}`,
+      background: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+      boxShadow: `0 12px 30px ${alpha(theme.palette.common.black, 0.28)}`,
+      zIndex: theme.zIndex.modal + 2,
+    }),
+    [theme],
+  );
+
+  const menuItemStyle = React.useMemo<React.CSSProperties>(
+    () => ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      width: '100%',
+      minHeight: 36,
+      padding: '8px 10px',
+      borderRadius: 8,
+      border: 'none',
+      background: 'transparent',
+      color: 'inherit',
+      textAlign: 'left',
+      cursor: 'pointer',
+      fontWeight: 600,
+      fontSize: '0.875rem',
+    }),
+    [],
+  );
+
+
+  const navItems = React.useMemo(() => {
+    const items = [
+      { label: t('nav.dashboard'), href: '/', icon: Dashboard },
+      { label: t('nav.announcements'), href: '/announcements', icon: Campaign },
+      { label: t('nav.events'), href: '/events', icon: CalendarToday },
+      { label: t('nav.roster'), href: '/roster', icon: Groups },
+      { label: t('nav.guild_war'), href: '/guild-war', icon: Security },
+      { label: t('nav.wiki'), href: '/wiki', icon: Book },
+      { label: t('nav.tools'), href: '/tools', icon: Build },
+      { label: t('nav.gallery'), href: '/gallery', icon: ImageIcon },
+    ];
+
+    if (canSeeAdmin) {
+      items.push({ label: t('nav.admin'), href: '/admin', icon: ReportProblem });
+    }
+
+    return items;
+  }, [canSeeAdmin, t, i18n.language]);
 
   const roleColors: Record<string, string> = theme.custom?.roleColors || {
     admin: theme.palette.error.main,
@@ -282,78 +271,55 @@ export function AppShell() {
       </Box>
 
       <List sx={{ flex: 1, px: sidebarCollapsed && !isMobile ? 1 : 2, py: 1, overflowX: 'hidden' }} className="custom-scrollbar">
-        {navItems.map((item, index) => (
-          <motion.div
-            key={item.href}
-            initial={prefersReducedMotion ? false : { opacity: 0, x: -14 }}
-            animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
-            transition={
-              prefersReducedMotion
-                ? undefined
-                : {
-                    duration: motionMediumSec,
-                    delay: Math.min(index * navDelayStepSec, navDelayCapSec),
-                    ease: motionEase,
-                  }
-            }
-          >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {navItems.map((item) => (
             <Tooltip
+              key={item.href}
               title={sidebarCollapsed && !isMobile ? item.label : ''}
               placement="right"
               disableHoverListener={!sidebarCollapsed || isMobile}
             >
-              <ListItemButton
-                component={Link}
-                to={item.href}
-                onClick={closeSidebar}
+              <PrimitiveButton
+                data-ui="nav-button"
                 aria-label={item.label}
-                activeOptions={{ exact: false }}
-                sx={{
-                  mb: 0.5,
-                  borderRadius: 'var(--radiusBtn)',
-                  border: '1px solid transparent',
+                aria-current={isNavItemActive(item.href) ? 'page' : undefined}
+                variant={isNavItemActive(item.href) ? 'secondary' : 'ghost'}
+                className="control"
+                onClick={() => {
+                  navigate({ to: item.href as any });
+                  closeSidebar();
+                }}
+                style={{
+                  width: '100%',
+                  marginBottom: 4,
+                  display: 'flex',
                   justifyContent: sidebarCollapsed && !isMobile ? 'center' : 'flex-start',
-                  px: sidebarCollapsed && !isMobile ? 1 : 2,
-                  '&.active': {
-                    background: `var(--cmp-nav-item-active-bg, var(--nav-active-bg))`,
-                    opacity: 1,
-                    color: 'var(--cmp-nav-item-active-text, var(--text0))',
-                    borderLeft: '3px solid var(--accent1)',
-                    borderRight: 'var(--stroke) solid var(--accent1)',
-                  },
-                  '&:hover': {
-                    backgroundColor: 'var(--surface2)',
-                    borderColor: 'var(--accent0)',
-                    boxShadow: 'var(--glow)',
-                    transform: 'translateX(4px)',
-                  },
-                  '&:focus-visible': {
-                    outline: 'var(--interaction-focus-ring-width, 2px) solid var(--interaction-focus-ring-color, var(--sys-interactive-focus-ring))',
-                    outlineOffset: 2,
-                    boxShadow: 'var(--interaction-focus-ring-glow, none)',
-                  },
+                  gap: 10,
+                  paddingInline: sidebarCollapsed && !isMobile ? 10 : 14,
+                  borderRadius: 'var(--radiusBtn)',
+                  borderLeft: isNavItemActive(item.href) ? '3px solid var(--accent1)' : undefined,
+                  borderRight: isNavItemActive(item.href) ? 'var(--stroke) solid var(--accent1)' : undefined,
+                  boxShadow: isNavItemActive(item.href) ? 'var(--glow)' : undefined,
                   transition: `all ${motionMediumMs}ms ${motionTokens.ease}`,
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-                  <item.icon sx={{ fontSize: 18 }} />
-                </ListItemIcon>
+                <item.icon style={{ fontSize: 18 }} />
                 {(!sidebarCollapsed || isMobile) && (
-                  <ListItemText
-                    primary={item.label}
-                    primaryTypographyProps={{
-                      variant: 'body2',
+                  <span
+                    style={{
                       fontWeight: 700,
                       textTransform: 'var(--cmp-nav-label-transform, uppercase)',
                       letterSpacing: 'var(--cmp-nav-label-letter-spacing, 0.1em)',
-                      fontSize: '0.7rem'
+                      fontSize: '0.7rem',
                     }}
-                  />
+                  >
+                    {item.label}
+                  </span>
                 )}
-              </ListItemButton>
+              </PrimitiveButton>
             </Tooltip>
-          </motion.div>
-        ))}
+          ))}
+        </Box>
       </List>
 
       <Box sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}`, bgcolor: 'background.default' }}>
@@ -363,40 +329,34 @@ export function AppShell() {
                   <Visibility sx={{ fontSize: 12, color: "text.secondary" }} />
                   <Typography variant="caption" sx={{ fontWeight: 900, textTransform: 'uppercase', color: 'text.secondary' }}>{t('common.view_mode')}</Typography>
                </Stack>
-               <ButtonGroup size="small" fullWidth variant="outlined">
+               <Stack direction="row" spacing={0.5}>
                   {(['admin', 'moderator', 'member', 'external'] as const).map((r) => {
                      const isActive = (viewRole || user?.role) === r;
                      return (
-                        <Button
+                        <PrimitiveButton
                           key={r}
                           data-ui="button"
+                          size="sm"
+                          variant={isActive ? 'primary' : 'ghost'}
                           onClick={() => setViewRole(r === user?.role ? null : r as Role)}
-                          sx={{
-                             flex: 1,
-                             py: 0.5,
-                             fontSize: '0.6rem',
-                             fontWeight: 900,
-                             bgcolor: isActive ? (roleColors[r] || theme.palette.primary.main) : 'transparent',
-                             color: isActive
-                               ? theme.palette.getContrastText(roleColors[r] || theme.palette.primary.main)
-                               : theme.palette.text.primary, // FIXED: Use primary text color for better visibility
-                             borderColor: roleColors[r] || theme.palette.primary.main,
-                             '&:hover': {
-                                bgcolor: isActive
-                                  ? (roleColors[r] || theme.palette.primary.main)
-                                  : alpha(roleColors[r] || theme.palette.primary.main, 0.15),
-                                borderColor: roleColors[r] || theme.palette.primary.main,
-                                color: isActive
-                                  ? theme.palette.getContrastText(roleColors[r] || theme.palette.primary.main)
-                                  : theme.palette.text.primary // FIXED: Ensure hover text is visible
-                             }
+                          style={{
+                            flex: 1,
+                            minHeight: 24,
+                            paddingInline: 6,
+                            fontSize: '0.6rem',
+                            fontWeight: 900,
+                            borderColor: roleColors[r] || theme.palette.primary.main,
+                            backgroundColor: isActive ? roleColors[r] || theme.palette.primary.main : 'transparent',
+                            color: isActive
+                              ? theme.palette.getContrastText(roleColors[r] || theme.palette.primary.main)
+                              : theme.palette.text.primary,
                           }}
                         >
                           {r.slice(0,3)}
-                        </Button>
+                        </PrimitiveButton>
                      );
                   })}
-               </ButtonGroup>
+               </Stack>
             </Box>
         )}
         {(!sidebarCollapsed || isMobile) ? (
@@ -498,243 +458,188 @@ export function AppShell() {
             )}
 
             <Box sx={{ flexGrow: 1, minWidth: 0, overflow: 'hidden' }}>
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={pageTitle}
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: 8, filter: 'blur(4px)' }}
-                  animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  exit={prefersReducedMotion ? undefined : { opacity: 0, y: -6, filter: 'blur(3px)' }}
-                  transition={prefersReducedMotion ? undefined : { duration: motionFastSec, ease: motionEase }}
-                >
-                  <Typography
-                    variant={isMobile ? "subtitle1" : "h6"}
-                    noWrap
-                    component="div"
-                    sx={{
-                      fontWeight: 900,
-                      textTransform: 'uppercase',
-                      letterSpacing: { xs: '0.05em', sm: '0.1em' },
-                      fontSize: { xs: '0.9rem', sm: '1rem', md: '1.25rem' }
-                    }}
-                  >
-                    {pageTitle}
-                  </Typography>
-                </motion.div>
-              </AnimatePresence>
+              <Typography
+                key={pageTitle}
+                variant={isMobile ? "subtitle1" : "h6"}
+                noWrap
+                component="div"
+                sx={{
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  letterSpacing: { xs: '0.05em', sm: '0.1em' },
+                  fontSize: { xs: '0.9rem', sm: '1rem', md: '1.25rem' },
+                  transition: prefersReducedMotion
+                    ? 'none'
+                    : `color ${motionFastMs}ms ${motionTokens.ease}, opacity ${motionFastMs}ms ${motionTokens.ease}`,
+                }}
+              >
+                {pageTitle}
+              </Typography>
             </Box>
 
             <Stack direction="row" alignItems="center" spacing={{ xs: 0.5, sm: 1, md: 2 }}>
-                   <Button
-                      data-ui="button"
-                      onClick={(e) => setUserMenuAnchor(e.currentTarget)}
-                      endIcon={
-                        <Avatar
-                          src={user?.avatar_url}
-                          alt={user?.username || t('common.guest')}
-                          sx={{
-                             width: { xs: 28, sm: 32 },
-                             height: { xs: 28, sm: 32 },
-                             borderRadius: 1,
-                             border: '2px solid var(--sys-interactive-accent)',
-                             bgcolor: user ? 'transparent' : 'color-mix(in srgb, var(--sys-interactive-accent) 10%, transparent)'
-                          }}
-                        >
-                           {!user && <ManageAccounts sx={{ fontSize: 18 }} />}
-                        </Avatar>
-                      }
-                      sx={{
-                        textTransform: 'none',
-                        color: 'text.primary',
-                        borderRadius: 2,
-                        minWidth: 'auto',
-                        px: { xs: 1, sm: 2 },
-                        gap: 1.5,
-                        '&:hover': { bgcolor: 'action.hover' }
-                      }}
-                   >
-                     <Box sx={{ textAlign: 'right', display: { xs: 'none', md: 'block' } }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800, lineHeight: 1 }}>
-                          {user?.username || t('common.guest')}
-                        </Typography>
-                     </Box>
-                   </Button>
-                    <Menu
-                       anchorEl={userMenuAnchor}
-                       open={Boolean(userMenuAnchor)}
-                       onClose={handleCloseUserMenu}
-                       slotProps={{ paper: { sx: profileMenuPaperSx } }}
-                    >
-                      {user ? (
-                         [
-                            <Box key="header" sx={{ px: 2, py: 1 }}>
-                              <Typography variant="overline" sx={{ fontWeight: 900, color: 'text.disabled' }}>{t('nav.account')}</Typography>
-                            </Box>,
-                            <MenuItem key="profile" className={profileMenuItemClassName} component={Link} to="/profile" onClick={handleCloseUserMenu}>
-                               <ListItemIcon><ManageAccounts sx={{ fontSize: 16 }} /></ListItemIcon>
-                               <ListItemText primary={t('nav.profile')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
-                             </MenuItem>,
-                             <MenuItem key="theme-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('theme', e.currentTarget)}>
-                                <ListItemIcon><Palette sx={{ fontSize: 16 }} /></ListItemIcon>
-                                <ListItemText
-                                  primary={t('settings.interface_theme', { defaultValue: t('settings.visual_theme') })}
-                                  primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                                />
-                                <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                             </MenuItem>,
-                             <MenuItem key="color-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('color', e.currentTarget)}>
-                                <ListItemIcon><ColorLens sx={{ fontSize: 16 }} /></ListItemIcon>
-                                <ListItemText
-                                  primary={t('settings.color_palette')}
-                                  primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                                />
-                                <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                             </MenuItem>,
-                             <MenuItem key="language-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('language', e.currentTarget)}>
-                                <ListItemIcon><Translate sx={{ fontSize: 16 }} /></ListItemIcon>
-                                <ListItemText
-                                  primary={t('settings.language')}
-                                  primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                                />
-                                <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                             </MenuItem>,
-                             <MenuItem key="settings" className={profileMenuItemClassName} component={Link} to="/settings" onClick={handleCloseUserMenu}>
-                                <ListItemIcon><Settings sx={{ fontSize: 16 }} /></ListItemIcon>
-                                <ListItemText primary={t('nav.settings')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
-                             </MenuItem>
-                         ]
-                      ) : (
-                         [
-                           <MenuItem key="guest-theme-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('theme', e.currentTarget)}>
-                              <ListItemIcon><Palette sx={{ fontSize: 16 }} /></ListItemIcon>
-                              <ListItemText
-                                primary={t('settings.interface_theme', { defaultValue: t('settings.visual_theme') })}
-                                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                              />
-                              <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            </MenuItem>,
-                            <MenuItem key="guest-color-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('color', e.currentTarget)}>
-                              <ListItemIcon><ColorLens sx={{ fontSize: 16 }} /></ListItemIcon>
-                              <ListItemText
-                                primary={t('settings.color_palette')}
-                                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                              />
-                              <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            </MenuItem>,
-                            <MenuItem key="guest-language-toggle" className={profileMenuItemClassName} onClick={(e) => handleOpenSubmenu('language', e.currentTarget)}>
-                              <ListItemIcon><Translate sx={{ fontSize: 16 }} /></ListItemIcon>
-                              <ListItemText
-                                primary={t('settings.language')}
-                                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                              />
-                              <ChevronRight sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            </MenuItem>,
-                            <MenuItem key="guest-settings" className={profileMenuItemClassName} component={Link} to="/settings" onClick={handleCloseUserMenu}>
-                              <ListItemIcon><Settings sx={{ fontSize: 16 }} /></ListItemIcon>
-                              <ListItemText primary={t('nav.settings')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
-                            </MenuItem>,
-                           <Divider key="guest-login-div" sx={{ my: 1 }} />,
-                            <MenuItem key="guest-login" className={profileMenuItemClassName} component={Link} to="/login" onClick={handleCloseUserMenu}>
-                              <ListItemIcon><Login sx={{ fontSize: 16 }} /></ListItemIcon>
-                              <ListItemText primary={t('auth.login_title')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
-                            </MenuItem>,
-                         ]
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <PrimitiveButton
+                    data-ui="button"
+                    variant="ghost"
+                    size="sm"
+                    style={{
+                      borderRadius: 10,
+                      minWidth: 'auto',
+                      paddingInline: isMobile ? 8 : 12,
+                      gap: 10,
+                    }}
+                  >
+                    <Box sx={{ textAlign: 'right', display: { xs: 'none', md: 'block' } }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, lineHeight: 1 }}>
+                        {user?.username || t('common.guest')}
+                      </Typography>
+                      {user?.role && (
+                        <PrimitiveBadge size="sm" variant="info" style={{ marginTop: 4 }}>
+                          {String(user.role).toUpperCase()}
+                        </PrimitiveBadge>
                       )}
-                      
-                      {user && [
-                           <Divider key="logout-div" sx={{ my: 1 }} />,
-                            <MenuItem key="logout" className={profileMenuItemClassName} onClick={handleLogout} sx={{ color: 'error.main' }}>
-                               <ListItemIcon><Logout sx={{ fontSize: 16, color: 'inherit' }} /></ListItemIcon>
-                               <ListItemText primary={t('account.logout')} primaryTypographyProps={{ variant: 'body2', fontWeight: 700 }} />
-                            </MenuItem>
-                      ]}
-                    </Menu>
-                    <Menu
-                      anchorEl={submenuAnchor}
-                      open={Boolean(submenuAnchor && submenuType)}
-                      onClose={handleCloseSubmenu}
-                      anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                      slotProps={{
-                        paper: {
-                          sx: profileSubmenuPaperSx,
-                        },
-                      }}
-                    >
-                      {submenuType === 'theme' && NEXUS_THEME_OPTIONS.map((opt: any) => {
-                        const ThemeIcon = getThemeModeIcon(opt.id);
-                        const isSelected = themeController.currentTheme === opt.id;
+                    </Box>
+                    <PrimitiveBadge size="sm" variant="warning" style={{ minWidth: 20, justifyContent: 'center' }}>
+                      {notificationCount}
+                    </PrimitiveBadge>
+                    <PrimitiveAvatar
+                      src={user?.avatar_url ?? undefined}
+                      alt={user?.username || t('common.guest')}
+                      name={user?.username || t('common.guest')}
+                      size={isMobile ? 'sm' : 'md'}
+                    />
+                  </PrimitiveButton>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content align="end" sideOffset={8} style={menuContentStyle}>
+                    {user && (
+                      <div style={{ padding: '4px 10px', marginBottom: 4, fontWeight: 900, opacity: 0.7, fontSize: '0.72rem' }}>
+                        {t('nav.account')}
+                      </div>
+                    )}
 
-                        return (
-                          <MenuItem
-                            key={`submenu-theme-opt-${opt.id}`}
-                            className={profileMenuItemClassName}
-                            onClick={() => {
-                              themeController.setTheme(opt.id);
-                              handleCloseSubmenu();
-                            }}
-                            selected={isSelected}
+                    {user && (
+                      <DropdownMenu.Item onSelect={() => navigate({ to: '/profile' })} style={menuItemStyle}>
+                        <ManageAccounts style={{ fontSize: 16 }} />
+                        {t('nav.profile')}
+                      </DropdownMenu.Item>
+                    )}
+
+                    <DropdownMenu.Sub>
+                      <DropdownMenu.SubTrigger style={{ ...menuItemStyle, justifyContent: 'space-between' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                          <Palette style={{ fontSize: 16 }} />
+                          {t('settings.interface_theme', { defaultValue: t('settings.visual_theme') })}
+                        </span>
+                        <ChevronRight style={{ fontSize: 16, opacity: 0.7 }} />
+                      </DropdownMenu.SubTrigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.SubContent sideOffset={8} alignOffset={-4} style={menuSubContentStyle}>
+                          {NEXUS_THEME_OPTIONS.map((opt: any) => {
+                            const ThemeIcon = getThemeModeIcon(opt.id);
+                            const isSelected = themeController.currentTheme === opt.id;
+
+                            return (
+                              <DropdownMenu.Item
+                                key={`submenu-theme-opt-${opt.id}`}
+                                onSelect={() => themeController.setTheme(opt.id)}
+                                style={{ ...menuItemStyle, fontWeight: isSelected ? 800 : 600 }}
+                              >
+                                <ThemeIcon style={{ fontSize: 16 }} />
+                                {t(`theme_menu.themes.${opt.id}.label`, { defaultValue: opt.label })}
+                              </DropdownMenu.Item>
+                            );
+                          })}
+                        </DropdownMenu.SubContent>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Sub>
+
+                    <DropdownMenu.Sub>
+                      <DropdownMenu.SubTrigger style={{ ...menuItemStyle, justifyContent: 'space-between' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                          <ColorLens style={{ fontSize: 16 }} />
+                          {t('settings.color_palette')}
+                        </span>
+                        <ChevronRight style={{ fontSize: 16, opacity: 0.7 }} />
+                      </DropdownMenu.SubTrigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.SubContent sideOffset={8} alignOffset={-4} style={menuSubContentStyle}>
+                          {NEXUS_COLOR_OPTIONS.map((opt: any) => (
+                            <DropdownMenu.Item
+                              key={`submenu-color-opt-${opt.id}`}
+                              onSelect={() => themeController.setColor(opt.id)}
+                              style={{
+                                ...menuItemStyle,
+                                fontWeight: themeController.currentColor === opt.id ? 800 : 600,
+                              }}
+                            >
+                              {t(`theme_menu.colors.${opt.id}.label`, { defaultValue: opt.label })}
+                            </DropdownMenu.Item>
+                          ))}
+                        </DropdownMenu.SubContent>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Sub>
+
+                    <DropdownMenu.Sub>
+                      <DropdownMenu.SubTrigger style={{ ...menuItemStyle, justifyContent: 'space-between' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                          <Translate style={{ fontSize: 16 }} />
+                          {t('settings.language')}
+                        </span>
+                        <ChevronRight style={{ fontSize: 16, opacity: 0.7 }} />
+                      </DropdownMenu.SubTrigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.SubContent sideOffset={8} alignOffset={-4} style={menuSubContentStyle}>
+                          <DropdownMenu.Item
+                            onSelect={() => handleLanguageChange('en')}
+                            style={{ ...menuItemStyle, fontWeight: !i18n.language.startsWith('zh') ? 800 : 600 }}
                           >
-                            <Stack direction="row" spacing={1.25} alignItems="center" sx={{ width: '100%' }}>
-                              <ThemeIcon
-                                sx={{
-                                  fontSize: 16,
-                                  color: isSelected ? 'primary.main' : 'text.secondary',
-                                  flexShrink: 0,
-                                }}
-                              />
-                              <ListItemText
-                                primary={t(`theme_menu.themes.${opt.id}.label`, { defaultValue: opt.label })}
-                                secondary={t(`theme_menu.themes.${opt.id}.description`, { defaultValue: opt.description })}
-                                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                                secondaryTypographyProps={{ variant: 'caption' }}
-                              />
-                            </Stack>
-                          </MenuItem>
-                        );
-                      })}
-                      {submenuType === 'color' && NEXUS_COLOR_OPTIONS.map((opt: any) => (
-                        <MenuItem
-                          key={`submenu-color-opt-${opt.id}`}
-                          className={profileMenuItemClassName}
-                          onClick={() => {
-                            themeController.setColor(opt.id);
-                            handleCloseSubmenu();
-                          }}
-                          selected={themeController.currentColor === opt.id}
-                        >
-                          <ListItemText
-                            primary={t(`theme_menu.colors.${opt.id}.label`, { defaultValue: opt.label })}
-                            secondary={t(`theme_menu.colors.${opt.id}.description`, { defaultValue: opt.description })}
-                            primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                            secondaryTypographyProps={{ variant: 'caption' }}
-                          />
-                        </MenuItem>
-                      ))}
-                      {submenuType === 'language' && [
-                        <MenuItem
-                          key="submenu-language-en"
-                          className={profileMenuItemClassName}
-                          onClick={() => {
-                            handleLanguageChange('en');
-                            handleCloseSubmenu();
-                          }}
-                          selected={!i18n.language.startsWith('zh')}
-                        >
-                          <ListItemText primary={t('settings.language_english')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
-                        </MenuItem>,
-                        <MenuItem
-                          key="submenu-language-zh"
-                          className={profileMenuItemClassName}
-                          onClick={() => {
-                            handleLanguageChange('zh');
-                            handleCloseSubmenu();
-                          }}
-                          selected={i18n.language.startsWith('zh')}
-                        >
-                          <ListItemText primary={t('settings.language_chinese')} primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
-                        </MenuItem>,
-                      ]}
-                    </Menu>
+                            {t('settings.language_english')}
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Item
+                            onSelect={() => handleLanguageChange('zh')}
+                            style={{ ...menuItemStyle, fontWeight: i18n.language.startsWith('zh') ? 800 : 600 }}
+                          >
+                            {t('settings.language_chinese')}
+                          </DropdownMenu.Item>
+                        </DropdownMenu.SubContent>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Sub>
+
+                    <DropdownMenu.Separator
+                      style={{
+                        height: 1,
+                        margin: '6px 2px',
+                        background: alpha(theme.palette.divider, 0.8),
+                      }}
+                    />
+
+                    <DropdownMenu.Item onSelect={() => navigate({ to: '/settings' })} style={menuItemStyle}>
+                      <Settings style={{ fontSize: 16 }} />
+                      {t('nav.settings')}
+                    </DropdownMenu.Item>
+
+                    {!user && (
+                      <DropdownMenu.Item onSelect={() => navigate({ to: '/login' })} style={menuItemStyle}>
+                        <Login style={{ fontSize: 16 }} />
+                        {t('auth.login_title')}
+                      </DropdownMenu.Item>
+                    )}
+
+                    {user && (
+                      <DropdownMenu.Item
+                        onSelect={handleLogout}
+                        style={{ ...menuItemStyle, color: theme.palette.error.main, fontWeight: 700 }}
+                      >
+                        <Logout style={{ fontSize: 16 }} />
+                        {t('account.logout')}
+                      </DropdownMenu.Item>
+                    )}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
             </Stack>
           </Toolbar>
         </AppBar>
@@ -747,8 +652,8 @@ export function AppShell() {
           data-route={routeSurface}
           sx={{
              flexGrow: 1,
-             p: { xs: mobile.spacing.page, md: 2, lg: 2.5 },
-             pb: { xs: 'calc(96px + env(safe-area-inset-bottom))', lg: 2.5 },
+             p: { xs: mobile.spacing.page, md: 0.75, lg: 1 },
+             pb: { xs: 'calc(96px + env(safe-area-inset-bottom))', lg: 1 },
              overflowY: 'auto',
              overflowX: 'visible',
              bgcolor: 'transparent',
@@ -759,20 +664,9 @@ export function AppShell() {
              maxWidth: '100%',
           }}
         >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              className="app-route-frame"
-              data-route={routeSurface}
-              key={location.pathname}
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 14, filter: 'blur(5px)' }}
-              animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8, filter: 'blur(4px)' }}
-              transition={prefersReducedMotion ? undefined : { duration: motionMediumSec, ease: motionEase }}
-              style={{ minHeight: '100%' }}
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
+          <PageTransition className="app-route-frame" data-route={routeSurface} transitionKey={location.pathname}>
+            <Outlet />
+          </PageTransition>
         </Box>
 
         <Box sx={{ display: { lg: 'none' } }}>

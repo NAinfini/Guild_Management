@@ -1,0 +1,7 @@
+﻿/**
+ * Steampunk theme slot.
+ * TODO: migrate theme values from legacy preset files.
+ */
+[data-theme='steampunk'] {
+  --color-accent: #d4a574;
+}

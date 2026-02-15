@@ -9,14 +9,14 @@
  * - Share button
  */
 
-import { Tooltip as MuiTooltip, IconButton } from "@mui/material";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import TrendingDownIcon from "@mui/icons-material/TrendingDown";
-import RemoveIcon from "@mui/icons-material/Remove";
-import InfoIcon from "@mui/icons-material/Info";
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import LocalActivityIcon from '@mui/icons-material/LocalActivity';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
+import { Tooltip as MuiTooltip, IconButton } from "@/ui-bridge/material";
+import TrendingUpIcon from "@/ui-bridge/icons-material/TrendingUp";
+import TrendingDownIcon from "@/ui-bridge/icons-material/TrendingDown";
+import RemoveIcon from "@/ui-bridge/icons-material/Remove";
+import InfoIcon from "@/ui-bridge/icons-material/Info";
+import EmojiEventsIcon from '@/ui-bridge/icons-material/EmojiEvents';
+import LocalActivityIcon from '@/ui-bridge/icons-material/LocalActivity';
+import ShowChartIcon from '@/ui-bridge/icons-material/ShowChart';
 import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
 import { formatMetricName, formatNumber, formatCompactNumber } from './types';

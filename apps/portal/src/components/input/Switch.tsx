@@ -1,6 +1,6 @@
 import * as React from "react";
-import MuiSwitch, { SwitchProps as MuiSwitchProps } from "@mui/material/Switch";
-import { useTheme, type SxProps, type Theme } from "@mui/material/styles";
+import MuiSwitch, { SwitchProps as MuiSwitchProps } from "@/ui-bridge/material/Switch";
+import { useTheme, type SxProps, type Theme } from "@/ui-bridge/material/styles";
 import { cn } from "@/lib/utils";
 
 const Switch = React.forwardRef<HTMLButtonElement, MuiSwitchProps>(

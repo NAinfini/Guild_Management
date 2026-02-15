@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 
 import * as React from "react";
-import { Tabs as MuiTabs, Tab as MuiTab } from "@mui/material";
+import { Tabs as MuiTabs, Tab as MuiTab } from "@/ui-bridge/material";
 
 // We'll maintain a similar API to the Radix-based version, 
 // using a context to manage the value across sub-components since MUI's Tabs are also integrated.
@@ -14,6 +14,12 @@ interface TabsContextValue {
 
 const TabsContext = React.createContext<TabsContextValue>({});
 
+interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
+}
+
 function Tabs({
   className,
   value,
@@ -21,7 +27,7 @@ function Tabs({
   defaultValue,
   children,
   ...props
-}: any) {
+}: TabsProps) {
   const [internalValue, setInternalValue] = React.useState(value || defaultValue);
 
   React.useEffect(() => {
@@ -46,17 +52,19 @@ function Tabs({
   );
 }
 
+type TabsListProps = Omit<React.ComponentProps<typeof MuiTabs>, "value" | "onChange">;
+
 function TabsList({
   className,
   children,
   ...props
-}: any) {
+}: TabsListProps) {
   const { value, onValueChange } = React.useContext(TabsContext);
 
   return (
     <MuiTabs
       value={value}
-      onChange={(_, val) => onValueChange?.(val)}
+      onChange={(_event: React.SyntheticEvent, val: string) => onValueChange?.(val)}
       data-slot="tabs-list"
       className={cn(
         "ui-nav control inline-flex w-fit items-center justify-center",
@@ -84,12 +92,17 @@ function TabsList({
   );
 }
 
+interface TabsTriggerProps extends Omit<React.ComponentProps<typeof MuiTab>, "label"> {
+  value: string;
+  children?: React.ReactNode;
+}
+
 function TabsTrigger({
   className,
   value,
   children,
   ...props
-}: any) {
+}: TabsTriggerProps) {
   // MUI Tab expects to be inside MuiTabs. We use it with value.
   return (
     <MuiTab
@@ -134,12 +147,16 @@ function TabsTrigger({
   );
 }
 
+interface TabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  value: string;
+}
+
 function TabsContent({
   className,
   value,
   children,
   ...props
-}: any) {
+}: TabsContentProps) {
   const { value: selectedValue } = React.useContext(TabsContext);
   
   if (selectedValue !== value) return null;

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useMemo, useEffect } from 'react';
 import { useFilteredList } from '../../hooks/useFilteredList';
 import { 
   Card, 
@@ -26,17 +26,17 @@ import {
   Tooltip,
   Avatar,
   Paper,
-  alpha
-} from '@mui/material';
-import { WarAnalyticsMain } from './components/WarAnalytics';
-import { WarHistory as WarHistoryView } from './components/WarHistory';
+  alpha,
+  Skeleton,
+  useMediaQuery,
+} from '@/ui-bridge/material';
 import { WarTeamDragDrop } from './components/WarTeamDragDrop';
 import { TeamMemberCard } from '@/components/data-display';
 import { PlaceholderPage } from '@/components/layout/PlaceholderPage';
-import { ThemedTabControl } from '@/components/controls/ThemedTabControl';
-import { ThemedSortButtonGroup } from '@/components/controls/ThemedSortButtonGroup';
-import { ThemedPanelBox } from '@/components/controls/ThemedPanelBox';
-import { ThemedIconButton } from '@/components/controls/ThemedIconButton';
+import { ThemedTabControl } from '@/components/primitives/themed-controls/ThemedTabControl';
+import { ThemedSortButtonGroup } from '@/components/primitives/themed-controls/ThemedSortButtonGroup';
+import { ThemedPanelBox } from '@/components/primitives/themed-controls/ThemedPanelBox';
+import { ThemedIconButton } from '@/components/primitives/themed-controls/ThemedIconButton';
 import { 
   Security, 
   GridView, 
@@ -54,11 +54,8 @@ import {
   AutoAwesome,
   ElectricBolt,
   Undo,
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 import { formatPower, formatDateTime, sanitizeHtml, formatClassDisplayName, getMemberCardAccentColors, getClassPillTone, buildMemberAccentGradient } from '../../lib/utils';
-// ... (imports remain same until next change)
-
-
 import { useAuthStore, useUIStore } from '../../store';
 import { User, WarTeam, ClassType } from '../../types';
 import { useTranslation } from 'react-i18next';
@@ -66,8 +63,6 @@ import { useEvents, useMembers, useJoinEvent, useLeaveEvent } from '../../hooks/
 import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent, useSensors, useSensor, PointerSensor, KeyboardSensor } from '@dnd-kit/core';
 import { snapCenterToCursor } from '@dnd-kit/modifiers';
 import { useWarTeams, useMovePoolToTeam, useMoveTeamToPool, useMoveTeamToTeam, useKickFromTeam, useKickFromPool } from './hooks/useWars';
-// 2026-02-06T13:26:16Z
-import { Skeleton, useMediaQuery } from '@mui/material';
 import { CardGridSkeleton } from '@/components/feedback/Skeleton';
 import { Toast } from '@/components/feedback';
 import { useOnline } from '../../hooks/useOnline';
@@ -86,6 +81,13 @@ import {
 
 type Tab = 'active' | 'history' | 'analytics';
 
+const GuildWarActionDialogs = lazy(() => import('./components/GuildWarActionDialogs'));
+const WarHistoryView = lazy(() =>
+  import('./components/WarHistory').then((module) => ({ default: module.WarHistory })),
+);
+const WarAnalyticsMain = lazy(() =>
+  import('./components/WarAnalytics').then((module) => ({ default: module.WarAnalyticsMain })),
+);
 
 
 const THEME_CARD_RADIUS = 'var(--cmp-card-radius)';
@@ -129,12 +131,26 @@ function getGuildWarSegmentedTokens(theme: any) {
   };
 }
 
+type GuildWarRoleKey = 'lead' | 'dps' | 'tank' | 'heal';
+
+function getGuildWarRoleColor(theme: any, role: GuildWarRoleKey): string {
+  const roleTokens = theme.custom?.warRoles;
+  const fallback: Record<GuildWarRoleKey, string> = {
+    lead: theme.palette.warning.main,
+    dps: theme.palette.error.main,
+    tank: theme.palette.info.main,
+    heal: theme.palette.success.main,
+  };
+
+  return roleTokens?.[role]?.main ?? fallback[role];
+}
+
 export function GuildWar() {
   const [activeTab, setActiveTab] = useState<Tab>('active');
   const [activeMemberSearchQuery, setActiveMemberSearchQuery] = useState('');
   const { user, viewRole } = useAuthStore();
 
-  // ✅ TanStack Query: Server state
+  // 鉁?TanStack Query: Server state
   const { data: events = [], isLoading } = useEvents();
 
   const { setPageTitle } = useUIStore();
@@ -243,7 +259,7 @@ export function GuildWar() {
                  <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 240 } }}>
                      <Select
                        value={warEvents.length === 0 ? '' : selectedWarId}
-                       onChange={(e) => setSelectedWarId(e.target.value)}
+                       onChange={(e: React.ChangeEvent<{ value: unknown }>) => setSelectedWarId(e.target.value as string)}
                        displayEmpty
                        sx={{
                            borderRadius: 2,
@@ -263,7 +279,7 @@ export function GuildWar() {
                  <TextField
                    size="small"
                    value={activeMemberSearchQuery}
-                   onChange={(e) => setActiveMemberSearchQuery(e.target.value)}
+                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setActiveMemberSearchQuery(e.target.value)}
                    placeholder={t('guild_war.active_member_search_placeholder')}
                    InputProps={{
                      startAdornment: (
@@ -287,8 +303,16 @@ export function GuildWar() {
             memberSearchQuery={activeMemberSearchQuery}
           />
         )}
-        {activeTab === 'history' && <WarHistory />}
-        {activeTab === 'analytics' && canViewAnalytics && <WarAnalytics canCopy={canCopyAnalytics} />}
+        {activeTab === 'history' && (
+          <Suspense fallback={<CardGridSkeleton count={2} />}>
+            <WarHistory />
+          </Suspense>
+        )}
+        {activeTab === 'analytics' && canViewAnalytics && (
+          <Suspense fallback={<CardGridSkeleton count={3} />}>
+            <WarAnalytics canCopy={canCopyAnalytics} />
+          </Suspense>
+        )}
       </Box>
     </Box>
   );
@@ -307,7 +331,7 @@ function ActiveWarManagement({
   canViewMemberDetail: boolean;
   memberSearchQuery: string;
 }) {
-  // ✅ TanStack Query: Server state and mutations
+  // 鉁?TanStack Query: Server state and mutations
   const { data: events = [] } = useEvents();
   const { data: members = [] } = useMembers();
   const joinEventMutation = useJoinEvent();
@@ -326,7 +350,12 @@ function ActiveWarManagement({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const activeWar = useMemo(() => events.find(e => e.id === warId), [events, warId]);
   
-  const { data: warData, refetch: refetchWar, isLoading: isLoadingTeams } = useWarTeams(warId);
+  const {
+    data: warData,
+    refetch: refetchWar,
+    isLoading: isLoadingTeams,
+    isError: isWarTeamsError,
+  } = useWarTeams(warId);
   const movePoolToTeam = useMovePoolToTeam();
   const moveTeamToPool = useMoveTeamToPool();
   const moveTeamToTeam = useMoveTeamToTeam();
@@ -346,6 +375,7 @@ function ActiveWarManagement({
   const [teamSort, setTeamSort] = useState<GuildWarSortState>({ field: 'power', direction: 'desc' });
   const [conflictOpen, setConflictOpen] = useState(false);
   const [kickPoolConfirmUserId, setKickPoolConfirmUserId] = useState<string | null>(null);
+  const hasActionDialogOpen = conflictOpen || Boolean(kickPoolConfirmUserId);
   const normalizedMemberSearchQuery = memberSearchQuery.trim().toLowerCase();
   const matchesMemberSearch = (member: User) => {
     if (!normalizedMemberSearchQuery) return false;
@@ -396,7 +426,7 @@ function ActiveWarManagement({
     if (lastAction) setToastOpen(true);
   }, [lastAction]);
 
-  // ✅ ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
+  // 鉁?ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
   const assignedUserIds = useMemo(() => {
     const set = new Set<string>();
     teams.forEach(t => t.members.forEach(m => set.add(m.user_id)));
@@ -421,6 +451,41 @@ function ActiveWarManagement({
   }
 
   if (isLoadingTeams) return <ActiveWarSkeleton />;
+
+  if (isWarTeamsError) {
+    return (
+      <Box
+        data-testid="guildwar-active-error-state"
+        sx={{
+          p: 3,
+          textAlign: 'center',
+          border: '2px dashed',
+          borderColor: 'divider',
+          borderRadius: 3,
+          bgcolor: 'action.hover',
+        }}
+      >
+        <Typography variant="overline" display="block" color="text.secondary" fontWeight={900} letterSpacing="0.2em">
+          {t('guild_war.no_active_wars')}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {t('common.placeholder_msg')}
+        </Typography>
+        <Stack
+          data-testid="guildwar-active-error-actions"
+          direction="row"
+          spacing={1.5}
+          justifyContent="center"
+          sx={{ mt: 3, flexWrap: 'wrap', rowGap: 1 }}
+        >
+          {/* Retry re-runs the war teams query so transient API failures recover without page navigation. */}
+          <Button type="button" variant="outlined" onClick={() => void refetchWar()}>
+            {t('common.retry')}
+          </Button>
+        </Stack>
+      </Box>
+    );
+  }
 
   const toggleSelection = (id: string, multi: boolean) => {
     if (!canManageActive) return;
@@ -654,9 +719,9 @@ function ActiveWarManagement({
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2, position: 'relative' }}>
-        <Grid container spacing={3} sx={{ flex: 1, minHeight: 0 }}>
+        <Grid data-testid="guildwar-war-teams-grid" container spacing={3} sx={{ flex: 1, minHeight: 0 }}>
             {/* LEFT COLUMN: POOL */}
-            <Grid size={{ xs: 12, md: 3 }} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Grid data-testid="guildwar-pool-column" size={{ xs: 12, md: 3 }} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <DroppablePool id="pool_droppable">
                   <ThemedPanelBox
                     variant="pool"
@@ -670,7 +735,7 @@ function ActiveWarManagement({
                       </Stack>
                     }
                     right={
-                      <Stack direction="row" spacing={0.5}>
+                    <Stack data-testid="guildwar-assignment-controls" direction="row" spacing={0.5}>
                         <ThemedSortButtonGroup
                           sortState={poolSort}
                           onFieldChange={(field) =>
@@ -735,6 +800,7 @@ function ActiveWarManagement({
                     </Stack>
                     
                     <ThemedSortButtonGroup
+                      data-testid="guildwar-assignment-controls"
                       sortState={teamSort}
                       onFieldChange={(field) =>
                         setTeamSort((prev) => nextGuildWarSortState(prev, field as GuildWarSortState['field']))
@@ -803,31 +869,26 @@ function ActiveWarManagement({
         </Snackbar>
         <Toast open={toastOpen && !!lastAction} message={lastAction?.desc || ''} severity="info" onClose={() => setToastOpen(false)} />
 
-        <Dialog open={conflictOpen} onClose={() => setConflictOpen(false)}>
-          <DialogTitle>{t('guild_war.conflict_title')}</DialogTitle>
-          <DialogContent>
-            <Typography variant="body2">
-              {t('guild_war.conflict_body')}
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => { setConflictOpen(false); refetchWar(); }}>{t('common.refresh')}</Button>
-            <Button variant="contained" color="warning" onClick={() => { setConflictOpen(false); setEtag(undefined); }}>{t('guild_war.override')}</Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog open={!!kickPoolConfirmUserId} onClose={() => setKickPoolConfirmUserId(null)} maxWidth="xs" fullWidth>
-          <DialogTitle>{t('guild_war.remove_from_pool')}</DialogTitle>
-          <DialogContent>
-            <Typography variant="body2">{t('guild_war.remove_confirm')}</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setKickPoolConfirmUserId(null)}>{t('common.cancel')}</Button>
-            <Button color="error" variant="contained" onClick={confirmKickFromPool}>
-              {t('common.remove')}
-            </Button>
-          </DialogActions>
-        </Dialog>
+        {hasActionDialogOpen ? (
+          <Suspense fallback={null}>
+            <GuildWarActionDialogs
+              conflictOpen={conflictOpen}
+              kickPoolConfirmOpen={Boolean(kickPoolConfirmUserId)}
+              t={t}
+              onCloseConflict={() => setConflictOpen(false)}
+              onRefreshConflict={() => {
+                setConflictOpen(false);
+                void refetchWar();
+              }}
+              onOverrideConflict={() => {
+                setConflictOpen(false);
+                setEtag(undefined);
+              }}
+              onCloseKickFromPool={() => setKickPoolConfirmUserId(null)}
+              onConfirmKickFromPool={confirmKickFromPool}
+            />
+          </Suspense>
+        ) : null}
 
       </Box>
 
@@ -1011,10 +1072,10 @@ function DroppableTeam({
         <Stack direction="row" alignItems="center" spacing={1}>
           {canManage && (
             <Box sx={{ display: 'flex', gap: 0.5, p: 0.5, bgcolor: panelTokens.panelControlBg, borderRadius: 1, border: '1px solid', borderColor: panelTokens.panelBorder }}>
-              <ThemedIconButton size="small" onClick={() => onAssignRole('lead')} sx={{ p: 0.5, color: theme.custom?.warRoles.lead.main }}><EmojiEvents sx={{ fontSize: 14 }} /></ThemedIconButton>
-              <ThemedIconButton size="small" onClick={() => onAssignRole('dmg')} sx={{ p: 0.5, color: theme.custom?.warRoles.dps.main }}><ElectricBolt sx={{ fontSize: 14 }} /></ThemedIconButton>
-              <ThemedIconButton size="small" onClick={() => onAssignRole('tank')} sx={{ p: 0.5, color: theme.custom?.warRoles.tank.main }}><Shield sx={{ fontSize: 14 }} /></ThemedIconButton>
-              <ThemedIconButton size="small" onClick={() => onAssignRole('healer')} sx={{ p: 0.5, color: theme.custom?.warRoles.heal.main }}><Favorite sx={{ fontSize: 14 }} /></ThemedIconButton>
+              <ThemedIconButton size="small" onClick={() => onAssignRole('lead')} sx={{ p: 0.5, color: getGuildWarRoleColor(theme, 'lead') }}><EmojiEvents sx={{ fontSize: 14 }} /></ThemedIconButton>
+              <ThemedIconButton size="small" onClick={() => onAssignRole('dmg')} sx={{ p: 0.5, color: getGuildWarRoleColor(theme, 'dps') }}><ElectricBolt sx={{ fontSize: 14 }} /></ThemedIconButton>
+              <ThemedIconButton size="small" onClick={() => onAssignRole('tank')} sx={{ p: 0.5, color: getGuildWarRoleColor(theme, 'tank') }}><Shield sx={{ fontSize: 14 }} /></ThemedIconButton>
+              <ThemedIconButton size="small" onClick={() => onAssignRole('healer')} sx={{ p: 0.5, color: getGuildWarRoleColor(theme, 'heal') }}><Favorite sx={{ fontSize: 14 }} /></ThemedIconButton>
             </Box>
           )}
 
@@ -1116,7 +1177,7 @@ function AddMemberModal({ open, onClose, members, currentParticipants, onAdd }: 
              fullWidth 
              placeholder={`${t('common.search')}...`} 
              value={search} 
-             onChange={e => setSearch(e.target.value)}
+             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
              InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ fontSize: 16 }} /></InputAdornment> }}
              sx={{ mb: 2, mt: 1 }}
          />
@@ -1365,3 +1426,4 @@ function ActiveWarSkeleton() {
     </Grid>
   );
 }
+

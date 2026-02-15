@@ -1,0 +1,7 @@
+﻿/**
+ * Neo-brutalism theme slot.
+ * TODO: migrate theme values from legacy preset files.
+ */
+[data-theme='neo-brutalism'] {
+  --color-accent: #ffd300;
+}

@@ -1,0 +1,7 @@
+﻿/**
+ * Minimalistic theme slot.
+ * TODO: migrate theme values from legacy preset files.
+ */
+[data-theme='minimalistic'] {
+  --color-accent: #7a8794;
+}

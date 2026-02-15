@@ -23,8 +23,8 @@ import { useWarsList, useAnalyticsData } from '../../../../hooks';
 import { AnalyticsMode } from './types';
 import { Card } from '@/components/layout/Card';
 import { Alert, AlertDescription } from '@/components/feedback/Alert';
-import { ErrorOutline } from '@mui/icons-material';
-import { useTheme } from '@mui/material/styles';
+import { ErrorOutline } from '@/ui-bridge/icons-material';
+import { useTheme } from '@/ui-bridge/material/styles';
 
 export function WarAnalyticsMain({ canCopy = true }: { canCopy?: boolean }) {
   return (
@@ -57,13 +57,25 @@ function WarAnalyticsContent({ canCopy }: { canCopy: boolean }) {
     updateRankingsMode,
   } = useAnalytics();
 
-  const { data: wars, isLoading: warsLoading } = useWarsList({
+  const {
+    data: wars,
+    isLoading: warsLoading,
+    isError: warsError = false,
+    error: warsQueryError,
+    refetch: refetchWars,
+  } = useWarsList({
     startDate: filters.startDate,
     endDate: filters.endDate,
     limit: 100,
   });
 
-  const { data: analyticsData, isLoading: analyticsLoading } = useAnalyticsData({
+  const {
+    data: analyticsData,
+    isLoading: analyticsLoading,
+    isError: analyticsError = false,
+    error: analyticsQueryError,
+    refetch: refetchAnalytics,
+  } = useAnalyticsData({
     startDate: filters.startDate,
     endDate: filters.endDate,
     warIds: filters.selectedWars,
@@ -174,6 +186,25 @@ function WarAnalyticsContent({ canCopy }: { canCopy: boolean }) {
     updateRankingsMode,
     updateTeamsMode,
   ]);
+
+  if (warsError || analyticsError) {
+    const activeError = warsError ? warsQueryError : analyticsQueryError;
+    return (
+      <div className="flex h-full flex-col space-y-4">
+        <FilterBar wars={wars || []} members={analyticsData?.memberStats || []} isLoading={false} />
+        <div className="flex-1 overflow-auto p-1">
+          <ErrorPanel
+            error={activeError}
+            retry={() => {
+              // Retry both queries to recover list + analytics panels from transient API failures.
+              void refetchWars?.();
+              void refetchAnalytics?.();
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col space-y-4">

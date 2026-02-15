@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { LineChart } from '@mui/x-charts/LineChart';
+import { LineChart } from '@/ui-bridge/x-charts/LineChart';
 import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
-import { TrendingUp, ErrorOutline } from '@mui/icons-material';
+import { TrendingUp, ErrorOutline } from '@/ui-bridge/icons-material';
 import { transformForTeams, formatNumber, formatWarDateShort } from './utils';
 import { getUserColor } from './types';
 import type { TeamStats, WarSummary } from './types';

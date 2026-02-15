@@ -11,7 +11,7 @@
  */
 
 import { useMemo } from 'react';
-import { LineChart } from '@mui/x-charts/LineChart';
+import { LineChart } from '@/ui-bridge/x-charts/LineChart';
 import { useTranslation } from 'react-i18next';
 import { CardSkeleton, Alert, AlertDescription, AlertTitle } from '@/components';
 import { useAnalytics } from './AnalyticsContext';
@@ -19,10 +19,10 @@ import { transformForCompare, formatWarDateShort, formatNumber } from './utils';
 import { getMemberMetricColor, formatMetricName } from './types';
 import type { PerWarMemberStats, WarSummary, MemberStats } from './types';
 import type { MetricType } from './types';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
-import InfoIcon from '@mui/icons-material/Info';
-import WarningIcon from '@mui/icons-material/Warning';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ShowChartIcon from '@/ui-bridge/icons-material/ShowChart';
+import InfoIcon from '@/ui-bridge/icons-material/Info';
+import WarningIcon from '@/ui-bridge/icons-material/Warning';
+import ErrorOutlineIcon from '@/ui-bridge/icons-material/ErrorOutline';
 
 // ============================================================================
 // Main Component
@@ -176,7 +176,7 @@ export function CompareTrendChart({ perWarStats, wars, members, onSelectWar, sam
           .map((series) => ({
             id: series.dataKey,
             data: chartData.map((d) => (d as any)[series.dataKey] ?? null),
-            label: `${series.username} · ${formatMetricName(series.metric as MetricType)}`,
+            label: `${series.username} 路 ${formatMetricName(series.metric as MetricType)}`,
             color: series.color,
             connectNulls: false,
             showMark: true,

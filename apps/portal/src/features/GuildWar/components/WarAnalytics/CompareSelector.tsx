@@ -10,10 +10,10 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import PeopleIcon from "@mui/icons-material/People";
-import SearchIcon from "@mui/icons-material/Search";
-import WarningIcon from "@mui/icons-material/Warning";
-import ErrorIcon from "@mui/icons-material/Error";
+import PeopleIcon from "@/ui-bridge/icons-material/People";
+import SearchIcon from "@/ui-bridge/icons-material/Search";
+import WarningIcon from "@/ui-bridge/icons-material/Warning";
+import ErrorIcon from "@/ui-bridge/icons-material/Error";
 
 import { useAnalytics, useSelectionLimits } from './AnalyticsContext';
 import { formatCompactNumber, getClassTint } from './types';
@@ -141,7 +141,7 @@ export function CompareSelector({ members, isLoading = false }: CompareSelectorP
              <Input
                 placeholder={t('common.search')}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9"
              />
           </div>

@@ -9,7 +9,7 @@
     "preview": "vite preview --config ../../config/vite/vite.portal.config.ts",
     "test": "vitest --config ../../config/vitest/vitest.portal.config.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext ts,tsx"
+    "lint": "cmd /d /s /c \"cd ../.. && npx eslint --config config/eslint/eslint.config.js apps/portal/src\""
   },
   "dependencies": {
     "@guild/shared-api": "*",

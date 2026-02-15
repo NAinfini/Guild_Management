@@ -1,0 +1,17 @@
+/*
+ * Inline code styling used by the Code primitive.
+ * It keeps monospace values legible on all theme surfaces.
+ */
+.code {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
+  font-size: 0.9em;
+  line-height: 1.3;
+  padding: 0.15em 0.45em;
+  border-radius: var(--radius-sm, 6px);
+  border: var(--border-width-default, 1px) solid var(--color-border-default, rgba(255, 255, 255, 0.12));
+  background-color: var(--color-bg-elevated, #14141a);
+  color: var(--color-accent, #00d9ff);
+}
+

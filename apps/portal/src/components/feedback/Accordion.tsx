@@ -7,8 +7,8 @@ import {
   AccordionSummary, 
   AccordionDetails,
   AccordionProps as MuiAccordionProps
-} from "@mui/material";
-import { KeyboardArrowDown } from "@mui/icons-material";
+} from "@/ui-bridge/material";
+import { KeyboardArrowDown } from "@/ui-bridge/icons-material";
 
 // Sub-component state management
 interface AccordionContextValue {

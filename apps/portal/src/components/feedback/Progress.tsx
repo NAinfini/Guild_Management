@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 
 import * as React from "react";
-import { LinearProgress, LinearProgressProps, Box } from "@mui/material";
+import { LinearProgress, LinearProgressProps, Box } from "@/ui-bridge/material";
 
 function Progress({
   className,

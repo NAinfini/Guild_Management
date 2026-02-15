@@ -143,13 +143,16 @@ export const LoadingPanel = FullPageLoading;
 
 
 // Actually, let's use MUI icons for migration consistency
-import { ErrorOutline, Refresh } from '@mui/icons-material';
+import { ErrorOutline, Refresh } from '@/ui-bridge/icons-material';
 
 export function ErrorPanel({ error, retry }: { error: any; retry?: () => void }) {
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center h-full min-h-[400px]">
+    <div
+      data-testid="guildwar-analytics-error-state"
+      className="flex flex-col items-center justify-center p-8 text-center h-full min-h-[400px]"
+    >
       <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
         <ErrorOutline className="w-8 h-8 text-destructive" />
       </div>
@@ -158,10 +161,13 @@ export function ErrorPanel({ error, retry }: { error: any; retry?: () => void })
         {error?.message || t('guild_war.analytics_error_body')}
       </p>
       {retry && (
-        <Button onClick={retry} variant="outline" className="gap-2">
-          <Refresh className="w-4 h-4" />
-          {t('common.retry')}
-        </Button>
+        <div data-testid="guildwar-analytics-error-actions">
+          {/* Retry delegates to the parent query refetch handlers so analytics can recover without route reload. */}
+          <Button data-testid="guildwar-analytics-retry" onClick={retry} variant="outline" className="gap-2">
+            <Refresh className="w-4 h-4" />
+            {t('common.retry')}
+          </Button>
+        </div>
       )}
     </div>
   );

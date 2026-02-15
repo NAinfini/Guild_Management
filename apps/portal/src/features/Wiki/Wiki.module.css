@@ -1,0 +1,119 @@
+.pageHeader {
+  display: grid;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--section-gap, 2rem);
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+.pageSubtitle {
+  margin: 0;
+  max-width: 65ch;
+}
+
+.layout {
+  display: grid;
+  /* Keep page-level rhythm aligned to section spacing token across themes. */
+  gap: var(--section-gap, 2rem);
+}
+
+.tocColumn {
+  position: relative;
+}
+
+.tocCard {
+  position: sticky;
+  top: var(--space-4, 1rem);
+}
+
+.tocTitle {
+  margin: 0;
+}
+
+.tocList {
+  margin: var(--card-gap, 1rem) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2, 0.5rem);
+}
+
+.tocItem {
+  margin: 0;
+}
+
+.tocNestedItem {
+  margin: 0;
+  padding-left: var(--space-3, 0.75rem);
+}
+
+.tocLink {
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.75));
+  text-decoration: none;
+  font-size: var(--font-size-sm, 0.875rem);
+  line-height: 1.5;
+  border-radius: var(--radius-sm, 8px);
+  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+  transition: color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.tocLink:hover,
+.tocLink:focus-visible {
+  color: var(--sys-text-primary, #ffffff);
+  background: color-mix(in srgb, var(--sys-interactive-accent, #7dd3fc) 18%, transparent);
+}
+
+.tocLink:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--sys-interactive-accent, #7dd3fc) 42%, transparent);
+}
+
+.articleColumn {
+  min-width: 0;
+}
+
+.articleContent {
+  display: grid;
+  gap: var(--card-gap, 1rem);
+}
+
+.articleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+  flex-wrap: wrap;
+}
+
+.markdownSurface {
+  display: grid;
+  gap: var(--space-4, 1rem);
+}
+
+.markdownSurface h1,
+.markdownSurface h2,
+.markdownSurface h3,
+.markdownSurface p,
+.markdownSurface li {
+  max-width: 70ch;
+}
+
+.markdownSurface p,
+.markdownSurface li {
+  line-height: 1.75;
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tocLink {
+    transition: none;
+  }
+}

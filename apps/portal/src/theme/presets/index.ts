@@ -1,4 +1,4 @@
-import type { ThemeOptions } from '@mui/material/styles';
+import type { ThemeOptions } from '@/ui-bridge/material/styles';
 import {
   THEME_VISUAL_SPECS,
   THEME_VISUAL_SPEC_LIST,

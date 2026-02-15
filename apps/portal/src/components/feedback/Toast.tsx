@@ -1,5 +1,5 @@
 import React from 'react';
-import { Snackbar, Alert, AlertColor } from '@mui/material';
+import { Snackbar, Alert, AlertColor } from '@/ui-bridge/material';
 
 export interface ToastProps {
   open: boolean;

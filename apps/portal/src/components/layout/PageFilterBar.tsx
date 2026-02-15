@@ -1,9 +1,9 @@
-﻿
+
 import { cn } from "@/lib/utils";
 import React from 'react';
-import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from "@mui/icons-material/Close";
-import FilterListIcon from "@mui/icons-material/FilterList";
+import SearchIcon from "@/ui-bridge/icons-material/Search";
+import CloseIcon from "@/ui-bridge/icons-material/Close";
+import FilterListIcon from "@/ui-bridge/icons-material/FilterList";
 import { useTranslation } from 'react-i18next';
 import { Input } from '../input/Input';
 import { Button } from '../button/Button';
@@ -102,7 +102,7 @@ export function PageFilterBar({
                 <Input
                   placeholder={searchPlaceholder || t('common.search')}
                   value={search || ''}
-                  onChange={(e) => onSearchChange?.(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSearchChange?.(e.target.value)}
                   autoComplete="off"
                   className="pl-9 pr-8 bg-background/88"
                   startAdornment={
@@ -112,6 +112,7 @@ export function PageFilterBar({
                     <Button 
                       variant="ghost" 
                       size="icon" 
+                      aria-label={t('common.clear')}
                       className="h-6 w-6 p-0 hover:bg-transparent text-muted-foreground hover:text-foreground"
                       onClick={() => onSearchChange?.('')}
                     >
@@ -164,14 +165,16 @@ export function PageFilterBar({
                 <Input
                   type="date"
                   value={startDate || ''}
-                  onChange={(e) => onStartDateChange?.(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => onStartDateChange?.(e.target.value)}
+                  aria-label={t('common.date_from')}
                   className="w-[140px] text-xs h-9 rounded-lg"
                 />
                 <span className="text-xs text-muted-foreground">-</span>
                 <Input
                   type="date"
                   value={endDate || ''}
-                  onChange={(e) => onEndDateChange?.(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => onEndDateChange?.(e.target.value)}
+                  aria-label={t('common.date_to')}
                   className="w-[140px] text-xs h-9 rounded-lg"
                 />
                 {(startDate || endDate) && (

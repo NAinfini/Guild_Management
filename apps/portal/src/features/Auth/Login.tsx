@@ -1,15 +1,15 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks';
 import { useNavigate, Link, useSearch } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import PersonIcon from '@mui/icons-material/Person';
-import LockIcon from '@mui/icons-material/Lock';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ErrorIcon from '@mui/icons-material/Error';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import LoginIcon from '@mui/icons-material/Login';
+import PersonIcon from '@/ui-bridge/icons-material/Person';
+import LockIcon from '@/ui-bridge/icons-material/Lock';
+import VisibilityIcon from '@/ui-bridge/icons-material/Visibility';
+import VisibilityOffIcon from '@/ui-bridge/icons-material/VisibilityOff';
+import ArrowBackIcon from '@/ui-bridge/icons-material/ArrowBack';
+import ErrorIcon from '@/ui-bridge/icons-material/Error';
+import VerifiedUserIcon from '@/ui-bridge/icons-material/VerifiedUser';
+import LoginIcon from '@/ui-bridge/icons-material/Login';
 import {
   Input,
   Label,
@@ -81,10 +81,18 @@ export function Login() {
             </p>
           </CardHeader>
           
-          <form onSubmit={handleSubmit}>
+          {/* Mark form busy state so assistive tech can announce in-flight auth attempts. */}
+          <form onSubmit={handleSubmit} aria-busy={isLoading}>
             <CardContent className="space-y-4 pt-8">
               {authError && (
-                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 animate-in fade-in zoom-in duration-300">
+                <Alert
+                  variant="destructive"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                  data-testid="login-auth-error-message"
+                  className="bg-destructive/10 border-destructive/20 animate-in fade-in zoom-in duration-300"
+                >
                   <ErrorIcon sx={{ fontSize: 16 }} className="mr-2" />
                   <AlertDescription className="text-xs font-bold uppercase tracking-wider">
                     {authError}
@@ -103,7 +111,7 @@ export function Login() {
                     placeholder={t('login.placeholder_username')}
                     type="text"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                     className="pl-10 bg-background/50 border-2 transition-all focus:border-primary uppercase font-bold tracking-wider"
                     required
                   />
@@ -123,7 +131,7 @@ export function Login() {
                     placeholder={t('login.placeholder_password')}
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                     className="pl-10 pr-10 bg-background/50 border-2 transition-all focus:border-primary font-mono"
                     required
                   />
@@ -145,7 +153,7 @@ export function Login() {
                 <Checkbox 
                   id="remember" 
                   checked={rememberMe}
-                  onChange={(_, checked) => setRememberMe(checked)}
+                  onChange={(_: unknown, checked: boolean) => setRememberMe(checked)}
                 />
                 <Label 
                   htmlFor="remember" 
@@ -164,7 +172,13 @@ export function Login() {
               >
                 <div className="relative z-10 flex items-center justify-center gap-2">
                    {isLoading ? (
-                        <div className="flex items-center gap-2">
+                        <div
+                            data-testid="login-auth-loading-status"
+                            role="status"
+                            aria-live="polite"
+                            aria-atomic="true"
+                            className="flex items-center gap-2"
+                        >
                             <div className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" />
                             <span>{t('login.status_authenticating')}</span>
                         </div>

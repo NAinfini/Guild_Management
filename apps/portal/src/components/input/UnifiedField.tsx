@@ -12,8 +12,8 @@ import {
   Box,
   InputAdornment,
   IconButton,
-} from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+} from '@/ui-bridge/material';
+import { Visibility, VisibilityOff } from '@/ui-bridge/icons-material';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 

@@ -1,0 +1,94 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 0.5rem);
+  border-radius: var(--radius-md, 8px);
+  border: var(--border-width-default, 1px) solid transparent;
+  font-family: var(--font-body, Inter, system-ui, sans-serif);
+  font-weight: var(--font-weight-semibold, 600);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast, 150ms ease),
+    color var(--transition-fast, 150ms ease),
+    border-color var(--transition-fast, 150ms ease),
+    transform var(--transition-fast, 150ms ease);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.button:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus, 0 0 0 3px rgba(0, 180, 255, 0.2));
+}
+
+.primary {
+  background-color: var(--color-accent, #00d9ff);
+  border-color: var(--color-accent, #00d9ff);
+  color: var(--color-text-inverse, #fff);
+}
+
+.primary:hover:not(:disabled) {
+  background-color: var(--color-accent-hover, #00b8d9);
+  border-color: var(--color-accent-hover, #00b8d9);
+}
+
+.secondary {
+  background-color: var(--color-bg-elevated, #14141a);
+  border-color: var(--color-border-default, rgba(255, 255, 255, 0.12));
+  color: var(--color-text-primary, rgba(255, 255, 255, 0.95));
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--color-border-strong, rgba(255, 255, 255, 0.18));
+}
+
+.ghost {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--color-text-primary, rgba(255, 255, 255, 0.95));
+}
+
+.ghost:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-bg-elevated, #14141a) 55%, transparent);
+}
+
+.sm {
+  min-height: 2.125rem;
+  padding: 0.35rem 0.7rem;
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.md {
+  min-height: 2.375rem;
+  padding: 0.45rem 0.95rem;
+  font-size: var(--font-size-base, 1rem);
+}
+
+.lg {
+  min-height: 2.625rem;
+  padding: 0.55rem 1.25rem;
+  font-size: var(--font-size-lg, 1.125rem);
+}
+
+.loading {
+  position: relative;
+}
+
+.spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ds-button-spin 0.7s linear infinite;
+}
+
+@keyframes ds-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

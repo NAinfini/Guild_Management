@@ -1,71 +1,35 @@
-
-import React, { useState, useEffect, useMemo } from 'react';
-import { useFilteredList } from '../../hooks/useFilteredList';
-import { 
-  Card, 
-  CardContent, 
-  Button, 
-  Chip, 
-  Typography, 
-  Box, 
-  Stack, 
-  IconButton, 
-  TextField, 
-  InputAdornment, 
-  Dialog, 
-  DialogContent, 
-  DialogTitle,
-  DialogActions,
-  useTheme,
-  alpha,
-  Avatar,
-  Badge,
-  Grid,
-  ToggleButton,
-  ToggleButtonGroup
-} from '@mui/material';
-import { 
-  Campaign, 
-  PushPin, 
-  Archive as ArchiveIcon, 
-  Add, 
-  Search as SearchIcon, 
-  Close,
-  AccessTime,
-  Edit as EditIcon,
-  Delete,
-  CalendarToday,
-  Image as ImageIcon,
-  MoreVert,
-  PlayArrow,
-  AttachFile
-} from '@mui/icons-material';
-import { formatDateTime, cn, sanitizeHtml } from '@/lib/utils';
-import { getOptimizedMediaUrl, getAvatarInitial } from '@/lib/media-conversion';
-import { useAuthStore, useUIStore } from '../../store';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { formatDateTime } from '@/lib/utils';
+import { useFilteredList } from '@/hooks/useFilteredList';
+import { useAuthStore, useUIStore } from '@/store';
 import { useTranslation } from 'react-i18next';
 import { useOnline } from '@/hooks/useOnline';
-import { Announcement } from '../../types';
-import { isAfter } from 'date-fns';
-import { Skeleton } from '@mui/material';
+import type { Announcement } from '@/types';
 import {
-  CardGridSkeleton, 
-  TiptapEditor,
-  MarkdownRenderer,
-  Tooltip,
+  Grid,
+  PageContainer,
+  PageFilterBar,
+  PrimitiveBadge,
+  PrimitiveButton,
+  PrimitiveCard,
+  PrimitiveCardContent,
+  PrimitiveCardHeader,
+  PrimitiveHeading,
+  PrimitiveSkeleton,
+  PrimitiveText,
+  type FilterOption,
 } from '@/components';
-import { ThemedIconButton } from '@/components/controls/ThemedIconButton';
-import { PageFilterBar, type FilterOption } from '@/components';
 import {
   useAnnouncements,
+  useArchiveAnnouncement,
   useCreateAnnouncement,
-  useUpdateAnnouncement,
   useDeleteAnnouncement,
   useTogglePinAnnouncement,
-  useArchiveAnnouncement
-} from '../../hooks/useServerState';
-import { useLastSeen } from '../../hooks/useLastSeen';
-import { STORAGE_KEYS } from '../../lib/storage';
+  useUpdateAnnouncement,
+} from '@/hooks/useServerState';
+import { useLastSeen } from '@/hooks/useLastSeen';
+import { STORAGE_KEYS } from '@/lib/storage';
 import {
   canArchiveAnnouncement,
   canCreateAnnouncement,
@@ -73,61 +37,74 @@ import {
   canEditAnnouncement,
   canPinAnnouncement,
   getEffectiveRole,
-} from '../../lib/permissions';
-import { mediaAPI } from '../../lib/api/media';
+} from '@/lib/permissions';
+import type { EditorPayload } from './components/AnnouncementEditorDialog';
+import styles from './Announcements.module.css';
 
 type FilterType = 'all' | 'pinned' | 'archived';
 
+const AnnouncementEditorDialog = lazy(() => import('./components/AnnouncementEditorDialog'));
+const AnnouncementActionDialogs = lazy(() => import('./components/AnnouncementActionDialogs'));
+
+function getAnnouncementPreview(contentHtml: string): string {
+  if (!contentHtml) return '';
+
+  if (contentHtml.trim().startsWith('<')) {
+    return contentHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  return contentHtml.trim();
+}
+
+function AnnouncementListSkeleton() {
+  return (
+    <div data-testid="announcement-list-skeleton">
+      <Grid cols={{ mobile: 1, desktop: 2 }} gap="normal">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <PrimitiveCard key={`announcement-skeleton-${index}`} variant="outlined" className={styles.skeletonCard}>
+            <PrimitiveCardHeader className={styles.skeletonHeader}>
+              <PrimitiveSkeleton variant="text" width="65%" />
+              <PrimitiveSkeleton variant="text" width="35%" />
+            </PrimitiveCardHeader>
+            <PrimitiveCardContent className={styles.skeletonBody}>
+              <PrimitiveSkeleton variant="text" width="100%" />
+              <PrimitiveSkeleton variant="text" width="92%" />
+              <PrimitiveSkeleton variant="text" width="78%" />
+            </PrimitiveCardContent>
+          </PrimitiveCard>
+        ))}
+      </Grid>
+    </div>
+  );
+}
+
 export function Announcements() {
   const { user, viewRole } = useAuthStore();
-
   const { timezoneOffset, setPageTitle } = useUIStore();
   const { t } = useTranslation();
-  const theme = useTheme();
   const online = useOnline();
 
   const [filter, setFilter] = useState<FilterType>('all');
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Announcement | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  // ✅ TanStack Query: Server state with automatic caching
-  const { data: announcements = [], isLoading } = useAnnouncements({
+  const { data: announcements = [], isLoading, isError, refetch } = useAnnouncements({
     includeArchived: filter === 'archived',
     search,
-    startDate: filter === 'all' ? startDate : undefined, // Only use date filter in 'all' view or as needed
-    endDate: filter === 'all' ? endDate : undefined
+    startDate: filter === 'all' ? startDate : undefined,
+    endDate: filter === 'all' ? endDate : undefined,
   });
 
-  // ✅ TanStack Query: Mutations with automatic cache invalidation
   const createAnnouncementMutation = useCreateAnnouncement();
   const updateAnnouncementMutation = useUpdateAnnouncement();
   const deleteAnnouncementMutation = useDeleteAnnouncement();
   const togglePinMutation = useTogglePinAnnouncement();
   const archiveAnnouncementMutation = useArchiveAnnouncement();
-
-  // Wrapper functions to match existing API
-  const createAnnouncement = async (data: any) => {
-    await createAnnouncementMutation.mutateAsync(data);
-  };
-  const updateAnnouncement = async (id: string, data: any) => {
-    await updateAnnouncementMutation.mutateAsync({ id, data });
-  };
-  const deleteAnnouncement = async (id: string) => {
-    await deleteAnnouncementMutation.mutateAsync(id);
-  };
-  const togglePinAnnouncement = async (id: string, isPinned: boolean) => {
-    await togglePinMutation.mutateAsync({ id, isPinned });
-  };
-  const archiveAnnouncement = async (id: string, isArchived: boolean) => {
-    await archiveAnnouncementMutation.mutateAsync({ id, isArchived });
-  };
-
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Announcement | null>(null);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const effectiveRole = getEffectiveRole(user?.role, viewRole);
   const canCreate = canCreateAnnouncement(effectiveRole);
@@ -135,25 +112,34 @@ export function Announcements() {
   const canDelete = canDeleteAnnouncement(effectiveRole);
   const canPin = canPinAnnouncement(effectiveRole);
   const canArchive = canArchiveAnnouncement(effectiveRole);
+
   const { markAsSeen, hasNewContent } = useLastSeen(
     STORAGE_KEYS.ANNOUNCEMENTS_LAST_SEEN,
-    'last_seen_announcements_at'
+    'last_seen_announcements_at',
   );
 
   useEffect(() => {
     setPageTitle(t('nav.announcements'));
   }, [setPageTitle, t]);
 
+  useEffect(() => {
+    return () => markAsSeen();
+  }, [markAsSeen]);
+
   const announcementFilterFn = useMemo(
-    () => filter === 'pinned' ? (a: any) => a.is_pinned : undefined,
-    [filter]
+    () => (filter === 'pinned' ? (announcement: Announcement) => announcement.is_pinned : undefined),
+    [filter],
   );
+
   const announcementSortFn = useMemo(
-    () => (a: any, b: any) => {
-      if (a.is_pinned !== b.is_pinned && filter !== 'archived') return a.is_pinned ? -1 : 1;
+    () => (a: Announcement, b: Announcement) => {
+      if (a.is_pinned !== b.is_pinned && filter !== 'archived') {
+        return a.is_pinned ? -1 : 1;
+      }
+
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     },
-    [filter]
+    [filter],
   );
 
   const filteredAnnouncements = useFilteredList({
@@ -164,47 +150,101 @@ export function Announcements() {
     sortFn: announcementSortFn,
   });
 
-  // Auto-mark as seen on unmount (or we could do it on mount/periodic)
-  useEffect(() => {
-    return () => markAsSeen();
-  }, [markAsSeen]);
-
-  const openDeleteConfirm = (id: string) => {
-    setDeleteTargetId(id);
-    setDeleteConfirmOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (!canDelete || !deleteTargetId) return;
-    deleteAnnouncement(deleteTargetId);
-    setDeleteConfirmOpen(false);
-    setDeleteTargetId(null);
-  };
-
   const categories: FilterOption[] = [
     { id: 'all', value: 'all', label: t('announcements.filter_all') },
     { id: 'pinned', value: 'pinned', label: t('announcements.filter_pinned') },
     { id: 'archived', value: 'archived', label: t('announcements.filter_archived') },
   ];
+  const hasActiveFilters = Boolean(search.trim() || startDate || endDate || filter !== 'all');
+  const hasAnyActionDialogOpen = Boolean(selectedAnnouncement || deleteTargetId);
+
+  const handleClearFilters = () => {
+    // Reset all filter inputs so the list returns to the default all-announcements query state.
+    setSearch('');
+    setStartDate('');
+    setEndDate('');
+    setFilter('all');
+  };
+
+  const handleCreateOrUpdate = async (payload: EditorPayload) => {
+    if (editTarget) {
+      await updateAnnouncementMutation.mutateAsync({
+        id: editTarget.id,
+        data: {
+          title: payload.title,
+          bodyHtml: payload.content_html,
+        },
+      });
+    } else {
+      await createAnnouncementMutation.mutateAsync({
+        title: payload.title,
+        bodyHtml: payload.content_html,
+      });
+    }
+
+    setIsEditorOpen(false);
+    setEditTarget(null);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTargetId || !canDelete) return;
+
+    await deleteAnnouncementMutation.mutateAsync(deleteTargetId);
+    setDeleteTargetId(null);
+    setSelectedAnnouncement(null);
+  };
 
   if (isLoading && announcements.length === 0) {
     return (
-      <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 10, px: { xs: 2, sm: 4 } }}>
-        <CardGridSkeleton count={3} aspectRatio="16/9" />
-      </Box>
+      <PageContainer width="wide" spacing="normal">
+        <AnnouncementListSkeleton />
+      </PageContainer>
     );
   }
 
-
+  if (isError && announcements.length === 0) {
+    return (
+      <PageContainer width="wide" spacing="normal">
+        <PrimitiveCard variant="flat" className={styles.emptyState} data-testid="announcement-error-state">
+          <PrimitiveCardContent>
+            <PrimitiveHeading level={4} align="center">
+              {t('announcements.signal_silence')}
+            </PrimitiveHeading>
+            <PrimitiveText as="p" align="center" color="secondary">
+              {t('common.placeholder_msg')}
+            </PrimitiveText>
+            <div className={`${styles.actionRow} ${styles.stateActions}`} data-testid="announcement-error-actions">
+              {/* Retry replays the announcement list query so users can recover from transient failures in place. */}
+              <PrimitiveButton type="button" variant="secondary" onClick={() => void refetch()}>
+                {t('common.retry')}
+              </PrimitiveButton>
+              {canCreate ? (
+                <PrimitiveButton
+                  type="button"
+                  onClick={() => {
+                    setEditTarget(null);
+                    setIsEditorOpen(true);
+                  }}
+                  disabled={!online}
+                >
+                  {t('announcements.new_broadcast')}
+                </PrimitiveButton>
+              ) : null}
+            </div>
+          </PrimitiveCardContent>
+        </PrimitiveCard>
+      </PageContainer>
+    );
+  }
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 10, px: { xs: 2, sm: 4 } }}>
+    <PageContainer width="wide" spacing="normal">
       <PageFilterBar
         search={search}
         onSearchChange={setSearch}
         searchPlaceholder={t('announcements.search_placeholder')}
         category={filter}
-        onCategoryChange={(val) => setFilter(val as FilterType)}
+        onCategoryChange={(value) => setFilter(value as FilterType)}
         categories={categories}
         startDate={startDate}
         onStartDateChange={setStartDate}
@@ -213,378 +253,184 @@ export function Announcements() {
         resultsCount={filteredAnnouncements.length}
         isLoading={isLoading}
         extraActions={
-          <Stack direction="row" spacing={1}>
-            {canCreate && (
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<Add sx={{ fontSize: 18 }} />}
-                onClick={() => { setEditTarget(null); setIsEditorOpen(true); }}
-                disabled={!online}
-                sx={{ fontWeight: 900, borderRadius: 2 }}
-              >
-                {t('announcements.new_broadcast')}
-              </Button>
-            )}
-          </Stack>
+          canCreate ? (
+            <PrimitiveButton
+              data-testid="announcement-create-button"
+              size="sm"
+              onClick={() => {
+                setEditTarget(null);
+                setIsEditorOpen(true);
+              }}
+              disabled={!online}
+            >
+              <span className={styles.actionIcon} aria-hidden="true">
+                <Plus size={14} />
+              </span>
+              {t('announcements.new_broadcast')}
+            </PrimitiveButton>
+          ) : null
         }
       />
 
-      {/* Feed List */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
-        {filteredAnnouncements.map((ann) => {
-          const isNew = hasNewContent(ann.created_at);
-          return (
-            <Card 
-              key={ann.id}
-              elevation={1}
-              onClick={() => setSelectedAnnouncement(ann)}
-              sx={{ 
-                  borderRadius: 2, 
-                  border: 1, 
-                  borderColor: ann.is_pinned ? 'primary.main' : 'divider',
-                  overflow: 'hidden',
-                  transition: 'transform 0.2s',
-                  cursor: 'pointer',
-                  '&:hover': { borderColor: 'primary.main' }
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                  <Stack direction="row" spacing={2} alignItems="flex-start">
-                      {ann.is_pinned && <PushPin sx={{ fontSize: 18, color: 'primary.main' }} />}
-                      <Box flex={1}>
-                          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography variant="h6" fontWeight={800}>{ann.title}</Typography>
-                                  {isNew && <Chip label={t('common.label_new')} size="small" color="error" sx={{ height: 16, fontSize: '0.6rem' }} />}
-                              </Box>
-                              <Typography variant="caption" color="text.secondary">
-                                  {formatDateTime(ann.created_at, 0, true)}
-                              </Typography>
-                          </Stack>
-                          <Box sx={{ 
-                              display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                              typography: 'body2', color: 'text.secondary'
-                          }}>
-                              {ann.content_html.trim().startsWith('<') ? (
-                                  <span dangerouslySetInnerHTML={sanitizeHtml(ann.content_html.replace(/<[^>]+>/g, ' ') || '')} />
-                              ) : (
-                                  <MarkdownRenderer>{ann.content_html}</MarkdownRenderer>
-                              )}
-                          </Box>
-                          {/* Media Counters */}
-                          {ann.media_urls && ann.media_urls.length > 0 && (
-                             <Stack direction="row" spacing={1} mt={2}>
-                                {(() => {
-                                   const images = ann.media_urls.filter(u => u.match(/\.(jpg|jpeg|png|gif|webp)$/i)).length;
-                                   const videos = ann.media_urls.filter(u => u.match(/\.(mp4|webm|mov)$/i)).length;
-                                   const others = ann.media_urls.length - images - videos;
+      {filteredAnnouncements.length > 0 ? (
+        <Grid cols={{ mobile: 1, desktop: 2 }} gap="normal">
+          {filteredAnnouncements.map((announcement) => {
+            const previewText = getAnnouncementPreview(announcement.content_html);
+            const isNew = hasNewContent(announcement.created_at);
 
-                                   return (
-                                     <>
-                                         {images > 0 && (
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
-                                                <ImageIcon sx={{ fontSize: 14 }} />
-                                                <Typography variant="caption" fontWeight={900}>{images}</Typography>
-                                            </Box>
-                                         )}
-                                         {videos > 0 && (
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
-                                                <PlayArrow sx={{ fontSize: 14 }} />
-                                                <Typography variant="caption" fontWeight={900}>{videos}</Typography>
-                                            </Box>
-                                         )}
-                                         {others > 0 && (
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
-                                                <AttachFile sx={{ fontSize: 14 }} />
-                                                <Typography variant="caption" fontWeight={900}>{others}</Typography>
-                                            </Box>
-                                         )}
-                                     </>
-                                   );
-                                })()}
-                             </Stack>
-                          )}
-                      </Box>
-                  </Stack>
-              </CardContent>
-            </Card>
-          );
-        })}
+            return (
+              <PrimitiveCard
+                key={announcement.id}
+                variant="outlined"
+                className={styles.card}
+                data-testid={`announcement-card-${announcement.id}`}
+                onClick={() => setSelectedAnnouncement(announcement)}
+              >
+                <PrimitiveCardHeader className={styles.cardHeader}>
+                  <div className={styles.cardTitleRow}>
+                    {/* Heading anchors the announcement card title hierarchy for dense feeds. */}
+                    <PrimitiveHeading level={3} className={styles.cardTitle} data-testid={`announcement-card-title-${announcement.id}`}>
+                      {announcement.title}
+                    </PrimitiveHeading>
+                    {announcement.is_pinned ? (
+                      <PrimitiveBadge
+                        variant="info"
+                        size="sm"
+                        data-testid={`announcement-card-badge-pinned-${announcement.id}`}
+                      >
+                        {t('announcements.status_priority')}
+                      </PrimitiveBadge>
+                    ) : null}
+                    {isNew ? (
+                      <PrimitiveBadge variant="error" size="sm">
+                        {t('common.label_new')}
+                      </PrimitiveBadge>
+                    ) : null}
+                  </div>
 
-        {filteredAnnouncements.length === 0 && (
-            <Box sx={{ py: 10, textAlign: 'center', opacity: 0.5, border: `2px dashed ${theme.palette.divider}`, borderRadius: 5 }}>
-               <Campaign sx={{ fontSize: 48, color: 'text.secondary', display: 'block', margin: '0 auto', marginBottom: 2 }} />
-               <Typography variant="caption" fontWeight={900} textTransform="uppercase" letterSpacing="0.2em" color="text.secondary">
-                 {t('announcements.signal_silence')}
-               </Typography>
-            </Box>
-        )}
-      </Box>
+                  <PrimitiveText
+                    as="span"
+                    size="xs"
+                    color="tertiary"
+                    data-testid={`announcement-card-timestamp-${announcement.id}`}
+                  >
+                    {formatDateTime(announcement.created_at, 0, true)}
+                  </PrimitiveText>
+                </PrimitiveCardHeader>
 
-      {/* View Modal */}
-      {selectedAnnouncement && (
-         <Dialog 
-            open 
-            onClose={() => setSelectedAnnouncement(null)} 
-            maxWidth="md" 
-            fullWidth
-            PaperProps={{ sx: { bgcolor: 'background.paper', borderRadius: 5, overflow: 'hidden' } }}
-         >
-            <Box sx={{ p: 4, bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-               <Box>
-                  <Stack direction="row" spacing={1} mb={2}>
-                     {selectedAnnouncement.is_pinned && <Chip label={t('announcements.status_priority')} size="small" color="primary" sx={{ fontWeight: 900, height: 20, fontSize: '0.6rem' }} />}
-                     {selectedAnnouncement.is_archived && <Chip label={t('announcements.status_archived')} size="small" sx={{ fontWeight: 900, height: 20, fontSize: '0.6rem' }} />}
-                  </Stack>
-                  <Typography variant="h4" fontWeight={900} fontStyle="italic" textTransform="uppercase" lineHeight={1}>{selectedAnnouncement.title}</Typography>
-                  <Stack direction="row" spacing={2} mt={2} alignItems="center">
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                          <AccessTime sx={{ fontSize: 12, color: 'text.secondary' }} />
-                          <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">{formatDateTime(selectedAnnouncement.created_at, timezoneOffset)}</Typography>
-                      </Stack>
-                      <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary">
-                        {t('announcements.agent')}: {selectedAnnouncement.author_id}
-                      </Typography>
-                  </Stack>
-               </Box>
-               <Tooltip content={t('common.close')}>
-                 <IconButton
-                   onClick={() => setSelectedAnnouncement(null)}
-                   sx={{
-                     width: 36,
-                     height: 36,
-                     borderRadius: 'var(--cmp-button-radius)',
-                     border: '1px solid var(--cmp-input-border)',
-                     bgcolor: 'transparent',
-                     color: 'var(--sys-text-primary)',
-                     '&:hover': {
-                       bgcolor: 'var(--sys-interactive-hover)',
-                     },
-                   }}
-                 >
-                   <Close />
-                 </IconButton>
-               </Tooltip>
-            </Box>
-
-            <DialogContent sx={{ p: 5 }}>
-               {selectedAnnouncement.content_html.trim().startsWith('<') ? (
-                   <Typography 
-                      variant="body1" 
-                      color="text.secondary" 
-                      sx={{ '& p': { mb: 2, lineHeight: 1.8 } }} 
-                      dangerouslySetInnerHTML={sanitizeHtml(selectedAnnouncement.content_html)} 
-                   />
-               ) : (
-                   <Box sx={{ '& p': { mb: 2, lineHeight: 1.8 } }}>
-                       <MarkdownRenderer>{selectedAnnouncement.content_html}</MarkdownRenderer>
-                   </Box>
-               )}
-
-               {selectedAnnouncement.media_urls && selectedAnnouncement.media_urls.length > 0 && (
-                  <Box mt={4}>
-                     <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.disabled" display="block" mb={2} letterSpacing="0.1em">{t('announcements.intel_attached')}</Typography>
-                     <Grid container spacing={1.5}>
-                        {selectedAnnouncement.media_urls.map((url, i) => (
-                           <Grid size={{ xs: 12, sm: 4, md: 3 }} key={i}>
-                              <Box sx={{ aspectRatio: '4/3', borderRadius: 2, overflow: 'hidden', bgcolor: 'black' }}>
-                                 <img src={getOptimizedMediaUrl(url, 'image')} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              </Box>
-                           </Grid>
-                        ))}
-                     </Grid>
-                  </Box>
-               )}
-            </DialogContent>
-
-            {(canEdit || canPin || canArchive || canDelete) && (
-                <DialogActions sx={{ p: 3, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
-                   {canEdit && (
-                     <Button startIcon={<EditIcon sx={{ fontSize: 16 }} />} onClick={() => { setEditTarget(selectedAnnouncement); setIsEditorOpen(true); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{t('announcements.edit')}</Button>
-                   )}
-                   {canPin && (
-                     <Button startIcon={<PushPin sx={{ fontSize: 16 }} />} onClick={() => { togglePinAnnouncement(selectedAnnouncement.id, !selectedAnnouncement.is_pinned); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{selectedAnnouncement.is_pinned ? t('announcements.unpin') : t('announcements.pin')}</Button>
-                   )}
-                   {canArchive && (
-                     <Button startIcon={<ArchiveIcon sx={{ fontSize: 16 }} />} onClick={() => { archiveAnnouncement(selectedAnnouncement.id, !selectedAnnouncement.is_archived); setSelectedAnnouncement(null); }} sx={{ fontWeight: 900 }} disabled={!online}>{selectedAnnouncement.is_archived ? t('announcements.restore') : t('announcements.archive')}</Button>
-                   )}
-                   {canDelete && (
-                     <Button
-                       startIcon={<Delete sx={{ fontSize: 16 }} />}
-                       color="error"
-                       onClick={() => {
-                         openDeleteConfirm(selectedAnnouncement.id);
-                         setSelectedAnnouncement(null);
-                       }}
-                       sx={{ fontWeight: 900 }}
-                       disabled={!online}
-                     >
-                       {t('announcements.delete')}
-                     </Button>
-                   )}
-                </DialogActions>
-             )}
-         </Dialog>
+                <PrimitiveCardContent>
+                  {/* Body text keeps to 3 lines so card heights remain stable in the grid. */}
+                  <PrimitiveText
+                    as="p"
+                    size="sm"
+                    color="secondary"
+                    className={styles.cardBody}
+                    data-testid={`announcement-card-body-${announcement.id}`}
+                  >
+                    {previewText}
+                  </PrimitiveText>
+                </PrimitiveCardContent>
+              </PrimitiveCard>
+            );
+          })}
+        </Grid>
+      ) : (
+        <PrimitiveCard variant="flat" className={styles.emptyState}>
+          <PrimitiveCardContent>
+            <PrimitiveHeading level={4} align="center">
+              {t('announcements.signal_silence')}
+            </PrimitiveHeading>
+            <PrimitiveText as="p" align="center" color="secondary">
+              {t('common.no_data')}
+            </PrimitiveText>
+            <div className={`${styles.actionRow} ${styles.stateActions}`} data-testid="announcement-empty-actions">
+              {canCreate ? (
+                <PrimitiveButton
+                  type="button"
+                  onClick={() => {
+                    setEditTarget(null);
+                    setIsEditorOpen(true);
+                  }}
+                  disabled={!online}
+                >
+                  {t('announcements.new_broadcast')}
+                </PrimitiveButton>
+              ) : null}
+              {hasActiveFilters ? (
+                // Clear filters returns to baseline feed visibility when search/date/category excludes all records.
+                <PrimitiveButton type="button" variant="secondary" onClick={handleClearFilters}>
+                  {t('common.clear_filters')}
+                </PrimitiveButton>
+              ) : null}
+            </div>
+          </PrimitiveCardContent>
+        </PrimitiveCard>
       )}
 
-      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('announcements.delete')}</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">{t('common.delete_confirm')}</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)}>{t('common.cancel')}</Button>
-          <Button color="error" variant="contained" onClick={confirmDelete}>
-            {t('common.delete')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Editor Modal */}
-      {isEditorOpen && (
-         <EditorModal 
-            isOpen={isEditorOpen} 
-            onClose={() => setIsEditorOpen(false)} 
-            initialData={editTarget}
-            onSubmit={(data: any) => {
-               if (editTarget) updateAnnouncement(editTarget.id, data);
-               else createAnnouncement({ ...data, author_id: user?.username || 'CORE' });
-               setIsEditorOpen(false);
+      {hasAnyActionDialogOpen ? (
+        <Suspense fallback={null}>
+          <AnnouncementActionDialogs
+            t={t}
+            timezoneOffset={timezoneOffset}
+            selectedAnnouncement={selectedAnnouncement}
+            deleteTargetId={deleteTargetId}
+            canEdit={canEdit}
+            canPin={canPin}
+            canArchive={canArchive}
+            canDelete={canDelete}
+            online={online}
+            dialogPanelClassName={styles.dialogPanel}
+            dialogBodyClassName={styles.dialogBody}
+            actionRowClassName={styles.actionRow}
+            actionIconClassName={styles.actionIcon}
+            onCloseView={() => setSelectedAnnouncement(null)}
+            onEditSelected={() => {
+              if (!selectedAnnouncement) return;
+              setEditTarget(selectedAnnouncement);
+              setIsEditorOpen(true);
+              setSelectedAnnouncement(null);
             }}
-         />
-      )}
-    </Box>
+            onTogglePinSelected={async () => {
+              if (!selectedAnnouncement) return;
+              await togglePinMutation.mutateAsync({
+                id: selectedAnnouncement.id,
+                isPinned: !selectedAnnouncement.is_pinned,
+              });
+              setSelectedAnnouncement(null);
+            }}
+            onToggleArchiveSelected={async () => {
+              if (!selectedAnnouncement) return;
+              await archiveAnnouncementMutation.mutateAsync({
+                id: selectedAnnouncement.id,
+                isArchived: !selectedAnnouncement.is_archived,
+              });
+              setSelectedAnnouncement(null);
+            }}
+            onRequestDeleteSelected={() => {
+              if (!selectedAnnouncement) return;
+              setDeleteTargetId(selectedAnnouncement.id);
+            }}
+            onCloseDelete={() => setDeleteTargetId(null)}
+            onConfirmDelete={handleDelete}
+          />
+        </Suspense>
+      ) : null}
+
+      {isEditorOpen ? (
+        <Suspense fallback={null}>
+          <AnnouncementEditorDialog
+            open={isEditorOpen}
+            onOpenChange={(open) => {
+              setIsEditorOpen(open);
+              if (!open) {
+                setEditTarget(null);
+              }
+            }}
+            initialData={editTarget}
+            onSubmit={handleCreateOrUpdate}
+          />
+        </Suspense>
+      ) : null}
+    </PageContainer>
   );
-}
-
-function EditorModal({ isOpen, onClose, initialData, onSubmit }: any) {
-    const { t } = useTranslation();
-    const [title, setTitle] = useState(initialData?.title || '');
-    const [content, setContent] = useState(initialData?.content_html || '');
-    const [showPreview, setShowPreview] = useState(false);
-    // Media from existing announcement
-    const existingMedia = initialData?.media_urls || [];
-
-    // Handle image upload for Tiptap paste
-    const handleImageUpload = async (file: File): Promise<string> => {
-        try {
-            const uploaded = await mediaAPI.uploadImage(file, 'gallery');
-            return `/api/media/${encodeURIComponent(uploaded.r2Key)}`;
-        } catch (error) {
-            console.error('Image upload failed:', error);
-            throw error;
-        }
-    };
-
-    return (
-        <Dialog 
-            open={isOpen} 
-            onClose={onClose} 
-            maxWidth="md" 
-            fullWidth
-            PaperProps={{ sx: { borderRadius: 4 } }}
-        >
-            <DialogTitle sx={{ p: 4, pb: 2 }}>
-                <Typography variant="h5" fontWeight={900} fontStyle="italic" textTransform="uppercase">{initialData ? t('announcements.edit_signal') : t('announcements.broadcast_signal')}</Typography>
-                <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary" letterSpacing="0.1em">{t('announcements.modify_params')}</Typography>
-            </DialogTitle>
-            <DialogContent sx={{ p: 4 }}>
-                <Stack spacing={3}>
-                    <TextField 
-                        label={t('announcements.subject_line')} 
-                        fullWidth 
-                        value={title} 
-                        onChange={e => setTitle(e.target.value)}
-                        autoFocus
-                    />
-                    
-                    {/* Preview/Edit Tabs */}
-                    <Box>
-                        <Stack direction="row" spacing={1} mb={2}>
-                            <Button
-                                size="small"
-                                variant={!showPreview ? 'contained' : 'outlined'}
-                                onClick={() => setShowPreview(false)}
-                                sx={{ fontWeight: 700, fontSize: '0.7rem' }}
-                            >
-                                {t('common.edit')}
-                            </Button>
-                            <Button
-                                size="small"
-                                variant={showPreview ? 'contained' : 'outlined'}
-                                onClick={() => setShowPreview(true)}
-                                sx={{ fontWeight: 700, fontSize: '0.7rem' }}
-                            >
-                                {t('tools.preview_label')}
-                            </Button>
-                        </Stack>
-
-                        {showPreview ? (
-                            <Box 
-                                sx={{ 
-                                    minHeight: 200, 
-                                    p: 3, 
-                                    border: 1, 
-                                    borderColor: 'divider', 
-                                    borderRadius: 2,
-                                    '& p': { mb: 1 },
-                                    '& h1, & h2, & h3': { mt: 2, mb: 1, fontWeight: 700 },
-                                    '& img': { maxWidth: '100%', borderRadius: 1, my: 1 },
-                                }}
-                                dangerouslySetInnerHTML={sanitizeHtml(content)}
-                            />
-                        ) : (
-                            <TiptapEditor
-                                content={content}
-                                onChange={setContent}
-                                onImageUpload={handleImageUpload}
-                                placeholder={t('announcements.tx_body')}
-                                className="min-h-[250px]"
-                            />
-                        )}
-                    </Box>
-                    
-                    <Box>
-                         <Typography variant="caption" fontWeight={900} textTransform="uppercase" color="text.secondary" mb={2} display="block">{t('announcements.attached_media')}</Typography>
-                         <Grid container spacing={1.5}>
-                             {existingMedia.map((url: string, i: number) => (
-                                 <Grid size={{ xs: 4, sm: 3, md: 2 }} key={i}>
-                                      <Box sx={{ aspectRatio: '4/3', borderRadius: 2, overflow: 'hidden', position: 'relative' }}>
-                                          <img src={getOptimizedMediaUrl(url, 'image')} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                                          <Tooltip content={t('common.delete')}>
-                                            <ThemedIconButton
-                                              size="small"
-                                              variant="overlayDanger"
-                                              sx={{
-                                                position: 'absolute',
-                                                top: 4,
-                                                right: 4,
-                                                width: 24,
-                                                height: 24,
-                                                minWidth: 24,
-                                                borderRadius: '6px',
-                                              }}
-                                            >
-                                              <Delete sx={{ fontSize: 14 }} />
-                                            </ThemedIconButton>
-                                          </Tooltip>
-                                      </Box>
-                                 </Grid>
-                             ))}
-                              <Grid size={{ xs: 4, sm: 3, md: 2 }}>
-                                  <Box sx={{ aspectRatio: '4/3', borderRadius: 2, border: '2px dashed', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' } }}>
-                                      <Add sx={{ fontSize: 24, color: 'var(--color-text-secondary)' }} />
-                                  </Box>
-                              </Grid>
-                         </Grid>
-                    </Box>
-                </Stack>
-            </DialogContent>
-            <DialogActions sx={{ p: 4, pt: 0 }}>
-                <Button onClick={onClose} sx={{ fontWeight: 900 }}>{t('common.cancel')}</Button>
-                <Button variant="contained" onClick={() => onSubmit({ title, content_html: content })} disabled={!title || !content} sx={{ fontWeight: 900, px: 4 }}>{t('announcements.transmit')}</Button>
-            </DialogActions>
-        </Dialog>
-    )
 }

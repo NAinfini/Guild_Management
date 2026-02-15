@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import MuiButton, { ButtonProps as MuiButtonProps } from "@mui/material/Button";
+import MuiButton, { ButtonProps as MuiButtonProps } from "@/ui-bridge/material/Button";
 import { cn } from "@/lib/utils";
 
 function resolveDocumentTheme(): string | null {

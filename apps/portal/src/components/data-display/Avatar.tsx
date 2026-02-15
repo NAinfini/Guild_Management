@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Avatar as MuiAvatar, AvatarProps as MuiAvatarProps } from "@mui/material";
+import { Avatar as MuiAvatar, AvatarProps as MuiAvatarProps } from "@/ui-bridge/material";
 
 function Avatar({
   className,
@@ -38,6 +38,8 @@ function AvatarImage({
       data-slot="avatar-image"
       src={src}
       alt={alt}
+      loading="lazy"
+      decoding="async"
       className={className}
       style={{
         aspectRatio: '1/1',

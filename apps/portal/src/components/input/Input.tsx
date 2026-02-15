@@ -1,5 +1,5 @@
 import * as React from "react";
-import InputBase, { InputBaseProps } from "@mui/material/InputBase";
+import InputBase, { InputBaseProps } from "@/ui-bridge/material/InputBase";
 import { cn } from "@/lib/utils";
 
 export type InputProps = Omit<InputBaseProps, "color">;

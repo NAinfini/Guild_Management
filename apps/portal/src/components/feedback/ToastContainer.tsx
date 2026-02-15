@@ -1,5 +1,5 @@
 import React from 'react';
-import { Snackbar, Alert } from '@mui/material';
+import { Snackbar, Alert } from '@/ui-bridge/material';
 import { useToastStore } from '@/lib/toast';
 
 /**

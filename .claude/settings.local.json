@@ -27,7 +27,14 @@
       "Bash(npm run dev:portal:*)",
       "Bash(npx playwright install:*)",
       "Bash(npx @executeautomation/playwright-mcp-server:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:portal:*)",
+      "Bash(test:*)",
+      "Bash(du:*)",
+      "Bash(npm run test:portal:*)",
+      "Bash(git merge:*)",
+      "Bash(git branch:*)"
     ]
   },
   "mcpServers": {

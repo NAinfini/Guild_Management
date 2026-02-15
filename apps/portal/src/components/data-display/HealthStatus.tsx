@@ -3,7 +3,7 @@
  * Displays system health metrics
  */
 
-import { Box, Card, CardContent, Typography, Grid, Chip, Stack, Alert, Skeleton, Button, useTheme } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, Chip, Stack, Alert, Skeleton, Button, useTheme } from '@/ui-bridge/material';
 import { CardGridSkeleton } from '../feedback/Skeleton';
 import { 
   Insights, 
@@ -14,7 +14,7 @@ import {
   CheckCircle,
   Error,
   ErrorOutline,
-} from "@mui/icons-material";
+} from "@/ui-bridge/icons-material";
 import { useHealthStatus, useD1Health, useR2Health, useEndpointHealth } from '@/hooks';
 import { useTranslation } from 'react-i18next';
 

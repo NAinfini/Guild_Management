@@ -7,11 +7,11 @@ import { Select, SelectItem } from '@/components/input/Select';
 import { Slider } from '@/components/input/Slider';
 import { Badge } from '@/components/data-display/Badge';
 import { Label } from '@/components/input/Label';
-import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
-import CloseIcon from "@mui/icons-material/Close";
-import FilterListIcon from "@mui/icons-material/FilterList";
+import EmojiEventsIcon from "@/ui-bridge/icons-material/EmojiEvents";
+import CloseIcon from "@/ui-bridge/icons-material/Close";
+import FilterListIcon from "@/ui-bridge/icons-material/FilterList";
 import { cn } from '../../../../lib/utils';
-import { SelectChangeEvent, alpha, useTheme } from '@mui/material';
+import { SelectChangeEvent, alpha, useTheme } from '@/ui-bridge/material';
 
 interface RankingsFiltersProps {
   availableClasses?: string[];

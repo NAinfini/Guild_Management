@@ -5,10 +5,10 @@ import { Announcement, Event, User } from '@/types';
 import { parseISO, formatDistanceToNow, subDays, addDays, isAfter, isBefore, isValid } from 'date-fns';
 import { enUS, zhCN } from 'date-fns/locale';
 import { Link } from '@tanstack/react-router';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import CellTowerIcon from '@mui/icons-material/CellTower';
+import NotificationsIcon from '@/ui-bridge/icons-material/Notifications';
+import PersonAddIcon from '@/ui-bridge/icons-material/PersonAdd';
+import CalendarTodayIcon from '@/ui-bridge/icons-material/CalendarToday';
+import CellTowerIcon from '@/ui-bridge/icons-material/CellTower';
 import { ScrollArea } from '@/components/layout/ScrollArea';
 
 interface IntelFeedProps {
@@ -75,7 +75,7 @@ export const Notifications: React.FC<IntelFeedProps> = ({ announcements, newMemb
       <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-50" />
 
       <CardHeader
-        className="px-4 pt-3 pb-2.5 border-b border-[color:var(--cmp-card-border)] flex-shrink-0"
+        className="px-4 pt-4 pb-2 border-b border-[color:var(--cmp-card-border)] flex-shrink-0"
         style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 40%, transparent)' }}
       >
         <div className="flex items-center gap-2">
@@ -92,19 +92,20 @@ export const Notifications: React.FC<IntelFeedProps> = ({ announcements, newMemb
                 {recentAnnouncements.slice(0, 3).map((a) => (
                   <div
                     key={`announcement-${a.id}`}
-                    className="p-3 border-b border-[color:var(--cmp-card-border)] hover:bg-[color:var(--sys-interactive-hover)] transition-all duration-300 flex gap-3 group/item relative overflow-hidden"
+                    // Row spacing/motion follows 8px grid and 150ms interaction budget.
+                    className="p-4 border-b border-[color:var(--cmp-card-border)] hover:bg-[color:var(--sys-interactive-hover)] transition-all duration-150 active:scale-[0.98] flex gap-4 group/item relative overflow-hidden"
                   >
-                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary scale-y-0 group-hover/item:scale-y-100 transition-transform duration-300" />
+                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary scale-y-0 group-hover/item:scale-y-100 transition-transform duration-150" />
 
                     <div
-                      className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border shadow-inner"
+                      className="mt-0 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border shadow-inner"
                       style={getIntelIconContainerStyle('error')}
                     >
                       <NotificationsIcon sx={{ fontSize: 16 }} />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start mb-0.5">
+                      <div className="flex justify-between items-start mb-2">
                         <span className="text-[9px] font-black uppercase tracking-wider" style={getIntelLabelStyle('error')}>
                           {t('dashboard.intel.priority_transmission')}
                         </span>
@@ -126,19 +127,19 @@ export const Notifications: React.FC<IntelFeedProps> = ({ announcements, newMemb
                 {upcomingEvents.slice(0, 3).map((e) => (
                   <div
                     key={`event-${e.id}`}
-                    className="p-3 border-b border-[color:var(--cmp-card-border)] hover:bg-[color:var(--sys-interactive-hover)] transition-all duration-300 flex gap-3 group/item relative overflow-hidden"
+                    className="p-4 border-b border-[color:var(--cmp-card-border)] hover:bg-[color:var(--sys-interactive-hover)] transition-all duration-150 active:scale-[0.98] flex gap-4 group/item relative overflow-hidden"
                   >
-                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary scale-y-0 group-hover/item:scale-y-100 transition-transform duration-300" />
+                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary scale-y-0 group-hover/item:scale-y-100 transition-transform duration-150" />
 
                     <div
-                      className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border shadow-inner"
+                      className="mt-0 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border shadow-inner"
                       style={getIntelIconContainerStyle('info')}
                     >
                       <CalendarTodayIcon sx={{ fontSize: 16 }} />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start mb-0.5">
+                      <div className="flex justify-between items-start mb-2">
                         <span className="text-[9px] font-black uppercase tracking-wider" style={getIntelLabelStyle('info')}>
                           {t('dashboard.intel.schedule_update')}
                         </span>
@@ -167,19 +168,19 @@ export const Notifications: React.FC<IntelFeedProps> = ({ announcements, newMemb
                 {recentNewMembers.slice(0, 3).map((m) => (
                   <div
                     key={`member-${m.id}`}
-                    className="p-3 border-b border-[color:var(--cmp-card-border)] hover:bg-[color:var(--sys-interactive-hover)] transition-all duration-300 flex gap-3 group/item relative overflow-hidden"
+                    className="p-4 border-b border-[color:var(--cmp-card-border)] hover:bg-[color:var(--sys-interactive-hover)] transition-all duration-150 active:scale-[0.98] flex gap-4 group/item relative overflow-hidden"
                   >
-                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary scale-y-0 group-hover/item:scale-y-100 transition-transform duration-300" />
+                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary scale-y-0 group-hover/item:scale-y-100 transition-transform duration-150" />
 
                     <div
-                      className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border shadow-inner"
+                      className="mt-0 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border shadow-inner"
                       style={getIntelIconContainerStyle('success')}
                     >
                       <PersonAddIcon sx={{ fontSize: 16 }} />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start mb-0.5">
+                      <div className="flex justify-between items-start mb-2">
                         <span className="text-[9px] font-black uppercase tracking-wider text-primary/80">
                           {t('dashboard.intel.reinforcements')}
                         </span>
@@ -197,8 +198,20 @@ export const Notifications: React.FC<IntelFeedProps> = ({ announcements, newMemb
             )}
 
             {recentAnnouncements.length === 0 && upcomingEvents.length === 0 && recentNewMembers.length === 0 && (
-              <div className="p-8 text-center text-muted-foreground text-[10px] uppercase tracking-widest border-t border-dashed border-[color:var(--cmp-card-border)] m-4">
-                {t('dashboard.intel.no_recent_intel')}
+              <div
+                data-testid="dashboard-notifications-empty-state"
+                className="p-8 text-center text-muted-foreground text-[10px] uppercase tracking-widest border-t border-dashed border-[color:var(--cmp-card-border)] m-4 space-y-3"
+              >
+                <p>{t('dashboard.intel.no_recent_intel')}</p>
+                <div data-testid="dashboard-notifications-empty-actions" className="flex justify-center">
+                  {/* Empty-state action routes users to announcements so intel feed can be populated. */}
+                  <Link
+                    to="/announcements"
+                    className="inline-flex items-center justify-center rounded-md border border-[color:var(--cmp-card-border)] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-foreground hover:bg-[color:var(--sys-interactive-hover)] transition-colors"
+                  >
+                    {t('nav.announcements')}
+                  </Link>
+                </div>
               </div>
             )}
           </div>

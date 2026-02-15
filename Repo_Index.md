@@ -1,968 +1,1826 @@
-# Repository Structure Index
+﻿# Repo Index
 
-## Governance
-- Read this file before investigating any area of the repository.
-- Update this file whenever files, folders, exported symbols, or ownership boundaries change.
-- When a class is no longer referenced, mark it as `OBSOLETE` in the obsolete tracker before deleting/refactoring it.
-- Scope: tracked repository files excluding `.git/`, `node_modules/`, `dist/`, `temp/`, `.claude/`, `.gsd/`, `.kilocode/`.
+Canonical index for this repository. Read this file before codebase exploration.
 
-## Canonical Shared Packages
-- `packages/shared-api/src`: cross-runtime endpoint and contract definitions used by portal + worker.
-- `packages/shared-utils/src`: runtime-safe helpers (`etag`, `pagination`, `response`) used across apps.
+## Rules
+- Keep `Repo_Index.md` at repo root as the single source of truth for file indexing.
+- Do not keep `Repo_Index` or `repository-structure` docs under `docs/engineering`.
+- Update this file in the same PR whenever files are added, removed, or moved.
 
-## Full File Tree Index
-```text
-Guild_Management/
-|- .env.development [search: env, development] [functions/classes: n/a] - Repository file artifact
-|- .gitignore [search: gitignore] [functions/classes: n/a] - Repository file artifact
-|- .kilocodemodes [search: kilocodemodes] [functions/classes: n/a] - Repository file artifact
-|- .mcp.json [search: mcp] [functions/classes: n/a] - Structured configuration/data file
-|- .npmrc [search: npmrc] [functions/classes: n/a] - Repository file artifact
-|- apps/
-|  |- portal/
-|  |  |- index.html [search: html] [functions/classes: n/a] - Repository file artifact
-|  |  |- package.json [search: package] [functions/classes: n/a] - Structured configuration/data file
-|  |  |- public/
-|  |  |  |- vite.svg [search: vite, svg] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |  `- 燕云十六声图标/
-|  |  |     |- 其他加成.webp [search: 燕云十六声图标, 其他加成, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |- 奇术图标/
-|  |  |     |  |- 百鬼打穴手.webp [search: 燕云十六声图标, 奇术图标, 百鬼打穴手, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 狗嘴夺食.webp [search: 燕云十六声图标, 奇术图标, 狗嘴夺食, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 红尘障目.webp [search: 燕云十六声图标, 奇术图标, 红尘障目, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 金蟾腾跃.webp [search: 燕云十六声图标, 奇术图标, 金蟾腾跃, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 流行坠火.webp [search: 燕云十六声图标, 奇术图标, 流行坠火, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 骑龙回马.webp [search: 燕云十六声图标, 奇术图标, 骑龙回马, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 清风霁月.webp [search: 燕云十六声图标, 奇术图标, 清风霁月, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 神龙吐火.webp [search: 燕云十六声图标, 奇术图标, 神龙吐火, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 狮吼正声.webp [search: 燕云十六声图标, 奇术图标, 狮吼正声, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 太白醉月.webp [search: 燕云十六声图标, 奇术图标, 太白醉月, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 万物为锋.webp [search: 燕云十六声图标, 奇术图标, 万物为锋, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 韦陀正法.webp [search: 燕云十六声图标, 奇术图标, 韦陀正法, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 无相金身.webp [search: 燕云十六声图标, 奇术图标, 无相金身, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 萧吟千浪.webp [search: 燕云十六声图标, 奇术图标, 萧吟千浪, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 衍九矢.webp [search: 燕云十六声图标, 奇术图标, 衍九矢, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 杳无形.webp [search: 燕云十六声图标, 奇术图标, 杳无形, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 药叉破魔.webp [search: 燕云十六声图标, 奇术图标, 药叉破魔, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 叶龙骧首.webp [search: 燕云十六声图标, 奇术图标, 叶龙骧首, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 以鹅之鸣.webp [search: 燕云十六声图标, 奇术图标, 以鹅之鸣, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 阴阳迷踪步.webp [search: 燕云十六声图标, 奇术图标, 阴阳迷踪步, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 鹰爪连凿.webp [search: 燕云十六声图标, 奇术图标, 鹰爪连凿, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 荧光晖夜.webp [search: 燕云十六声图标, 奇术图标, 荧光晖夜, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  `- 自在无碍.webp [search: 燕云十六声图标, 奇术图标, 自在无碍, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |- 武学图标/
-|  |  |     |  |- 八方风雷枪.webp [search: 燕云十六声图标, 武学图标, 八方风雷枪, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 积矩九剑.webp [search: 燕云十六声图标, 武学图标, 积矩九剑, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 嗟夫刀法.webp [search: 燕云十六声图标, 武学图标, 嗟夫刀法, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 九曲惊神枪.webp [search: 燕云十六声图标, 武学图标, 九曲惊神枪, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 九重春色.webp [search: 燕云十六声图标, 武学图标, 九重春色, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 明川药典.webp [search: 燕云十六声图标, 武学图标, 明川药典, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 泥犁三垢.webp [search: 燕云十六声图标, 武学图标, 泥犁三垢, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 千机素天.webp [search: 燕云十六声图标, 武学图标, 千机素天, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 千香引魂蛊.webp [search: 燕云十六声图标, 武学图标, 千香引魂蛊, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 青山执笔.webp [search: 燕云十六声图标, 武学图标, 青山执笔, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 十方破阵.webp [search: 燕云十六声图标, 武学图标, 十方破阵, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 粟子行云.webp [search: 燕云十六声图标, 武学图标, 粟子行云, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 粟子游尘.webp [search: 燕云十六声图标, 武学图标, 粟子游尘, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 天志垂象.webp [search: 燕云十六声图标, 武学图标, 天志垂象, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 无名剑法.webp [search: 燕云十六声图标, 武学图标, 无名剑法, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 无名枪法.webp [search: 燕云十六声图标, 武学图标, 无名枪法, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  |- 斩雪刀法.webp [search: 燕云十六声图标, 武学图标, 斩雪刀法, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     |  `- 醉梦游春.webp [search: 燕云十六声图标, 武学图标, 醉梦游春, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |     `- 心法图标/
-|  |  |        |- 沧浪剑诀.webp [search: 燕云十六声图标, 心法图标, 沧浪剑诀, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 穿喉诀.webp [search: 燕云十六声图标, 心法图标, 穿喉诀, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 春雷篇.webp [search: 燕云十六声图标, 心法图标, 春雷篇, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 大唐歌.webp [search: 燕云十六声图标, 心法图标, 大唐歌, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 丹心篆.webp [search: 燕云十六声图标, 心法图标, 丹心篆, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 灯儿亮.webp [search: 燕云十六声图标, 心法图标, 灯儿亮, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 断石之构.webp [search: 燕云十六声图标, 心法图标, 断石之构, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 扶摇直上.webp [search: 燕云十六声图标, 心法图标, 扶摇直上, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 孤忠不辞.webp [search: 燕云十六声图标, 心法图标, 孤忠不辞, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 归燕经.webp [search: 燕云十六声图标, 心法图标, 归燕经, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 葫芦飞飞.webp [search: 燕云十六声图标, 心法图标, 葫芦飞飞, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 花上月令.webp [search: 燕云十六声图标, 心法图标, 花上月令, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 极乐泣血.webp [search: 燕云十六声图标, 心法图标, 极乐泣血, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 剑气纵横.webp [search: 燕云十六声图标, 心法图标, 剑气纵横, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 君臣药.webp [search: 燕云十六声图标, 心法图标, 君臣药, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 抗造大法.webp [search: 燕云十六声图标, 心法图标, 抗造大法, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 困兽心经.webp [search: 燕云十六声图标, 心法图标, 困兽心经, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 燎原踏.webp [search: 燕云十六声图标, 心法图标, 燎原踏, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 燎原星火.webp [search: 燕云十六声图标, 心法图标, 燎原星火, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 明晦同尘.webp [search: 燕云十六声图标, 心法图标, 明晦同尘, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 凝神章.webp [search: 燕云十六声图标, 心法图标, 凝神章, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 怒斩马.webp [search: 燕云十六声图标, 心法图标, 怒斩马, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 磐石诀.webp [search: 燕云十六声图标, 心法图标, 磐石诀, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 婆娑影.webp [search: 燕云十六声图标, 心法图标, 婆娑影, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 千山法.webp [search: 燕云十六声图标, 心法图标, 千山法, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 千丝蛊.webp [search: 燕云十六声图标, 心法图标, 千丝蛊, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 千营一呼.webp [search: 燕云十六声图标, 心法图标, 千营一呼, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 擒天势.webp [search: 燕云十六声图标, 心法图标, 擒天势, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 三穷致知.webp [search: 燕云十六声图标, 心法图标, 三穷致知, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 沙摆尾.webp [search: 燕云十六声图标, 心法图标, 沙摆尾, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 山河绝韵.webp [search: 燕云十六声图标, 心法图标, 山河绝韵, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 山月无影.webp [search: 燕云十六声图标, 心法图标, 山月无影, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 生龙活虎.webp [search: 燕云十六声图标, 心法图标, 生龙活虎, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 绳舟行木.webp [search: 燕云十六声图标, 心法图标, 绳舟行木, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 霜天白夜.webp [search: 燕云十六声图标, 心法图标, 霜天白夜, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 四时无常.webp [search: 燕云十六声图标, 心法图标, 四时无常, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 所恨年年.webp [search: 燕云十六声图标, 心法图标, 所恨年年, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 天行健.webp [search: 燕云十六声图标, 心法图标, 天行健, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 铁身诀.webp [search: 燕云十六声图标, 心法图标, 铁身诀, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 晚雪间.webp [search: 燕云十六声图标, 心法图标, 晚雪间, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 忘川绝响.webp [search: 燕云十六声图标, 心法图标, 忘川绝响, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 威猛歌.webp [search: 燕云十六声图标, 心法图标, 威猛歌, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 无名心法.webp [search: 燕云十六声图标, 心法图标, 无名心法, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 心弥泥鱼.webp [search: 燕云十六声图标, 心法图标, 心弥泥鱼, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 杏花不见.webp [search: 燕云十六声图标, 心法图标, 杏花不见, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 移经易武.webp [search: 燕云十六声图标, 心法图标, 移经易武, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 易水歌.webp [search: 燕云十六声图标, 心法图标, 易水歌, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 长生无相.webp [search: 燕云十六声图标, 心法图标, 长生无相, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 征人归.webp [search: 燕云十六声图标, 心法图标, 征人归, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 指玄篇注.webp [search: 燕云十六声图标, 心法图标, 指玄篇注, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        |- 逐狼心经.webp [search: 燕云十六声图标, 心法图标, 逐狼心经, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |        `- 纵地摘星.webp [search: 燕云十六声图标, 心法图标, 纵地摘星, webp] [functions/classes: n/a] - Portal static asset (icon/media)
-|  |  |- src/
-|  |  |  |- App.css [search: n/a] [functions/classes: n/a] - Repository file artifact
-|  |  |  |- App.tsx [search: n/a] [functions/classes: n/a] - Repository file artifact
-|  |  |  |- assets/
-|  |  |  |  `- react.svg [search: assets, react, svg] [functions/classes: n/a] - Repository file artifact
-|  |  |  |- components/
-|  |  |  |  |- advanced/
-|  |  |  |  |  |- ContextMenu.tsx [search: components, advanced, contextmenu] [functions/classes: 
-  ContextMenu,
-  ContextMenuTrigger,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuItem as ContextMenuCheckboxItem,
-  ContextMenuItem as ContextMenuRadioItem,
-  ContextMenuLabel,
-  ContextMenuSeparator,
-  ContextMenuShortcut,
-  ContextMenuGroup,
-  ContextMenuPortal,
-  ContextMenuGroup as ContextMenuRadioGroup
-] - Reusable portal UI component
-|  |  |  |  |  |- DropdownMenu.tsx [search: components, advanced, dropdownmenu] [functions/classes: 
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-  DropdownMenuGroup,
-  DropdownMenuPortal,
-  DropdownMenuShortcut
-] - Reusable portal UI component
-|  |  |  |  |  |- index.ts [search: components, advanced] [functions/classes:  ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuCheckboxItem, ContextMenuRadioItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuShortcut, ContextMenuGroup, ContextMenuPortal, ContextMenuRadioGroup ,  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuGroup, DropdownMenuPortal ,  MediaReorder ,  MediaUpload ,  ResizablePanelGroup, ResizablePanel, ResizableHandle ] - Reusable portal UI component
-|  |  |  |  |  |- MediaReorder.tsx [search: components, advanced, mediareorder] [functions/classes: MediaReorder] - Reusable portal UI component
-|  |  |  |  |  |- MediaUpload.tsx [search: components, advanced, mediaupload] [functions/classes: MediaUpload] - Reusable portal UI component
-|  |  |  |  |  `- Resizable.tsx [search: components, advanced, resizable] [functions/classes:  ResizablePanelGroup, ResizablePanel, ResizableHandle ] - Reusable portal UI component
-|  |  |  |  |- button/
-|  |  |  |  |  |- Button.tsx [search: components, button] [functions/classes:  Button, buttonVariants ] - Reusable portal UI component
-|  |  |  |  |  |- EnhancedButton.tsx [search: components, button, enhancedbutton] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  `- index.ts [search: components, button] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |- controls/
-|  |  |  |  |  |- index.ts [search: components, controls] [functions/classes:  SegmentedControl ,  SortArrows ,  ThemedIconButton ] - Reusable portal UI component
-|  |  |  |  |  |- SegmentedControl.tsx [search: components, controls, segmentedcontrol] [functions/classes: SegmentedControl] - Reusable portal UI component
-|  |  |  |  |  |- SortArrows.tsx [search: components, controls, sortarrows] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- ThemedIconButton.tsx [search: components, controls, themediconbutton] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- ThemedPanelBox.tsx [search: components, controls, themedpanelbox] [functions/classes: ThemedPanelBox] - Reusable portal UI component
-|  |  |  |  |  |- ThemedSortButtonGroup.tsx [search: components, controls, themedsortbuttongroup] [functions/classes: ThemedSortButtonGroup] - Reusable portal UI component
-|  |  |  |  |  `- ThemedTabControl.tsx [search: components, controls, themedtabcontrol] [functions/classes: ThemedTabControl] - Reusable portal UI component
-|  |  |  |  |- data-display/
-|  |  |  |  |  |- Avatar.tsx [search: components, data, display, avatar] [functions/classes:  Avatar, AvatarImage, AvatarFallback ] - Reusable portal UI component
-|  |  |  |  |  |- Badge.tsx [search: components, data, display, badge] [functions/classes:  Badge, badgeVariants ] - Reusable portal UI component
-|  |  |  |  |  |- DecorativeGlyph.tsx [search: components, data, display, decorativeglyph] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- HealthStatus.tsx [search: components, data, display, healthstatus] [functions/classes: HealthStatus] - Reusable portal UI component
-|  |  |  |  |  |- index.ts [search: components, data, display] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- MarkdownContent.tsx [search: components, data, display, markdowncontent] [functions/classes: MarkdownContent] - Reusable portal UI component
-|  |  |  |  |  |- MarkdownRenderer.tsx [search: components, data, display, markdownrenderer] [functions/classes: MarkdownRenderer] - Reusable portal UI component
-|  |  |  |  |  |- MetricCard.tsx [search: components, data, display, metriccard] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- Separator.tsx [search: components, data, display, separator] [functions/classes:  Separator ] - Reusable portal UI component
-|  |  |  |  |  |- StatusBadge.tsx [search: components, data, display, statusbadge] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- Table.tsx [search: components, data, display, table] [functions/classes: 
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
-] - Reusable portal UI component
-|  |  |  |  |  `- TeamMemberCard.tsx [search: components, data, display, teammembercard] [functions/classes: TeamMemberCard] - Reusable portal UI component
-|  |  |  |  |- feedback/
-|  |  |  |  |  |- Accordion.tsx [search: components, feedback, accordion] [functions/classes:  Accordion, AccordionItem, AccordionTrigger, AccordionContent ] - Reusable portal UI component
-|  |  |  |  |  |- Alert.tsx [search: components, feedback, alert] [functions/classes:  Alert, AlertTitle, AlertDescription ] - Reusable portal UI component
-|  |  |  |  |  |- AlertDialog.tsx [search: components, feedback, alertdialog] [functions/classes: 
-  AlertDialog,
-  AlertDialogPortal,
-  AlertDialogOverlay,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
-] - Reusable portal UI component
-|  |  |  |  |  |- Collapsible.tsx [search: components, feedback, collapsible] [functions/classes:  Collapsible, CollapsibleTrigger, CollapsibleContent ] - Reusable portal UI component
-|  |  |  |  |  |- Dialog.tsx [search: components, feedback, dialog] [functions/classes: 
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-  DialogTrigger,
-] - Reusable portal UI component
-|  |  |  |  |  |- EmptyState.tsx [search: components, feedback, emptystate] [functions/classes: EmptyState] - Reusable portal UI component
-|  |  |  |  |  |- ErrorBoundary.tsx [search: components, feedback, errorboundary] [functions/classes: ErrorBoundary] - Reusable portal UI component
-|  |  |  |  |  |- ErrorState.tsx [search: components, feedback, errorstate] [functions/classes: ErrorState] - Reusable portal UI component
-|  |  |  |  |  |- HoverCard.tsx [search: components, feedback, hovercard] [functions/classes:  HoverCard, HoverCardTrigger, HoverCardContent ] - Reusable portal UI component
-|  |  |  |  |  |- index.ts [search: components, feedback] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- OfflineBanner.tsx [search: components, feedback, offlinebanner] [functions/classes: OfflineBanner] - Reusable portal UI component
-|  |  |  |  |  |- Popover.tsx [search: components, feedback, popover] [functions/classes:  Popover, PopoverTrigger, PopoverContent, PopoverAnchor ] - Reusable portal UI component
-|  |  |  |  |  |- Progress.tsx [search: components, feedback, progress] [functions/classes:  Progress ] - Reusable portal UI component
-|  |  |  |  |  |- Skeleton.tsx [search: components, feedback, skeleton] [functions/classes:  Skeleton , CardGridSkeleton, CardSkeleton, PageHeaderSkeleton, TableSkeleton] - Reusable portal UI component
-|  |  |  |  |  |- Toast.tsx [search: components, feedback, toast] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- ToastContainer.tsx [search: components, feedback, toastcontainer] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  `- Tooltip.tsx [search: components, feedback, tooltip] [functions/classes:  NexusTooltip, NexusTooltip as Tooltip, TooltipTrigger, TooltipContent, TooltipProvider , NexusTooltip, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger] - Reusable portal UI component
-|  |  |  |  |- index.ts [search: components] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |- input/
-|  |  |  |  |  |- Calendar.tsx [search: components, input, calendar] [functions/classes:  Calendar ] - Reusable portal UI component
-|  |  |  |  |  |- Checkbox.tsx [search: components, input, checkbox] [functions/classes:  Checkbox ] - Reusable portal UI component
-|  |  |  |  |  |- Command.tsx [search: components, input, command] [functions/classes: 
-  Command,
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandShortcut,
-  CommandSeparator,
-] - Reusable portal UI component
-|  |  |  |  |  |- FilterBar.tsx [search: components, input, filterbar] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- Form.tsx [search: components, input, form] [functions/classes: 
-  useFormField,
-  Form,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription,
-  FormMessage,
-  FormField,
-] - Reusable portal UI component
-|  |  |  |  |  |- index.ts [search: components, input] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- Input.tsx [search: components, input] [functions/classes:  Input ] - Reusable portal UI component
-|  |  |  |  |  |- Label.tsx [search: components, input, label] [functions/classes:  Label ] - Reusable portal UI component
-|  |  |  |  |  |- RadioGroup.tsx [search: components, input, radiogroup] [functions/classes:  RadioGroup, RadioGroupItem ] - Reusable portal UI component
-|  |  |  |  |  |- Select.tsx [search: components, input, select] [functions/classes:  Select, SelectItem ] - Reusable portal UI component
-|  |  |  |  |  |- Slider.tsx [search: components, input, slider] [functions/classes:  Slider ] - Reusable portal UI component
-|  |  |  |  |  |- Switch.tsx [search: components, input, switch] [functions/classes:  Switch ] - Reusable portal UI component
-|  |  |  |  |  |- Textarea.tsx [search: components, input, textarea] [functions/classes:  Textarea ] - Reusable portal UI component
-|  |  |  |  |  |- TiptapEditor.tsx [search: components, input, tiptapeditor] [functions/classes: TiptapEditor] - Reusable portal UI component
-|  |  |  |  |  |- Toggle.tsx [search: components, input, toggle] [functions/classes:  Toggle, toggleVariants ] - Reusable portal UI component
-|  |  |  |  |  |- ToggleGroup.tsx [search: components, input, togglegroup] [functions/classes:  ToggleGroup, ToggleGroupItem ] - Reusable portal UI component
-|  |  |  |  |  `- UnifiedField.tsx [search: components, input, unifiedfield] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |- layout/
-|  |  |  |  |  |- BottomSheetDialog.tsx [search: components, layout, bottomsheetdialog] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- Card.tsx [search: components, layout, card] [functions/classes: 
-  Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardAction,
-  CardDescription,
-  CardContent,
-] - Reusable portal UI component
-|  |  |  |  |  |- DecorativeBackground.tsx [search: components, layout, decorativebackground] [functions/classes: DecorativeBackground] - Reusable portal UI component
-|  |  |  |  |  |- Drawer.tsx [search: components, layout, drawer] [functions/classes: 
-  Drawer,
-  DrawerPortal,
-  DrawerOverlay,
-  DrawerTrigger,
-  DrawerClose,
-  DrawerContent,
-  DrawerHeader,
-  DrawerFooter,
-  DrawerTitle,
-  DrawerDescription,
-] - Reusable portal UI component
-|  |  |  |  |  |- index.ts [search: components, layout] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  |- PageFilterBar.tsx [search: components, layout, pagefilterbar] [functions/classes: PageFilterBar] - Reusable portal UI component
-|  |  |  |  |  |- PlaceholderPage.tsx [search: components, layout, placeholderpage] [functions/classes: PlaceholderPage] - Reusable portal UI component
-|  |  |  |  |  |- ScrollArea.tsx [search: components, layout, scrollarea] [functions/classes:  ScrollArea, ScrollBar ] - Reusable portal UI component
-|  |  |  |  |  |- Sidebar.tsx [search: components, layout, sidebar] [functions/classes: 
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarSeparator,
-  SidebarTrigger,
-  useSidebar,
-] - Reusable portal UI component
-|  |  |  |  |  `- ThemeAmbientEffects.tsx [search: components, layout, themeambienteffects] [functions/classes: ThemeAmbientEffects] - Reusable portal UI component
-|  |  |  |  |- navigation/
-|  |  |  |  |  |- BottomNavigation.tsx [search: components, navigation, bottomnavigation] [functions/classes: BottomNavigation] - Reusable portal UI component
-|  |  |  |  |  |- Breadcrumb.tsx [search: components, navigation, breadcrumb] [functions/classes: 
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-  BreadcrumbEllipsis,
-] - Reusable portal UI component
-|  |  |  |  |  |- index.ts [search: components, navigation] [functions/classes: n/a] - Reusable portal UI component
-|  |  |  |  |  `- Tabs.tsx [search: components, navigation, tabs] [functions/classes:  Tabs, TabsList, TabsTrigger, TabsContent ] - Reusable portal UI component
-|  |  |  |  `- system/
-|  |  |  |     |- AllControls.tsx [search: components, system, allcontrols] [functions/classes: AdvancedShowcase, DateTimeShowcase, DisclosureShowcase, DragGestureShowcase, FileMediaShowcase, FormFlowShowcase] - Reusable portal UI component
-|  |  |  |     |- Buttons.tsx [search: components, system, buttons] [functions/classes: ButtonsShowcase] - Reusable portal UI component
-|  |  |  |     |- Cards.tsx [search: components, system, cards] [functions/classes: CardsShowcase] - Reusable portal UI component
-|  |  |  |     |- ChoiceControls.tsx [search: components, system, choicecontrols] [functions/classes: ChoiceControlsShowcase] - Reusable portal UI component
-|  |  |  |     |- DropdownSelect.tsx [search: components, system, dropdownselect] [functions/classes: DropdownSelectShowcase] - Reusable portal UI component
-|  |  |  |     |- Feedback.tsx [search: components, system, feedback] [functions/classes: FeedbackShowcase] - Reusable portal UI component
-|  |  |  |     |- index.ts [search: components, system] [functions/classes:  AccessibilityShowcase, SearchFilterShowcase ,  ButtonsShowcase ,  CardsShowcase ,  ChoiceControlsShowcase ,  DropdownSelectShowcase ,  FeedbackShowcase ] - Reusable portal UI component
-|  |  |  |     |- MoreControls.tsx [search: components, system, morecontrols] [functions/classes: AccessibilityShowcase, SearchFilterShowcase] - Reusable portal UI component
-|  |  |  |     |- Navigation.tsx [search: components, system, navigation] [functions/classes: NavigationShowcase] - Reusable portal UI component
-|  |  |  |     |- RangeControls.tsx [search: components, system, rangecontrols] [functions/classes: RangeControlsShowcase] - Reusable portal UI component
-|  |  |  |     `- TextInput.tsx [search: components, system, textinput] [functions/classes: TextInputShowcase] - Reusable portal UI component
-|  |  |  |- features/
-|  |  |  |  |- Admin/
-|  |  |  |  |  |- components/
-|  |  |  |  |  |  `- AuditLogs.tsx [search: features, admin, components, auditlogs] [functions/classes: AuditLogs] - Portal feature module implementation
-|  |  |  |  |  |- hooks/
-|  |  |  |  |  |  `- useAdmin.ts [search: features, admin, hooks, useadmin] [functions/classes: useAuditLogs, useD1Health, useEndpointHealth, useHealthStatus, useR2Health] - Portal feature module implementation
-|  |  |  |  |  `- index.tsx [search: features, admin] [functions/classes: Admin, AdminProtected] - Portal feature module implementation
-|  |  |  |  |- Announcements/
-|  |  |  |  |  `- index.tsx [search: features, announcements] [functions/classes: Announcements] - Portal feature module implementation
-|  |  |  |  |- Auth/
-|  |  |  |  |  |- components/
-|  |  |  |  |  |  |- ProtectedRoute.tsx [search: features, auth, components, protectedroute] [functions/classes: ProtectedRoute] - Portal feature module implementation
-|  |  |  |  |  |  |- SessionExpiredModal.tsx [search: features, auth, components, sessionexpiredmodal] [functions/classes: SessionExpiredModal] - Portal feature module implementation
-|  |  |  |  |  |  `- SessionInitializer.tsx [search: features, auth, components, sessioninitializer] [functions/classes: SessionInitializer] - Portal feature module implementation
-|  |  |  |  |  |- hooks/
-|  |  |  |  |  |  `- useAuth.ts [search: features, auth, hooks, useauth] [functions/classes: useAuth] - Portal feature module implementation
-|  |  |  |  |  `- Login.tsx [search: features, auth, login] [functions/classes: Login] - Portal feature module implementation
-|  |  |  |  |- Dashboard/
-|  |  |  |  |  |- components/
-|  |  |  |  |  |  |- Notifications.tsx [search: features, dashboard, components, notifications] [functions/classes: n/a] - Portal feature module implementation
-|  |  |  |  |  |  |- RecentWars.tsx [search: features, dashboard, components, recentwars] [functions/classes: n/a] - Portal feature module implementation
-|  |  |  |  |  |  |- Timeline.tsx [search: features, dashboard, components, timeline] [functions/classes: n/a] - Portal feature module implementation
-|  |  |  |  |  |  `- UpcomingEvents.tsx [search: features, dashboard, components, upcomingevents] [functions/classes: n/a] - Portal feature module implementation
-|  |  |  |  |  `- index.tsx [search: features, dashboard] [functions/classes: applyNotificationSeen, Dashboard, getDashboardRecentEvents, getLatestCompletedWar, getRecentCompletedWars] - Portal feature module implementation
-|  |  |  |  |- Events/
-|  |  |  |  |  |- Events.filtering.ts [search: features, events, filtering] [functions/classes: filterEventsByCategory] - Portal feature module implementation
-|  |  |  |  |  |- Events.participants.ts [search: features, events, participants] [functions/classes: DEFAULT_VISIBLE_PARTICIPANTS, getVisibleParticipants] - Portal feature module implementation
-|  |  |  |  |  `- index.tsx [search: features, events] [functions/classes: Events, getEventFilterCategories, getEventTypeFallbackTone, getEventTypeLabel, isArchivedEventFilter] - Portal feature module implementation
-|  |  |  |  |- Gallery/
-|  |  |  |  |  `- index.tsx [search: features, gallery] [functions/classes: Gallery] - Portal feature module implementation
-|  |  |  |  |- GuildWar/
-|  |  |  |  |  |- components/
-|  |  |  |  |  |  |- WarAnalytics/
-|  |  |  |  |  |  |  |- AnalyticsContext.tsx [search: features, guildwar, components, waranalytics, analyticscontext] [functions/classes: AnalyticsProvider, useAnalytics, useCurrentModeState, useHasSelection, useSelectionLimits] - Portal feature module implementation
-|  |  |  |  |  |  |  |- CompareSelector.tsx [search: features, guildwar, components, waranalytics, compareselector] [functions/classes: CompareSelector] - Portal feature module implementation
-|  |  |  |  |  |  |  |- CompareTrendChart.tsx [search: features, guildwar, components, waranalytics, comparetrendchart] [functions/classes:  CompareTooltip , CompareTrendChart] - Portal feature module implementation
-|  |  |  |  |  |  |  |- FilterBar.tsx [search: features, guildwar, components, waranalytics, filterbar] [functions/classes: DateRangeSelector, FilterBar, WarMultiSelector] - Portal feature module implementation
-|  |  |  |  |  |  |  |- index.ts [search: features, guildwar, components, waranalytics] [functions/classes:  AnalyticsProvider, useAnalytics, useSelectionLimits, useCurrentModeState, useHasSelection ,  ChartLoadingSkeleton, TableLoadingSkeleton, CardLoadingSkeleton, ListLoadingSkeleton, FullPageLoading ,  CompareSelector ,  CompareTrendChart, CompareTooltip ,  FilterBar, DateRangeSelector, WarMultiSelector ,  MetricFormulaEditor ] - Portal feature module implementation
-|  |  |  |  |  |  |  |- LoadingStates.tsx [search: features, guildwar, components, waranalytics, loadingstates] [functions/classes: CardLoadingSkeleton, ChartLoadingSkeleton, ErrorPanel, FullPageLoading, ListLoadingSkeleton, LoadingPanel] - Portal feature module implementation
-|  |  |  |  |  |  |  |- MetricFormulaEditor.tsx [search: features, guildwar, components, waranalytics, metricformulaeditor] [functions/classes: MetricFormulaEditor] - Portal feature module implementation
-|  |  |  |  |  |  |  |- MetricsPanel.tsx [search: features, guildwar, components, waranalytics, metricspanel] [functions/classes: MetricsPanel] - Portal feature module implementation
-|  |  |  |  |  |  |  |- ModeStrip.tsx [search: features, guildwar, components, waranalytics, modestrip] [functions/classes: ModeDescription, ModeStrip] - Portal feature module implementation
-|  |  |  |  |  |  |  |- NormalizationDiagnosticsPanel.tsx [search: features, guildwar, components, waranalytics, normalizationdiagnosticspanel] [functions/classes: NormalizationDiagnosticsPanel] - Portal feature module implementation
-|  |  |  |  |  |  |  |- PlayerTimelineChart.tsx [search: features, guildwar, components, waranalytics, playertimelinechart] [functions/classes:  CustomTooltip , PlayerTimelineChart] - Portal feature module implementation
-|  |  |  |  |  |  |  |- RankingsBarChart.tsx [search: features, guildwar, components, waranalytics, rankingsbarchart] [functions/classes:  RankingsTooltip , RankingsBarChart] - Portal feature module implementation
-|  |  |  |  |  |  |  |- RankingsFilters.tsx [search: features, guildwar, components, waranalytics, rankingsfilters] [functions/classes: RankingsFilters] - Portal feature module implementation
-|  |  |  |  |  |  |  |- ShareButton.tsx [search: features, guildwar, components, waranalytics, sharebutton] [functions/classes: ShareButton] - Portal feature module implementation
-|  |  |  |  |  |  |  |- SubjectSelector.tsx [search: features, guildwar, components, waranalytics, subjectselector] [functions/classes: SubjectSelector] - Portal feature module implementation
-|  |  |  |  |  |  |  |- TableFallback.tsx [search: features, guildwar, components, waranalytics, tablefallback] [functions/classes: createCompareColumns, createRankingsColumns, createTimelineColumns, TableFallback] - Portal feature module implementation
-|  |  |  |  |  |  |  |- TeamSelector.tsx [search: features, guildwar, components, waranalytics, teamselector] [functions/classes: TeamSelector] - Portal feature module implementation
-|  |  |  |  |  |  |  |- TeamTrendChart.tsx [search: features, guildwar, components, waranalytics, teamtrendchart] [functions/classes: TeamTrendChart] - Portal feature module implementation
-|  |  |  |  |  |  |  |- types.ts [search: features, guildwar, components, waranalytics, types] [functions/classes: calculateKDA, COLOR_PALETTE, formatCompactNumber, formatKDA, formatMetricName, formatNumber] - Portal feature module implementation
-|  |  |  |  |  |  |  |- utils.ts [search: features, guildwar, components, waranalytics, utils] [functions/classes:  formatNumber, formatCompactNumber, formatMetricName, METRICS , calculateMedian, calculateMovingAverage, calculateStdDev, calculateTrend, calculateVariance] - Portal feature module implementation
-|  |  |  |  |  |  |  |- WarAnalyticsMain.tsx [search: features, guildwar, components, waranalytics, waranalyticsmain] [functions/classes: WarAnalyticsMain] - Portal feature module implementation
-|  |  |  |  |  |  |  `- WarDetailSidePanel.tsx [search: features, guildwar, components, waranalytics, wardetailsidepanel] [functions/classes: WarDetailSidePanel] - Portal feature module implementation
-|  |  |  |  |  |  |- WarHistory.tsx [search: features, guildwar, components, warhistory] [functions/classes: WarHistory] - Portal feature module implementation
-|  |  |  |  |  |  |- WarHistory.utils.ts [search: features, guildwar, components, warhistory, utils] [functions/classes: buildWarCardMetrics, formatKdaRatio, sumMemberField] - Portal feature module implementation
-|  |  |  |  |  |  |- WarHistoryChart.tsx [search: features, guildwar, components, warhistorychart] [functions/classes: WarHistoryChart] - Portal feature module implementation
-|  |  |  |  |  |  |- WarHistoryDetail.tsx [search: features, guildwar, components, warhistorydetail] [functions/classes: WarHistoryDetail] - Portal feature module implementation
-|  |  |  |  |  |  |- WarHistoryPieCharts.tsx [search: features, guildwar, components, warhistorypiecharts] [functions/classes: WAR_HISTORY_PIE_COLORS, WarHistoryPieCharts] - Portal feature module implementation
-|  |  |  |  |  |  `- WarTeamDragDrop.tsx [search: features, guildwar, components, warteamdragdrop] [functions/classes: WarTeamDragDrop] - Portal feature module implementation
-|  |  |  |  |  |- GuildWar.sorting.ts [search: features, guildwar, sorting] [functions/classes: nextGuildWarSortState, sortGuildWarMembers] - Portal feature module implementation
-|  |  |  |  |  |- hooks/
-|  |  |  |  |  |  `- useWars.ts [search: features, guildwar, hooks, usewars] [functions/classes: useActiveWars, useAnalyticsData, useCreateWarAnalyticsFormulaPreset, useCreateWarHistory, useCreateWarTeam, useDeleteWarAnalyticsFormulaPreset] - Portal feature module implementation
-|  |  |  |  |  `- index.tsx [search: features, guildwar] [functions/classes: GuildWar] - Portal feature module implementation
-|  |  |  |  |- Members/
-|  |  |  |  |  |- components/
-|  |  |  |  |  |  `- RosterFilterPanel.tsx [search: features, members, components, rosterfilterpanel] [functions/classes: RosterFilterPanel] - Portal feature module implementation
-|  |  |  |  |  `- index.tsx [search: features, members] [functions/classes: resolveRosterHoverAudioUrl, Roster] - Portal feature module implementation
-|  |  |  |  |- Profile/
-|  |  |  |  |  `- index.tsx [search: features, profile] [functions/classes: Profile] - Portal feature module implementation
-|  |  |  |  |- Settings/
-|  |  |  |  |  `- index.tsx [search: features, settings] [functions/classes: Settings] - Portal feature module implementation
-|  |  |  |  |- Tools/
-|  |  |  |  |  |- components/
-|  |  |  |  |  |  |- NexusControlStudio.tsx [search: features, tools, components, nexuscontrolstudio] [functions/classes: NexusControlStudio] - Portal feature module implementation
-|  |  |  |  |  |  `- StyleBuilder.tsx [search: features, tools, components, stylebuilder] [functions/classes: StyleBuilder] - Portal feature module implementation
-|  |  |  |  |  `- index.tsx [search: features, tools] [functions/classes: Tools] - Portal feature module implementation
-|  |  |  |  `- Wiki/
-|  |  |  |     `- index.tsx [search: features, wiki] [functions/classes: Wiki] - Portal feature module implementation
-|  |  |  |- hooks/
-|  |  |  |  |- index.ts [search: hooks] [functions/classes:  useAuth ,  useFilteredList ,  useLocaleDate ,  useMobileOptimizations ,  useOnline ,  usePush ] - Portal shared React hook
-|  |  |  |  |- useFilteredList.ts [search: hooks, usefilteredlist] [functions/classes: useFilteredList] - Portal shared React hook
-|  |  |  |  |- useFilterPresets.ts [search: hooks, usefilterpresets] [functions/classes: useFilterPresets] - Portal shared React hook
-|  |  |  |  |- useLastSeen.ts [search: hooks, uselastseen] [functions/classes: useLastSeen] - Portal shared React hook
-|  |  |  |  |- useLocaleDate.ts [search: hooks, uselocaledate] [functions/classes: useLocaleDate] - Portal shared React hook
-|  |  |  |  |- use-media-query.ts [search: hooks, use, media, query] [functions/classes: useMediaQuery] - Portal shared React hook
-|  |  |  |  |- useMobileOptimizations.ts [search: hooks, usemobileoptimizations] [functions/classes: useMobileOptimizations] - Portal shared React hook
-|  |  |  |  |- useOnline.ts [search: hooks, useonline] [functions/classes: useOnline] - Portal shared React hook
-|  |  |  |  |- usePush.ts [search: hooks, usepush] [functions/classes: usePush] - Portal shared React hook
-|  |  |  |  |- useServerState.ts [search: hooks, useserverstate] [functions/classes: computePollingInterval, useAnnouncement, useAnnouncements, useArchiveAnnouncement, useArchiveEvent, useAuditLogs] - Portal shared React hook
-|  |  |  |  `- useWebSocket.ts [search: hooks, usewebsocket] [functions/classes: useWebSocket] - Portal shared React hook
-|  |  |  |- i18n/
-|  |  |  |  |- config.ts [search: i18n] [functions/classes: dateFormats, getDateFormat] - Repository file artifact
-|  |  |  |  |- json.d.ts [search: i18n] [functions/classes: n/a] - Repository file artifact
-|  |  |  |  `- locales/
-|  |  |  |     |- en.json [search: i18n, locales, en] [functions/classes: n/a] - Structured configuration/data file
-|  |  |  |     `- zh.json [search: i18n, locales, zh] [functions/classes: n/a] - Structured configuration/data file
-|  |  |  |- index.css [search: n/a] [functions/classes: n/a] - Repository file artifact
-|  |  |  |- layouts/
-|  |  |  |  |- AppShell.tsx [search: layouts, appshell] [functions/classes: AppShell] - Repository file artifact
-|  |  |  |  `- index.ts [search: layouts] [functions/classes: n/a] - Repository file artifact
-|  |  |  |- lib/
-|  |  |  |  |- api/
-|  |  |  |  |  |- admin.ts [search: lib, api, admin] [functions/classes: adminAPI] - Portal API client adapter
-|  |  |  |  |  |- announcements.ts [search: lib, api, announcements] [functions/classes: announcementsAPI, mapToDomain] - Portal API client adapter
-|  |  |  |  |  |- api-builder.ts [search: lib, api, builder] [functions/classes:  ENDPOINTS, buildPath , typedAPI] - Portal API client adapter
-|  |  |  |  |  |- auth.ts [search: lib, api, auth] [functions/classes: authAPI] - Portal API client adapter
-|  |  |  |  |  |- date.ts [search: lib, api, date] [functions/classes: normalizeUtcDateTime] - Portal API client adapter
-|  |  |  |  |  |- events.ts [search: lib, api, events] [functions/classes: eventsAPI, mapToDomain] - Portal API client adapter
-|  |  |  |  |  |- gallery.ts [search: lib, api, gallery] [functions/classes: galleryAPI] - Portal API client adapter
-|  |  |  |  |  |- index.ts [search: lib, api] [functions/classes:  adminAPI ,  announcementsAPI ,  authAPI ,  eventsAPI ,  mediaAPI ,  membersAPI ] - Portal API client adapter
-|  |  |  |  |  |- media.ts [search: lib, api, media] [functions/classes: mediaAPI] - Portal API client adapter
-|  |  |  |  |  |- members.ts [search: lib, api, members] [functions/classes: mapToDomain, membersAPI] - Portal API client adapter
-|  |  |  |  |  |- poll.ts [search: lib, api, poll] [functions/classes: pollAPI] - Portal API client adapter
-|  |  |  |  |  |- themePreferences.ts [search: lib, api, themepreferences] [functions/classes: themePreferencesAPI] - Portal API client adapter
-|  |  |  |  |  `- wars.ts [search: lib, api, wars] [functions/classes: mapHistoryToDomain, warsAPI] - Portal API client adapter
-|  |  |  |  |- api-client.ts [search: lib, api, client] [functions/classes: api, apiDirect, APIError] - Portal shared library utility
-|  |  |  |  |- media-conversion.ts [search: lib, media, conversion] [functions/classes: ALLOWED_VIDEO_HOSTS, convertToOpus, convertToWebP, getAvatarInitial, getOptimizedMediaUrl, getYouTubeId] - Portal shared library utility
-|  |  |  |  |- permissions.ts [search: lib, permissions] [functions/classes: canAccessAdminArea, canArchiveAnnouncement, canArchiveEvent, canCopyEventSignup, canCopyGuildWarAnalytics, canCreateAnnouncement] - Portal shared library utility
-|  |  |  |  |- progression.ts [search: lib, progression] [functions/classes: clampLevel, flattenCategoryItems, getCategoryById] - Portal shared library utility
-|  |  |  |  |- queryClient.ts [search: lib, queryclient] [functions/classes: queryClient] - Portal shared library utility
-|  |  |  |  |- queryKeys.ts [search: lib, querykeys] [functions/classes: queryKeys] - Portal shared library utility
-|  |  |  |  |- storage.ts [search: lib, storage] [functions/classes: storage, STORAGE_KEYS] - Portal shared library utility
-|  |  |  |  |- toast.ts [search: lib, toast] [functions/classes: toast, useToastStore] - Portal shared library utility
-|  |  |  |  |- types/
-|  |  |  |  |  `- api.ts [search: lib, types, api] [functions/classes: n/a] - Portal shared library utility
-|  |  |  |  |- undoStore.ts [search: lib, undostore] [functions/classes: useUndoStore] - Portal shared library utility
-|  |  |  |  `- utils.ts [search: lib, utils] [functions/classes: buildMemberAccentGradient, cn, formatClassDisplayName, formatDate, formatDateTime, formatLongDate] - Portal shared library utility
-|  |  |  |- main.tsx [search: main] [functions/classes: n/a] - Repository file artifact
-|  |  |  |- routes/
-|  |  |  |  |- __root.tsx [search: routes, root] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |- _layout/
-|  |  |  |  |  |- admin.tsx [search: routes, layout, admin] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  |- announcements.tsx [search: routes, layout, announcements] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  |- events.tsx [search: routes, layout, events] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  |- gallery.tsx [search: routes, layout, gallery] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  |- guild-war.tsx [search: routes, layout, guild, war] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  |- index.tsx [search: routes, layout] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  |- profile.tsx [search: routes, layout, profile] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  |- roster.tsx [search: routes, layout, roster] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  |- settings.tsx [search: routes, layout, settings] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  |- tools/
-|  |  |  |  |  |  |- index.tsx [search: routes, layout, tools] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  |  `- war-analytics.tsx [search: routes, layout, tools, war, analytics] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  |- tools.tsx [search: routes, layout, tools] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |  `- wiki.tsx [search: routes, layout, wiki] [functions/classes: Route] - TanStack route definition
-|  |  |  |  |- _layout.tsx [search: routes, layout] [functions/classes: Route] - TanStack route definition
-|  |  |  |  `- login.tsx [search: routes, login] [functions/classes: Route] - TanStack route definition
-|  |  |  |- routeTree.gen.ts [search: routetree, gen] [functions/classes: routeTree] - Repository file artifact
-|  |  |  |- store.ts [search: store] [functions/classes: useAuthStore, useUIStore] - Repository file artifact
-|  |  |  |- theme/
-|  |  |  |  |- accessibility-enhancements.css [search: theme, accessibility, enhancements] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |- colors/
-|  |  |  |  |  |- color-tokens.css [search: theme, colors, color, tokens] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- index.ts [search: theme, colors] [functions/classes: 
-  THEME_COLOR_PRESET_LIST,
-  THEME_COLOR_PRESETS,
-  goldAmberColor,
-  chineseInkColor,
-  tealNeonColor,
-  crimsonGoldColor,
-  softRoseColor,
-  violetCyanColor,
-  GAME_CLASS_COLORS,
-, getThemeColorPalette, getThemeColorTokens, isThemeColor, THEME_COLOR_IDS] - Theme runtime, tokens, or presets
-|  |  |  |  |  `- types.ts [search: theme, colors, types] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |- effects.css [search: theme, effects] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |- fontsource.d.ts [search: theme, fontsource] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |- fx/
-|  |  |  |  |  |- postFxGates.ts [search: theme, fx, postfxgates] [functions/classes: isEffectAllowedAtQuality, resolveThemePostFxStack] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- rafThrottle.ts [search: theme, fx, rafthrottle] [functions/classes: rafThrottle] - Theme runtime, tokens, or presets
-|  |  |  |  |  `- ThemeFXLayer.tsx [search: theme, fx, themefxlayer] [functions/classes: ThemeFXLayer] - Theme runtime, tokens, or presets
-|  |  |  |  |- index.ts [search: theme] [functions/classes:  ThemeControllerProvider as ThemeController , 
-  initTheme,
-  initThemePreferences,
-  setTheme,
-  setThemeColor,
-  setThemePreferences,
-  getTheme,
-  getThemeColor,
-  getThemePreferences,
-  onThemeChange,
-  type ColorBlindMode,
-  type ThemePreferences,
-, 
-  ThemeControllerProvider,
-  useThemeController,
-  ThemeSection,
-  ColorSection,
-  ThemeColorPicker,
-] - Theme runtime, tokens, or presets
-|  |  |  |  |- layout.css [search: theme, layout] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |- presets/
-|  |  |  |  |  |- _component-tokens.css [search: theme, presets, component, tokens] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- _context-aware-theming.css [search: theme, presets, context, aware, theming] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- _control-animations.css [search: theme, presets, control, animations] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- _global-improvements.css [search: theme, presets, global, improvements] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- _interactions-base.css [search: theme, presets, interactions, base] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- _member-card-colors.css [search: theme, presets, member, card, colors] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- _performance-optimizations.css [search: theme, presets, performance, optimizations] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- _shape-unification.css [search: theme, presets, shape, unification] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- _theme-customization.css [search: theme, presets, customization] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- _theme-enhancements.css [search: theme, presets, enhancements] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- _theme-transitions.css [search: theme, presets, transitions] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- chibi.css [search: theme, presets, chibi] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- cyberpunk.css [search: theme, presets, cyberpunk] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- index.css [search: theme, presets] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- index.ts [search: theme, presets] [functions/classes:  THEME_VISUAL_SPEC_LIST , getThemeOptions, getThemeVisualSpec, isThemeMode, THEME_IDS, THEME_PRESET_LIST] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- minimalistic.css [search: theme, presets, minimalistic] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- neo-brutalism.css [search: theme, presets, neo, brutalism] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- post-apocalyptic.css [search: theme, presets, post, apocalyptic] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  |- royal.css [search: theme, presets, royal] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  `- steampunk.css [search: theme, presets, steampunk] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |- rollout.ts [search: theme, rollout] [functions/classes: clearRuntimeRolloutOverrides, readThemeRolloutConfig, resolveThemeRolloutRuntime, setRuntimeBaselineFxOnly, setRuntimeEnabledThemes, setRuntimeMaxFxQuality] - Theme runtime, tokens, or presets
-|  |  |  |  |- rolloutMonitoring.ts [search: theme, rolloutmonitoring] [functions/classes: evaluateThemeRolloutMonitoring] - Theme runtime, tokens, or presets
-|  |  |  |  |- runtimeContracts.ts [search: theme, runtimecontracts] [functions/classes: FX_QUALITY_LABELS, getDefaultThemeRuntimeConfig, resolveThemeRuntimeConfig] - Theme runtime, tokens, or presets
-|  |  |  |  |- theme.css [search: theme] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |- ThemeController.tsx [search: theme, themecontroller] [functions/classes: ColorSection, getTheme, getThemeColor, getThemeModeIcon, getThemePreferences, initTheme] - Theme runtime, tokens, or presets
-|  |  |  |  |- tokens.ts [search: theme, tokens] [functions/classes: GAME_CLASS_COLORS] - Theme runtime, tokens, or presets
-|  |  |  |  |- types/
-|  |  |  |  |  |- types.ts [search: theme, types] [functions/classes: n/a] - Theme runtime, tokens, or presets
-|  |  |  |  |  `- typography.ts [search: theme, types, typography] [functions/classes: typography] - Theme runtime, tokens, or presets
-|  |  |  |  `- useMotionTokens.ts [search: theme, usemotiontokens] [functions/classes: useMotionTokens] - Theme runtime, tokens, or presets
-|  |  |  `- types.ts [search: types] [functions/classes: n/a] - Repository file artifact
-|  |  |- tests/
-|  |  |  |- components/
-|  |  |  |  |- app-imports.test.ts [search: components, imports] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- BottomNavigation.account-menu.test.tsx [search: components, bottomnavigation, account, menu] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- Button.disabled-visibility.test.tsx [search: components, button, disabled, visibility] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- chibi-control-signatures.phase4.test.tsx [search: components, chibi, control, signatures, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- cyberpunk-control-signatures.phase4.test.tsx [search: components, cyberpunk, control, signatures, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- DecorativeBackground.test.tsx [search: components, decorativebackground] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- Dialog.close-button.test.tsx [search: components, dialog, close, button] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- layout/
-|  |  |  |  |  |- __snapshots__/
-|  |  |  |  |  |  `- ThemeAmbientEffects.visual-regression.phase5.test.tsx.snap [search: components, layout, snapshots, themeambienteffects, visual, regression] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- PageFilterBar.category-selected-style.test.tsx [search: components, layout, pagefilterbar, category, selected, style] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientCanvas.phase2-runtime.test.ts [search: components, layout, themeambientcanvas, phase2, runtime] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.canvas-mapping.test.tsx [search: components, layout, themeambienteffects, canvas, mapping] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.chibi-toy-box.test.tsx [search: components, layout, themeambienteffects, chibi, toy, box] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.cyberpunk-deepnet.test.tsx [search: components, layout, themeambienteffects, cyberpunk, deepnet] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.interaction.test.tsx [search: components, layout, themeambienteffects, interaction] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.minimalistic-gallery.test.tsx [search: components, layout, themeambienteffects, minimalistic, gallery] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.neo-graphic-print.test.tsx [search: components, layout, themeambienteffects, neo, graphic, print] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.post-apocalyptic-wasteland.test.tsx [search: components, layout, themeambienteffects, post, apocalyptic, wasteland] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.premium-scenes.test.tsx [search: components, layout, themeambienteffects, premium, scenes] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.reduced-profiles.phase4.test.tsx [search: components, layout, themeambienteffects, reduced, profiles, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.royal-atelier.test.tsx [search: components, layout, themeambienteffects, royal, atelier] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.steampunk-foundry.test.tsx [search: components, layout, themeambienteffects, steampunk, foundry] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientEffects.visual-regression.phase5.test.tsx [search: components, layout, themeambienteffects, visual, regression, phase5] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- ThemeAmbientPerformance.phase5.test.ts [search: components, layout, themeambientperformance, phase5] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  `- ThemeBackgroundRenderer.r3f.test.tsx [search: components, layout, themebackgroundrenderer, r3f] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- Layout.theme-menu.test.tsx [search: components, layout, theme, menu] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- legacy-component-paths.test.ts [search: components, legacy, component, paths] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- MarkdownContent.test.tsx [search: components, markdowncontent] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- minimalistic-control-signatures.phase4.test.tsx [search: components, minimalistic, control, signatures, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- neo-control-signatures.phase4.test.tsx [search: components, neo, control, signatures, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- NexusControlAudit.test.ts [search: components, nexuscontrolaudit] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- NexusControlStudio.header-layout.test.tsx [search: components, nexuscontrolstudio, header, layout] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- NexusControlStudio.scope-vars.test.tsx [search: components, nexuscontrolstudio, scope, vars] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- NexusControlStudio.theme-isolation.test.tsx [search: components, nexuscontrolstudio, theme, isolation] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- nexus-primitives-imports.test.ts [search: components, nexus, primitives, imports] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- overlay-content-classname.test.tsx [search: components, overlay, content, classname] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- post-apocalyptic-control-signatures.phase4.test.tsx [search: components, post, apocalyptic, control, signatures, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- royal-control-signatures.phase4.test.tsx [search: components, royal, control, signatures, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- steampunk-control-signatures.phase4.test.tsx [search: components, steampunk, control, signatures, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  `- TiptapEditor.image-upload.test.tsx [search: components, tiptapeditor, image, upload] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |- features/
-|  |  |  |  |- Announcements/
-|  |  |  |  |  `- Announcements.controls.test.tsx [search: features, announcements, controls] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- Dashboard/
-|  |  |  |  |  |- Dashboard.notifications.test.tsx [search: features, dashboard, notifications] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- Dashboard.timeline.smoke.test.tsx [search: features, dashboard, timeline, smoke] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  `- UpcomingEvents.participantCard.test.tsx [search: features, dashboard, upcomingevents, participantcard] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- Events/
-|  |  |  |  |  |- Events.card-type.test.ts [search: features, events, card, type] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- Events.create-edit-controls.test.tsx [search: features, events, create, edit, controls] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- Events.filtering.test.ts [search: features, events, filtering] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- Events.filters.test.tsx [search: features, events, filters] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- Events.participant-card-layout.test.tsx [search: features, events, participant, card, layout] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- Events.participant-permissions.test.tsx [search: features, events, participant, permissions] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  `- Events.participants.test.ts [search: features, events, participants] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- Gallery/
-|  |  |  |  |  `- Gallery.filters.test.tsx [search: features, gallery, filters] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- GuildWar/
-|  |  |  |  |  |- components/
-|  |  |  |  |  |  `- WarHistory.utils.test.ts [search: features, guildwar, components, warhistory, utils] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- GuildWar.permissions.test.tsx [search: features, guildwar, permissions] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- GuildWar.sort-controls-size.test.ts [search: features, guildwar, sort, controls, size] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- GuildWar.sorting.test.ts [search: features, guildwar, sorting] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- WarAnalytics.chart-colors.test.ts [search: features, guildwar, waranalytics, chart, colors] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- WarAnalytics.detail-panel.test.tsx [search: features, guildwar, waranalytics, detail, panel] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- WarAnalytics.diagnostics.test.tsx [search: features, guildwar, waranalytics, diagnostics] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- WarAnalytics.filter-header.test.tsx [search: features, guildwar, waranalytics, filter, header] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- WarAnalytics.filters.test.tsx [search: features, guildwar, waranalytics, filters] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- WarAnalytics.formula-editor.test.tsx [search: features, guildwar, waranalytics, formula, editor] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- WarAnalytics.localization.test.tsx [search: features, guildwar, waranalytics, localization] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- WarAnalytics.main.test.tsx [search: features, guildwar, waranalytics, main] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- WarAnalytics.teams-mode.test.tsx [search: features, guildwar, waranalytics, teams, mode] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- WarAnalytics.utils.localization.test.ts [search: features, guildwar, waranalytics, utils, localization] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- WarHistory.detail-modal.test.tsx [search: features, guildwar, warhistory, detail, modal] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  `- WarHistory.pie-colors.test.ts [search: features, guildwar, warhistory, pie, colors] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- Members/
-|  |  |  |  |  |- Roster.audio.test.ts [search: features, members, roster, audio] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- Roster.audio-controls.test.tsx [search: features, members, roster, audio, controls] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- Roster.hook-order.test.tsx [search: features, members, roster, hook, order] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- Roster.member-detail-panel.test.tsx [search: features, members, roster, member, detail, panel] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  `- Roster.modal.test.tsx [search: features, members, roster, modal] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  `- Settings/
-|  |  |  |     |- Settings.localization.test.tsx [search: features, settings, localization] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |     `- Settings.motion-slider.test.tsx [search: features, settings, motion, slider] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |- hooks/
-|  |  |  |  `- useServerState.polling.test.ts [search: hooks, useserverstate, polling] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |- i18n/
-|  |  |  |  |- guild-war-analytics-zh-keys.test.ts [search: i18n, guild, war, analytics, zh, keys] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- nav-wording.test.ts [search: i18n, nav, wording] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- portal-surface-localization.test.ts [search: i18n, surface, localization] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- zh-localization-quality.test.ts [search: i18n, zh, localization, quality] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  `- zh-structure.test.ts [search: i18n, zh, structure] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |- lib/
-|  |  |  |  |- api/
-|  |  |  |  |  |- members.test.ts [search: lib, api, members] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  |- wars.test.ts [search: lib, api, wars] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |  `- wars.update-member-stats.test.ts [search: lib, api, wars, update, member, stats] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- permissions.test.ts [search: lib, permissions] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  `- utils.member-card-colors.test.ts [search: lib, utils, member, card, colors] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |- setupTests.ts [search: setuptests] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |- theme/
-|  |  |  |  |- accessibility-enhancements.selectors.test.ts [search: theme, accessibility, enhancements, selectors] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- member-card-theme-colors.spec.ts [search: theme, member, card, colors, spec] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-background-effects.contract.test.ts [search: theme, background, effects, contract] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-background-effects-disabled.contract.test.ts [search: theme, background, effects, disabled, contract] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-background-mode.canvas-policy.test.ts [search: theme, background, mode, canvas, policy] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-chibi-control-geometry.test.ts [search: theme, chibi, control, geometry] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-chibi-toy-box.phase4.test.ts [search: theme, chibi, toy, box, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-controller.remote-preferences.test.tsx [search: theme, controller, remote, preferences] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-controller.state.test.tsx [search: theme, controller, state] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-cyberpunk-deepnet.phase4.test.ts [search: theme, cyberpunk, deepnet, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-engine.preferences.test.ts [search: theme, engine, preferences] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-fancy-fx-suppression.phase5.test.ts [search: theme, fancy, fx, suppression, phase5] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- ThemeFXLayer.cyberpunk-events.phase4.test.tsx [search: theme, themefxlayer, cyberpunk, events, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- ThemeFXLayer.phase2-gates.test.tsx [search: theme, themefxlayer, phase2, gates] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- ThemeFXLayer.phase6-rollout.test.tsx [search: theme, themefxlayer, phase6, rollout] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- ThemeFXLayer.test.tsx [search: theme, themefxlayer] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-fx-quality-gating.phase5.test.ts [search: theme, fx, quality, gating, phase5] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-minimalistic-gallery.phase4.test.ts [search: theme, minimalistic, gallery, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-motion-contract.test.ts [search: theme, motion, contract] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-motion-mode-resolution.phase5.test.tsx [search: theme, motion, mode, resolution, phase5] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-neo-brutalism-hover.test.ts [search: theme, neo, brutalism, hover] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-neo-graphic-print.phase4.test.ts [search: theme, neo, graphic, print, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-post-apocalyptic-wasteland.phase4.test.ts [search: theme, post, apocalyptic, wasteland, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-postfx-gates.phase2.test.ts [search: theme, postfx, gates, phase2] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-registry.split.test.ts [search: theme, registry, split] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-rollout-flags.phase6.test.ts [search: theme, rollout, flags, phase6] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-rollout-monitoring.phase6.test.ts [search: theme, rollout, monitoring, phase6] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-royal-atelier.phase4.test.ts [search: theme, royal, atelier, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  |- theme-runtime-contracts.phase0.test.ts [search: theme, runtime, contracts, phase0] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  |  `- theme-steampunk-foundry.phase4.test.ts [search: theme, steampunk, foundry, phase4] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |  `- visual/
-|  |  |     |- control-shape-audit.spec.ts [search: visual, control, shape, audit, spec] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |     |- css-specificity-audit.spec.ts [search: visual, specificity, audit, spec] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |     `- theme-contrast-audit.spec.ts [search: visual, theme, contrast, audit, spec] [functions/classes: n/a] - Automated test coverage artifact
-|  |  |- tsconfig.json [search: tsconfig] [functions/classes: n/a] - Structured configuration/data file
-|  |  `- typecheck_output.txt [search: typecheck, output, txt] [functions/classes: n/a] - Repository file artifact
-|  `- worker/
-|     |- package.json [search: package] [functions/classes: n/a] - Structured configuration/data file
-|     |- src/
-|     |  |- api/
-|     |  |  |- admin/
-|     |  |  |  |- audit-logs/
-|     |  |  |  |  |- [id].ts [search: api, admin, audit, logs, id] [functions/classes: onRequestDelete] - Worker API endpoint handler
-|     |  |  |  |  |- entity/
-|     |  |  |  |  |  `- [entityId].ts [search: api, admin, audit, logs, entity, entityid] [functions/classes: onRequestGet] - Worker API endpoint handler
-|     |  |  |  |  `- stats.ts [search: api, admin, audit, logs, stats] [functions/classes: onRequestGet] - Worker API endpoint handler
-|     |  |  |  `- audit-logs.ts [search: api, admin, audit, logs] [functions/classes: onRequestGet, onRequestPost] - Worker API endpoint handler
-|     |  |  |- announcements/
-|     |  |  |  |- [id]/
-|     |  |  |  |  |- media/
-|     |  |  |  |  |  `- [mediaId].ts [search: api, announcements, id, media, mediaid] [functions/classes: onRequestDelete] - Worker API endpoint handler
-|     |  |  |  |  |- media.ts [search: api, announcements, id, media] [functions/classes: onRequestPost, onRequestPut] - Worker API endpoint handler
-|     |  |  |  |  |- pin.ts [search: api, announcements, id, pin] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  `- toggle-archive.ts [search: api, announcements, id, toggle, archive] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |- [id].ts [search: api, announcements, id] [functions/classes: onRequestDelete, onRequestGet, onRequestPatch, onRequestPut] - Worker API endpoint handler
-|     |  |  |  |- index.ts [search: api, announcements] [functions/classes: onRequestDelete, onRequestGet, onRequestPost] - Worker API endpoint handler
-|     |  |  |  `- restore.ts [search: api, announcements, restore] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |- auth/
-|     |  |  |  |- api-keys/
-|     |  |  |  |  `- [id].ts [search: api, auth, keys, id] [functions/classes: onRequestDelete] - Worker API endpoint handler
-|     |  |  |  |- api-keys.ts [search: api, auth, keys] [functions/classes: onRequestGet, onRequestPost] - Worker API endpoint handler
-|     |  |  |  |- change-password.ts [search: api, auth, change, password] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |- csrf.ts [search: api, auth, csrf] [functions/classes: onRequestGet] - Worker API endpoint handler
-|     |  |  |  |- login.ts [search: api, auth, login] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |- logout.ts [search: api, auth, logout] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |- preferences.ts [search: api, auth, preferences] [functions/classes: onRequestGet, onRequestPut] - Worker API endpoint handler
-|     |  |  |  |- session.ts [search: api, auth, session] [functions/classes: onRequestGet] - Worker API endpoint handler
-|     |  |  |  `- signup.ts [search: api, auth, signup] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |- events/
-|     |  |  |  |- [id]/
-|     |  |  |  |  |- [action].ts [search: api, events, id, action] [functions/classes: routeHandler] - Worker API endpoint handler
-|     |  |  |  |  |- attachments/
-|     |  |  |  |  |  `- [mediaId].ts [search: api, events, id, attachments, mediaid] [functions/classes: onRequestDelete] - Worker API endpoint handler
-|     |  |  |  |  |- attachments.ts [search: api, events, id, attachments] [functions/classes: onRequestPost, onRequestPut] - Worker API endpoint handler
-|     |  |  |  |  |- duplicate.ts [search: api, events, id, duplicate] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  |- join.ts [search: api, events, id, join] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  |- kick.ts [search: api, events, id, kick] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  |- leave.ts [search: api, events, id, leave] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  |- participants.ts [search: api, events, id, participants] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  |- pin.ts [search: api, events, id, pin] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  |- toggle-archive.ts [search: api, events, id, toggle, archive] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  |- toggle-lock.ts [search: api, events, id, toggle, lock] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  `- toggle-pin.ts [search: api, events, id, toggle, pin] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |- [id].ts [search: api, events, id] [functions/classes: onRequestDelete, onRequestGet, onRequestPatch, onRequestPut] - Worker API endpoint handler
-|     |  |  |  |- index.ts [search: api, events] [functions/classes: onRequestDelete, onRequestGet, onRequestPost] - Worker API endpoint handler
-|     |  |  |  `- restore.ts [search: api, events, restore] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |- gallery/
-|     |  |  |  |- [id]/
-|     |  |  |  |  |- feature.ts [search: api, gallery, id, feature] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  `- unfeature.ts [search: api, gallery, id, unfeature] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |- [id].ts [search: api, gallery, id] [functions/classes: onRequestDelete, onRequestGet, onRequestPut] - Worker API endpoint handler
-|     |  |  |  `- index.ts [search: api, gallery] [functions/classes: onRequestDelete, onRequestGet, onRequestPost] - Worker API endpoint handler
-|     |  |  |- health/
-|     |  |  |  `- [[check]].ts [search: api, health, check] [functions/classes: onRequestGet] - Worker API endpoint handler
-|     |  |  |- media/
-|     |  |  |  |- [id]/
-|     |  |  |  |  |- conversions/
-|     |  |  |  |  |  `- retry.ts [search: api, media, id, conversions, retry] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  `- conversions.ts [search: api, media, id, conversions] [functions/classes: onRequestGet] - Worker API endpoint handler
-|     |  |  |  |- [key].ts [search: api, media, key] [functions/classes: onRequestGet] - Worker API endpoint handler
-|     |  |  |  |- check-duplicate.ts [search: api, media, check, duplicate] [functions/classes: onRequestGet] - Worker API endpoint handler
-|     |  |  |  |- conversions.ts [search: api, media, conversions] [functions/classes: onRequestGet, onRequestPost] - Worker API endpoint handler
-|     |  |  |  `- reorder.ts [search: api, media, reorder] [functions/classes: onRequestPut] - Worker API endpoint handler
-|     |  |  |- members/
-|     |  |  |  |- [id]/
-|     |  |  |  |  |- [action].ts [search: api, members, id, action] [functions/classes: routeHandler] - Worker API endpoint handler
-|     |  |  |  |  |- availability.ts [search: api, members, id, availability] [functions/classes: onRequestPut] - Worker API endpoint handler
-|     |  |  |  |  |- classes.ts [search: api, members, id, classes] [functions/classes: onRequestPut] - Worker API endpoint handler
-|     |  |  |  |  |- media/
-|     |  |  |  |  |  |- [mediaId]/
-|     |  |  |  |  |  |  `- set-avatar.ts [search: api, members, id, media, mediaid, set] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  |  |- [mediaId].ts [search: api, members, id, media, mediaid] [functions/classes: onRequestDelete] - Worker API endpoint handler
-|     |  |  |  |  |  `- reorder.ts [search: api, members, id, media, reorder] [functions/classes: onRequestPut] - Worker API endpoint handler
-|     |  |  |  |  |- media.ts [search: api, members, id, media] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  |- notes.ts [search: api, members, id, notes] [functions/classes: onRequestGet, onRequestPut] - Worker API endpoint handler
-|     |  |  |  |  |- progression.ts [search: api, members, id, progression] [functions/classes: onRequestGet, onRequestPut] - Worker API endpoint handler
-|     |  |  |  |  |- reset-password.ts [search: api, members, id, reset, password] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  |- role.ts [search: api, members, id, role] [functions/classes: onRequestPut] - Worker API endpoint handler
-|     |  |  |  |  |- toggle-active.ts [search: api, members, id, toggle, active] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  |  |- username.ts [search: api, members, id, username] [functions/classes: onRequestPut] - Worker API endpoint handler
-|     |  |  |  |  |- video-urls/
-|     |  |  |  |  |  `- [videoId].ts [search: api, members, id, video, urls, videoid] [functions/classes: onRequestDelete, onRequestPut] - Worker API endpoint handler
-|     |  |  |  |  `- video-urls.ts [search: api, members, id, video, urls] [functions/classes: onRequestGet, onRequestPost] - Worker API endpoint handler
-|     |  |  |  |- [id].ts [search: api, members, id] [functions/classes: onRequestGet, onRequestPut] - Worker API endpoint handler
-|     |  |  |  |- index.ts [search: api, members] [functions/classes: onRequestGet, onRequestPatch] - Worker API endpoint handler
-|     |  |  |  `- restore.ts [search: api, members, restore] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |- poll/
-|     |  |  |  |- handlers.ts [search: api, poll, handlers] [functions/classes: fetchAnnouncements, fetchEvents, fetchMembers] - Worker API endpoint handler
-|     |  |  |  `- index.ts [search: api, poll] [functions/classes: onRequestGet] - Worker API endpoint handler
-|     |  |  |- push/
-|     |  |  |  `- index.ts [search: api, push] [functions/classes: routeHandler] - Worker API endpoint handler
-|     |  |  |- upload/
-|     |  |  |  |- audio.ts [search: api, upload, audio] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  |  `- image.ts [search: api, upload, image] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |  `- wars/
-|     |  |     |- [id]/
-|     |  |     |  |- [action].ts [search: api, wars, id, action] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |     |  |- kick-from-pool.ts [search: api, wars, id, kick, from, pool] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |     |  |- kick-from-team.ts [search: api, wars, id, kick, from, team] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |     |  |- pool-to-team.ts [search: api, wars, id, pool, to, team] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |     |  |- teams/
-|     |  |     |  |  |- [teamId].ts [search: api, wars, id, teams, teamid] [functions/classes: onRequestDelete, onRequestGet, onRequestPut] - Worker API endpoint handler
-|     |  |     |  |  `- index.ts [search: api, wars, id, teams] [functions/classes: onRequestGet, onRequestPost] - Worker API endpoint handler
-|     |  |     |  |- team-to-pool.ts [search: api, wars, id, team, to, pool] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |     |  `- team-to-team.ts [search: api, wars, id, team, to] [functions/classes: onRequestPost] - Worker API endpoint handler
-|     |  |     |- [id].ts [search: api, wars, id] [functions/classes: onRequestDelete, onRequestGet, onRequestPut] - Worker API endpoint handler
-|     |  |     |- analytics.ts [search: api, wars, analytics] [functions/classes: onRequestGet] - Worker API endpoint handler
-|     |  |     |- analytics-formula-presets.ts [search: api, wars, analytics, formula, presets] [functions/classes: onRequestDelete, onRequestGet, onRequestPost] - Worker API endpoint handler
-|     |  |     |- history/
-|     |  |     |  |- [id]/
-|     |  |     |  |  `- member-stats.ts [search: api, wars, history, id, member, stats] [functions/classes: onRequestGet, onRequestPut] - Worker API endpoint handler
-|     |  |     |  `- [id].ts [search: api, wars, history, id] [functions/classes: onRequestGet, onRequestPut] - Worker API endpoint handler
-|     |  |     |- history.ts [search: api, wars, history] [functions/classes: onRequestGet, onRequestPost] - Worker API endpoint handler
-|     |  |     |- index.ts [search: api, wars] [functions/classes: onRequestGet, onRequestPost] - Worker API endpoint handler
-|     |  |     `- latest.ts [search: api, wars, latest] [functions/classes: onRequestGet] - Worker API endpoint handler
-|     |  |- core/
-|     |  |  |- api-keys.ts [search: core, api, keys] [functions/classes: generateAPIKey, requireScope, validateAPIKey, withAPIKeyAuth] - Worker core runtime module
-|     |  |  |- broadcast.ts [search: core, broadcast] [functions/classes: broadcastUpdate] - Worker core runtime module
-|     |  |  |- csrf.ts [search: core, csrf] [functions/classes: generateCSRFToken, setCSRFTokenInSession, withCSRF] - Worker core runtime module
-|     |  |  |- db-schema.ts [search: core, db, schema] [functions/classes: DB_TABLES, EVENT_COLUMNS, EVENT_SELECT_FIELDS, MEMBER_USER_SELECT_FIELDS, pickAllowedFields] - Worker core runtime module
-|     |  |  |- drizzle.ts [search: core, drizzle] [functions/classes: getDb] - Worker core runtime module
-|     |  |  |- endpoint-factory.ts [search: core, endpoint, factory] [functions/classes: createEndpoint] - Worker core runtime module
-|     |  |  |- endpoint-registry.ts [search: core, endpoint, registry] [functions/classes: clearRegistry, createRegisteredEndpoint, exportRegistry, getAllEndpoints, getEndpoint, getEndpointsByEntity] - Worker core runtime module
-|     |  |  |- endpoint-registry-adapter.ts [search: core, endpoint, registry, adapter] [functions/classes: getAllEndpointPaths, getCanonicalPath, initializeEndpointRegistry, isValidEndpointPath, registerPollHandlers] - Worker core runtime module
-|     |  |  |- errors.ts [search: core, errors] [functions/classes: AppError, AuthenticationError, ConflictError, ForbiddenError, NotFoundError, ValidationError] - Worker core runtime module
-|     |  |  |- middleware.ts [search: core, middleware] [functions/classes: checkRateLimit, getRateLimitKey, withAdminAuth, withAuth, withModeratorAuth, withOptionalAuth] - Worker core runtime module
-|     |  |  |- rate-limit.ts [search: core, rate, limit] [functions/classes: checkRateLimitDO, getRateLimitConfig, getRateLimitKey, getUserTier] - Worker core runtime module
-|     |  |  |- route-loader.ts [search: core, route, loader] [functions/classes: clearHandlerCache, getAllRoutes, getRouteHandler, getRouteStats, matchRoute, registerRouteHandler] - Worker core runtime module
-|     |  |  |- route-registrar.ts [search: core, route, registrar] [functions/classes: initializeRouteRegistrar] - Worker core runtime module
-|     |  |  |- sanitize.ts [search: core, sanitize] [functions/classes: announcementBodySchema, emailSchema, htmlSchema, limitedString, plainTextSchema, sanitizeHTML] - Worker core runtime module
-|     |  |  |- shared.ts [search: core, shared] [functions/classes: errorResponse, generateETag, jsonResponse] - Worker core runtime module
-|     |  |  |- types.ts [search: core, types] [functions/classes: n/a] - Worker core runtime module
-|     |  |  |- utils.ts [search: core, utils] [functions/classes: addETag, assertIfMatch, badRequestResponse, canEditEntity, checkETag, checkIfMatch] - Worker core runtime module
-|     |  |  `- validation.ts [search: core, validation] [functions/classes: addVideoUrlSchema, assignMemberSchema, auditLogQuerySchema, availabilityBlockSchema, batchAnnouncementActionSchema, batchEventActionSchema] - Worker core runtime module
-|     |  |- cron/
-|     |  |  `- cleanup-audit-logs.ts [search: cron, cleanup, audit, logs] [functions/classes: cleanupAuditLogs] - Worker scheduled maintenance task
-|     |  |- db/
-|     |  |  `- schema.ts [search: db, schema] [functions/classes: auditLog, events, eventTeams, mediaObjects, memberAvailabilityBlocks, memberMedia] - Worker database schema or helpers
-|     |  |- declarations.d.ts [search: declarations] [functions/classes: n/a] - Repository file artifact
-|     |  |- scheduled/
-|     |  |  `- session-cleanup.ts [search: scheduled, session, cleanup] [functions/classes: n/a] - Worker scheduled maintenance task
-|     |  |- websocket/
-|     |  |  `- ConnectionManager.ts [search: websocket, connectionmanager] [functions/classes: ConnectionManager] - Worker websocket coordination module
-|     |  `- worker.ts [search: n/a] [functions/classes:  ConnectionManager ] - Repository file artifact
-|     `- tests/
-|        |- api/
-|        |  |- auth/
-|        |  |  |- login-session-policy.test.ts [search: api, auth, login, session, policy] [functions/classes: n/a] - Automated test coverage artifact
-|        |  |  `- preferences.test.ts [search: api, auth, preferences] [functions/classes: n/a] - Automated test coverage artifact
-|        |  |- events/
-|        |  |  `- list-controls.test.ts [search: api, events, list, controls] [functions/classes: n/a] - Automated test coverage artifact
-|        |  |- media/
-|        |  |  `- key.test.ts [search: api, media, key] [functions/classes: n/a] - Automated test coverage artifact
-|        |  |- members/
-|        |  |  `- list-pagination.test.ts [search: api, members, list, pagination] [functions/classes: n/a] - Automated test coverage artifact
-|        |  `- wars/
-|        |     |- analytics.test.ts [search: api, wars, analytics] [functions/classes: n/a] - Automated test coverage artifact
-|        |     `- analytics-formula-presets.test.ts [search: api, wars, analytics, formula, presets] [functions/classes: n/a] - Automated test coverage artifact
-|        |- contracts/
-|        |  `- list-endpoints-pagination.contract.test.ts [search: contracts, list, endpoints, pagination, contract] [functions/classes: n/a] - Automated test coverage artifact
-|        |- core/
-|        |  `- pagination.test.ts [search: core, pagination] [functions/classes: n/a] - Automated test coverage artifact
-|        |- README.md [search: readme] [functions/classes: n/a] - Automated test coverage artifact
-|        `- test-utils/
-|           `- setup.ts [search: utils, setup] [functions/classes: authedRequest, seedAnnouncement, seedEvent, seedSchema, seedSession, seedUser] - Automated test coverage artifact
-|- config/
-|  |- drizzle/
-|  |  `- drizzle.config.ts [search: drizzle] [functions/classes: n/a] - Centralized tool/build configuration
-|  |- eslint/
-|  |  `- eslint.config.js [search: eslint] [functions/classes: n/a] - Centralized tool/build configuration
-|  |- postcss/
-|  |  `- postcss.config.js [search: postcss] [functions/classes: n/a] - Centralized tool/build configuration
-|  |- tailwind/
-|  |  `- tailwind.config.js [search: tailwind] [functions/classes: n/a] - Centralized tool/build configuration
-|  |- typescript/
-|  |  |- tsconfig.node.json [search: typescript, tsconfig, node] [functions/classes: n/a] - Centralized tool/build configuration
-|  |  |- tsconfig.portal.json [search: typescript, tsconfig] [functions/classes: n/a] - Centralized tool/build configuration
-|  |  |- tsconfig.root.json [search: typescript, tsconfig, root] [functions/classes: n/a] - Centralized tool/build configuration
-|  |  `- tsconfig.worker.json [search: typescript, tsconfig] [functions/classes: n/a] - Centralized tool/build configuration
-|  |- vite/
-|  |  `- vite.portal.config.ts [search: vite] [functions/classes: n/a] - Centralized tool/build configuration
-|  `- vitest/
-|     |- vitest.portal.config.ts [search: vitest] [functions/classes: n/a] - Centralized tool/build configuration
-|     `- vitest.workers.config.ts [search: vitest, workers] [functions/classes: n/a] - Centralized tool/build configuration
-|- docs/
-|  |- engineering/
-|  |  `- repository-structure.md [search: engineering, repository, structure] [functions/classes: n/a] - Engineering standards/documentation
-|  |- plans/
-|  |  `- todo.md [search: plans, todo] [functions/classes: n/a] - Documentation file
-|  `- product/
-|     |- admin-console.md [search: product, admin, console] [functions/classes: n/a] - Product behavior specification
-|     |- announcements.md [search: product, announcements] [functions/classes: n/a] - Product behavior specification
-|     |- auth.md [search: product, auth] [functions/classes: n/a] - Product behavior specification
-|     |- dashboard.md [search: product, dashboard] [functions/classes: n/a] - Product behavior specification
-|     |- events.md [search: product, events] [functions/classes: n/a] - Product behavior specification
-|     |- Global.md [search: product, global] [functions/classes: n/a] - Product behavior specification
-|     |- guild-war.md [search: product, guild, war] [functions/classes: n/a] - Product behavior specification
-|     |- my-profile.md [search: product, my, profile] [functions/classes: n/a] - Product behavior specification
-|     |- roster.md [search: product, roster] [functions/classes: n/a] - Product behavior specification
-|     |- settings.md [search: product, settings] [functions/classes: n/a] - Product behavior specification
-|     |- tools.md [search: product, tools] [functions/classes: n/a] - Product behavior specification
-|     `- wiki.md [search: product, wiki] [functions/classes: n/a] - Product behavior specification
-|- infra/
-|  |- cloudflare/
-|  |  `- README.md [search: cloudflare, readme] [functions/classes: n/a] - Cloudflare infrastructure notes
-|  `- database/
-|     |- d1-schema/
-|     |  |- D1_Schema.sql [search: database, d1, schema] [functions/classes: n/a] - Database schema or migration artifact
-|     |  |- d1_schema_optimization_guide.md [search: database, d1, schema, optimization, guide] [functions/classes: n/a] - Database schema or migration artifact
-|     |  |- DATABASE_SCHEMA.md [search: database, d1, schema] [functions/classes: n/a] - Database schema or migration artifact
-|     |  `- seed_portal_mock_data.sql [search: database, d1, schema, seed, mock, data] [functions/classes: n/a] - Database schema or migration artifact
-|     `- drizzle/
-|        |- 0000_free_baron_strucker.sql [search: database, drizzle, 0000, free, baron, strucker] [functions/classes: n/a] - Database schema or migration artifact
-|        `- meta/
-|           |- _journal.json [search: database, drizzle, journal] [functions/classes: n/a] - Database schema or migration artifact
-|           `- 0000_snapshot.json [search: database, drizzle, 0000, snapshot] [functions/classes: n/a] - Database schema or migration artifact
-|- Knowledge_Base.md [search: knowledge, base] [functions/classes: n/a] - Project durable rules and operating guidance
-|- package.json [search: package] [functions/classes: n/a] - Structured configuration/data file
-|- package-lock.json [search: package, lock] [functions/classes: n/a] - Structured configuration/data file
-|- packages/
-|  |- shared-api/
-|  |  |- package.json [search: shared, api, package] [functions/classes: n/a] - Structured configuration/data file
-|  |  `- src/
-|  |     |- contracts.ts [search: shared, api, contracts] [functions/classes: n/a] - Shared API contracts/endpoints package
-|  |     `- endpoints.ts [search: shared, api, endpoints] [functions/classes: buildPath, ENDPOINTS, extractPathParams] - Shared API contracts/endpoints package
-|  `- shared-utils/
-|     |- package.json [search: shared, utils, package] [functions/classes: n/a] - Structured configuration/data file
-|     `- src/
-|        |- etag.ts [search: shared, utils, etag] [functions/classes: generateStrongETag, generateTimestampETag, generateWeakETag, matchesETag, parseETagHeader, weakETagEquals] - Shared utility package module
-|        |- pagination.ts [search: shared, utils, pagination] [functions/classes: buildCursorWhereClause, buildPaginatedResponse, decodeCursor, encodeCursor, filterFields, parseFieldsQuery] - Shared utility package module
-|        `- response.ts [search: shared, utils, response] [functions/classes: addAllowedOrigin, badRequestResponse, conflictResponse, corsHeaders, errorResponse, forbiddenResponse] - Shared utility package module
-|- scripts/
-|  |- audit-endpoints.cjs [search: scripts, audit, endpoints] [functions/classes: n/a] - Automation/audit script
-|  |- enforce-theme-token-usage.mjs [search: scripts, enforce, theme, token, usage] [functions/classes: n/a] - Automation/audit script
-|  |- theme-contrast-audit.mjs [search: scripts, theme, contrast, audit] [functions/classes: n/a] - Automation/audit script
-|  `- theme-token-guardrail-baseline.json [search: scripts, theme, token, guardrail, baseline] [functions/classes: n/a] - Automation/audit script
-|- tsconfig.json [search: tsconfig] [functions/classes: n/a] - Structured configuration/data file
-`- wrangler.jsonc [search: wrangler, jsonc] [functions/classes: n/a] - Structured configuration/data file
-```
+## Search Usage
+- Use `Search Parameter` with: `rg --files -uu | rg --fixed-strings "<Search Parameter>"`.
+- For content references, use: `rg -n --fixed-strings "<relative/path.ext>" .`.
 
-## Obsolete Class Tracker
-- ACTIVE: `APIError` in `apps\portal\src\lib\api-client.ts` (reference files: 3).
-- ACTIVE: `AppError` in `apps\worker\src\core\errors.ts` (reference files: 2).
-- ACTIVE: `AuthenticationError` in `apps\worker\src\core\errors.ts` (reference files: 2).
-- OBSOLETE CANDIDATE: `ConflictError` in `apps\worker\src\core\errors.ts` (reference files: 1).
-- ACTIVE: `ConnectionManager` in `apps\worker\src\websocket\ConnectionManager.ts` (reference files: 4).
-- ACTIVE: `ErrorBoundary` in `apps\portal\src\components\feedback\ErrorBoundary.tsx` (reference files: 3).
-- ACTIVE: `ForbiddenError` in `apps\worker\src\core\errors.ts` (reference files: 2).
-- ACTIVE: `NotFoundError` in `apps\worker\src\core\errors.ts` (reference files: 40).
-- OBSOLETE CANDIDATE: `ValidationError` in `apps\worker\src\core\errors.ts` (reference files: 1).
+## Snapshot
+- Generated: 2026-02-14T21:41:25-05:00
+- Indexed files: 1765
 
-## Maintenance Workflow
-1. Start any repo dive by reading this file.
-2. After any structural code change, refresh symbols/search words for touched files.
-3. If removing or replacing a class, update the obsolete tracker status in the same change.
-4. Keep `Knowledge_Base.md` and this file aligned on repository governance rules.
+## Full File Index
+| Path | Search Parameter |
+|---|---|
+| .claude/settings.local.json | .claude/settings.local.json |
+| .env.development | .env.development |
+| .gitignore | .gitignore |
+| .gsd/templates/codebase/architecture.md | .gsd/templates/codebase/architecture.md |
+| .gsd/templates/codebase/concerns.md | .gsd/templates/codebase/concerns.md |
+| .gsd/templates/codebase/conventions.md | .gsd/templates/codebase/conventions.md |
+| .gsd/templates/codebase/integrations.md | .gsd/templates/codebase/integrations.md |
+| .gsd/templates/codebase/stack.md | .gsd/templates/codebase/stack.md |
+| .gsd/templates/codebase/structure.md | .gsd/templates/codebase/structure.md |
+| .gsd/templates/codebase/testing.md | .gsd/templates/codebase/testing.md |
+| .gsd/templates/config.json | .gsd/templates/config.json |
+| .gsd/templates/context.md | .gsd/templates/context.md |
+| .gsd/templates/continue-here.md | .gsd/templates/continue-here.md |
+| .gsd/templates/DEBUG.md | .gsd/templates/DEBUG.md |
+| .gsd/templates/debug-subagent-prompt.md | .gsd/templates/debug-subagent-prompt.md |
+| .gsd/templates/discovery.md | .gsd/templates/discovery.md |
+| .gsd/templates/milestone.md | .gsd/templates/milestone.md |
+| .gsd/templates/milestone-archive.md | .gsd/templates/milestone-archive.md |
+| .gsd/templates/phase-prompt.md | .gsd/templates/phase-prompt.md |
+| .gsd/templates/planner-subagent-prompt.md | .gsd/templates/planner-subagent-prompt.md |
+| .gsd/templates/project.md | .gsd/templates/project.md |
+| .gsd/templates/requirements.md | .gsd/templates/requirements.md |
+| .gsd/templates/research.md | .gsd/templates/research.md |
+| .gsd/templates/research-project/ARCHITECTURE.md | .gsd/templates/research-project/ARCHITECTURE.md |
+| .gsd/templates/research-project/FEATURES.md | .gsd/templates/research-project/FEATURES.md |
+| .gsd/templates/research-project/PITFALLS.md | .gsd/templates/research-project/PITFALLS.md |
+| .gsd/templates/research-project/STACK.md | .gsd/templates/research-project/STACK.md |
+| .gsd/templates/research-project/SUMMARY.md | .gsd/templates/research-project/SUMMARY.md |
+| .gsd/templates/roadmap.md | .gsd/templates/roadmap.md |
+| .gsd/templates/state.md | .gsd/templates/state.md |
+| .gsd/templates/summary.md | .gsd/templates/summary.md |
+| .gsd/templates/UAT.md | .gsd/templates/UAT.md |
+| .gsd/templates/user-setup.md | .gsd/templates/user-setup.md |
+| .gsd/templates/verification-report.md | .gsd/templates/verification-report.md |
+| .kilocode/rules/checkpoints.md | .kilocode/rules/checkpoints.md |
+| .kilocode/rules/continuation-format.md | .kilocode/rules/continuation-format.md |
+| .kilocode/rules/git-integration.md | .kilocode/rules/git-integration.md |
+| .kilocode/rules/model-profiles.md | .kilocode/rules/model-profiles.md |
+| .kilocode/rules/planning-config.md | .kilocode/rules/planning-config.md |
+| .kilocode/rules/questioning.md | .kilocode/rules/questioning.md |
+| .kilocode/rules/tdd.md | .kilocode/rules/tdd.md |
+| .kilocode/rules/ui-brand.md | .kilocode/rules/ui-brand.md |
+| .kilocode/rules/verification-patterns.md | .kilocode/rules/verification-patterns.md |
+| .kilocode/rules-gsd-codebase-mapper/rules.md | .kilocode/rules-gsd-codebase-mapper/rules.md |
+| .kilocode/rules-gsd-debugger/rules.md | .kilocode/rules-gsd-debugger/rules.md |
+| .kilocode/rules-gsd-executor/rules.md | .kilocode/rules-gsd-executor/rules.md |
+| .kilocode/rules-gsd-integration-checker/rules.md | .kilocode/rules-gsd-integration-checker/rules.md |
+| .kilocode/rules-gsd-phase-researcher/rules.md | .kilocode/rules-gsd-phase-researcher/rules.md |
+| .kilocode/rules-gsd-plan-checker/rules.md | .kilocode/rules-gsd-plan-checker/rules.md |
+| .kilocode/rules-gsd-planner/rules.md | .kilocode/rules-gsd-planner/rules.md |
+| .kilocode/rules-gsd-project-researcher/rules.md | .kilocode/rules-gsd-project-researcher/rules.md |
+| .kilocode/rules-gsd-research-synthesizer/rules.md | .kilocode/rules-gsd-research-synthesizer/rules.md |
+| .kilocode/rules-gsd-roadmapper/rules.md | .kilocode/rules-gsd-roadmapper/rules.md |
+| .kilocode/rules-gsd-verifier/rules.md | .kilocode/rules-gsd-verifier/rules.md |
+| .kilocode/skills/better-auth-best-practices/SKILL.md | .kilocode/skills/better-auth-best-practices/SKILL.md |
+| .kilocode/skills/brainstorming/SKILL.md | .kilocode/skills/brainstorming/SKILL.md |
+| .kilocode/skills/canvas-design/canvas-fonts/ArsenalSC-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/ArsenalSC-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/ArsenalSC-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/ArsenalSC-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/BigShoulders-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/BigShoulders-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/BigShoulders-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/BigShoulders-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/BigShoulders-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/BigShoulders-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Boldonse-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/Boldonse-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/Boldonse-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/Boldonse-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/BricolageGrotesque-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/BricolageGrotesque-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/BricolageGrotesque-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/BricolageGrotesque-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/BricolageGrotesque-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/BricolageGrotesque-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/CrimsonPro-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/CrimsonPro-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/CrimsonPro-Italic.ttf | .kilocode/skills/canvas-design/canvas-fonts/CrimsonPro-Italic.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/CrimsonPro-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/CrimsonPro-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/CrimsonPro-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/CrimsonPro-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/DMMono-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/DMMono-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/DMMono-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/DMMono-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/EricaOne-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/EricaOne-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/EricaOne-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/EricaOne-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/GeistMono-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/GeistMono-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/GeistMono-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/GeistMono-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/GeistMono-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/GeistMono-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Gloock-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/Gloock-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/Gloock-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/Gloock-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/IBMPlexMono-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/IBMPlexMono-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/IBMPlexMono-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/IBMPlexMono-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/IBMPlexMono-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/IBMPlexMono-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/IBMPlexSerif-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/IBMPlexSerif-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/IBMPlexSerif-BoldItalic.ttf | .kilocode/skills/canvas-design/canvas-fonts/IBMPlexSerif-BoldItalic.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/IBMPlexSerif-Italic.ttf | .kilocode/skills/canvas-design/canvas-fonts/IBMPlexSerif-Italic.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/IBMPlexSerif-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/IBMPlexSerif-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/InstrumentSans-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/InstrumentSans-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/InstrumentSans-BoldItalic.ttf | .kilocode/skills/canvas-design/canvas-fonts/InstrumentSans-BoldItalic.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/InstrumentSans-Italic.ttf | .kilocode/skills/canvas-design/canvas-fonts/InstrumentSans-Italic.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/InstrumentSans-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/InstrumentSans-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/InstrumentSans-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/InstrumentSans-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/InstrumentSerif-Italic.ttf | .kilocode/skills/canvas-design/canvas-fonts/InstrumentSerif-Italic.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/InstrumentSerif-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/InstrumentSerif-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Italiana-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/Italiana-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/Italiana-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/Italiana-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/JetBrainsMono-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/JetBrainsMono-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/JetBrainsMono-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/JetBrainsMono-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/JetBrainsMono-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/JetBrainsMono-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Jura-Light.ttf | .kilocode/skills/canvas-design/canvas-fonts/Jura-Light.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Jura-Medium.ttf | .kilocode/skills/canvas-design/canvas-fonts/Jura-Medium.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Jura-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/Jura-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/LibreBaskerville-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/LibreBaskerville-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/LibreBaskerville-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/LibreBaskerville-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Lora-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/Lora-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Lora-BoldItalic.ttf | .kilocode/skills/canvas-design/canvas-fonts/Lora-BoldItalic.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Lora-Italic.ttf | .kilocode/skills/canvas-design/canvas-fonts/Lora-Italic.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Lora-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/Lora-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/Lora-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/Lora-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/NationalPark-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/NationalPark-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/NationalPark-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/NationalPark-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/NationalPark-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/NationalPark-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/NothingYouCouldDo-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/NothingYouCouldDo-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/NothingYouCouldDo-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/NothingYouCouldDo-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Outfit-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/Outfit-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Outfit-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/Outfit-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/Outfit-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/Outfit-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/PixelifySans-Medium.ttf | .kilocode/skills/canvas-design/canvas-fonts/PixelifySans-Medium.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/PixelifySans-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/PixelifySans-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/PoiretOne-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/PoiretOne-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/PoiretOne-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/PoiretOne-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/RedHatMono-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/RedHatMono-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/RedHatMono-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/RedHatMono-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/RedHatMono-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/RedHatMono-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Silkscreen-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/Silkscreen-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/Silkscreen-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/Silkscreen-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/SmoochSans-Medium.ttf | .kilocode/skills/canvas-design/canvas-fonts/SmoochSans-Medium.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/SmoochSans-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/SmoochSans-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/Tektur-Medium.ttf | .kilocode/skills/canvas-design/canvas-fonts/Tektur-Medium.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/Tektur-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/Tektur-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/Tektur-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/Tektur-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/WorkSans-Bold.ttf | .kilocode/skills/canvas-design/canvas-fonts/WorkSans-Bold.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/WorkSans-BoldItalic.ttf | .kilocode/skills/canvas-design/canvas-fonts/WorkSans-BoldItalic.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/WorkSans-Italic.ttf | .kilocode/skills/canvas-design/canvas-fonts/WorkSans-Italic.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/WorkSans-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/WorkSans-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/WorkSans-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/WorkSans-Regular.ttf |
+| .kilocode/skills/canvas-design/canvas-fonts/YoungSerif-OFL.txt | .kilocode/skills/canvas-design/canvas-fonts/YoungSerif-OFL.txt |
+| .kilocode/skills/canvas-design/canvas-fonts/YoungSerif-Regular.ttf | .kilocode/skills/canvas-design/canvas-fonts/YoungSerif-Regular.ttf |
+| .kilocode/skills/canvas-design/LICENSE.txt | .kilocode/skills/canvas-design/LICENSE.txt |
+| .kilocode/skills/canvas-design/SKILL.md | .kilocode/skills/canvas-design/SKILL.md |
+| .kilocode/skills/cloudflare/references/agents-sdk/api.md | .kilocode/skills/cloudflare/references/agents-sdk/api.md |
+| .kilocode/skills/cloudflare/references/agents-sdk/configuration.md | .kilocode/skills/cloudflare/references/agents-sdk/configuration.md |
+| .kilocode/skills/cloudflare/references/agents-sdk/gotchas.md | .kilocode/skills/cloudflare/references/agents-sdk/gotchas.md |
+| .kilocode/skills/cloudflare/references/agents-sdk/patterns.md | .kilocode/skills/cloudflare/references/agents-sdk/patterns.md |
+| .kilocode/skills/cloudflare/references/ai-gateway/configuration.md | .kilocode/skills/cloudflare/references/ai-gateway/configuration.md |
+| .kilocode/skills/cloudflare/references/ai-gateway/dynamic-routing.md | .kilocode/skills/cloudflare/references/ai-gateway/dynamic-routing.md |
+| .kilocode/skills/cloudflare/references/ai-gateway/features.md | .kilocode/skills/cloudflare/references/ai-gateway/features.md |
+| .kilocode/skills/cloudflare/references/ai-gateway/sdk-integration.md | .kilocode/skills/cloudflare/references/ai-gateway/sdk-integration.md |
+| .kilocode/skills/cloudflare/references/ai-gateway/troubleshooting.md | .kilocode/skills/cloudflare/references/ai-gateway/troubleshooting.md |
+| .kilocode/skills/cloudflare/references/ai-search/api.md | .kilocode/skills/cloudflare/references/ai-search/api.md |
+| .kilocode/skills/cloudflare/references/ai-search/configuration.md | .kilocode/skills/cloudflare/references/ai-search/configuration.md |
+| .kilocode/skills/cloudflare/references/ai-search/gotchas.md | .kilocode/skills/cloudflare/references/ai-search/gotchas.md |
+| .kilocode/skills/cloudflare/references/ai-search/patterns.md | .kilocode/skills/cloudflare/references/ai-search/patterns.md |
+| .kilocode/skills/cloudflare/references/analytics-engine/api.md | .kilocode/skills/cloudflare/references/analytics-engine/api.md |
+| .kilocode/skills/cloudflare/references/analytics-engine/configuration.md | .kilocode/skills/cloudflare/references/analytics-engine/configuration.md |
+| .kilocode/skills/cloudflare/references/analytics-engine/gotchas.md | .kilocode/skills/cloudflare/references/analytics-engine/gotchas.md |
+| .kilocode/skills/cloudflare/references/analytics-engine/patterns.md | .kilocode/skills/cloudflare/references/analytics-engine/patterns.md |
+| .kilocode/skills/cloudflare/references/api/api.md | .kilocode/skills/cloudflare/references/api/api.md |
+| .kilocode/skills/cloudflare/references/api/configuration.md | .kilocode/skills/cloudflare/references/api/configuration.md |
+| .kilocode/skills/cloudflare/references/api/gotchas.md | .kilocode/skills/cloudflare/references/api/gotchas.md |
+| .kilocode/skills/cloudflare/references/api/patterns.md | .kilocode/skills/cloudflare/references/api/patterns.md |
+| .kilocode/skills/cloudflare/references/api-shield/api.md | .kilocode/skills/cloudflare/references/api-shield/api.md |
+| .kilocode/skills/cloudflare/references/api-shield/configuration.md | .kilocode/skills/cloudflare/references/api-shield/configuration.md |
+| .kilocode/skills/cloudflare/references/api-shield/gotchas.md | .kilocode/skills/cloudflare/references/api-shield/gotchas.md |
+| .kilocode/skills/cloudflare/references/api-shield/patterns.md | .kilocode/skills/cloudflare/references/api-shield/patterns.md |
+| .kilocode/skills/cloudflare/references/argo-smart-routing/api.md | .kilocode/skills/cloudflare/references/argo-smart-routing/api.md |
+| .kilocode/skills/cloudflare/references/argo-smart-routing/configuration.md | .kilocode/skills/cloudflare/references/argo-smart-routing/configuration.md |
+| .kilocode/skills/cloudflare/references/argo-smart-routing/gotchas.md | .kilocode/skills/cloudflare/references/argo-smart-routing/gotchas.md |
+| .kilocode/skills/cloudflare/references/argo-smart-routing/patterns.md | .kilocode/skills/cloudflare/references/argo-smart-routing/patterns.md |
+| .kilocode/skills/cloudflare/references/bindings/api.md | .kilocode/skills/cloudflare/references/bindings/api.md |
+| .kilocode/skills/cloudflare/references/bindings/configuration.md | .kilocode/skills/cloudflare/references/bindings/configuration.md |
+| .kilocode/skills/cloudflare/references/bindings/gotchas.md | .kilocode/skills/cloudflare/references/bindings/gotchas.md |
+| .kilocode/skills/cloudflare/references/bindings/patterns.md | .kilocode/skills/cloudflare/references/bindings/patterns.md |
+| .kilocode/skills/cloudflare/references/bot-management/api.md | .kilocode/skills/cloudflare/references/bot-management/api.md |
+| .kilocode/skills/cloudflare/references/bot-management/configuration.md | .kilocode/skills/cloudflare/references/bot-management/configuration.md |
+| .kilocode/skills/cloudflare/references/bot-management/gotchas.md | .kilocode/skills/cloudflare/references/bot-management/gotchas.md |
+| .kilocode/skills/cloudflare/references/bot-management/patterns.md | .kilocode/skills/cloudflare/references/bot-management/patterns.md |
+| .kilocode/skills/cloudflare/references/browser-rendering/api.md | .kilocode/skills/cloudflare/references/browser-rendering/api.md |
+| .kilocode/skills/cloudflare/references/browser-rendering/configuration.md | .kilocode/skills/cloudflare/references/browser-rendering/configuration.md |
+| .kilocode/skills/cloudflare/references/browser-rendering/gotchas.md | .kilocode/skills/cloudflare/references/browser-rendering/gotchas.md |
+| .kilocode/skills/cloudflare/references/browser-rendering/patterns.md | .kilocode/skills/cloudflare/references/browser-rendering/patterns.md |
+| .kilocode/skills/cloudflare/references/c3/api.md | .kilocode/skills/cloudflare/references/c3/api.md |
+| .kilocode/skills/cloudflare/references/c3/configuration.md | .kilocode/skills/cloudflare/references/c3/configuration.md |
+| .kilocode/skills/cloudflare/references/c3/gotchas.md | .kilocode/skills/cloudflare/references/c3/gotchas.md |
+| .kilocode/skills/cloudflare/references/c3/patterns.md | .kilocode/skills/cloudflare/references/c3/patterns.md |
+| .kilocode/skills/cloudflare/references/cache-reserve/api.md | .kilocode/skills/cloudflare/references/cache-reserve/api.md |
+| .kilocode/skills/cloudflare/references/cache-reserve/configuration.md | .kilocode/skills/cloudflare/references/cache-reserve/configuration.md |
+| .kilocode/skills/cloudflare/references/cache-reserve/gotchas.md | .kilocode/skills/cloudflare/references/cache-reserve/gotchas.md |
+| .kilocode/skills/cloudflare/references/cache-reserve/patterns.md | .kilocode/skills/cloudflare/references/cache-reserve/patterns.md |
+| .kilocode/skills/cloudflare/references/containers/api.md | .kilocode/skills/cloudflare/references/containers/api.md |
+| .kilocode/skills/cloudflare/references/containers/configuration.md | .kilocode/skills/cloudflare/references/containers/configuration.md |
+| .kilocode/skills/cloudflare/references/containers/gotchas.md | .kilocode/skills/cloudflare/references/containers/gotchas.md |
+| .kilocode/skills/cloudflare/references/containers/patterns.md | .kilocode/skills/cloudflare/references/containers/patterns.md |
+| .kilocode/skills/cloudflare/references/cron-triggers/api.md | .kilocode/skills/cloudflare/references/cron-triggers/api.md |
+| .kilocode/skills/cloudflare/references/cron-triggers/configuration.md | .kilocode/skills/cloudflare/references/cron-triggers/configuration.md |
+| .kilocode/skills/cloudflare/references/cron-triggers/gotchas.md | .kilocode/skills/cloudflare/references/cron-triggers/gotchas.md |
+| .kilocode/skills/cloudflare/references/cron-triggers/patterns.md | .kilocode/skills/cloudflare/references/cron-triggers/patterns.md |
+| .kilocode/skills/cloudflare/references/d1/api.md | .kilocode/skills/cloudflare/references/d1/api.md |
+| .kilocode/skills/cloudflare/references/d1/configuration.md | .kilocode/skills/cloudflare/references/d1/configuration.md |
+| .kilocode/skills/cloudflare/references/d1/gotchas.md | .kilocode/skills/cloudflare/references/d1/gotchas.md |
+| .kilocode/skills/cloudflare/references/d1/patterns.md | .kilocode/skills/cloudflare/references/d1/patterns.md |
+| .kilocode/skills/cloudflare/references/ddos/api.md | .kilocode/skills/cloudflare/references/ddos/api.md |
+| .kilocode/skills/cloudflare/references/ddos/configuration.md | .kilocode/skills/cloudflare/references/ddos/configuration.md |
+| .kilocode/skills/cloudflare/references/ddos/gotchas.md | .kilocode/skills/cloudflare/references/ddos/gotchas.md |
+| .kilocode/skills/cloudflare/references/ddos/patterns.md | .kilocode/skills/cloudflare/references/ddos/patterns.md |
+| .kilocode/skills/cloudflare/references/do-storage/api.md | .kilocode/skills/cloudflare/references/do-storage/api.md |
+| .kilocode/skills/cloudflare/references/do-storage/configuration.md | .kilocode/skills/cloudflare/references/do-storage/configuration.md |
+| .kilocode/skills/cloudflare/references/do-storage/gotchas.md | .kilocode/skills/cloudflare/references/do-storage/gotchas.md |
+| .kilocode/skills/cloudflare/references/do-storage/patterns.md | .kilocode/skills/cloudflare/references/do-storage/patterns.md |
+| .kilocode/skills/cloudflare/references/do-storage/testing.md | .kilocode/skills/cloudflare/references/do-storage/testing.md |
+| .kilocode/skills/cloudflare/references/durable-objects/api.md | .kilocode/skills/cloudflare/references/durable-objects/api.md |
+| .kilocode/skills/cloudflare/references/durable-objects/configuration.md | .kilocode/skills/cloudflare/references/durable-objects/configuration.md |
+| .kilocode/skills/cloudflare/references/durable-objects/gotchas.md | .kilocode/skills/cloudflare/references/durable-objects/gotchas.md |
+| .kilocode/skills/cloudflare/references/durable-objects/patterns.md | .kilocode/skills/cloudflare/references/durable-objects/patterns.md |
+| .kilocode/skills/cloudflare/references/email-routing/api.md | .kilocode/skills/cloudflare/references/email-routing/api.md |
+| .kilocode/skills/cloudflare/references/email-routing/configuration.md | .kilocode/skills/cloudflare/references/email-routing/configuration.md |
+| .kilocode/skills/cloudflare/references/email-routing/gotchas.md | .kilocode/skills/cloudflare/references/email-routing/gotchas.md |
+| .kilocode/skills/cloudflare/references/email-routing/patterns.md | .kilocode/skills/cloudflare/references/email-routing/patterns.md |
+| .kilocode/skills/cloudflare/references/email-workers/api.md | .kilocode/skills/cloudflare/references/email-workers/api.md |
+| .kilocode/skills/cloudflare/references/email-workers/configuration.md | .kilocode/skills/cloudflare/references/email-workers/configuration.md |
+| .kilocode/skills/cloudflare/references/email-workers/gotchas.md | .kilocode/skills/cloudflare/references/email-workers/gotchas.md |
+| .kilocode/skills/cloudflare/references/email-workers/patterns.md | .kilocode/skills/cloudflare/references/email-workers/patterns.md |
+| .kilocode/skills/cloudflare/references/hyperdrive/api.md | .kilocode/skills/cloudflare/references/hyperdrive/api.md |
+| .kilocode/skills/cloudflare/references/hyperdrive/configuration.md | .kilocode/skills/cloudflare/references/hyperdrive/configuration.md |
+| .kilocode/skills/cloudflare/references/hyperdrive/gotchas.md | .kilocode/skills/cloudflare/references/hyperdrive/gotchas.md |
+| .kilocode/skills/cloudflare/references/hyperdrive/patterns.md | .kilocode/skills/cloudflare/references/hyperdrive/patterns.md |
+| .kilocode/skills/cloudflare/references/images/api.md | .kilocode/skills/cloudflare/references/images/api.md |
+| .kilocode/skills/cloudflare/references/images/configuration.md | .kilocode/skills/cloudflare/references/images/configuration.md |
+| .kilocode/skills/cloudflare/references/images/gotchas.md | .kilocode/skills/cloudflare/references/images/gotchas.md |
+| .kilocode/skills/cloudflare/references/images/patterns.md | .kilocode/skills/cloudflare/references/images/patterns.md |
+| .kilocode/skills/cloudflare/references/kv/api.md | .kilocode/skills/cloudflare/references/kv/api.md |
+| .kilocode/skills/cloudflare/references/kv/configuration.md | .kilocode/skills/cloudflare/references/kv/configuration.md |
+| .kilocode/skills/cloudflare/references/kv/gotchas.md | .kilocode/skills/cloudflare/references/kv/gotchas.md |
+| .kilocode/skills/cloudflare/references/kv/patterns.md | .kilocode/skills/cloudflare/references/kv/patterns.md |
+| .kilocode/skills/cloudflare/references/miniflare/api.md | .kilocode/skills/cloudflare/references/miniflare/api.md |
+| .kilocode/skills/cloudflare/references/miniflare/configuration.md | .kilocode/skills/cloudflare/references/miniflare/configuration.md |
+| .kilocode/skills/cloudflare/references/miniflare/gotchas.md | .kilocode/skills/cloudflare/references/miniflare/gotchas.md |
+| .kilocode/skills/cloudflare/references/miniflare/patterns.md | .kilocode/skills/cloudflare/references/miniflare/patterns.md |
+| .kilocode/skills/cloudflare/references/network-interconnect/api.md | .kilocode/skills/cloudflare/references/network-interconnect/api.md |
+| .kilocode/skills/cloudflare/references/network-interconnect/configuration.md | .kilocode/skills/cloudflare/references/network-interconnect/configuration.md |
+| .kilocode/skills/cloudflare/references/network-interconnect/gotchas.md | .kilocode/skills/cloudflare/references/network-interconnect/gotchas.md |
+| .kilocode/skills/cloudflare/references/network-interconnect/patterns.md | .kilocode/skills/cloudflare/references/network-interconnect/patterns.md |
+| .kilocode/skills/cloudflare/references/observability/api.md | .kilocode/skills/cloudflare/references/observability/api.md |
+| .kilocode/skills/cloudflare/references/observability/configuration.md | .kilocode/skills/cloudflare/references/observability/configuration.md |
+| .kilocode/skills/cloudflare/references/observability/gotchas.md | .kilocode/skills/cloudflare/references/observability/gotchas.md |
+| .kilocode/skills/cloudflare/references/observability/patterns.md | .kilocode/skills/cloudflare/references/observability/patterns.md |
+| .kilocode/skills/cloudflare/references/pages/api.md | .kilocode/skills/cloudflare/references/pages/api.md |
+| .kilocode/skills/cloudflare/references/pages/configuration.md | .kilocode/skills/cloudflare/references/pages/configuration.md |
+| .kilocode/skills/cloudflare/references/pages/gotchas.md | .kilocode/skills/cloudflare/references/pages/gotchas.md |
+| .kilocode/skills/cloudflare/references/pages/patterns.md | .kilocode/skills/cloudflare/references/pages/patterns.md |
+| .kilocode/skills/cloudflare/references/pages-functions/api.md | .kilocode/skills/cloudflare/references/pages-functions/api.md |
+| .kilocode/skills/cloudflare/references/pages-functions/configuration.md | .kilocode/skills/cloudflare/references/pages-functions/configuration.md |
+| .kilocode/skills/cloudflare/references/pages-functions/gotchas.md | .kilocode/skills/cloudflare/references/pages-functions/gotchas.md |
+| .kilocode/skills/cloudflare/references/pages-functions/patterns.md | .kilocode/skills/cloudflare/references/pages-functions/patterns.md |
+| .kilocode/skills/cloudflare/references/pipelines/api.md | .kilocode/skills/cloudflare/references/pipelines/api.md |
+| .kilocode/skills/cloudflare/references/pipelines/configuration.md | .kilocode/skills/cloudflare/references/pipelines/configuration.md |
+| .kilocode/skills/cloudflare/references/pipelines/gotchas.md | .kilocode/skills/cloudflare/references/pipelines/gotchas.md |
+| .kilocode/skills/cloudflare/references/pipelines/patterns.md | .kilocode/skills/cloudflare/references/pipelines/patterns.md |
+| .kilocode/skills/cloudflare/references/pulumi/api.md | .kilocode/skills/cloudflare/references/pulumi/api.md |
+| .kilocode/skills/cloudflare/references/pulumi/configuration.md | .kilocode/skills/cloudflare/references/pulumi/configuration.md |
+| .kilocode/skills/cloudflare/references/pulumi/gotchas.md | .kilocode/skills/cloudflare/references/pulumi/gotchas.md |
+| .kilocode/skills/cloudflare/references/pulumi/patterns.md | .kilocode/skills/cloudflare/references/pulumi/patterns.md |
+| .kilocode/skills/cloudflare/references/queues/api.md | .kilocode/skills/cloudflare/references/queues/api.md |
+| .kilocode/skills/cloudflare/references/queues/configuration.md | .kilocode/skills/cloudflare/references/queues/configuration.md |
+| .kilocode/skills/cloudflare/references/queues/gotchas.md | .kilocode/skills/cloudflare/references/queues/gotchas.md |
+| .kilocode/skills/cloudflare/references/queues/patterns.md | .kilocode/skills/cloudflare/references/queues/patterns.md |
+| .kilocode/skills/cloudflare/references/r2/api.md | .kilocode/skills/cloudflare/references/r2/api.md |
+| .kilocode/skills/cloudflare/references/r2/configuration.md | .kilocode/skills/cloudflare/references/r2/configuration.md |
+| .kilocode/skills/cloudflare/references/r2/gotchas.md | .kilocode/skills/cloudflare/references/r2/gotchas.md |
+| .kilocode/skills/cloudflare/references/r2/patterns.md | .kilocode/skills/cloudflare/references/r2/patterns.md |
+| .kilocode/skills/cloudflare/references/r2-data-catalog/api.md | .kilocode/skills/cloudflare/references/r2-data-catalog/api.md |
+| .kilocode/skills/cloudflare/references/r2-data-catalog/configuration.md | .kilocode/skills/cloudflare/references/r2-data-catalog/configuration.md |
+| .kilocode/skills/cloudflare/references/r2-data-catalog/gotchas.md | .kilocode/skills/cloudflare/references/r2-data-catalog/gotchas.md |
+| .kilocode/skills/cloudflare/references/r2-data-catalog/patterns.md | .kilocode/skills/cloudflare/references/r2-data-catalog/patterns.md |
+| .kilocode/skills/cloudflare/references/r2-sql/api.md | .kilocode/skills/cloudflare/references/r2-sql/api.md |
+| .kilocode/skills/cloudflare/references/r2-sql/configuration.md | .kilocode/skills/cloudflare/references/r2-sql/configuration.md |
+| .kilocode/skills/cloudflare/references/r2-sql/gotchas.md | .kilocode/skills/cloudflare/references/r2-sql/gotchas.md |
+| .kilocode/skills/cloudflare/references/r2-sql/patterns.md | .kilocode/skills/cloudflare/references/r2-sql/patterns.md |
+| .kilocode/skills/cloudflare/references/realtimekit/api.md | .kilocode/skills/cloudflare/references/realtimekit/api.md |
+| .kilocode/skills/cloudflare/references/realtimekit/configuration.md | .kilocode/skills/cloudflare/references/realtimekit/configuration.md |
+| .kilocode/skills/cloudflare/references/realtimekit/gotchas.md | .kilocode/skills/cloudflare/references/realtimekit/gotchas.md |
+| .kilocode/skills/cloudflare/references/realtimekit/patterns.md | .kilocode/skills/cloudflare/references/realtimekit/patterns.md |
+| .kilocode/skills/cloudflare/references/realtime-sfu/api.md | .kilocode/skills/cloudflare/references/realtime-sfu/api.md |
+| .kilocode/skills/cloudflare/references/realtime-sfu/configuration.md | .kilocode/skills/cloudflare/references/realtime-sfu/configuration.md |
+| .kilocode/skills/cloudflare/references/realtime-sfu/gotchas.md | .kilocode/skills/cloudflare/references/realtime-sfu/gotchas.md |
+| .kilocode/skills/cloudflare/references/realtime-sfu/patterns.md | .kilocode/skills/cloudflare/references/realtime-sfu/patterns.md |
+| .kilocode/skills/cloudflare/references/sandbox/api.md | .kilocode/skills/cloudflare/references/sandbox/api.md |
+| .kilocode/skills/cloudflare/references/sandbox/configuration.md | .kilocode/skills/cloudflare/references/sandbox/configuration.md |
+| .kilocode/skills/cloudflare/references/sandbox/gotchas.md | .kilocode/skills/cloudflare/references/sandbox/gotchas.md |
+| .kilocode/skills/cloudflare/references/sandbox/patterns.md | .kilocode/skills/cloudflare/references/sandbox/patterns.md |
+| .kilocode/skills/cloudflare/references/secrets-store/api.md | .kilocode/skills/cloudflare/references/secrets-store/api.md |
+| .kilocode/skills/cloudflare/references/secrets-store/configuration.md | .kilocode/skills/cloudflare/references/secrets-store/configuration.md |
+| .kilocode/skills/cloudflare/references/secrets-store/gotchas.md | .kilocode/skills/cloudflare/references/secrets-store/gotchas.md |
+| .kilocode/skills/cloudflare/references/secrets-store/patterns.md | .kilocode/skills/cloudflare/references/secrets-store/patterns.md |
+| .kilocode/skills/cloudflare/references/smart-placement/api.md | .kilocode/skills/cloudflare/references/smart-placement/api.md |
+| .kilocode/skills/cloudflare/references/smart-placement/configuration.md | .kilocode/skills/cloudflare/references/smart-placement/configuration.md |
+| .kilocode/skills/cloudflare/references/smart-placement/gotchas.md | .kilocode/skills/cloudflare/references/smart-placement/gotchas.md |
+| .kilocode/skills/cloudflare/references/smart-placement/patterns.md | .kilocode/skills/cloudflare/references/smart-placement/patterns.md |
+| .kilocode/skills/cloudflare/references/snippets/api.md | .kilocode/skills/cloudflare/references/snippets/api.md |
+| .kilocode/skills/cloudflare/references/snippets/configuration.md | .kilocode/skills/cloudflare/references/snippets/configuration.md |
+| .kilocode/skills/cloudflare/references/snippets/gotchas.md | .kilocode/skills/cloudflare/references/snippets/gotchas.md |
+| .kilocode/skills/cloudflare/references/snippets/patterns.md | .kilocode/skills/cloudflare/references/snippets/patterns.md |
+| .kilocode/skills/cloudflare/references/spectrum/api.md | .kilocode/skills/cloudflare/references/spectrum/api.md |
+| .kilocode/skills/cloudflare/references/spectrum/configuration.md | .kilocode/skills/cloudflare/references/spectrum/configuration.md |
+| .kilocode/skills/cloudflare/references/spectrum/gotchas.md | .kilocode/skills/cloudflare/references/spectrum/gotchas.md |
+| .kilocode/skills/cloudflare/references/spectrum/patterns.md | .kilocode/skills/cloudflare/references/spectrum/patterns.md |
+| .kilocode/skills/cloudflare/references/static-assets/api.md | .kilocode/skills/cloudflare/references/static-assets/api.md |
+| .kilocode/skills/cloudflare/references/static-assets/configuration.md | .kilocode/skills/cloudflare/references/static-assets/configuration.md |
+| .kilocode/skills/cloudflare/references/static-assets/gotchas.md | .kilocode/skills/cloudflare/references/static-assets/gotchas.md |
+| .kilocode/skills/cloudflare/references/static-assets/patterns.md | .kilocode/skills/cloudflare/references/static-assets/patterns.md |
+| .kilocode/skills/cloudflare/references/stream/api.md | .kilocode/skills/cloudflare/references/stream/api.md |
+| .kilocode/skills/cloudflare/references/stream/api-live.md | .kilocode/skills/cloudflare/references/stream/api-live.md |
+| .kilocode/skills/cloudflare/references/stream/configuration.md | .kilocode/skills/cloudflare/references/stream/configuration.md |
+| .kilocode/skills/cloudflare/references/stream/gotchas.md | .kilocode/skills/cloudflare/references/stream/gotchas.md |
+| .kilocode/skills/cloudflare/references/stream/patterns.md | .kilocode/skills/cloudflare/references/stream/patterns.md |
+| .kilocode/skills/cloudflare/references/tail-workers/api.md | .kilocode/skills/cloudflare/references/tail-workers/api.md |
+| .kilocode/skills/cloudflare/references/tail-workers/configuration.md | .kilocode/skills/cloudflare/references/tail-workers/configuration.md |
+| .kilocode/skills/cloudflare/references/tail-workers/gotchas.md | .kilocode/skills/cloudflare/references/tail-workers/gotchas.md |
+| .kilocode/skills/cloudflare/references/tail-workers/patterns.md | .kilocode/skills/cloudflare/references/tail-workers/patterns.md |
+| .kilocode/skills/cloudflare/references/terraform/api.md | .kilocode/skills/cloudflare/references/terraform/api.md |
+| .kilocode/skills/cloudflare/references/terraform/configuration.md | .kilocode/skills/cloudflare/references/terraform/configuration.md |
+| .kilocode/skills/cloudflare/references/terraform/gotchas.md | .kilocode/skills/cloudflare/references/terraform/gotchas.md |
+| .kilocode/skills/cloudflare/references/terraform/patterns.md | .kilocode/skills/cloudflare/references/terraform/patterns.md |
+| .kilocode/skills/cloudflare/references/tunnel/api.md | .kilocode/skills/cloudflare/references/tunnel/api.md |
+| .kilocode/skills/cloudflare/references/tunnel/configuration.md | .kilocode/skills/cloudflare/references/tunnel/configuration.md |
+| .kilocode/skills/cloudflare/references/tunnel/gotchas.md | .kilocode/skills/cloudflare/references/tunnel/gotchas.md |
+| .kilocode/skills/cloudflare/references/tunnel/networking.md | .kilocode/skills/cloudflare/references/tunnel/networking.md |
+| .kilocode/skills/cloudflare/references/tunnel/patterns.md | .kilocode/skills/cloudflare/references/tunnel/patterns.md |
+| .kilocode/skills/cloudflare/references/turn/api.md | .kilocode/skills/cloudflare/references/turn/api.md |
+| .kilocode/skills/cloudflare/references/turn/configuration.md | .kilocode/skills/cloudflare/references/turn/configuration.md |
+| .kilocode/skills/cloudflare/references/turn/gotchas.md | .kilocode/skills/cloudflare/references/turn/gotchas.md |
+| .kilocode/skills/cloudflare/references/turn/patterns.md | .kilocode/skills/cloudflare/references/turn/patterns.md |
+| .kilocode/skills/cloudflare/references/turnstile/api.md | .kilocode/skills/cloudflare/references/turnstile/api.md |
+| .kilocode/skills/cloudflare/references/turnstile/configuration.md | .kilocode/skills/cloudflare/references/turnstile/configuration.md |
+| .kilocode/skills/cloudflare/references/turnstile/gotchas.md | .kilocode/skills/cloudflare/references/turnstile/gotchas.md |
+| .kilocode/skills/cloudflare/references/turnstile/patterns.md | .kilocode/skills/cloudflare/references/turnstile/patterns.md |
+| .kilocode/skills/cloudflare/references/vectorize/api.md | .kilocode/skills/cloudflare/references/vectorize/api.md |
+| .kilocode/skills/cloudflare/references/vectorize/configuration.md | .kilocode/skills/cloudflare/references/vectorize/configuration.md |
+| .kilocode/skills/cloudflare/references/vectorize/gotchas.md | .kilocode/skills/cloudflare/references/vectorize/gotchas.md |
+| .kilocode/skills/cloudflare/references/vectorize/patterns.md | .kilocode/skills/cloudflare/references/vectorize/patterns.md |
+| .kilocode/skills/cloudflare/references/waf/api.md | .kilocode/skills/cloudflare/references/waf/api.md |
+| .kilocode/skills/cloudflare/references/waf/configuration.md | .kilocode/skills/cloudflare/references/waf/configuration.md |
+| .kilocode/skills/cloudflare/references/waf/gotchas.md | .kilocode/skills/cloudflare/references/waf/gotchas.md |
+| .kilocode/skills/cloudflare/references/waf/patterns.md | .kilocode/skills/cloudflare/references/waf/patterns.md |
+| .kilocode/skills/cloudflare/references/web-analytics/configuration.md | .kilocode/skills/cloudflare/references/web-analytics/configuration.md |
+| .kilocode/skills/cloudflare/references/web-analytics/gotchas.md | .kilocode/skills/cloudflare/references/web-analytics/gotchas.md |
+| .kilocode/skills/cloudflare/references/web-analytics/integration.md | .kilocode/skills/cloudflare/references/web-analytics/integration.md |
+| .kilocode/skills/cloudflare/references/web-analytics/patterns.md | .kilocode/skills/cloudflare/references/web-analytics/patterns.md |
+| .kilocode/skills/cloudflare/references/workerd/api.md | .kilocode/skills/cloudflare/references/workerd/api.md |
+| .kilocode/skills/cloudflare/references/workerd/configuration.md | .kilocode/skills/cloudflare/references/workerd/configuration.md |
+| .kilocode/skills/cloudflare/references/workerd/gotchas.md | .kilocode/skills/cloudflare/references/workerd/gotchas.md |
+| .kilocode/skills/cloudflare/references/workerd/patterns.md | .kilocode/skills/cloudflare/references/workerd/patterns.md |
+| .kilocode/skills/cloudflare/references/workers/api.md | .kilocode/skills/cloudflare/references/workers/api.md |
+| .kilocode/skills/cloudflare/references/workers/configuration.md | .kilocode/skills/cloudflare/references/workers/configuration.md |
+| .kilocode/skills/cloudflare/references/workers/frameworks.md | .kilocode/skills/cloudflare/references/workers/frameworks.md |
+| .kilocode/skills/cloudflare/references/workers/gotchas.md | .kilocode/skills/cloudflare/references/workers/gotchas.md |
+| .kilocode/skills/cloudflare/references/workers/patterns.md | .kilocode/skills/cloudflare/references/workers/patterns.md |
+| .kilocode/skills/cloudflare/references/workers-ai/api.md | .kilocode/skills/cloudflare/references/workers-ai/api.md |
+| .kilocode/skills/cloudflare/references/workers-ai/configuration.md | .kilocode/skills/cloudflare/references/workers-ai/configuration.md |
+| .kilocode/skills/cloudflare/references/workers-ai/gotchas.md | .kilocode/skills/cloudflare/references/workers-ai/gotchas.md |
+| .kilocode/skills/cloudflare/references/workers-ai/patterns.md | .kilocode/skills/cloudflare/references/workers-ai/patterns.md |
+| .kilocode/skills/cloudflare/references/workers-for-platforms/api.md | .kilocode/skills/cloudflare/references/workers-for-platforms/api.md |
+| .kilocode/skills/cloudflare/references/workers-for-platforms/configuration.md | .kilocode/skills/cloudflare/references/workers-for-platforms/configuration.md |
+| .kilocode/skills/cloudflare/references/workers-for-platforms/gotchas.md | .kilocode/skills/cloudflare/references/workers-for-platforms/gotchas.md |
+| .kilocode/skills/cloudflare/references/workers-for-platforms/patterns.md | .kilocode/skills/cloudflare/references/workers-for-platforms/patterns.md |
+| .kilocode/skills/cloudflare/references/workers-playground/api.md | .kilocode/skills/cloudflare/references/workers-playground/api.md |
+| .kilocode/skills/cloudflare/references/workers-playground/configuration.md | .kilocode/skills/cloudflare/references/workers-playground/configuration.md |
+| .kilocode/skills/cloudflare/references/workers-playground/gotchas.md | .kilocode/skills/cloudflare/references/workers-playground/gotchas.md |
+| .kilocode/skills/cloudflare/references/workers-playground/patterns.md | .kilocode/skills/cloudflare/references/workers-playground/patterns.md |
+| .kilocode/skills/cloudflare/references/workers-vpc/api.md | .kilocode/skills/cloudflare/references/workers-vpc/api.md |
+| .kilocode/skills/cloudflare/references/workers-vpc/configuration.md | .kilocode/skills/cloudflare/references/workers-vpc/configuration.md |
+| .kilocode/skills/cloudflare/references/workers-vpc/gotchas.md | .kilocode/skills/cloudflare/references/workers-vpc/gotchas.md |
+| .kilocode/skills/cloudflare/references/workers-vpc/patterns.md | .kilocode/skills/cloudflare/references/workers-vpc/patterns.md |
+| .kilocode/skills/cloudflare/references/workflows/api.md | .kilocode/skills/cloudflare/references/workflows/api.md |
+| .kilocode/skills/cloudflare/references/workflows/configuration.md | .kilocode/skills/cloudflare/references/workflows/configuration.md |
+| .kilocode/skills/cloudflare/references/workflows/gotchas.md | .kilocode/skills/cloudflare/references/workflows/gotchas.md |
+| .kilocode/skills/cloudflare/references/workflows/patterns.md | .kilocode/skills/cloudflare/references/workflows/patterns.md |
+| .kilocode/skills/cloudflare/references/wrangler/api.md | .kilocode/skills/cloudflare/references/wrangler/api.md |
+| .kilocode/skills/cloudflare/references/wrangler/auth.md | .kilocode/skills/cloudflare/references/wrangler/auth.md |
+| .kilocode/skills/cloudflare/references/wrangler/configuration.md | .kilocode/skills/cloudflare/references/wrangler/configuration.md |
+| .kilocode/skills/cloudflare/references/wrangler/gotchas.md | .kilocode/skills/cloudflare/references/wrangler/gotchas.md |
+| .kilocode/skills/cloudflare/references/wrangler/patterns.md | .kilocode/skills/cloudflare/references/wrangler/patterns.md |
+| .kilocode/skills/cloudflare/references/zaraz/api.md | .kilocode/skills/cloudflare/references/zaraz/api.md |
+| .kilocode/skills/cloudflare/references/zaraz/configuration.md | .kilocode/skills/cloudflare/references/zaraz/configuration.md |
+| .kilocode/skills/cloudflare/references/zaraz/gotchas.md | .kilocode/skills/cloudflare/references/zaraz/gotchas.md |
+| .kilocode/skills/cloudflare/references/zaraz/IMPLEMENTATION_SUMMARY.md | .kilocode/skills/cloudflare/references/zaraz/IMPLEMENTATION_SUMMARY.md |
+| .kilocode/skills/cloudflare/references/zaraz/patterns.md | .kilocode/skills/cloudflare/references/zaraz/patterns.md |
+| .kilocode/skills/cloudflare/SKILL.md | .kilocode/skills/cloudflare/SKILL.md |
+| .kilocode/skills/complete-milestone/SKILL.md | .kilocode/skills/complete-milestone/SKILL.md |
+| .kilocode/skills/diagnose-issues/SKILL.md | .kilocode/skills/diagnose-issues/SKILL.md |
+| .kilocode/skills/discovery-phase/SKILL.md | .kilocode/skills/discovery-phase/SKILL.md |
+| .kilocode/skills/discuss-phase/SKILL.md | .kilocode/skills/discuss-phase/SKILL.md |
+| .kilocode/skills/dispatching-parallel-agents/SKILL.md | .kilocode/skills/dispatching-parallel-agents/SKILL.md |
+| .kilocode/skills/documentation-templates/SKILL.md | .kilocode/skills/documentation-templates/SKILL.md |
+| .kilocode/skills/durable-objects/references/rules.md | .kilocode/skills/durable-objects/references/rules.md |
+| .kilocode/skills/durable-objects/references/testing.md | .kilocode/skills/durable-objects/references/testing.md |
+| .kilocode/skills/durable-objects/references/workers.md | .kilocode/skills/durable-objects/references/workers.md |
+| .kilocode/skills/durable-objects/SKILL.md | .kilocode/skills/durable-objects/SKILL.md |
+| .kilocode/skills/execute-phase/SKILL.md | .kilocode/skills/execute-phase/SKILL.md |
+| .kilocode/skills/execute-plan/SKILL.md | .kilocode/skills/execute-plan/SKILL.md |
+| .kilocode/skills/executing-plans/SKILL.md | .kilocode/skills/executing-plans/SKILL.md |
+| .kilocode/skills/find-skills/SKILL.md | .kilocode/skills/find-skills/SKILL.md |
+| .kilocode/skills/frontend-design/LICENSE.txt | .kilocode/skills/frontend-design/LICENSE.txt |
+| .kilocode/skills/frontend-design/SKILL.md | .kilocode/skills/frontend-design/SKILL.md |
+| .kilocode/skills/list-phase-assumptions/SKILL.md | .kilocode/skills/list-phase-assumptions/SKILL.md |
+| .kilocode/skills/map-codebase/SKILL.md | .kilocode/skills/map-codebase/SKILL.md |
+| .kilocode/skills/resume-project/SKILL.md | .kilocode/skills/resume-project/SKILL.md |
+| .kilocode/skills/systematic-debugging/condition-based-waiting.md | .kilocode/skills/systematic-debugging/condition-based-waiting.md |
+| .kilocode/skills/systematic-debugging/condition-based-waiting-example.ts | .kilocode/skills/systematic-debugging/condition-based-waiting-example.ts |
+| .kilocode/skills/systematic-debugging/CREATION-LOG.md | .kilocode/skills/systematic-debugging/CREATION-LOG.md |
+| .kilocode/skills/systematic-debugging/defense-in-depth.md | .kilocode/skills/systematic-debugging/defense-in-depth.md |
+| .kilocode/skills/systematic-debugging/find-polluter.sh | .kilocode/skills/systematic-debugging/find-polluter.sh |
+| .kilocode/skills/systematic-debugging/root-cause-tracing.md | .kilocode/skills/systematic-debugging/root-cause-tracing.md |
+| .kilocode/skills/systematic-debugging/SKILL.md | .kilocode/skills/systematic-debugging/SKILL.md |
+| .kilocode/skills/systematic-debugging/test-academic.md | .kilocode/skills/systematic-debugging/test-academic.md |
+| .kilocode/skills/systematic-debugging/test-pressure-1.md | .kilocode/skills/systematic-debugging/test-pressure-1.md |
+| .kilocode/skills/systematic-debugging/test-pressure-2.md | .kilocode/skills/systematic-debugging/test-pressure-2.md |
+| .kilocode/skills/systematic-debugging/test-pressure-3.md | .kilocode/skills/systematic-debugging/test-pressure-3.md |
+| .kilocode/skills/tanstack-query/.claude-plugin/plugin.json | .kilocode/skills/tanstack-query/.claude-plugin/plugin.json |
+| .kilocode/skills/tanstack-query/assets/example-template.txt | .kilocode/skills/tanstack-query/assets/example-template.txt |
+| .kilocode/skills/tanstack-query/references/best-practices.md | .kilocode/skills/tanstack-query/references/best-practices.md |
+| .kilocode/skills/tanstack-query/references/common-patterns.md | .kilocode/skills/tanstack-query/references/common-patterns.md |
+| .kilocode/skills/tanstack-query/references/example-reference.md | .kilocode/skills/tanstack-query/references/example-reference.md |
+| .kilocode/skills/tanstack-query/references/testing.md | .kilocode/skills/tanstack-query/references/testing.md |
+| .kilocode/skills/tanstack-query/references/top-errors.md | .kilocode/skills/tanstack-query/references/top-errors.md |
+| .kilocode/skills/tanstack-query/references/typescript-patterns.md | .kilocode/skills/tanstack-query/references/typescript-patterns.md |
+| .kilocode/skills/tanstack-query/references/v4-to-v5-migration.md | .kilocode/skills/tanstack-query/references/v4-to-v5-migration.md |
+| .kilocode/skills/tanstack-query/rules/tanstack-query.md | .kilocode/skills/tanstack-query/rules/tanstack-query.md |
+| .kilocode/skills/tanstack-query/scripts/example-script.sh | .kilocode/skills/tanstack-query/scripts/example-script.sh |
+| .kilocode/skills/tanstack-query/SKILL.md | .kilocode/skills/tanstack-query/SKILL.md |
+| .kilocode/skills/tanstack-query/templates/custom-hooks-pattern.tsx | .kilocode/skills/tanstack-query/templates/custom-hooks-pattern.tsx |
+| .kilocode/skills/tanstack-query/templates/devtools-setup.tsx | .kilocode/skills/tanstack-query/templates/devtools-setup.tsx |
+| .kilocode/skills/tanstack-query/templates/error-boundary.tsx | .kilocode/skills/tanstack-query/templates/error-boundary.tsx |
+| .kilocode/skills/tanstack-query/templates/package.json | .kilocode/skills/tanstack-query/templates/package.json |
+| .kilocode/skills/tanstack-query/templates/provider-setup.tsx | .kilocode/skills/tanstack-query/templates/provider-setup.tsx |
+| .kilocode/skills/tanstack-query/templates/query-client-config.ts | .kilocode/skills/tanstack-query/templates/query-client-config.ts |
+| .kilocode/skills/tanstack-query/templates/use-infinite-query.tsx | .kilocode/skills/tanstack-query/templates/use-infinite-query.tsx |
+| .kilocode/skills/tanstack-query/templates/use-mutation-basic.tsx | .kilocode/skills/tanstack-query/templates/use-mutation-basic.tsx |
+| .kilocode/skills/tanstack-query/templates/use-mutation-optimistic.tsx | .kilocode/skills/tanstack-query/templates/use-mutation-optimistic.tsx |
+| .kilocode/skills/tanstack-query/templates/use-query-basic.tsx | .kilocode/skills/tanstack-query/templates/use-query-basic.tsx |
+| .kilocode/skills/tanstack-router/.claude-plugin/plugin.json | .kilocode/skills/tanstack-router/.claude-plugin/plugin.json |
+| .kilocode/skills/tanstack-router/references/common-errors.md | .kilocode/skills/tanstack-router/references/common-errors.md |
+| .kilocode/skills/tanstack-router/rules/tanstack-router.md | .kilocode/skills/tanstack-router/rules/tanstack-router.md |
+| .kilocode/skills/tanstack-router/SKILL.md | .kilocode/skills/tanstack-router/SKILL.md |
+| .kilocode/skills/tanstack-router/templates/package.json | .kilocode/skills/tanstack-router/templates/package.json |
+| .kilocode/skills/tanstack-router/templates/route-examples.tsx | .kilocode/skills/tanstack-router/templates/route-examples.tsx |
+| .kilocode/skills/tanstack-router/templates/vite.config.ts | .kilocode/skills/tanstack-router/templates/vite.config.ts |
+| .kilocode/skills/test-driven-development/SKILL.md | .kilocode/skills/test-driven-development/SKILL.md |
+| .kilocode/skills/test-driven-development/testing-anti-patterns.md | .kilocode/skills/test-driven-development/testing-anti-patterns.md |
+| .kilocode/skills/transition/SKILL.md | .kilocode/skills/transition/SKILL.md |
+| .kilocode/skills/ui-ux-pro-max/data | .kilocode/skills/ui-ux-pro-max/data |
+| .kilocode/skills/ui-ux-pro-max/scripts | .kilocode/skills/ui-ux-pro-max/scripts |
+| .kilocode/skills/ui-ux-pro-max/SKILL.md | .kilocode/skills/ui-ux-pro-max/SKILL.md |
+| .kilocode/skills/using-superpowers/SKILL.md | .kilocode/skills/using-superpowers/SKILL.md |
+| .kilocode/skills/vercel-composition-patterns/AGENTS.md | .kilocode/skills/vercel-composition-patterns/AGENTS.md |
+| .kilocode/skills/vercel-composition-patterns/rules/architecture-avoid-boolean-props.md | .kilocode/skills/vercel-composition-patterns/rules/architecture-avoid-boolean-props.md |
+| .kilocode/skills/vercel-composition-patterns/rules/architecture-compound-components.md | .kilocode/skills/vercel-composition-patterns/rules/architecture-compound-components.md |
+| .kilocode/skills/vercel-composition-patterns/rules/patterns-children-over-render-props.md | .kilocode/skills/vercel-composition-patterns/rules/patterns-children-over-render-props.md |
+| .kilocode/skills/vercel-composition-patterns/rules/patterns-explicit-variants.md | .kilocode/skills/vercel-composition-patterns/rules/patterns-explicit-variants.md |
+| .kilocode/skills/vercel-composition-patterns/rules/react19-no-forwardref.md | .kilocode/skills/vercel-composition-patterns/rules/react19-no-forwardref.md |
+| .kilocode/skills/vercel-composition-patterns/rules/state-context-interface.md | .kilocode/skills/vercel-composition-patterns/rules/state-context-interface.md |
+| .kilocode/skills/vercel-composition-patterns/rules/state-decouple-implementation.md | .kilocode/skills/vercel-composition-patterns/rules/state-decouple-implementation.md |
+| .kilocode/skills/vercel-composition-patterns/rules/state-lift-state.md | .kilocode/skills/vercel-composition-patterns/rules/state-lift-state.md |
+| .kilocode/skills/vercel-composition-patterns/SKILL.md | .kilocode/skills/vercel-composition-patterns/SKILL.md |
+| .kilocode/skills/vercel-react-best-practices/AGENTS.md | .kilocode/skills/vercel-react-best-practices/AGENTS.md |
+| .kilocode/skills/vercel-react-best-practices/rules/advanced-event-handler-refs.md | .kilocode/skills/vercel-react-best-practices/rules/advanced-event-handler-refs.md |
+| .kilocode/skills/vercel-react-best-practices/rules/advanced-init-once.md | .kilocode/skills/vercel-react-best-practices/rules/advanced-init-once.md |
+| .kilocode/skills/vercel-react-best-practices/rules/advanced-use-latest.md | .kilocode/skills/vercel-react-best-practices/rules/advanced-use-latest.md |
+| .kilocode/skills/vercel-react-best-practices/rules/async-api-routes.md | .kilocode/skills/vercel-react-best-practices/rules/async-api-routes.md |
+| .kilocode/skills/vercel-react-best-practices/rules/async-defer-await.md | .kilocode/skills/vercel-react-best-practices/rules/async-defer-await.md |
+| .kilocode/skills/vercel-react-best-practices/rules/async-dependencies.md | .kilocode/skills/vercel-react-best-practices/rules/async-dependencies.md |
+| .kilocode/skills/vercel-react-best-practices/rules/async-parallel.md | .kilocode/skills/vercel-react-best-practices/rules/async-parallel.md |
+| .kilocode/skills/vercel-react-best-practices/rules/async-suspense-boundaries.md | .kilocode/skills/vercel-react-best-practices/rules/async-suspense-boundaries.md |
+| .kilocode/skills/vercel-react-best-practices/rules/bundle-barrel-imports.md | .kilocode/skills/vercel-react-best-practices/rules/bundle-barrel-imports.md |
+| .kilocode/skills/vercel-react-best-practices/rules/bundle-conditional.md | .kilocode/skills/vercel-react-best-practices/rules/bundle-conditional.md |
+| .kilocode/skills/vercel-react-best-practices/rules/bundle-defer-third-party.md | .kilocode/skills/vercel-react-best-practices/rules/bundle-defer-third-party.md |
+| .kilocode/skills/vercel-react-best-practices/rules/bundle-dynamic-imports.md | .kilocode/skills/vercel-react-best-practices/rules/bundle-dynamic-imports.md |
+| .kilocode/skills/vercel-react-best-practices/rules/bundle-preload.md | .kilocode/skills/vercel-react-best-practices/rules/bundle-preload.md |
+| .kilocode/skills/vercel-react-best-practices/rules/client-event-listeners.md | .kilocode/skills/vercel-react-best-practices/rules/client-event-listeners.md |
+| .kilocode/skills/vercel-react-best-practices/rules/client-localstorage-schema.md | .kilocode/skills/vercel-react-best-practices/rules/client-localstorage-schema.md |
+| .kilocode/skills/vercel-react-best-practices/rules/client-passive-event-listeners.md | .kilocode/skills/vercel-react-best-practices/rules/client-passive-event-listeners.md |
+| .kilocode/skills/vercel-react-best-practices/rules/client-swr-dedup.md | .kilocode/skills/vercel-react-best-practices/rules/client-swr-dedup.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-batch-dom-css.md | .kilocode/skills/vercel-react-best-practices/rules/js-batch-dom-css.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-cache-function-results.md | .kilocode/skills/vercel-react-best-practices/rules/js-cache-function-results.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-cache-property-access.md | .kilocode/skills/vercel-react-best-practices/rules/js-cache-property-access.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-cache-storage.md | .kilocode/skills/vercel-react-best-practices/rules/js-cache-storage.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-combine-iterations.md | .kilocode/skills/vercel-react-best-practices/rules/js-combine-iterations.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-early-exit.md | .kilocode/skills/vercel-react-best-practices/rules/js-early-exit.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-hoist-regexp.md | .kilocode/skills/vercel-react-best-practices/rules/js-hoist-regexp.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-index-maps.md | .kilocode/skills/vercel-react-best-practices/rules/js-index-maps.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-length-check-first.md | .kilocode/skills/vercel-react-best-practices/rules/js-length-check-first.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-min-max-loop.md | .kilocode/skills/vercel-react-best-practices/rules/js-min-max-loop.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-set-map-lookups.md | .kilocode/skills/vercel-react-best-practices/rules/js-set-map-lookups.md |
+| .kilocode/skills/vercel-react-best-practices/rules/js-tosorted-immutable.md | .kilocode/skills/vercel-react-best-practices/rules/js-tosorted-immutable.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rendering-activity.md | .kilocode/skills/vercel-react-best-practices/rules/rendering-activity.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rendering-animate-svg-wrapper.md | .kilocode/skills/vercel-react-best-practices/rules/rendering-animate-svg-wrapper.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rendering-conditional-render.md | .kilocode/skills/vercel-react-best-practices/rules/rendering-conditional-render.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rendering-content-visibility.md | .kilocode/skills/vercel-react-best-practices/rules/rendering-content-visibility.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rendering-hoist-jsx.md | .kilocode/skills/vercel-react-best-practices/rules/rendering-hoist-jsx.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rendering-hydration-no-flicker.md | .kilocode/skills/vercel-react-best-practices/rules/rendering-hydration-no-flicker.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rendering-hydration-suppress-warning.md | .kilocode/skills/vercel-react-best-practices/rules/rendering-hydration-suppress-warning.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rendering-svg-precision.md | .kilocode/skills/vercel-react-best-practices/rules/rendering-svg-precision.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rendering-usetransition-loading.md | .kilocode/skills/vercel-react-best-practices/rules/rendering-usetransition-loading.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-defer-reads.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-defer-reads.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-dependencies.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-dependencies.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-derived-state.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-derived-state.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-derived-state-no-effect.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-derived-state-no-effect.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-functional-setstate.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-functional-setstate.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-lazy-state-init.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-lazy-state-init.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-memo.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-memo.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-memo-with-default-value.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-memo-with-default-value.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-move-effect-to-event.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-move-effect-to-event.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-simple-expression-in-memo.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-simple-expression-in-memo.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-transitions.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-transitions.md |
+| .kilocode/skills/vercel-react-best-practices/rules/rerender-use-ref-transient-values.md | .kilocode/skills/vercel-react-best-practices/rules/rerender-use-ref-transient-values.md |
+| .kilocode/skills/vercel-react-best-practices/rules/server-after-nonblocking.md | .kilocode/skills/vercel-react-best-practices/rules/server-after-nonblocking.md |
+| .kilocode/skills/vercel-react-best-practices/rules/server-auth-actions.md | .kilocode/skills/vercel-react-best-practices/rules/server-auth-actions.md |
+| .kilocode/skills/vercel-react-best-practices/rules/server-cache-lru.md | .kilocode/skills/vercel-react-best-practices/rules/server-cache-lru.md |
+| .kilocode/skills/vercel-react-best-practices/rules/server-cache-react.md | .kilocode/skills/vercel-react-best-practices/rules/server-cache-react.md |
+| .kilocode/skills/vercel-react-best-practices/rules/server-dedup-props.md | .kilocode/skills/vercel-react-best-practices/rules/server-dedup-props.md |
+| .kilocode/skills/vercel-react-best-practices/rules/server-parallel-fetching.md | .kilocode/skills/vercel-react-best-practices/rules/server-parallel-fetching.md |
+| .kilocode/skills/vercel-react-best-practices/rules/server-serialization.md | .kilocode/skills/vercel-react-best-practices/rules/server-serialization.md |
+| .kilocode/skills/vercel-react-best-practices/SKILL.md | .kilocode/skills/vercel-react-best-practices/SKILL.md |
+| .kilocode/skills/vercel-react-native-skills/AGENTS.md | .kilocode/skills/vercel-react-native-skills/AGENTS.md |
+| .kilocode/skills/vercel-react-native-skills/rules/animation-derived-value.md | .kilocode/skills/vercel-react-native-skills/rules/animation-derived-value.md |
+| .kilocode/skills/vercel-react-native-skills/rules/animation-gesture-detector-press.md | .kilocode/skills/vercel-react-native-skills/rules/animation-gesture-detector-press.md |
+| .kilocode/skills/vercel-react-native-skills/rules/animation-gpu-properties.md | .kilocode/skills/vercel-react-native-skills/rules/animation-gpu-properties.md |
+| .kilocode/skills/vercel-react-native-skills/rules/design-system-compound-components.md | .kilocode/skills/vercel-react-native-skills/rules/design-system-compound-components.md |
+| .kilocode/skills/vercel-react-native-skills/rules/fonts-config-plugin.md | .kilocode/skills/vercel-react-native-skills/rules/fonts-config-plugin.md |
+| .kilocode/skills/vercel-react-native-skills/rules/imports-design-system-folder.md | .kilocode/skills/vercel-react-native-skills/rules/imports-design-system-folder.md |
+| .kilocode/skills/vercel-react-native-skills/rules/js-hoist-intl.md | .kilocode/skills/vercel-react-native-skills/rules/js-hoist-intl.md |
+| .kilocode/skills/vercel-react-native-skills/rules/list-performance-callbacks.md | .kilocode/skills/vercel-react-native-skills/rules/list-performance-callbacks.md |
+| .kilocode/skills/vercel-react-native-skills/rules/list-performance-function-references.md | .kilocode/skills/vercel-react-native-skills/rules/list-performance-function-references.md |
+| .kilocode/skills/vercel-react-native-skills/rules/list-performance-images.md | .kilocode/skills/vercel-react-native-skills/rules/list-performance-images.md |
+| .kilocode/skills/vercel-react-native-skills/rules/list-performance-inline-objects.md | .kilocode/skills/vercel-react-native-skills/rules/list-performance-inline-objects.md |
+| .kilocode/skills/vercel-react-native-skills/rules/list-performance-item-expensive.md | .kilocode/skills/vercel-react-native-skills/rules/list-performance-item-expensive.md |
+| .kilocode/skills/vercel-react-native-skills/rules/list-performance-item-memo.md | .kilocode/skills/vercel-react-native-skills/rules/list-performance-item-memo.md |
+| .kilocode/skills/vercel-react-native-skills/rules/list-performance-item-types.md | .kilocode/skills/vercel-react-native-skills/rules/list-performance-item-types.md |
+| .kilocode/skills/vercel-react-native-skills/rules/list-performance-virtualize.md | .kilocode/skills/vercel-react-native-skills/rules/list-performance-virtualize.md |
+| .kilocode/skills/vercel-react-native-skills/rules/monorepo-native-deps-in-app.md | .kilocode/skills/vercel-react-native-skills/rules/monorepo-native-deps-in-app.md |
+| .kilocode/skills/vercel-react-native-skills/rules/monorepo-single-dependency-versions.md | .kilocode/skills/vercel-react-native-skills/rules/monorepo-single-dependency-versions.md |
+| .kilocode/skills/vercel-react-native-skills/rules/navigation-native-navigators.md | .kilocode/skills/vercel-react-native-skills/rules/navigation-native-navigators.md |
+| .kilocode/skills/vercel-react-native-skills/rules/react-compiler-destructure-functions.md | .kilocode/skills/vercel-react-native-skills/rules/react-compiler-destructure-functions.md |
+| .kilocode/skills/vercel-react-native-skills/rules/react-compiler-reanimated-shared-values.md | .kilocode/skills/vercel-react-native-skills/rules/react-compiler-reanimated-shared-values.md |
+| .kilocode/skills/vercel-react-native-skills/rules/react-state-dispatcher.md | .kilocode/skills/vercel-react-native-skills/rules/react-state-dispatcher.md |
+| .kilocode/skills/vercel-react-native-skills/rules/react-state-fallback.md | .kilocode/skills/vercel-react-native-skills/rules/react-state-fallback.md |
+| .kilocode/skills/vercel-react-native-skills/rules/react-state-minimize.md | .kilocode/skills/vercel-react-native-skills/rules/react-state-minimize.md |
+| .kilocode/skills/vercel-react-native-skills/rules/rendering-no-falsy-and.md | .kilocode/skills/vercel-react-native-skills/rules/rendering-no-falsy-and.md |
+| .kilocode/skills/vercel-react-native-skills/rules/rendering-text-in-text-component.md | .kilocode/skills/vercel-react-native-skills/rules/rendering-text-in-text-component.md |
+| .kilocode/skills/vercel-react-native-skills/rules/scroll-position-no-state.md | .kilocode/skills/vercel-react-native-skills/rules/scroll-position-no-state.md |
+| .kilocode/skills/vercel-react-native-skills/rules/state-ground-truth.md | .kilocode/skills/vercel-react-native-skills/rules/state-ground-truth.md |
+| .kilocode/skills/vercel-react-native-skills/rules/ui-expo-image.md | .kilocode/skills/vercel-react-native-skills/rules/ui-expo-image.md |
+| .kilocode/skills/vercel-react-native-skills/rules/ui-image-gallery.md | .kilocode/skills/vercel-react-native-skills/rules/ui-image-gallery.md |
+| .kilocode/skills/vercel-react-native-skills/rules/ui-measure-views.md | .kilocode/skills/vercel-react-native-skills/rules/ui-measure-views.md |
+| .kilocode/skills/vercel-react-native-skills/rules/ui-menus.md | .kilocode/skills/vercel-react-native-skills/rules/ui-menus.md |
+| .kilocode/skills/vercel-react-native-skills/rules/ui-native-modals.md | .kilocode/skills/vercel-react-native-skills/rules/ui-native-modals.md |
+| .kilocode/skills/vercel-react-native-skills/rules/ui-pressable.md | .kilocode/skills/vercel-react-native-skills/rules/ui-pressable.md |
+| .kilocode/skills/vercel-react-native-skills/rules/ui-safe-area-scroll.md | .kilocode/skills/vercel-react-native-skills/rules/ui-safe-area-scroll.md |
+| .kilocode/skills/vercel-react-native-skills/rules/ui-scrollview-content-inset.md | .kilocode/skills/vercel-react-native-skills/rules/ui-scrollview-content-inset.md |
+| .kilocode/skills/vercel-react-native-skills/rules/ui-styling.md | .kilocode/skills/vercel-react-native-skills/rules/ui-styling.md |
+| .kilocode/skills/vercel-react-native-skills/SKILL.md | .kilocode/skills/vercel-react-native-skills/SKILL.md |
+| .kilocode/skills/verification-before-completion/SKILL.md | .kilocode/skills/verification-before-completion/SKILL.md |
+| .kilocode/skills/verify-phase/SKILL.md | .kilocode/skills/verify-phase/SKILL.md |
+| .kilocode/skills/verify-work/SKILL.md | .kilocode/skills/verify-work/SKILL.md |
+| .kilocode/skills/web-design-guidelines/SKILL.md | .kilocode/skills/web-design-guidelines/SKILL.md |
+| .kilocode/skills/wrangler/SKILL.md | .kilocode/skills/wrangler/SKILL.md |
+| .kilocode/skills/writing-plans/SKILL.md | .kilocode/skills/writing-plans/SKILL.md |
+| .kilocode/skills/writing-skills/anthropic-best-practices.md | .kilocode/skills/writing-skills/anthropic-best-practices.md |
+| .kilocode/skills/writing-skills/examples/CLAUDE_MD_TESTING.md | .kilocode/skills/writing-skills/examples/CLAUDE_MD_TESTING.md |
+| .kilocode/skills/writing-skills/graphviz-conventions.dot | .kilocode/skills/writing-skills/graphviz-conventions.dot |
+| .kilocode/skills/writing-skills/persuasion-principles.md | .kilocode/skills/writing-skills/persuasion-principles.md |
+| .kilocode/skills/writing-skills/render-graphs.js | .kilocode/skills/writing-skills/render-graphs.js |
+| .kilocode/skills/writing-skills/SKILL.md | .kilocode/skills/writing-skills/SKILL.md |
+| .kilocode/skills/writing-skills/testing-skills-with-subagents.md | .kilocode/skills/writing-skills/testing-skills-with-subagents.md |
+| .kilocode/workflows/add-phase.md | .kilocode/workflows/add-phase.md |
+| .kilocode/workflows/add-todo.md | .kilocode/workflows/add-todo.md |
+| .kilocode/workflows/audit-milestone.md | .kilocode/workflows/audit-milestone.md |
+| .kilocode/workflows/check-todos.md | .kilocode/workflows/check-todos.md |
+| .kilocode/workflows/complete-milestone.md | .kilocode/workflows/complete-milestone.md |
+| .kilocode/workflows/debug.md | .kilocode/workflows/debug.md |
+| .kilocode/workflows/discuss-phase.md | .kilocode/workflows/discuss-phase.md |
+| .kilocode/workflows/execute-phase.md | .kilocode/workflows/execute-phase.md |
+| .kilocode/workflows/help.md | .kilocode/workflows/help.md |
+| .kilocode/workflows/insert-phase.md | .kilocode/workflows/insert-phase.md |
+| .kilocode/workflows/join-discord.md | .kilocode/workflows/join-discord.md |
+| .kilocode/workflows/list-phase-assumptions.md | .kilocode/workflows/list-phase-assumptions.md |
+| .kilocode/workflows/map-codebase.md | .kilocode/workflows/map-codebase.md |
+| .kilocode/workflows/new-milestone.md | .kilocode/workflows/new-milestone.md |
+| .kilocode/workflows/new-project.md | .kilocode/workflows/new-project.md |
+| .kilocode/workflows/pause-work.md | .kilocode/workflows/pause-work.md |
+| .kilocode/workflows/plan-milestone-gaps.md | .kilocode/workflows/plan-milestone-gaps.md |
+| .kilocode/workflows/plan-phase.md | .kilocode/workflows/plan-phase.md |
+| .kilocode/workflows/progress.md | .kilocode/workflows/progress.md |
+| .kilocode/workflows/quick.md | .kilocode/workflows/quick.md |
+| .kilocode/workflows/remove-phase.md | .kilocode/workflows/remove-phase.md |
+| .kilocode/workflows/research-phase.md | .kilocode/workflows/research-phase.md |
+| .kilocode/workflows/resume-work.md | .kilocode/workflows/resume-work.md |
+| .kilocode/workflows/set-profile.md | .kilocode/workflows/set-profile.md |
+| .kilocode/workflows/settings.md | .kilocode/workflows/settings.md |
+| .kilocode/workflows/update.md | .kilocode/workflows/update.md |
+| .kilocode/workflows/verify-work.md | .kilocode/workflows/verify-work.md |
+| .kilocodemodes | .kilocodemodes |
+| .mcp.json | .mcp.json |
+| .npmrc | .npmrc |
+| .tmp/tsc-portal.log | .tmp/tsc-portal.log |
+| .tmp/tsc-portal-dashboard-day18.log | .tmp/tsc-portal-dashboard-day18.log |
+| .tmp/tsc-portal-dashboard-empty-actions-day18.log | .tmp/tsc-portal-dashboard-empty-actions-day18.log |
+| .tmp/tsc-portal-dashboard-new-day18.log | .tmp/tsc-portal-dashboard-new-day18.log |
+| .tmp/tsc-portal-guildwar-active.log | .tmp/tsc-portal-guildwar-active.log |
+| .tmp/tsc-portal-warhistory-day18.log | .tmp/tsc-portal-warhistory-day18.log |
+| .tmp_day18_typecheck.log | .tmp_day18_typecheck.log |
+| apps/portal/index.html | apps/portal/index.html |
+| apps/portal/node_modules/.vite/deps/@radix-ui_react-checkbox.js | apps/portal/node_modules/.vite/deps/@radix-ui_react-checkbox.js |
+| apps/portal/node_modules/.vite/deps/@radix-ui_react-checkbox.js.map | apps/portal/node_modules/.vite/deps/@radix-ui_react-checkbox.js.map |
+| apps/portal/node_modules/.vite/deps/@radix-ui_react-dialog.js | apps/portal/node_modules/.vite/deps/@radix-ui_react-dialog.js |
+| apps/portal/node_modules/.vite/deps/@radix-ui_react-dialog.js.map | apps/portal/node_modules/.vite/deps/@radix-ui_react-dialog.js.map |
+| apps/portal/node_modules/.vite/deps/@radix-ui_react-dropdown-menu.js | apps/portal/node_modules/.vite/deps/@radix-ui_react-dropdown-menu.js |
+| apps/portal/node_modules/.vite/deps/@radix-ui_react-dropdown-menu.js.map | apps/portal/node_modules/.vite/deps/@radix-ui_react-dropdown-menu.js.map |
+| apps/portal/node_modules/.vite/deps/@radix-ui_react-select.js | apps/portal/node_modules/.vite/deps/@radix-ui_react-select.js |
+| apps/portal/node_modules/.vite/deps/@radix-ui_react-select.js.map | apps/portal/node_modules/.vite/deps/@radix-ui_react-select.js.map |
+| apps/portal/node_modules/.vite/deps/@radix-ui_react-switch.js | apps/portal/node_modules/.vite/deps/@radix-ui_react-switch.js |
+| apps/portal/node_modules/.vite/deps/@radix-ui_react-switch.js.map | apps/portal/node_modules/.vite/deps/@radix-ui_react-switch.js.map |
+| apps/portal/node_modules/.vite/deps/@tanstack_react-query.js | apps/portal/node_modules/.vite/deps/@tanstack_react-query.js |
+| apps/portal/node_modules/.vite/deps/@tanstack_react-query.js.map | apps/portal/node_modules/.vite/deps/@tanstack_react-query.js.map |
+| apps/portal/node_modules/.vite/deps/@tanstack_react-query-devtools.js | apps/portal/node_modules/.vite/deps/@tanstack_react-query-devtools.js |
+| apps/portal/node_modules/.vite/deps/@tanstack_react-query-devtools.js.map | apps/portal/node_modules/.vite/deps/@tanstack_react-query-devtools.js.map |
+| apps/portal/node_modules/.vite/deps/@tanstack_react-router.js | apps/portal/node_modules/.vite/deps/@tanstack_react-router.js |
+| apps/portal/node_modules/.vite/deps/@tanstack_react-router.js.map | apps/portal/node_modules/.vite/deps/@tanstack_react-router.js.map |
+| apps/portal/node_modules/.vite/deps/@tiptap_extension-image.js | apps/portal/node_modules/.vite/deps/@tiptap_extension-image.js |
+| apps/portal/node_modules/.vite/deps/@tiptap_extension-image.js.map | apps/portal/node_modules/.vite/deps/@tiptap_extension-image.js.map |
+| apps/portal/node_modules/.vite/deps/@tiptap_extension-link.js | apps/portal/node_modules/.vite/deps/@tiptap_extension-link.js |
+| apps/portal/node_modules/.vite/deps/@tiptap_extension-link.js.map | apps/portal/node_modules/.vite/deps/@tiptap_extension-link.js.map |
+| apps/portal/node_modules/.vite/deps/@tiptap_react.js | apps/portal/node_modules/.vite/deps/@tiptap_react.js |
+| apps/portal/node_modules/.vite/deps/@tiptap_react.js.map | apps/portal/node_modules/.vite/deps/@tiptap_react.js.map |
+| apps/portal/node_modules/.vite/deps/@tiptap_starter-kit.js | apps/portal/node_modules/.vite/deps/@tiptap_starter-kit.js |
+| apps/portal/node_modules/.vite/deps/@tiptap_starter-kit.js.map | apps/portal/node_modules/.vite/deps/@tiptap_starter-kit.js.map |
+| apps/portal/node_modules/.vite/deps/_metadata.json | apps/portal/node_modules/.vite/deps/_metadata.json |
+| apps/portal/node_modules/.vite/deps/B5PP2USH-KNAZNMMX.js | apps/portal/node_modules/.vite/deps/B5PP2USH-KNAZNMMX.js |
+| apps/portal/node_modules/.vite/deps/B5PP2USH-KNAZNMMX.js.map | apps/portal/node_modules/.vite/deps/B5PP2USH-KNAZNMMX.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-2DWKWOH3.js | apps/portal/node_modules/.vite/deps/chunk-2DWKWOH3.js |
+| apps/portal/node_modules/.vite/deps/chunk-2DWKWOH3.js.map | apps/portal/node_modules/.vite/deps/chunk-2DWKWOH3.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-2SF4BZZA.js | apps/portal/node_modules/.vite/deps/chunk-2SF4BZZA.js |
+| apps/portal/node_modules/.vite/deps/chunk-2SF4BZZA.js.map | apps/portal/node_modules/.vite/deps/chunk-2SF4BZZA.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-3H7CRGJU.js | apps/portal/node_modules/.vite/deps/chunk-3H7CRGJU.js |
+| apps/portal/node_modules/.vite/deps/chunk-3H7CRGJU.js.map | apps/portal/node_modules/.vite/deps/chunk-3H7CRGJU.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-3MH5H6W7.js | apps/portal/node_modules/.vite/deps/chunk-3MH5H6W7.js |
+| apps/portal/node_modules/.vite/deps/chunk-3MH5H6W7.js.map | apps/portal/node_modules/.vite/deps/chunk-3MH5H6W7.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-65C6TZV4.js | apps/portal/node_modules/.vite/deps/chunk-65C6TZV4.js |
+| apps/portal/node_modules/.vite/deps/chunk-65C6TZV4.js.map | apps/portal/node_modules/.vite/deps/chunk-65C6TZV4.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-6EOSBIGH.js | apps/portal/node_modules/.vite/deps/chunk-6EOSBIGH.js |
+| apps/portal/node_modules/.vite/deps/chunk-6EOSBIGH.js.map | apps/portal/node_modules/.vite/deps/chunk-6EOSBIGH.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-6MJACH5R.js | apps/portal/node_modules/.vite/deps/chunk-6MJACH5R.js |
+| apps/portal/node_modules/.vite/deps/chunk-6MJACH5R.js.map | apps/portal/node_modules/.vite/deps/chunk-6MJACH5R.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-7CLISBJN.js | apps/portal/node_modules/.vite/deps/chunk-7CLISBJN.js |
+| apps/portal/node_modules/.vite/deps/chunk-7CLISBJN.js.map | apps/portal/node_modules/.vite/deps/chunk-7CLISBJN.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-DO2OJTVR.js | apps/portal/node_modules/.vite/deps/chunk-DO2OJTVR.js |
+| apps/portal/node_modules/.vite/deps/chunk-DO2OJTVR.js.map | apps/portal/node_modules/.vite/deps/chunk-DO2OJTVR.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-E3E4X7IM.js | apps/portal/node_modules/.vite/deps/chunk-E3E4X7IM.js |
+| apps/portal/node_modules/.vite/deps/chunk-E3E4X7IM.js.map | apps/portal/node_modules/.vite/deps/chunk-E3E4X7IM.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-EU2M3Q6S.js | apps/portal/node_modules/.vite/deps/chunk-EU2M3Q6S.js |
+| apps/portal/node_modules/.vite/deps/chunk-EU2M3Q6S.js.map | apps/portal/node_modules/.vite/deps/chunk-EU2M3Q6S.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-GDEQDRAW.js | apps/portal/node_modules/.vite/deps/chunk-GDEQDRAW.js |
+| apps/portal/node_modules/.vite/deps/chunk-GDEQDRAW.js.map | apps/portal/node_modules/.vite/deps/chunk-GDEQDRAW.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-HMQIUT45.js | apps/portal/node_modules/.vite/deps/chunk-HMQIUT45.js |
+| apps/portal/node_modules/.vite/deps/chunk-HMQIUT45.js.map | apps/portal/node_modules/.vite/deps/chunk-HMQIUT45.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-HTD5CNVQ.js | apps/portal/node_modules/.vite/deps/chunk-HTD5CNVQ.js |
+| apps/portal/node_modules/.vite/deps/chunk-HTD5CNVQ.js.map | apps/portal/node_modules/.vite/deps/chunk-HTD5CNVQ.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-LPFZAAH6.js | apps/portal/node_modules/.vite/deps/chunk-LPFZAAH6.js |
+| apps/portal/node_modules/.vite/deps/chunk-LPFZAAH6.js.map | apps/portal/node_modules/.vite/deps/chunk-LPFZAAH6.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-MUHDPL43.js | apps/portal/node_modules/.vite/deps/chunk-MUHDPL43.js |
+| apps/portal/node_modules/.vite/deps/chunk-MUHDPL43.js.map | apps/portal/node_modules/.vite/deps/chunk-MUHDPL43.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-MVLP6FN5.js | apps/portal/node_modules/.vite/deps/chunk-MVLP6FN5.js |
+| apps/portal/node_modules/.vite/deps/chunk-MVLP6FN5.js.map | apps/portal/node_modules/.vite/deps/chunk-MVLP6FN5.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-OHSGBPTU.js | apps/portal/node_modules/.vite/deps/chunk-OHSGBPTU.js |
+| apps/portal/node_modules/.vite/deps/chunk-OHSGBPTU.js.map | apps/portal/node_modules/.vite/deps/chunk-OHSGBPTU.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-PHK5INXX.js | apps/portal/node_modules/.vite/deps/chunk-PHK5INXX.js |
+| apps/portal/node_modules/.vite/deps/chunk-PHK5INXX.js.map | apps/portal/node_modules/.vite/deps/chunk-PHK5INXX.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-R54QURUY.js | apps/portal/node_modules/.vite/deps/chunk-R54QURUY.js |
+| apps/portal/node_modules/.vite/deps/chunk-R54QURUY.js.map | apps/portal/node_modules/.vite/deps/chunk-R54QURUY.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-RFV3XYB4.js | apps/portal/node_modules/.vite/deps/chunk-RFV3XYB4.js |
+| apps/portal/node_modules/.vite/deps/chunk-RFV3XYB4.js.map | apps/portal/node_modules/.vite/deps/chunk-RFV3XYB4.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-SYW7QTVY.js | apps/portal/node_modules/.vite/deps/chunk-SYW7QTVY.js |
+| apps/portal/node_modules/.vite/deps/chunk-SYW7QTVY.js.map | apps/portal/node_modules/.vite/deps/chunk-SYW7QTVY.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-V4OQ3NZ2.js | apps/portal/node_modules/.vite/deps/chunk-V4OQ3NZ2.js |
+| apps/portal/node_modules/.vite/deps/chunk-V4OQ3NZ2.js.map | apps/portal/node_modules/.vite/deps/chunk-V4OQ3NZ2.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-WFNHCR67.js | apps/portal/node_modules/.vite/deps/chunk-WFNHCR67.js |
+| apps/portal/node_modules/.vite/deps/chunk-WFNHCR67.js.map | apps/portal/node_modules/.vite/deps/chunk-WFNHCR67.js.map |
+| apps/portal/node_modules/.vite/deps/chunk-XTZNI3PB.js | apps/portal/node_modules/.vite/deps/chunk-XTZNI3PB.js |
+| apps/portal/node_modules/.vite/deps/chunk-XTZNI3PB.js.map | apps/portal/node_modules/.vite/deps/chunk-XTZNI3PB.js.map |
+| apps/portal/node_modules/.vite/deps/class-variance-authority.js | apps/portal/node_modules/.vite/deps/class-variance-authority.js |
+| apps/portal/node_modules/.vite/deps/class-variance-authority.js.map | apps/portal/node_modules/.vite/deps/class-variance-authority.js.map |
+| apps/portal/node_modules/.vite/deps/clsx.js | apps/portal/node_modules/.vite/deps/clsx.js |
+| apps/portal/node_modules/.vite/deps/clsx.js.map | apps/portal/node_modules/.vite/deps/clsx.js.map |
+| apps/portal/node_modules/.vite/deps/cmdk.js | apps/portal/node_modules/.vite/deps/cmdk.js |
+| apps/portal/node_modules/.vite/deps/cmdk.js.map | apps/portal/node_modules/.vite/deps/cmdk.js.map |
+| apps/portal/node_modules/.vite/deps/date-fns.js | apps/portal/node_modules/.vite/deps/date-fns.js |
+| apps/portal/node_modules/.vite/deps/date-fns.js.map | apps/portal/node_modules/.vite/deps/date-fns.js.map |
+| apps/portal/node_modules/.vite/deps/date-fns_locale.js | apps/portal/node_modules/.vite/deps/date-fns_locale.js |
+| apps/portal/node_modules/.vite/deps/date-fns_locale.js.map | apps/portal/node_modules/.vite/deps/date-fns_locale.js.map |
+| apps/portal/node_modules/.vite/deps/dompurify.js | apps/portal/node_modules/.vite/deps/dompurify.js |
+| apps/portal/node_modules/.vite/deps/dompurify.js.map | apps/portal/node_modules/.vite/deps/dompurify.js.map |
+| apps/portal/node_modules/.vite/deps/i18next.js | apps/portal/node_modules/.vite/deps/i18next.js |
+| apps/portal/node_modules/.vite/deps/i18next.js.map | apps/portal/node_modules/.vite/deps/i18next.js.map |
+| apps/portal/node_modules/.vite/deps/i18next-browser-languagedetector.js | apps/portal/node_modules/.vite/deps/i18next-browser-languagedetector.js |
+| apps/portal/node_modules/.vite/deps/i18next-browser-languagedetector.js.map | apps/portal/node_modules/.vite/deps/i18next-browser-languagedetector.js.map |
+| apps/portal/node_modules/.vite/deps/motion.js | apps/portal/node_modules/.vite/deps/motion.js |
+| apps/portal/node_modules/.vite/deps/motion.js.map | apps/portal/node_modules/.vite/deps/motion.js.map |
+| apps/portal/node_modules/.vite/deps/motion_react.js | apps/portal/node_modules/.vite/deps/motion_react.js |
+| apps/portal/node_modules/.vite/deps/motion_react.js.map | apps/portal/node_modules/.vite/deps/motion_react.js.map |
+| apps/portal/node_modules/.vite/deps/package.json | apps/portal/node_modules/.vite/deps/package.json |
+| apps/portal/node_modules/.vite/deps/react.js | apps/portal/node_modules/.vite/deps/react.js |
+| apps/portal/node_modules/.vite/deps/react.js.map | apps/portal/node_modules/.vite/deps/react.js.map |
+| apps/portal/node_modules/.vite/deps/react_jsx-dev-runtime.js | apps/portal/node_modules/.vite/deps/react_jsx-dev-runtime.js |
+| apps/portal/node_modules/.vite/deps/react_jsx-dev-runtime.js.map | apps/portal/node_modules/.vite/deps/react_jsx-dev-runtime.js.map |
+| apps/portal/node_modules/.vite/deps/react_jsx-runtime.js | apps/portal/node_modules/.vite/deps/react_jsx-runtime.js |
+| apps/portal/node_modules/.vite/deps/react_jsx-runtime.js.map | apps/portal/node_modules/.vite/deps/react_jsx-runtime.js.map |
+| apps/portal/node_modules/.vite/deps/react-day-picker.js | apps/portal/node_modules/.vite/deps/react-day-picker.js |
+| apps/portal/node_modules/.vite/deps/react-day-picker.js.map | apps/portal/node_modules/.vite/deps/react-day-picker.js.map |
+| apps/portal/node_modules/.vite/deps/react-dom.js | apps/portal/node_modules/.vite/deps/react-dom.js |
+| apps/portal/node_modules/.vite/deps/react-dom.js.map | apps/portal/node_modules/.vite/deps/react-dom.js.map |
+| apps/portal/node_modules/.vite/deps/react-dom_client.js | apps/portal/node_modules/.vite/deps/react-dom_client.js |
+| apps/portal/node_modules/.vite/deps/react-dom_client.js.map | apps/portal/node_modules/.vite/deps/react-dom_client.js.map |
+| apps/portal/node_modules/.vite/deps/react-hook-form.js | apps/portal/node_modules/.vite/deps/react-hook-form.js |
+| apps/portal/node_modules/.vite/deps/react-hook-form.js.map | apps/portal/node_modules/.vite/deps/react-hook-form.js.map |
+| apps/portal/node_modules/.vite/deps/react-i18next.js | apps/portal/node_modules/.vite/deps/react-i18next.js |
+| apps/portal/node_modules/.vite/deps/react-i18next.js.map | apps/portal/node_modules/.vite/deps/react-i18next.js.map |
+| apps/portal/node_modules/.vite/deps/react-markdown.js | apps/portal/node_modules/.vite/deps/react-markdown.js |
+| apps/portal/node_modules/.vite/deps/react-markdown.js.map | apps/portal/node_modules/.vite/deps/react-markdown.js.map |
+| apps/portal/node_modules/.vite/deps/react-resizable-panels.js | apps/portal/node_modules/.vite/deps/react-resizable-panels.js |
+| apps/portal/node_modules/.vite/deps/react-resizable-panels.js.map | apps/portal/node_modules/.vite/deps/react-resizable-panels.js.map |
+| apps/portal/node_modules/.vite/deps/remark-gfm.js | apps/portal/node_modules/.vite/deps/remark-gfm.js |
+| apps/portal/node_modules/.vite/deps/remark-gfm.js.map | apps/portal/node_modules/.vite/deps/remark-gfm.js.map |
+| apps/portal/node_modules/.vite/deps/tailwind-merge.js | apps/portal/node_modules/.vite/deps/tailwind-merge.js |
+| apps/portal/node_modules/.vite/deps/tailwind-merge.js.map | apps/portal/node_modules/.vite/deps/tailwind-merge.js.map |
+| apps/portal/node_modules/.vite/deps/WI32IQVE-VHMADOF2.js | apps/portal/node_modules/.vite/deps/WI32IQVE-VHMADOF2.js |
+| apps/portal/node_modules/.vite/deps/WI32IQVE-VHMADOF2.js.map | apps/portal/node_modules/.vite/deps/WI32IQVE-VHMADOF2.js.map |
+| apps/portal/node_modules/.vite/deps/zustand.js | apps/portal/node_modules/.vite/deps/zustand.js |
+| apps/portal/node_modules/.vite/deps/zustand.js.map | apps/portal/node_modules/.vite/deps/zustand.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-checkbox.js | apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-checkbox.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-checkbox.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-checkbox.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-dialog.js | apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-dialog.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-dialog.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-dialog.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-select.js | apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-select.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-select.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-select.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-switch.js | apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-switch.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-switch.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/@radix-ui_react-switch.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-query.js | apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-query.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-query.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-query.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-query-devtools.js | apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-query-devtools.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-query-devtools.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-query-devtools.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-router.js | apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-router.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-router.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/@tanstack_react-router.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_extension-image.js | apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_extension-image.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_extension-image.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_extension-image.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_extension-link.js | apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_extension-link.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_extension-link.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_extension-link.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_react.js | apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_react.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_react.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_react.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_starter-kit.js | apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_starter-kit.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_starter-kit.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/@tiptap_starter-kit.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/_metadata.json | apps/portal/node_modules/.vite/deps_temp_c498041f/_metadata.json |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/B5PP2USH-VQPA7VEH.js | apps/portal/node_modules/.vite/deps_temp_c498041f/B5PP2USH-VQPA7VEH.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/B5PP2USH-VQPA7VEH.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/B5PP2USH-VQPA7VEH.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-4WZGKSIC.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-4WZGKSIC.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-4WZGKSIC.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-4WZGKSIC.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-5QEDJF6U.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-5QEDJF6U.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-5QEDJF6U.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-5QEDJF6U.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-6MT7O4EV.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-6MT7O4EV.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-6MT7O4EV.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-6MT7O4EV.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-6SPGWGBI.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-6SPGWGBI.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-6SPGWGBI.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-6SPGWGBI.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-76JESNO4.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-76JESNO4.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-76JESNO4.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-76JESNO4.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-7IHUQNNR.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-7IHUQNNR.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-7IHUQNNR.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-7IHUQNNR.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-7RBHDNR7.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-7RBHDNR7.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-7RBHDNR7.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-7RBHDNR7.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-DJSDPVCV.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-DJSDPVCV.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-DJSDPVCV.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-DJSDPVCV.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-JONNXJQ3.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-JONNXJQ3.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-JONNXJQ3.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-JONNXJQ3.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-M3A46DT5.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-M3A46DT5.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-M3A46DT5.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-M3A46DT5.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-NGYE6MJJ.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-NGYE6MJJ.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-NGYE6MJJ.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-NGYE6MJJ.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-OGMC6JCI.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-OGMC6JCI.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-OGMC6JCI.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-OGMC6JCI.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-PSYGYB7I.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-PSYGYB7I.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-PSYGYB7I.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-PSYGYB7I.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-RVIT7I4R.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-RVIT7I4R.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-RVIT7I4R.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-RVIT7I4R.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-S57K2XXO.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-S57K2XXO.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-S57K2XXO.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-S57K2XXO.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-TRPUOOMG.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-TRPUOOMG.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-TRPUOOMG.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-TRPUOOMG.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-TTT5C3U5.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-TTT5C3U5.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-TTT5C3U5.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-TTT5C3U5.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-V4OQ3NZ2.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-V4OQ3NZ2.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-V4OQ3NZ2.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-V4OQ3NZ2.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-VRBD2OKM.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-VRBD2OKM.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-VRBD2OKM.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-VRBD2OKM.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-VULAMDH6.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-VULAMDH6.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-VULAMDH6.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-VULAMDH6.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XF5IM22I.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XF5IM22I.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XF5IM22I.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XF5IM22I.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XUQQQWZA.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XUQQQWZA.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XUQQQWZA.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XUQQQWZA.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XY7F4C55.js | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XY7F4C55.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XY7F4C55.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/chunk-XY7F4C55.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/class-variance-authority.js | apps/portal/node_modules/.vite/deps_temp_c498041f/class-variance-authority.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/class-variance-authority.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/class-variance-authority.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/clsx.js | apps/portal/node_modules/.vite/deps_temp_c498041f/clsx.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/clsx.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/clsx.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/cmdk.js | apps/portal/node_modules/.vite/deps_temp_c498041f/cmdk.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/cmdk.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/cmdk.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/date-fns.js | apps/portal/node_modules/.vite/deps_temp_c498041f/date-fns.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/date-fns.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/date-fns.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/date-fns_locale.js | apps/portal/node_modules/.vite/deps_temp_c498041f/date-fns_locale.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/date-fns_locale.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/date-fns_locale.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/dompurify.js | apps/portal/node_modules/.vite/deps_temp_c498041f/dompurify.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/dompurify.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/dompurify.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/i18next.js | apps/portal/node_modules/.vite/deps_temp_c498041f/i18next.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/i18next.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/i18next.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/i18next-browser-languagedetector.js | apps/portal/node_modules/.vite/deps_temp_c498041f/i18next-browser-languagedetector.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/i18next-browser-languagedetector.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/i18next-browser-languagedetector.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/motion.js | apps/portal/node_modules/.vite/deps_temp_c498041f/motion.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/motion.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/motion.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/motion_react.js | apps/portal/node_modules/.vite/deps_temp_c498041f/motion_react.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/motion_react.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/motion_react.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/package.json | apps/portal/node_modules/.vite/deps_temp_c498041f/package.json |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react.js | apps/portal/node_modules/.vite/deps_temp_c498041f/react.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/react.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react_jsx-dev-runtime.js | apps/portal/node_modules/.vite/deps_temp_c498041f/react_jsx-dev-runtime.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react_jsx-dev-runtime.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/react_jsx-dev-runtime.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react_jsx-runtime.js | apps/portal/node_modules/.vite/deps_temp_c498041f/react_jsx-runtime.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react_jsx-runtime.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/react_jsx-runtime.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-day-picker.js | apps/portal/node_modules/.vite/deps_temp_c498041f/react-day-picker.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-day-picker.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/react-day-picker.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-dom.js | apps/portal/node_modules/.vite/deps_temp_c498041f/react-dom.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-dom.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/react-dom.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-dom_client.js | apps/portal/node_modules/.vite/deps_temp_c498041f/react-dom_client.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-dom_client.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/react-dom_client.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-hook-form.js | apps/portal/node_modules/.vite/deps_temp_c498041f/react-hook-form.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-hook-form.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/react-hook-form.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-i18next.js | apps/portal/node_modules/.vite/deps_temp_c498041f/react-i18next.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-i18next.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/react-i18next.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-markdown.js | apps/portal/node_modules/.vite/deps_temp_c498041f/react-markdown.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-markdown.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/react-markdown.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-resizable-panels.js | apps/portal/node_modules/.vite/deps_temp_c498041f/react-resizable-panels.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/react-resizable-panels.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/react-resizable-panels.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/remark-gfm.js | apps/portal/node_modules/.vite/deps_temp_c498041f/remark-gfm.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/remark-gfm.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/remark-gfm.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/tailwind-merge.js | apps/portal/node_modules/.vite/deps_temp_c498041f/tailwind-merge.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/tailwind-merge.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/tailwind-merge.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/WI32IQVE-XXY4ZCJS.js | apps/portal/node_modules/.vite/deps_temp_c498041f/WI32IQVE-XXY4ZCJS.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/WI32IQVE-XXY4ZCJS.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/WI32IQVE-XXY4ZCJS.js.map |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/zustand.js | apps/portal/node_modules/.vite/deps_temp_c498041f/zustand.js |
+| apps/portal/node_modules/.vite/deps_temp_c498041f/zustand.js.map | apps/portal/node_modules/.vite/deps_temp_c498041f/zustand.js.map |
+| apps/portal/node_modules/.vite/vitest/da39a3ee5e6b4b0d3255bfef95601890afd80709/results.json | apps/portal/node_modules/.vite/vitest/da39a3ee5e6b4b0d3255bfef95601890afd80709/results.json |
+| apps/portal/package.json | apps/portal/package.json |
+| apps/portal/public/vite.svg | apps/portal/public/vite.svg |
+| apps/portal/public/燕云十六声图标/其他加成.webp | apps/portal/public/燕云十六声图标/其他加成.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/百鬼打穴手.webp | apps/portal/public/燕云十六声图标/奇术图标/百鬼打穴手.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/狗嘴夺食.webp | apps/portal/public/燕云十六声图标/奇术图标/狗嘴夺食.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/红尘障目.webp | apps/portal/public/燕云十六声图标/奇术图标/红尘障目.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/金蟾腾跃.webp | apps/portal/public/燕云十六声图标/奇术图标/金蟾腾跃.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/流行坠火.webp | apps/portal/public/燕云十六声图标/奇术图标/流行坠火.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/骑龙回马.webp | apps/portal/public/燕云十六声图标/奇术图标/骑龙回马.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/清风霁月.webp | apps/portal/public/燕云十六声图标/奇术图标/清风霁月.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/神龙吐火.webp | apps/portal/public/燕云十六声图标/奇术图标/神龙吐火.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/狮吼正声.webp | apps/portal/public/燕云十六声图标/奇术图标/狮吼正声.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/太白醉月.webp | apps/portal/public/燕云十六声图标/奇术图标/太白醉月.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/万物为锋.webp | apps/portal/public/燕云十六声图标/奇术图标/万物为锋.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/韦陀正法.webp | apps/portal/public/燕云十六声图标/奇术图标/韦陀正法.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/无相金身.webp | apps/portal/public/燕云十六声图标/奇术图标/无相金身.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/萧吟千浪.webp | apps/portal/public/燕云十六声图标/奇术图标/萧吟千浪.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/衍九矢.webp | apps/portal/public/燕云十六声图标/奇术图标/衍九矢.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/杳无形.webp | apps/portal/public/燕云十六声图标/奇术图标/杳无形.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/药叉破魔.webp | apps/portal/public/燕云十六声图标/奇术图标/药叉破魔.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/叶龙骧首.webp | apps/portal/public/燕云十六声图标/奇术图标/叶龙骧首.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/以鹅之鸣.webp | apps/portal/public/燕云十六声图标/奇术图标/以鹅之鸣.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/阴阳迷踪步.webp | apps/portal/public/燕云十六声图标/奇术图标/阴阳迷踪步.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/鹰爪连凿.webp | apps/portal/public/燕云十六声图标/奇术图标/鹰爪连凿.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/荧光晖夜.webp | apps/portal/public/燕云十六声图标/奇术图标/荧光晖夜.webp |
+| apps/portal/public/燕云十六声图标/奇术图标/自在无碍.webp | apps/portal/public/燕云十六声图标/奇术图标/自在无碍.webp |
+| apps/portal/public/燕云十六声图标/武学图标/八方风雷枪.webp | apps/portal/public/燕云十六声图标/武学图标/八方风雷枪.webp |
+| apps/portal/public/燕云十六声图标/武学图标/积矩九剑.webp | apps/portal/public/燕云十六声图标/武学图标/积矩九剑.webp |
+| apps/portal/public/燕云十六声图标/武学图标/嗟夫刀法.webp | apps/portal/public/燕云十六声图标/武学图标/嗟夫刀法.webp |
+| apps/portal/public/燕云十六声图标/武学图标/九曲惊神枪.webp | apps/portal/public/燕云十六声图标/武学图标/九曲惊神枪.webp |
+| apps/portal/public/燕云十六声图标/武学图标/九重春色.webp | apps/portal/public/燕云十六声图标/武学图标/九重春色.webp |
+| apps/portal/public/燕云十六声图标/武学图标/明川药典.webp | apps/portal/public/燕云十六声图标/武学图标/明川药典.webp |
+| apps/portal/public/燕云十六声图标/武学图标/泥犁三垢.webp | apps/portal/public/燕云十六声图标/武学图标/泥犁三垢.webp |
+| apps/portal/public/燕云十六声图标/武学图标/千机素天.webp | apps/portal/public/燕云十六声图标/武学图标/千机素天.webp |
+| apps/portal/public/燕云十六声图标/武学图标/千香引魂蛊.webp | apps/portal/public/燕云十六声图标/武学图标/千香引魂蛊.webp |
+| apps/portal/public/燕云十六声图标/武学图标/青山执笔.webp | apps/portal/public/燕云十六声图标/武学图标/青山执笔.webp |
+| apps/portal/public/燕云十六声图标/武学图标/十方破阵.webp | apps/portal/public/燕云十六声图标/武学图标/十方破阵.webp |
+| apps/portal/public/燕云十六声图标/武学图标/粟子行云.webp | apps/portal/public/燕云十六声图标/武学图标/粟子行云.webp |
+| apps/portal/public/燕云十六声图标/武学图标/粟子游尘.webp | apps/portal/public/燕云十六声图标/武学图标/粟子游尘.webp |
+| apps/portal/public/燕云十六声图标/武学图标/天志垂象.webp | apps/portal/public/燕云十六声图标/武学图标/天志垂象.webp |
+| apps/portal/public/燕云十六声图标/武学图标/无名剑法.webp | apps/portal/public/燕云十六声图标/武学图标/无名剑法.webp |
+| apps/portal/public/燕云十六声图标/武学图标/无名枪法.webp | apps/portal/public/燕云十六声图标/武学图标/无名枪法.webp |
+| apps/portal/public/燕云十六声图标/武学图标/斩雪刀法.webp | apps/portal/public/燕云十六声图标/武学图标/斩雪刀法.webp |
+| apps/portal/public/燕云十六声图标/武学图标/醉梦游春.webp | apps/portal/public/燕云十六声图标/武学图标/醉梦游春.webp |
+| apps/portal/public/燕云十六声图标/心法图标/沧浪剑诀.webp | apps/portal/public/燕云十六声图标/心法图标/沧浪剑诀.webp |
+| apps/portal/public/燕云十六声图标/心法图标/穿喉诀.webp | apps/portal/public/燕云十六声图标/心法图标/穿喉诀.webp |
+| apps/portal/public/燕云十六声图标/心法图标/春雷篇.webp | apps/portal/public/燕云十六声图标/心法图标/春雷篇.webp |
+| apps/portal/public/燕云十六声图标/心法图标/大唐歌.webp | apps/portal/public/燕云十六声图标/心法图标/大唐歌.webp |
+| apps/portal/public/燕云十六声图标/心法图标/丹心篆.webp | apps/portal/public/燕云十六声图标/心法图标/丹心篆.webp |
+| apps/portal/public/燕云十六声图标/心法图标/灯儿亮.webp | apps/portal/public/燕云十六声图标/心法图标/灯儿亮.webp |
+| apps/portal/public/燕云十六声图标/心法图标/断石之构.webp | apps/portal/public/燕云十六声图标/心法图标/断石之构.webp |
+| apps/portal/public/燕云十六声图标/心法图标/扶摇直上.webp | apps/portal/public/燕云十六声图标/心法图标/扶摇直上.webp |
+| apps/portal/public/燕云十六声图标/心法图标/孤忠不辞.webp | apps/portal/public/燕云十六声图标/心法图标/孤忠不辞.webp |
+| apps/portal/public/燕云十六声图标/心法图标/归燕经.webp | apps/portal/public/燕云十六声图标/心法图标/归燕经.webp |
+| apps/portal/public/燕云十六声图标/心法图标/葫芦飞飞.webp | apps/portal/public/燕云十六声图标/心法图标/葫芦飞飞.webp |
+| apps/portal/public/燕云十六声图标/心法图标/花上月令.webp | apps/portal/public/燕云十六声图标/心法图标/花上月令.webp |
+| apps/portal/public/燕云十六声图标/心法图标/极乐泣血.webp | apps/portal/public/燕云十六声图标/心法图标/极乐泣血.webp |
+| apps/portal/public/燕云十六声图标/心法图标/剑气纵横.webp | apps/portal/public/燕云十六声图标/心法图标/剑气纵横.webp |
+| apps/portal/public/燕云十六声图标/心法图标/君臣药.webp | apps/portal/public/燕云十六声图标/心法图标/君臣药.webp |
+| apps/portal/public/燕云十六声图标/心法图标/抗造大法.webp | apps/portal/public/燕云十六声图标/心法图标/抗造大法.webp |
+| apps/portal/public/燕云十六声图标/心法图标/困兽心经.webp | apps/portal/public/燕云十六声图标/心法图标/困兽心经.webp |
+| apps/portal/public/燕云十六声图标/心法图标/燎原踏.webp | apps/portal/public/燕云十六声图标/心法图标/燎原踏.webp |
+| apps/portal/public/燕云十六声图标/心法图标/燎原星火.webp | apps/portal/public/燕云十六声图标/心法图标/燎原星火.webp |
+| apps/portal/public/燕云十六声图标/心法图标/明晦同尘.webp | apps/portal/public/燕云十六声图标/心法图标/明晦同尘.webp |
+| apps/portal/public/燕云十六声图标/心法图标/凝神章.webp | apps/portal/public/燕云十六声图标/心法图标/凝神章.webp |
+| apps/portal/public/燕云十六声图标/心法图标/怒斩马.webp | apps/portal/public/燕云十六声图标/心法图标/怒斩马.webp |
+| apps/portal/public/燕云十六声图标/心法图标/磐石诀.webp | apps/portal/public/燕云十六声图标/心法图标/磐石诀.webp |
+| apps/portal/public/燕云十六声图标/心法图标/婆娑影.webp | apps/portal/public/燕云十六声图标/心法图标/婆娑影.webp |
+| apps/portal/public/燕云十六声图标/心法图标/千山法.webp | apps/portal/public/燕云十六声图标/心法图标/千山法.webp |
+| apps/portal/public/燕云十六声图标/心法图标/千丝蛊.webp | apps/portal/public/燕云十六声图标/心法图标/千丝蛊.webp |
+| apps/portal/public/燕云十六声图标/心法图标/千营一呼.webp | apps/portal/public/燕云十六声图标/心法图标/千营一呼.webp |
+| apps/portal/public/燕云十六声图标/心法图标/擒天势.webp | apps/portal/public/燕云十六声图标/心法图标/擒天势.webp |
+| apps/portal/public/燕云十六声图标/心法图标/三穷致知.webp | apps/portal/public/燕云十六声图标/心法图标/三穷致知.webp |
+| apps/portal/public/燕云十六声图标/心法图标/沙摆尾.webp | apps/portal/public/燕云十六声图标/心法图标/沙摆尾.webp |
+| apps/portal/public/燕云十六声图标/心法图标/山河绝韵.webp | apps/portal/public/燕云十六声图标/心法图标/山河绝韵.webp |
+| apps/portal/public/燕云十六声图标/心法图标/山月无影.webp | apps/portal/public/燕云十六声图标/心法图标/山月无影.webp |
+| apps/portal/public/燕云十六声图标/心法图标/生龙活虎.webp | apps/portal/public/燕云十六声图标/心法图标/生龙活虎.webp |
+| apps/portal/public/燕云十六声图标/心法图标/绳舟行木.webp | apps/portal/public/燕云十六声图标/心法图标/绳舟行木.webp |
+| apps/portal/public/燕云十六声图标/心法图标/霜天白夜.webp | apps/portal/public/燕云十六声图标/心法图标/霜天白夜.webp |
+| apps/portal/public/燕云十六声图标/心法图标/四时无常.webp | apps/portal/public/燕云十六声图标/心法图标/四时无常.webp |
+| apps/portal/public/燕云十六声图标/心法图标/所恨年年.webp | apps/portal/public/燕云十六声图标/心法图标/所恨年年.webp |
+| apps/portal/public/燕云十六声图标/心法图标/天行健.webp | apps/portal/public/燕云十六声图标/心法图标/天行健.webp |
+| apps/portal/public/燕云十六声图标/心法图标/铁身诀.webp | apps/portal/public/燕云十六声图标/心法图标/铁身诀.webp |
+| apps/portal/public/燕云十六声图标/心法图标/晚雪间.webp | apps/portal/public/燕云十六声图标/心法图标/晚雪间.webp |
+| apps/portal/public/燕云十六声图标/心法图标/忘川绝响.webp | apps/portal/public/燕云十六声图标/心法图标/忘川绝响.webp |
+| apps/portal/public/燕云十六声图标/心法图标/威猛歌.webp | apps/portal/public/燕云十六声图标/心法图标/威猛歌.webp |
+| apps/portal/public/燕云十六声图标/心法图标/无名心法.webp | apps/portal/public/燕云十六声图标/心法图标/无名心法.webp |
+| apps/portal/public/燕云十六声图标/心法图标/心弥泥鱼.webp | apps/portal/public/燕云十六声图标/心法图标/心弥泥鱼.webp |
+| apps/portal/public/燕云十六声图标/心法图标/杏花不见.webp | apps/portal/public/燕云十六声图标/心法图标/杏花不见.webp |
+| apps/portal/public/燕云十六声图标/心法图标/移经易武.webp | apps/portal/public/燕云十六声图标/心法图标/移经易武.webp |
+| apps/portal/public/燕云十六声图标/心法图标/易水歌.webp | apps/portal/public/燕云十六声图标/心法图标/易水歌.webp |
+| apps/portal/public/燕云十六声图标/心法图标/长生无相.webp | apps/portal/public/燕云十六声图标/心法图标/长生无相.webp |
+| apps/portal/public/燕云十六声图标/心法图标/征人归.webp | apps/portal/public/燕云十六声图标/心法图标/征人归.webp |
+| apps/portal/public/燕云十六声图标/心法图标/指玄篇注.webp | apps/portal/public/燕云十六声图标/心法图标/指玄篇注.webp |
+| apps/portal/public/燕云十六声图标/心法图标/逐狼心经.webp | apps/portal/public/燕云十六声图标/心法图标/逐狼心经.webp |
+| apps/portal/public/燕云十六声图标/心法图标/纵地摘星.webp | apps/portal/public/燕云十六声图标/心法图标/纵地摘星.webp |
+| apps/portal/src/App.tsx | apps/portal/src/App.tsx |
+| apps/portal/src/assets/react.svg | apps/portal/src/assets/react.svg |
+| apps/portal/src/components/button/Button.tsx | apps/portal/src/components/button/Button.tsx |
+| apps/portal/src/components/button/EnhancedButton.tsx | apps/portal/src/components/button/EnhancedButton.tsx |
+| apps/portal/src/components/button/index.ts | apps/portal/src/components/button/index.ts |
+| apps/portal/src/components/data-display/Avatar.tsx | apps/portal/src/components/data-display/Avatar.tsx |
+| apps/portal/src/components/data-display/Badge.tsx | apps/portal/src/components/data-display/Badge.tsx |
+| apps/portal/src/components/data-display/DecorativeGlyph.tsx | apps/portal/src/components/data-display/DecorativeGlyph.tsx |
+| apps/portal/src/components/data-display/HealthStatus.tsx | apps/portal/src/components/data-display/HealthStatus.tsx |
+| apps/portal/src/components/data-display/index.ts | apps/portal/src/components/data-display/index.ts |
+| apps/portal/src/components/data-display/MarkdownContent.tsx | apps/portal/src/components/data-display/MarkdownContent.tsx |
+| apps/portal/src/components/data-display/MarkdownRenderer.tsx | apps/portal/src/components/data-display/MarkdownRenderer.tsx |
+| apps/portal/src/components/data-display/MetricCard.tsx | apps/portal/src/components/data-display/MetricCard.tsx |
+| apps/portal/src/components/data-display/Separator.tsx | apps/portal/src/components/data-display/Separator.tsx |
+| apps/portal/src/components/data-display/StatusBadge.tsx | apps/portal/src/components/data-display/StatusBadge.tsx |
+| apps/portal/src/components/data-display/Table.tsx | apps/portal/src/components/data-display/Table.tsx |
+| apps/portal/src/components/data-display/TeamMemberCard.tsx | apps/portal/src/components/data-display/TeamMemberCard.tsx |
+| apps/portal/src/components/feedback/Accordion.tsx | apps/portal/src/components/feedback/Accordion.tsx |
+| apps/portal/src/components/feedback/Alert.tsx | apps/portal/src/components/feedback/Alert.tsx |
+| apps/portal/src/components/feedback/AlertDialog.tsx | apps/portal/src/components/feedback/AlertDialog.tsx |
+| apps/portal/src/components/feedback/Collapsible.tsx | apps/portal/src/components/feedback/Collapsible.tsx |
+| apps/portal/src/components/feedback/Dialog.tsx | apps/portal/src/components/feedback/Dialog.tsx |
+| apps/portal/src/components/feedback/EmptyState.tsx | apps/portal/src/components/feedback/EmptyState.tsx |
+| apps/portal/src/components/feedback/ErrorBoundary.tsx | apps/portal/src/components/feedback/ErrorBoundary.tsx |
+| apps/portal/src/components/feedback/ErrorState.tsx | apps/portal/src/components/feedback/ErrorState.tsx |
+| apps/portal/src/components/feedback/HoverCard.tsx | apps/portal/src/components/feedback/HoverCard.tsx |
+| apps/portal/src/components/feedback/index.ts | apps/portal/src/components/feedback/index.ts |
+| apps/portal/src/components/feedback/OfflineBanner.tsx | apps/portal/src/components/feedback/OfflineBanner.tsx |
+| apps/portal/src/components/feedback/Popover.tsx | apps/portal/src/components/feedback/Popover.tsx |
+| apps/portal/src/components/feedback/Progress.tsx | apps/portal/src/components/feedback/Progress.tsx |
+| apps/portal/src/components/feedback/Skeleton.tsx | apps/portal/src/components/feedback/Skeleton.tsx |
+| apps/portal/src/components/feedback/Toast.tsx | apps/portal/src/components/feedback/Toast.tsx |
+| apps/portal/src/components/feedback/ToastContainer.tsx | apps/portal/src/components/feedback/ToastContainer.tsx |
+| apps/portal/src/components/feedback/Tooltip.tsx | apps/portal/src/components/feedback/Tooltip.tsx |
+| apps/portal/src/components/index.ts | apps/portal/src/components/index.ts |
+| apps/portal/src/components/input/Calendar.tsx | apps/portal/src/components/input/Calendar.tsx |
+| apps/portal/src/components/input/Checkbox.tsx | apps/portal/src/components/input/Checkbox.tsx |
+| apps/portal/src/components/input/Command.tsx | apps/portal/src/components/input/Command.tsx |
+| apps/portal/src/components/input/FilterBar.tsx | apps/portal/src/components/input/FilterBar.tsx |
+| apps/portal/src/components/input/Form.tsx | apps/portal/src/components/input/Form.tsx |
+| apps/portal/src/components/input/index.ts | apps/portal/src/components/input/index.ts |
+| apps/portal/src/components/input/Input.tsx | apps/portal/src/components/input/Input.tsx |
+| apps/portal/src/components/input/Label.tsx | apps/portal/src/components/input/Label.tsx |
+| apps/portal/src/components/input/RadioGroup.tsx | apps/portal/src/components/input/RadioGroup.tsx |
+| apps/portal/src/components/input/Select.tsx | apps/portal/src/components/input/Select.tsx |
+| apps/portal/src/components/input/Slider.tsx | apps/portal/src/components/input/Slider.tsx |
+| apps/portal/src/components/input/Switch.tsx | apps/portal/src/components/input/Switch.tsx |
+| apps/portal/src/components/input/Textarea.tsx | apps/portal/src/components/input/Textarea.tsx |
+| apps/portal/src/components/input/TiptapEditor.tsx | apps/portal/src/components/input/TiptapEditor.tsx |
+| apps/portal/src/components/input/Toggle.tsx | apps/portal/src/components/input/Toggle.tsx |
+| apps/portal/src/components/input/ToggleGroup.tsx | apps/portal/src/components/input/ToggleGroup.tsx |
+| apps/portal/src/components/input/UnifiedField.tsx | apps/portal/src/components/input/UnifiedField.tsx |
+| apps/portal/src/components/layout/BottomSheetDialog.tsx | apps/portal/src/components/layout/BottomSheetDialog.tsx |
+| apps/portal/src/components/layout/Card.tsx | apps/portal/src/components/layout/Card.tsx |
+| apps/portal/src/components/layout/Center/Center.module.css | apps/portal/src/components/layout/Center/Center.module.css |
+| apps/portal/src/components/layout/Center/Center.tsx | apps/portal/src/components/layout/Center/Center.tsx |
+| apps/portal/src/components/layout/Center/index.ts | apps/portal/src/components/layout/Center/index.ts |
+| apps/portal/src/components/layout/Cluster/Cluster.module.css | apps/portal/src/components/layout/Cluster/Cluster.module.css |
+| apps/portal/src/components/layout/Cluster/Cluster.tsx | apps/portal/src/components/layout/Cluster/Cluster.tsx |
+| apps/portal/src/components/layout/Cluster/index.ts | apps/portal/src/components/layout/Cluster/index.ts |
+| apps/portal/src/components/layout/DecorativeBackground.tsx | apps/portal/src/components/layout/DecorativeBackground.tsx |
+| apps/portal/src/components/layout/Drawer.tsx | apps/portal/src/components/layout/Drawer.tsx |
+| apps/portal/src/components/layout/Grid/Grid.module.css | apps/portal/src/components/layout/Grid/Grid.module.css |
+| apps/portal/src/components/layout/Grid/Grid.tsx | apps/portal/src/components/layout/Grid/Grid.tsx |
+| apps/portal/src/components/layout/Grid/index.ts | apps/portal/src/components/layout/Grid/index.ts |
+| apps/portal/src/components/layout/index.ts | apps/portal/src/components/layout/index.ts |
+| apps/portal/src/components/layout/PageContainer/index.ts | apps/portal/src/components/layout/PageContainer/index.ts |
+| apps/portal/src/components/layout/PageContainer/PageContainer.module.css | apps/portal/src/components/layout/PageContainer/PageContainer.module.css |
+| apps/portal/src/components/layout/PageContainer/PageContainer.tsx | apps/portal/src/components/layout/PageContainer/PageContainer.tsx |
+| apps/portal/src/components/layout/PageFilterBar.tsx | apps/portal/src/components/layout/PageFilterBar.tsx |
+| apps/portal/src/components/layout/PageTransition/index.ts | apps/portal/src/components/layout/PageTransition/index.ts |
+| apps/portal/src/components/layout/PageTransition/PageTransition.tsx | apps/portal/src/components/layout/PageTransition/PageTransition.tsx |
+| apps/portal/src/components/layout/PlaceholderPage.tsx | apps/portal/src/components/layout/PlaceholderPage.tsx |
+| apps/portal/src/components/layout/ScrollArea.tsx | apps/portal/src/components/layout/ScrollArea.tsx |
+| apps/portal/src/components/layout/Sidebar.tsx | apps/portal/src/components/layout/Sidebar.tsx |
+| apps/portal/src/components/layout/Split/index.ts | apps/portal/src/components/layout/Split/index.ts |
+| apps/portal/src/components/layout/Split/Split.module.css | apps/portal/src/components/layout/Split/Split.module.css |
+| apps/portal/src/components/layout/Split/Split.tsx | apps/portal/src/components/layout/Split/Split.tsx |
+| apps/portal/src/components/layout/Stack/index.ts | apps/portal/src/components/layout/Stack/index.ts |
+| apps/portal/src/components/layout/Stack/Stack.module.css | apps/portal/src/components/layout/Stack/Stack.module.css |
+| apps/portal/src/components/layout/Stack/Stack.tsx | apps/portal/src/components/layout/Stack/Stack.tsx |
+| apps/portal/src/components/layout/StaggeredList/index.ts | apps/portal/src/components/layout/StaggeredList/index.ts |
+| apps/portal/src/components/layout/StaggeredList/StaggeredList.tsx | apps/portal/src/components/layout/StaggeredList/StaggeredList.tsx |
+| apps/portal/src/components/layout/ThemeAmbientEffects.tsx | apps/portal/src/components/layout/ThemeAmbientEffects.tsx |
+| apps/portal/src/components/navigation/BottomNavigation.tsx | apps/portal/src/components/navigation/BottomNavigation.tsx |
+| apps/portal/src/components/navigation/Breadcrumb.tsx | apps/portal/src/components/navigation/Breadcrumb.tsx |
+| apps/portal/src/components/navigation/index.ts | apps/portal/src/components/navigation/index.ts |
+| apps/portal/src/components/navigation/Tabs.tsx | apps/portal/src/components/navigation/Tabs.tsx |
+| apps/portal/src/components/primitives/Avatar/Avatar.module.css | apps/portal/src/components/primitives/Avatar/Avatar.module.css |
+| apps/portal/src/components/primitives/Avatar/Avatar.tsx | apps/portal/src/components/primitives/Avatar/Avatar.tsx |
+| apps/portal/src/components/primitives/Avatar/index.ts | apps/portal/src/components/primitives/Avatar/index.ts |
+| apps/portal/src/components/primitives/Badge/Badge.module.css | apps/portal/src/components/primitives/Badge/Badge.module.css |
+| apps/portal/src/components/primitives/Badge/Badge.tsx | apps/portal/src/components/primitives/Badge/Badge.tsx |
+| apps/portal/src/components/primitives/Badge/index.ts | apps/portal/src/components/primitives/Badge/index.ts |
+| apps/portal/src/components/primitives/Button/Button.module.css | apps/portal/src/components/primitives/Button/Button.module.css |
+| apps/portal/src/components/primitives/Button/Button.tsx | apps/portal/src/components/primitives/Button/Button.tsx |
+| apps/portal/src/components/primitives/Button/index.ts | apps/portal/src/components/primitives/Button/index.ts |
+| apps/portal/src/components/primitives/Card/Card.module.css | apps/portal/src/components/primitives/Card/Card.module.css |
+| apps/portal/src/components/primitives/Card/Card.tsx | apps/portal/src/components/primitives/Card/Card.tsx |
+| apps/portal/src/components/primitives/Card/index.ts | apps/portal/src/components/primitives/Card/index.ts |
+| apps/portal/src/components/primitives/Checkbox/Checkbox.module.css | apps/portal/src/components/primitives/Checkbox/Checkbox.module.css |
+| apps/portal/src/components/primitives/Checkbox/Checkbox.tsx | apps/portal/src/components/primitives/Checkbox/Checkbox.tsx |
+| apps/portal/src/components/primitives/Checkbox/index.ts | apps/portal/src/components/primitives/Checkbox/index.ts |
+| apps/portal/src/components/primitives/Code/Code.module.css | apps/portal/src/components/primitives/Code/Code.module.css |
+| apps/portal/src/components/primitives/Code/Code.tsx | apps/portal/src/components/primitives/Code/Code.tsx |
+| apps/portal/src/components/primitives/Code/index.ts | apps/portal/src/components/primitives/Code/index.ts |
+| apps/portal/src/components/primitives/Dialog/Dialog.module.css | apps/portal/src/components/primitives/Dialog/Dialog.module.css |
+| apps/portal/src/components/primitives/Dialog/Dialog.tsx | apps/portal/src/components/primitives/Dialog/Dialog.tsx |
+| apps/portal/src/components/primitives/Dialog/index.ts | apps/portal/src/components/primitives/Dialog/index.ts |
+| apps/portal/src/components/primitives/Heading/Heading.module.css | apps/portal/src/components/primitives/Heading/Heading.module.css |
+| apps/portal/src/components/primitives/Heading/Heading.tsx | apps/portal/src/components/primitives/Heading/Heading.tsx |
+| apps/portal/src/components/primitives/Heading/index.ts | apps/portal/src/components/primitives/Heading/index.ts |
+| apps/portal/src/components/primitives/index.ts | apps/portal/src/components/primitives/index.ts |
+| apps/portal/src/components/primitives/Input/index.ts | apps/portal/src/components/primitives/Input/index.ts |
+| apps/portal/src/components/primitives/Input/Input.module.css | apps/portal/src/components/primitives/Input/Input.module.css |
+| apps/portal/src/components/primitives/Input/Input.tsx | apps/portal/src/components/primitives/Input/Input.tsx |
+| apps/portal/src/components/primitives/Label/index.ts | apps/portal/src/components/primitives/Label/index.ts |
+| apps/portal/src/components/primitives/Label/Label.module.css | apps/portal/src/components/primitives/Label/Label.module.css |
+| apps/portal/src/components/primitives/Label/Label.tsx | apps/portal/src/components/primitives/Label/Label.tsx |
+| apps/portal/src/components/primitives/Select/index.ts | apps/portal/src/components/primitives/Select/index.ts |
+| apps/portal/src/components/primitives/Select/Select.module.css | apps/portal/src/components/primitives/Select/Select.module.css |
+| apps/portal/src/components/primitives/Select/Select.tsx | apps/portal/src/components/primitives/Select/Select.tsx |
+| apps/portal/src/components/primitives/Skeleton/index.ts | apps/portal/src/components/primitives/Skeleton/index.ts |
+| apps/portal/src/components/primitives/Skeleton/Skeleton.module.css | apps/portal/src/components/primitives/Skeleton/Skeleton.module.css |
+| apps/portal/src/components/primitives/Skeleton/Skeleton.tsx | apps/portal/src/components/primitives/Skeleton/Skeleton.tsx |
+| apps/portal/src/components/primitives/Switch/index.ts | apps/portal/src/components/primitives/Switch/index.ts |
+| apps/portal/src/components/primitives/Switch/Switch.module.css | apps/portal/src/components/primitives/Switch/Switch.module.css |
+| apps/portal/src/components/primitives/Switch/Switch.tsx | apps/portal/src/components/primitives/Switch/Switch.tsx |
+| apps/portal/src/components/primitives/Text/index.ts | apps/portal/src/components/primitives/Text/index.ts |
+| apps/portal/src/components/primitives/Text/Text.module.css | apps/portal/src/components/primitives/Text/Text.module.css |
+| apps/portal/src/components/primitives/Text/Text.tsx | apps/portal/src/components/primitives/Text/Text.tsx |
+| apps/portal/src/components/primitives/themed-controls/index.ts | apps/portal/src/components/primitives/themed-controls/index.ts |
+| apps/portal/src/components/primitives/themed-controls/SegmentedControl.tsx | apps/portal/src/components/primitives/themed-controls/SegmentedControl.tsx |
+| apps/portal/src/components/primitives/themed-controls/SortArrows.tsx | apps/portal/src/components/primitives/themed-controls/SortArrows.tsx |
+| apps/portal/src/components/primitives/themed-controls/ThemedIconButton.tsx | apps/portal/src/components/primitives/themed-controls/ThemedIconButton.tsx |
+| apps/portal/src/components/primitives/themed-controls/ThemedPanelBox.tsx | apps/portal/src/components/primitives/themed-controls/ThemedPanelBox.tsx |
+| apps/portal/src/components/primitives/themed-controls/ThemedSortButtonGroup.tsx | apps/portal/src/components/primitives/themed-controls/ThemedSortButtonGroup.tsx |
+| apps/portal/src/components/primitives/themed-controls/ThemedTabControl.tsx | apps/portal/src/components/primitives/themed-controls/ThemedTabControl.tsx |
+| apps/portal/src/design-system/index.css | apps/portal/src/design-system/index.css |
+| apps/portal/src/design-system/motion/index.ts | apps/portal/src/design-system/motion/index.ts |
+| apps/portal/src/design-system/motion/presets.ts | apps/portal/src/design-system/motion/presets.ts |
+| apps/portal/src/design-system/motion/tokens.ts | apps/portal/src/design-system/motion/tokens.ts |
+| apps/portal/src/design-system/primitives/layout.css | apps/portal/src/design-system/primitives/layout.css |
+| apps/portal/src/design-system/primitives/reset.css | apps/portal/src/design-system/primitives/reset.css |
+| apps/portal/src/design-system/primitives/utilities.css | apps/portal/src/design-system/primitives/utilities.css |
+| apps/portal/src/design-system/themes/chibi.css | apps/portal/src/design-system/themes/chibi.css |
+| apps/portal/src/design-system/themes/cyberpunk.css | apps/portal/src/design-system/themes/cyberpunk.css |
+| apps/portal/src/design-system/themes/minimalistic.css | apps/portal/src/design-system/themes/minimalistic.css |
+| apps/portal/src/design-system/themes/neo-brutalism.css | apps/portal/src/design-system/themes/neo-brutalism.css |
+| apps/portal/src/design-system/themes/post-apocalyptic.css | apps/portal/src/design-system/themes/post-apocalyptic.css |
+| apps/portal/src/design-system/themes/royal.css | apps/portal/src/design-system/themes/royal.css |
+| apps/portal/src/design-system/themes/steampunk.css | apps/portal/src/design-system/themes/steampunk.css |
+| apps/portal/src/design-system/tokens/colors.css | apps/portal/src/design-system/tokens/colors.css |
+| apps/portal/src/design-system/tokens/motion.css | apps/portal/src/design-system/tokens/motion.css |
+| apps/portal/src/design-system/tokens/shadows.css | apps/portal/src/design-system/tokens/shadows.css |
+| apps/portal/src/design-system/tokens/shapes.css | apps/portal/src/design-system/tokens/shapes.css |
+| apps/portal/src/design-system/tokens/spacing.css | apps/portal/src/design-system/tokens/spacing.css |
+| apps/portal/src/design-system/tokens/typography.css | apps/portal/src/design-system/tokens/typography.css |
+| apps/portal/src/features/Admin/components/AuditLogs.tsx | apps/portal/src/features/Admin/components/AuditLogs.tsx |
+| apps/portal/src/features/Admin/hooks/useAdmin.ts | apps/portal/src/features/Admin/hooks/useAdmin.ts |
+| apps/portal/src/features/Admin/index.tsx | apps/portal/src/features/Admin/index.tsx |
+| apps/portal/src/features/Announcements/Announcements.module.css | apps/portal/src/features/Announcements/Announcements.module.css |
+| apps/portal/src/features/Announcements/components/AnnouncementActionDialogs.tsx | apps/portal/src/features/Announcements/components/AnnouncementActionDialogs.tsx |
+| apps/portal/src/features/Announcements/components/AnnouncementEditorDialog.tsx | apps/portal/src/features/Announcements/components/AnnouncementEditorDialog.tsx |
+| apps/portal/src/features/Announcements/index.tsx | apps/portal/src/features/Announcements/index.tsx |
+| apps/portal/src/features/Auth/components/ProtectedRoute.tsx | apps/portal/src/features/Auth/components/ProtectedRoute.tsx |
+| apps/portal/src/features/Auth/components/SessionExpiredModal.tsx | apps/portal/src/features/Auth/components/SessionExpiredModal.tsx |
+| apps/portal/src/features/Auth/components/SessionInitializer.tsx | apps/portal/src/features/Auth/components/SessionInitializer.tsx |
+| apps/portal/src/features/Auth/hooks/useAuth.ts | apps/portal/src/features/Auth/hooks/useAuth.ts |
+| apps/portal/src/features/Auth/Login.tsx | apps/portal/src/features/Auth/Login.tsx |
+| apps/portal/src/features/Dashboard/components/Notifications.tsx | apps/portal/src/features/Dashboard/components/Notifications.tsx |
+| apps/portal/src/features/Dashboard/components/RecentWars.tsx | apps/portal/src/features/Dashboard/components/RecentWars.tsx |
+| apps/portal/src/features/Dashboard/components/Timeline.tsx | apps/portal/src/features/Dashboard/components/Timeline.tsx |
+| apps/portal/src/features/Dashboard/components/UpcomingEvents.tsx | apps/portal/src/features/Dashboard/components/UpcomingEvents.tsx |
+| apps/portal/src/features/Dashboard/DashboardPage.tsx | apps/portal/src/features/Dashboard/DashboardPage.tsx |
+| apps/portal/src/features/Dashboard/index.tsx | apps/portal/src/features/Dashboard/index.tsx |
+| apps/portal/src/features/Dashboard/notifications.ts | apps/portal/src/features/Dashboard/notifications.ts |
+| apps/portal/src/features/DesignSystemPreview/index.tsx | apps/portal/src/features/DesignSystemPreview/index.tsx |
+| apps/portal/src/features/Events/Events.filtering.ts | apps/portal/src/features/Events/Events.filtering.ts |
+| apps/portal/src/features/Events/Events.participants.ts | apps/portal/src/features/Events/Events.participants.ts |
+| apps/portal/src/features/Events/components/EventActionDialogs.tsx | apps/portal/src/features/Events/components/EventActionDialogs.tsx |
+| apps/portal/src/features/Events/components/EventEditorDialog.tsx | apps/portal/src/features/Events/components/EventEditorDialog.tsx |
+| apps/portal/src/features/Events/components/InviteMemberDialog.tsx | apps/portal/src/features/Events/components/InviteMemberDialog.tsx |
+| apps/portal/src/features/Events/index.tsx | apps/portal/src/features/Events/index.tsx |
+| apps/portal/src/features/Gallery/components/GalleryUploadDialog.tsx | apps/portal/src/features/Gallery/components/GalleryUploadDialog.tsx |
+| apps/portal/src/features/Gallery/components/GalleryDeleteDialog.tsx | apps/portal/src/features/Gallery/components/GalleryDeleteDialog.tsx |
+| apps/portal/src/features/Gallery/index.tsx | apps/portal/src/features/Gallery/index.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/AnalyticsContext.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/AnalyticsContext.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/CompareSelector.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/CompareSelector.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/CompareTrendChart.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/CompareTrendChart.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/FilterBar.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/FilterBar.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/index.ts | apps/portal/src/features/GuildWar/components/WarAnalytics/index.ts |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/LoadingStates.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/LoadingStates.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/MetricFormulaEditor.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/MetricFormulaEditor.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/MetricsPanel.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/MetricsPanel.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/ModeStrip.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/ModeStrip.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/NormalizationDiagnosticsPanel.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/NormalizationDiagnosticsPanel.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/PlayerTimelineChart.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/PlayerTimelineChart.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/RankingsBarChart.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/RankingsBarChart.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/RankingsFilters.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/RankingsFilters.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/ShareButton.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/ShareButton.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/SubjectSelector.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/SubjectSelector.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/TableFallback.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/TableFallback.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/TeamSelector.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/TeamSelector.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/TeamTrendChart.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/TeamTrendChart.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/types.ts | apps/portal/src/features/GuildWar/components/WarAnalytics/types.ts |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/utils.ts | apps/portal/src/features/GuildWar/components/WarAnalytics/utils.ts |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/WarAnalyticsMain.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/WarAnalyticsMain.tsx |
+| apps/portal/src/features/GuildWar/components/WarAnalytics/WarDetailSidePanel.tsx | apps/portal/src/features/GuildWar/components/WarAnalytics/WarDetailSidePanel.tsx |
+| apps/portal/src/features/GuildWar/components/WarHistory.tsx | apps/portal/src/features/GuildWar/components/WarHistory.tsx |
+| apps/portal/src/features/GuildWar/components/WarHistory.utils.ts | apps/portal/src/features/GuildWar/components/WarHistory.utils.ts |
+| apps/portal/src/features/GuildWar/components/WarHistoryDetail.tsx | apps/portal/src/features/GuildWar/components/WarHistoryDetail.tsx |
+| apps/portal/src/features/GuildWar/components/WarHistoryPieCharts.tsx | apps/portal/src/features/GuildWar/components/WarHistoryPieCharts.tsx |
+| apps/portal/src/features/GuildWar/components/WarTeamDragDrop.tsx | apps/portal/src/features/GuildWar/components/WarTeamDragDrop.tsx |
+| apps/portal/src/features/GuildWar/GuildWar.sorting.ts | apps/portal/src/features/GuildWar/GuildWar.sorting.ts |
+| apps/portal/src/features/GuildWar/hooks/useWars.ts | apps/portal/src/features/GuildWar/hooks/useWars.ts |
+| apps/portal/src/features/GuildWar/index.tsx | apps/portal/src/features/GuildWar/index.tsx |
+| apps/portal/src/features/Members/components/RosterFilterPanel.tsx | apps/portal/src/features/Members/components/RosterFilterPanel.tsx |
+| apps/portal/src/features/Members/components/RosterProfileDialog.tsx | apps/portal/src/features/Members/components/RosterProfileDialog.tsx |
+| apps/portal/src/features/Members/index.tsx | apps/portal/src/features/Members/index.tsx |
+| apps/portal/src/features/Profile/index.tsx | apps/portal/src/features/Profile/index.tsx |
+| apps/portal/src/features/Settings/index.tsx | apps/portal/src/features/Settings/index.tsx |
+| apps/portal/src/features/Tools/components/NexusControlStudio.tsx | apps/portal/src/features/Tools/components/NexusControlStudio.tsx |
+| apps/portal/src/features/Tools/components/nexus-showcase/AllControls.tsx | apps/portal/src/features/Tools/components/nexus-showcase/AllControls.tsx |
+| apps/portal/src/features/Tools/components/nexus-showcase/Buttons.tsx | apps/portal/src/features/Tools/components/nexus-showcase/Buttons.tsx |
+| apps/portal/src/features/Tools/components/nexus-showcase/Cards.tsx | apps/portal/src/features/Tools/components/nexus-showcase/Cards.tsx |
+| apps/portal/src/features/Tools/components/nexus-showcase/ChoiceControls.tsx | apps/portal/src/features/Tools/components/nexus-showcase/ChoiceControls.tsx |
+| apps/portal/src/features/Tools/components/nexus-showcase/DropdownSelect.tsx | apps/portal/src/features/Tools/components/nexus-showcase/DropdownSelect.tsx |
+| apps/portal/src/features/Tools/components/nexus-showcase/Feedback.tsx | apps/portal/src/features/Tools/components/nexus-showcase/Feedback.tsx |
+| apps/portal/src/features/Tools/components/nexus-showcase/index.ts | apps/portal/src/features/Tools/components/nexus-showcase/index.ts |
+| apps/portal/src/features/Tools/components/nexus-showcase/MoreControls.tsx | apps/portal/src/features/Tools/components/nexus-showcase/MoreControls.tsx |
+| apps/portal/src/features/Tools/components/nexus-showcase/Navigation.tsx | apps/portal/src/features/Tools/components/nexus-showcase/Navigation.tsx |
+| apps/portal/src/features/Tools/components/nexus-showcase/RangeControls.tsx | apps/portal/src/features/Tools/components/nexus-showcase/RangeControls.tsx |
+| apps/portal/src/features/Tools/components/nexus-showcase/TextInput.tsx | apps/portal/src/features/Tools/components/nexus-showcase/TextInput.tsx |
+| apps/portal/src/features/Tools/components/StyleBuilder.tsx | apps/portal/src/features/Tools/components/StyleBuilder.tsx |
+| apps/portal/src/features/Tools/index.tsx | apps/portal/src/features/Tools/index.tsx |
+| apps/portal/src/features/Tools/Tools.module.css | apps/portal/src/features/Tools/Tools.module.css |
+| apps/portal/src/features/Wiki/index.tsx | apps/portal/src/features/Wiki/index.tsx |
+| apps/portal/src/features/Wiki/Wiki.module.css | apps/portal/src/features/Wiki/Wiki.module.css |
+| apps/portal/src/hooks/index.ts | apps/portal/src/hooks/index.ts |
+| apps/portal/src/hooks/useFilteredList.ts | apps/portal/src/hooks/useFilteredList.ts |
+| apps/portal/src/hooks/useFilterPresets.ts | apps/portal/src/hooks/useFilterPresets.ts |
+| apps/portal/src/hooks/useInView.ts | apps/portal/src/hooks/useInView.ts |
+| apps/portal/src/hooks/useLastSeen.ts | apps/portal/src/hooks/useLastSeen.ts |
+| apps/portal/src/hooks/useLocaleDate.ts | apps/portal/src/hooks/useLocaleDate.ts |
+| apps/portal/src/hooks/use-media-query.ts | apps/portal/src/hooks/use-media-query.ts |
+| apps/portal/src/hooks/useMobileOptimizations.ts | apps/portal/src/hooks/useMobileOptimizations.ts |
+| apps/portal/src/hooks/useOnline.ts | apps/portal/src/hooks/useOnline.ts |
+| apps/portal/src/hooks/usePush.ts | apps/portal/src/hooks/usePush.ts |
+| apps/portal/src/hooks/useReducedMotion.ts | apps/portal/src/hooks/useReducedMotion.ts |
+| apps/portal/src/hooks/useServerState.ts | apps/portal/src/hooks/useServerState.ts |
+| apps/portal/src/hooks/useWebSocket.ts | apps/portal/src/hooks/useWebSocket.ts |
+| apps/portal/src/i18n/config.ts | apps/portal/src/i18n/config.ts |
+| apps/portal/src/i18n/json.d.ts | apps/portal/src/i18n/json.d.ts |
+| apps/portal/src/i18n/locales/en.json | apps/portal/src/i18n/locales/en.json |
+| apps/portal/src/i18n/locales/zh.json | apps/portal/src/i18n/locales/zh.json |
+| apps/portal/src/index.css | apps/portal/src/index.css |
+| apps/portal/src/layouts/AppShell.tsx | apps/portal/src/layouts/AppShell.tsx |
+| apps/portal/src/layouts/index.ts | apps/portal/src/layouts/index.ts |
+| apps/portal/src/lib/api/admin.ts | apps/portal/src/lib/api/admin.ts |
+| apps/portal/src/lib/api/announcements.ts | apps/portal/src/lib/api/announcements.ts |
+| apps/portal/src/lib/api/api-builder.ts | apps/portal/src/lib/api/api-builder.ts |
+| apps/portal/src/lib/api/auth.ts | apps/portal/src/lib/api/auth.ts |
+| apps/portal/src/lib/api/date.ts | apps/portal/src/lib/api/date.ts |
+| apps/portal/src/lib/api/events.ts | apps/portal/src/lib/api/events.ts |
+| apps/portal/src/lib/api/gallery.ts | apps/portal/src/lib/api/gallery.ts |
+| apps/portal/src/lib/api/index.ts | apps/portal/src/lib/api/index.ts |
+| apps/portal/src/lib/api/media.ts | apps/portal/src/lib/api/media.ts |
+| apps/portal/src/lib/api/members.ts | apps/portal/src/lib/api/members.ts |
+| apps/portal/src/lib/api/poll.ts | apps/portal/src/lib/api/poll.ts |
+| apps/portal/src/lib/api/themePreferences.ts | apps/portal/src/lib/api/themePreferences.ts |
+| apps/portal/src/lib/api/wars.ts | apps/portal/src/lib/api/wars.ts |
+| apps/portal/src/lib/api-client.ts | apps/portal/src/lib/api-client.ts |
+| apps/portal/src/lib/media-conversion.ts | apps/portal/src/lib/media-conversion.ts |
+| apps/portal/src/lib/permissions.ts | apps/portal/src/lib/permissions.ts |
+| apps/portal/src/lib/progression.ts | apps/portal/src/lib/progression.ts |
+| apps/portal/src/lib/queryClient.ts | apps/portal/src/lib/queryClient.ts |
+| apps/portal/src/lib/queryKeys.ts | apps/portal/src/lib/queryKeys.ts |
+| apps/portal/src/lib/storage.ts | apps/portal/src/lib/storage.ts |
+| apps/portal/src/lib/toast.ts | apps/portal/src/lib/toast.ts |
+| apps/portal/src/lib/utils.ts | apps/portal/src/lib/utils.ts |
+| apps/portal/src/main.tsx | apps/portal/src/main.tsx |
+| apps/portal/src/mui-shim/icons-material/_GenericIcon.tsx | apps/portal/src/mui-shim/icons-material/_GenericIcon.tsx |
+| apps/portal/src/mui-shim/icons-material/AccessTime.tsx | apps/portal/src/mui-shim/icons-material/AccessTime.tsx |
+| apps/portal/src/mui-shim/icons-material/Add.tsx | apps/portal/src/mui-shim/icons-material/Add.tsx |
+| apps/portal/src/mui-shim/icons-material/Analytics.tsx | apps/portal/src/mui-shim/icons-material/Analytics.tsx |
+| apps/portal/src/mui-shim/icons-material/ArrowBack.tsx | apps/portal/src/mui-shim/icons-material/ArrowBack.tsx |
+| apps/portal/src/mui-shim/icons-material/BarChart.tsx | apps/portal/src/mui-shim/icons-material/BarChart.tsx |
+| apps/portal/src/mui-shim/icons-material/CalendarMonth.tsx | apps/portal/src/mui-shim/icons-material/CalendarMonth.tsx |
+| apps/portal/src/mui-shim/icons-material/CalendarToday.tsx | apps/portal/src/mui-shim/icons-material/CalendarToday.tsx |
+| apps/portal/src/mui-shim/icons-material/CellTower.tsx | apps/portal/src/mui-shim/icons-material/CellTower.tsx |
+| apps/portal/src/mui-shim/icons-material/Check.tsx | apps/portal/src/mui-shim/icons-material/Check.tsx |
+| apps/portal/src/mui-shim/icons-material/CheckCircle.tsx | apps/portal/src/mui-shim/icons-material/CheckCircle.tsx |
+| apps/portal/src/mui-shim/icons-material/ChevronLeft.tsx | apps/portal/src/mui-shim/icons-material/ChevronLeft.tsx |
+| apps/portal/src/mui-shim/icons-material/ChevronRight.tsx | apps/portal/src/mui-shim/icons-material/ChevronRight.tsx |
+| apps/portal/src/mui-shim/icons-material/Circle.tsx | apps/portal/src/mui-shim/icons-material/Circle.tsx |
+| apps/portal/src/mui-shim/icons-material/Close.tsx | apps/portal/src/mui-shim/icons-material/Close.tsx |
+| apps/portal/src/mui-shim/icons-material/Code.tsx | apps/portal/src/mui-shim/icons-material/Code.tsx |
+| apps/portal/src/mui-shim/icons-material/ContentCopy.tsx | apps/portal/src/mui-shim/icons-material/ContentCopy.tsx |
+| apps/portal/src/mui-shim/icons-material/Delete.tsx | apps/portal/src/mui-shim/icons-material/Delete.tsx |
+| apps/portal/src/mui-shim/icons-material/ElectricBolt.tsx | apps/portal/src/mui-shim/icons-material/ElectricBolt.tsx |
+| apps/portal/src/mui-shim/icons-material/EmojiEvents.tsx | apps/portal/src/mui-shim/icons-material/EmojiEvents.tsx |
+| apps/portal/src/mui-shim/icons-material/EmojiEventsOutlined.tsx | apps/portal/src/mui-shim/icons-material/EmojiEventsOutlined.tsx |
+| apps/portal/src/mui-shim/icons-material/Error.tsx | apps/portal/src/mui-shim/icons-material/Error.tsx |
+| apps/portal/src/mui-shim/icons-material/ErrorOutline.tsx | apps/portal/src/mui-shim/icons-material/ErrorOutline.tsx |
+| apps/portal/src/mui-shim/icons-material/ExitToApp.tsx | apps/portal/src/mui-shim/icons-material/ExitToApp.tsx |
+| apps/portal/src/mui-shim/icons-material/FavoriteBorder.tsx | apps/portal/src/mui-shim/icons-material/FavoriteBorder.tsx |
+| apps/portal/src/mui-shim/icons-material/FilterList.tsx | apps/portal/src/mui-shim/icons-material/FilterList.tsx |
+| apps/portal/src/mui-shim/icons-material/FormatBold.tsx | apps/portal/src/mui-shim/icons-material/FormatBold.tsx |
+| apps/portal/src/mui-shim/icons-material/FormatItalic.tsx | apps/portal/src/mui-shim/icons-material/FormatItalic.tsx |
+| apps/portal/src/mui-shim/icons-material/FormatListBulleted.tsx | apps/portal/src/mui-shim/icons-material/FormatListBulleted.tsx |
+| apps/portal/src/mui-shim/icons-material/FormatListNumbered.tsx | apps/portal/src/mui-shim/icons-material/FormatListNumbered.tsx |
+| apps/portal/src/mui-shim/icons-material/FormatQuote.tsx | apps/portal/src/mui-shim/icons-material/FormatQuote.tsx |
+| apps/portal/src/mui-shim/icons-material/GppMaybe.tsx | apps/portal/src/mui-shim/icons-material/GppMaybe.tsx |
+| apps/portal/src/mui-shim/icons-material/Group.tsx | apps/portal/src/mui-shim/icons-material/Group.tsx |
+| apps/portal/src/mui-shim/icons-material/Image.tsx | apps/portal/src/mui-shim/icons-material/Image.tsx |
+| apps/portal/src/mui-shim/icons-material/index.tsx | apps/portal/src/mui-shim/icons-material/index.tsx |
+| apps/portal/src/mui-shim/icons-material/Info.tsx | apps/portal/src/mui-shim/icons-material/Info.tsx |
+| apps/portal/src/mui-shim/icons-material/KeyboardArrowDown.tsx | apps/portal/src/mui-shim/icons-material/KeyboardArrowDown.tsx |
+| apps/portal/src/mui-shim/icons-material/Link.tsx | apps/portal/src/mui-shim/icons-material/Link.tsx |
+| apps/portal/src/mui-shim/icons-material/LinkOff.tsx | apps/portal/src/mui-shim/icons-material/LinkOff.tsx |
+| apps/portal/src/mui-shim/icons-material/LocalActivity.tsx | apps/portal/src/mui-shim/icons-material/LocalActivity.tsx |
+| apps/portal/src/mui-shim/icons-material/Lock.tsx | apps/portal/src/mui-shim/icons-material/Lock.tsx |
+| apps/portal/src/mui-shim/icons-material/Login.tsx | apps/portal/src/mui-shim/icons-material/Login.tsx |
+| apps/portal/src/mui-shim/icons-material/Looks3.tsx | apps/portal/src/mui-shim/icons-material/Looks3.tsx |
+| apps/portal/src/mui-shim/icons-material/LooksOne.tsx | apps/portal/src/mui-shim/icons-material/LooksOne.tsx |
+| apps/portal/src/mui-shim/icons-material/LooksTwo.tsx | apps/portal/src/mui-shim/icons-material/LooksTwo.tsx |
+| apps/portal/src/mui-shim/icons-material/Notifications.tsx | apps/portal/src/mui-shim/icons-material/Notifications.tsx |
+| apps/portal/src/mui-shim/icons-material/OpenInNew.tsx | apps/portal/src/mui-shim/icons-material/OpenInNew.tsx |
+| apps/portal/src/mui-shim/icons-material/PaidOutlined.tsx | apps/portal/src/mui-shim/icons-material/PaidOutlined.tsx |
+| apps/portal/src/mui-shim/icons-material/People.tsx | apps/portal/src/mui-shim/icons-material/People.tsx |
+| apps/portal/src/mui-shim/icons-material/Person.tsx | apps/portal/src/mui-shim/icons-material/Person.tsx |
+| apps/portal/src/mui-shim/icons-material/PersonAdd.tsx | apps/portal/src/mui-shim/icons-material/PersonAdd.tsx |
+| apps/portal/src/mui-shim/icons-material/PlayArrow.tsx | apps/portal/src/mui-shim/icons-material/PlayArrow.tsx |
+| apps/portal/src/mui-shim/icons-material/Redo.tsx | apps/portal/src/mui-shim/icons-material/Redo.tsx |
+| apps/portal/src/mui-shim/icons-material/Remove.tsx | apps/portal/src/mui-shim/icons-material/Remove.tsx |
+| apps/portal/src/mui-shim/icons-material/Save.tsx | apps/portal/src/mui-shim/icons-material/Save.tsx |
+| apps/portal/src/mui-shim/icons-material/Search.tsx | apps/portal/src/mui-shim/icons-material/Search.tsx |
+| apps/portal/src/mui-shim/icons-material/Settings.tsx | apps/portal/src/mui-shim/icons-material/Settings.tsx |
+| apps/portal/src/mui-shim/icons-material/Shield.tsx | apps/portal/src/mui-shim/icons-material/Shield.tsx |
+| apps/portal/src/mui-shim/icons-material/ShieldOutlined.tsx | apps/portal/src/mui-shim/icons-material/ShieldOutlined.tsx |
+| apps/portal/src/mui-shim/icons-material/ShowChart.tsx | apps/portal/src/mui-shim/icons-material/ShowChart.tsx |
+| apps/portal/src/mui-shim/icons-material/SportsMma.tsx | apps/portal/src/mui-shim/icons-material/SportsMma.tsx |
+| apps/portal/src/mui-shim/icons-material/StrikethroughS.tsx | apps/portal/src/mui-shim/icons-material/StrikethroughS.tsx |
+| apps/portal/src/mui-shim/icons-material/Terminal.tsx | apps/portal/src/mui-shim/icons-material/Terminal.tsx |
+| apps/portal/src/mui-shim/icons-material/TextFields.tsx | apps/portal/src/mui-shim/icons-material/TextFields.tsx |
+| apps/portal/src/mui-shim/icons-material/TrackChanges.tsx | apps/portal/src/mui-shim/icons-material/TrackChanges.tsx |
+| apps/portal/src/mui-shim/icons-material/TrendingDown.tsx | apps/portal/src/mui-shim/icons-material/TrendingDown.tsx |
+| apps/portal/src/mui-shim/icons-material/TrendingUp.tsx | apps/portal/src/mui-shim/icons-material/TrendingUp.tsx |
+| apps/portal/src/mui-shim/icons-material/Undo.tsx | apps/portal/src/mui-shim/icons-material/Undo.tsx |
+| apps/portal/src/mui-shim/icons-material/UnfoldMore.tsx | apps/portal/src/mui-shim/icons-material/UnfoldMore.tsx |
+| apps/portal/src/mui-shim/icons-material/VerifiedUser.tsx | apps/portal/src/mui-shim/icons-material/VerifiedUser.tsx |
+| apps/portal/src/mui-shim/icons-material/Visibility.tsx | apps/portal/src/mui-shim/icons-material/Visibility.tsx |
+| apps/portal/src/mui-shim/icons-material/VisibilityOff.tsx | apps/portal/src/mui-shim/icons-material/VisibilityOff.tsx |
+| apps/portal/src/mui-shim/icons-material/VolumeOff.tsx | apps/portal/src/mui-shim/icons-material/VolumeOff.tsx |
+| apps/portal/src/mui-shim/icons-material/VolumeUp.tsx | apps/portal/src/mui-shim/icons-material/VolumeUp.tsx |
+| apps/portal/src/mui-shim/icons-material/Warning.tsx | apps/portal/src/mui-shim/icons-material/Warning.tsx |
+| apps/portal/src/mui-shim/material/_GenericMaterialSubpath.tsx | apps/portal/src/mui-shim/material/_GenericMaterialSubpath.tsx |
+| apps/portal/src/mui-shim/material/Box.tsx | apps/portal/src/mui-shim/material/Box.tsx |
+| apps/portal/src/mui-shim/material/Button.tsx | apps/portal/src/mui-shim/material/Button.tsx |
+| apps/portal/src/mui-shim/material/Checkbox.tsx | apps/portal/src/mui-shim/material/Checkbox.tsx |
+| apps/portal/src/mui-shim/material/FormLabel.tsx | apps/portal/src/mui-shim/material/FormLabel.tsx |
+| apps/portal/src/mui-shim/material/index.tsx | apps/portal/src/mui-shim/material/index.tsx |
+| apps/portal/src/mui-shim/material/InputBase.tsx | apps/portal/src/mui-shim/material/InputBase.tsx |
+| apps/portal/src/mui-shim/material/Radio.tsx | apps/portal/src/mui-shim/material/Radio.tsx |
+| apps/portal/src/mui-shim/material/RadioGroup.tsx | apps/portal/src/mui-shim/material/RadioGroup.tsx |
+| apps/portal/src/mui-shim/material/Slider.tsx | apps/portal/src/mui-shim/material/Slider.tsx |
+| apps/portal/src/mui-shim/material/styles.ts | apps/portal/src/mui-shim/material/styles.ts |
+| apps/portal/src/mui-shim/material/Switch.tsx | apps/portal/src/mui-shim/material/Switch.tsx |
+| apps/portal/src/mui-shim/x-charts/BarChart.tsx | apps/portal/src/mui-shim/x-charts/BarChart.tsx |
+| apps/portal/src/mui-shim/x-charts/ChartsReferenceLine.tsx | apps/portal/src/mui-shim/x-charts/ChartsReferenceLine.tsx |
+| apps/portal/src/mui-shim/x-charts/index.tsx | apps/portal/src/mui-shim/x-charts/index.tsx |
+| apps/portal/src/mui-shim/x-charts/LineChart.tsx | apps/portal/src/mui-shim/x-charts/LineChart.tsx |
+| apps/portal/src/mui-shim/x-charts/PieChart.tsx | apps/portal/src/mui-shim/x-charts/PieChart.tsx |
+| apps/portal/src/routes/__root.tsx | apps/portal/src/routes/__root.tsx |
+| apps/portal/src/routes/_layout.tsx | apps/portal/src/routes/_layout.tsx |
+| apps/portal/src/routes/_layout/admin.tsx | apps/portal/src/routes/_layout/admin.tsx |
+| apps/portal/src/routes/_layout/announcements.tsx | apps/portal/src/routes/_layout/announcements.tsx |
+| apps/portal/src/routes/_layout/design-system-preview.tsx | apps/portal/src/routes/_layout/design-system-preview.tsx |
+| apps/portal/src/routes/_layout/events.tsx | apps/portal/src/routes/_layout/events.tsx |
+| apps/portal/src/routes/_layout/gallery.tsx | apps/portal/src/routes/_layout/gallery.tsx |
+| apps/portal/src/routes/_layout/guild-war.tsx | apps/portal/src/routes/_layout/guild-war.tsx |
+| apps/portal/src/routes/_layout/index.tsx | apps/portal/src/routes/_layout/index.tsx |
+| apps/portal/src/routes/_layout/profile.tsx | apps/portal/src/routes/_layout/profile.tsx |
+| apps/portal/src/routes/_layout/roster.tsx | apps/portal/src/routes/_layout/roster.tsx |
+| apps/portal/src/routes/_layout/settings.tsx | apps/portal/src/routes/_layout/settings.tsx |
+| apps/portal/src/routes/_layout/tools.tsx | apps/portal/src/routes/_layout/tools.tsx |
+| apps/portal/src/routes/_layout/tools/index.tsx | apps/portal/src/routes/_layout/tools/index.tsx |
+| apps/portal/src/routes/_layout/tools/war-analytics.tsx | apps/portal/src/routes/_layout/tools/war-analytics.tsx |
+| apps/portal/src/routes/_layout/wiki.tsx | apps/portal/src/routes/_layout/wiki.tsx |
+| apps/portal/src/routes/login.tsx | apps/portal/src/routes/login.tsx |
+| apps/portal/src/routeTree.gen.ts | apps/portal/src/routeTree.gen.ts |
+| apps/portal/src/store.ts | apps/portal/src/store.ts |
+| apps/portal/src/theme/accessibility-enhancements.css | apps/portal/src/theme/accessibility-enhancements.css |
+| apps/portal/src/theme/colors/color-tokens.css | apps/portal/src/theme/colors/color-tokens.css |
+| apps/portal/src/theme/colors/index.ts | apps/portal/src/theme/colors/index.ts |
+| apps/portal/src/theme/colors/types.ts | apps/portal/src/theme/colors/types.ts |
+| apps/portal/src/theme/effects.css | apps/portal/src/theme/effects.css |
+| apps/portal/src/theme/fontsource.d.ts | apps/portal/src/theme/fontsource.d.ts |
+| apps/portal/src/theme/fx/postFxGates.ts | apps/portal/src/theme/fx/postFxGates.ts |
+| apps/portal/src/theme/fx/rafThrottle.ts | apps/portal/src/theme/fx/rafThrottle.ts |
+| apps/portal/src/theme/fx/ThemeFXLayer.tsx | apps/portal/src/theme/fx/ThemeFXLayer.tsx |
+| apps/portal/src/theme/index.ts | apps/portal/src/theme/index.ts |
+| apps/portal/src/theme/layout.css | apps/portal/src/theme/layout.css |
+| apps/portal/src/theme/presets/_component-tokens.css | apps/portal/src/theme/presets/_component-tokens.css |
+| apps/portal/src/theme/presets/_context-aware-theming.css | apps/portal/src/theme/presets/_context-aware-theming.css |
+| apps/portal/src/theme/presets/_control-animations.css | apps/portal/src/theme/presets/_control-animations.css |
+| apps/portal/src/theme/presets/_global-improvements.css | apps/portal/src/theme/presets/_global-improvements.css |
+| apps/portal/src/theme/presets/_interactions-base.css | apps/portal/src/theme/presets/_interactions-base.css |
+| apps/portal/src/theme/presets/_member-card-colors.css | apps/portal/src/theme/presets/_member-card-colors.css |
+| apps/portal/src/theme/presets/_performance-optimizations.css | apps/portal/src/theme/presets/_performance-optimizations.css |
+| apps/portal/src/theme/presets/_shape-unification.css | apps/portal/src/theme/presets/_shape-unification.css |
+| apps/portal/src/theme/presets/_theme-customization.css | apps/portal/src/theme/presets/_theme-customization.css |
+| apps/portal/src/theme/presets/_theme-enhancements.css | apps/portal/src/theme/presets/_theme-enhancements.css |
+| apps/portal/src/theme/presets/_theme-transitions.css | apps/portal/src/theme/presets/_theme-transitions.css |
+| apps/portal/src/theme/presets/chibi.css | apps/portal/src/theme/presets/chibi.css |
+| apps/portal/src/theme/presets/cyberpunk.css | apps/portal/src/theme/presets/cyberpunk.css |
+| apps/portal/src/theme/presets/index.css | apps/portal/src/theme/presets/index.css |
+| apps/portal/src/theme/presets/index.ts | apps/portal/src/theme/presets/index.ts |
+| apps/portal/src/theme/presets/minimalistic.css | apps/portal/src/theme/presets/minimalistic.css |
+| apps/portal/src/theme/presets/neo-brutalism.css | apps/portal/src/theme/presets/neo-brutalism.css |
+| apps/portal/src/theme/presets/post-apocalyptic.css | apps/portal/src/theme/presets/post-apocalyptic.css |
+| apps/portal/src/theme/presets/royal.css | apps/portal/src/theme/presets/royal.css |
+| apps/portal/src/theme/presets/steampunk.css | apps/portal/src/theme/presets/steampunk.css |
+| apps/portal/src/theme/README.md | apps/portal/src/theme/README.md |
+| apps/portal/src/theme/rollout.ts | apps/portal/src/theme/rollout.ts |
+| apps/portal/src/theme/rolloutMonitoring.ts | apps/portal/src/theme/rolloutMonitoring.ts |
+| apps/portal/src/theme/runtimeContracts.ts | apps/portal/src/theme/runtimeContracts.ts |
+| apps/portal/src/theme/theme.css | apps/portal/src/theme/theme.css |
+| apps/portal/src/theme/ThemeController.tsx | apps/portal/src/theme/ThemeController.tsx |
+| apps/portal/src/theme/tokens.ts | apps/portal/src/theme/tokens.ts |
+| apps/portal/src/theme/types/types.ts | apps/portal/src/theme/types/types.ts |
+| apps/portal/src/theme/types/typography.ts | apps/portal/src/theme/types/typography.ts |
+| apps/portal/src/theme/useMotionTokens.ts | apps/portal/src/theme/useMotionTokens.ts |
+| apps/portal/src/types.ts | apps/portal/src/types.ts |
+| apps/portal/tests/components/app-imports.test.ts | apps/portal/tests/components/app-imports.test.ts |
+| apps/portal/tests/components/BottomNavigation.account-menu.test.tsx | apps/portal/tests/components/BottomNavigation.account-menu.test.tsx |
+| apps/portal/tests/components/Button.disabled-visibility.test.tsx | apps/portal/tests/components/Button.disabled-visibility.test.tsx |
+| apps/portal/tests/components/chibi-control-signatures.phase4.test.tsx | apps/portal/tests/components/chibi-control-signatures.phase4.test.tsx |
+| apps/portal/tests/components/components.barrel-rework.test.tsx | apps/portal/tests/components/components.barrel-rework.test.tsx |
+| apps/portal/tests/components/cyberpunk-control-signatures.phase4.test.tsx | apps/portal/tests/components/cyberpunk-control-signatures.phase4.test.tsx |
+| apps/portal/tests/components/DecorativeBackground.test.tsx | apps/portal/tests/components/DecorativeBackground.test.tsx |
+| apps/portal/tests/components/Dialog.close-button.test.tsx | apps/portal/tests/components/Dialog.close-button.test.tsx |
+| apps/portal/tests/components/layout.AppShell.day14.remaining.contract.test.ts | apps/portal/tests/components/layout.AppShell.day14.remaining.contract.test.ts |
+| apps/portal/tests/components/layout.AppShell.phase14.contract.test.ts | apps/portal/tests/components/layout.AppShell.phase14.contract.test.ts |
+| apps/portal/tests/components/layout.Center.test.tsx | apps/portal/tests/components/layout.Center.test.tsx |
+| apps/portal/tests/components/layout.Cluster.test.tsx | apps/portal/tests/components/layout.Cluster.test.tsx |
+| apps/portal/tests/components/layout.Grid.test.tsx | apps/portal/tests/components/layout.Grid.test.tsx |
+| apps/portal/tests/components/layout.PageContainer.test.tsx | apps/portal/tests/components/layout.PageContainer.test.tsx |
+| apps/portal/tests/components/layout.PageTransition.test.tsx | apps/portal/tests/components/layout.PageTransition.test.tsx |
+| apps/portal/tests/components/layout.Split.test.tsx | apps/portal/tests/components/layout.Split.test.tsx |
+| apps/portal/tests/components/layout.Stack.test.tsx | apps/portal/tests/components/layout.Stack.test.tsx |
+| apps/portal/tests/components/layout.StaggeredList.test.tsx | apps/portal/tests/components/layout.StaggeredList.test.tsx |
+| apps/portal/tests/components/Layout.theme-menu.test.tsx | apps/portal/tests/components/Layout.theme-menu.test.tsx |
+| apps/portal/tests/components/layout/__snapshots__/ThemeAmbientEffects.visual-regression.phase5.test.tsx.snap | apps/portal/tests/components/layout/__snapshots__/ThemeAmbientEffects.visual-regression.phase5.test.tsx.snap |
+| apps/portal/tests/components/layout/PageFilterBar.category-selected-style.test.tsx | apps/portal/tests/components/layout/PageFilterBar.category-selected-style.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientCanvas.phase2-runtime.test.ts | apps/portal/tests/components/layout/ThemeAmbientCanvas.phase2-runtime.test.ts |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.canvas-mapping.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.canvas-mapping.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.chibi-toy-box.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.chibi-toy-box.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.cyberpunk-deepnet.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.cyberpunk-deepnet.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.interaction.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.interaction.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.minimalistic-gallery.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.minimalistic-gallery.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.neo-graphic-print.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.neo-graphic-print.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.post-apocalyptic-wasteland.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.post-apocalyptic-wasteland.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.premium-scenes.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.premium-scenes.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.reduced-profiles.phase4.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.reduced-profiles.phase4.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.royal-atelier.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.royal-atelier.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.steampunk-foundry.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.steampunk-foundry.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientEffects.visual-regression.phase5.test.tsx | apps/portal/tests/components/layout/ThemeAmbientEffects.visual-regression.phase5.test.tsx |
+| apps/portal/tests/components/layout/ThemeAmbientPerformance.phase5.test.ts | apps/portal/tests/components/layout/ThemeAmbientPerformance.phase5.test.ts |
+| apps/portal/tests/components/layout/ThemeBackgroundRenderer.r3f.test.tsx | apps/portal/tests/components/layout/ThemeBackgroundRenderer.r3f.test.tsx |
+| apps/portal/tests/components/legacy-component-paths.test.ts | apps/portal/tests/components/legacy-component-paths.test.ts |
+| apps/portal/tests/components/MarkdownContent.test.tsx | apps/portal/tests/components/MarkdownContent.test.tsx |
+| apps/portal/tests/components/minimalistic-control-signatures.phase4.test.tsx | apps/portal/tests/components/minimalistic-control-signatures.phase4.test.tsx |
+| apps/portal/tests/components/neo-control-signatures.phase4.test.tsx | apps/portal/tests/components/neo-control-signatures.phase4.test.tsx |
+| apps/portal/tests/components/NexusControlAudit.test.ts | apps/portal/tests/components/NexusControlAudit.test.ts |
+| apps/portal/tests/components/NexusControlStudio.header-layout.test.tsx | apps/portal/tests/components/NexusControlStudio.header-layout.test.tsx |
+| apps/portal/tests/components/NexusControlStudio.scope-vars.test.tsx | apps/portal/tests/components/NexusControlStudio.scope-vars.test.tsx |
+| apps/portal/tests/components/NexusControlStudio.theme-isolation.test.tsx | apps/portal/tests/components/NexusControlStudio.theme-isolation.test.tsx |
+| apps/portal/tests/components/nexus-primitives-imports.test.ts | apps/portal/tests/components/nexus-primitives-imports.test.ts |
+| apps/portal/tests/components/overlay-content-classname.test.tsx | apps/portal/tests/components/overlay-content-classname.test.tsx |
+| apps/portal/tests/components/post-apocalyptic-control-signatures.phase4.test.tsx | apps/portal/tests/components/post-apocalyptic-control-signatures.phase4.test.tsx |
+| apps/portal/tests/components/primitives.Avatar.test.tsx | apps/portal/tests/components/primitives.Avatar.test.tsx |
+| apps/portal/tests/components/primitives.Badge.test.tsx | apps/portal/tests/components/primitives.Badge.test.tsx |
+| apps/portal/tests/components/primitives.Button.test.tsx | apps/portal/tests/components/primitives.Button.test.tsx |
+| apps/portal/tests/components/primitives.Card.test.tsx | apps/portal/tests/components/primitives.Card.test.tsx |
+| apps/portal/tests/components/primitives.Checkbox.test.tsx | apps/portal/tests/components/primitives.Checkbox.test.tsx |
+| apps/portal/tests/components/primitives.Code.test.tsx | apps/portal/tests/components/primitives.Code.test.tsx |
+| apps/portal/tests/components/primitives.Dialog.test.tsx | apps/portal/tests/components/primitives.Dialog.test.tsx |
+| apps/portal/tests/components/primitives.Heading.test.tsx | apps/portal/tests/components/primitives.Heading.test.tsx |
+| apps/portal/tests/components/primitives.Input.test.tsx | apps/portal/tests/components/primitives.Input.test.tsx |
+| apps/portal/tests/components/primitives.Label.test.tsx | apps/portal/tests/components/primitives.Label.test.tsx |
+| apps/portal/tests/components/primitives.Select.test.tsx | apps/portal/tests/components/primitives.Select.test.tsx |
+| apps/portal/tests/components/primitives.Skeleton.test.tsx | apps/portal/tests/components/primitives.Skeleton.test.tsx |
+| apps/portal/tests/components/primitives.Switch.test.tsx | apps/portal/tests/components/primitives.Switch.test.tsx |
+| apps/portal/tests/components/primitives.Text.test.tsx | apps/portal/tests/components/primitives.Text.test.tsx |
+| apps/portal/tests/components/royal-control-signatures.phase4.test.tsx | apps/portal/tests/components/royal-control-signatures.phase4.test.tsx |
+| apps/portal/tests/components/steampunk-control-signatures.phase4.test.tsx | apps/portal/tests/components/steampunk-control-signatures.phase4.test.tsx |
+| apps/portal/tests/components/TiptapEditor.image-upload.test.tsx | apps/portal/tests/components/TiptapEditor.image-upload.test.tsx |
+| apps/portal/tests/features/Admin/Admin.day16.contract.test.ts | apps/portal/tests/features/Admin/Admin.day16.contract.test.ts |
+| apps/portal/tests/features/Admin/AuditLogs.day18.contract.test.ts | apps/portal/tests/features/Admin/AuditLogs.day18.contract.test.ts |
+| apps/portal/tests/features/Announcements/Announcements.controls.test.tsx | apps/portal/tests/features/Announcements/Announcements.controls.test.tsx |
+| apps/portal/tests/features/Announcements/Announcements.day15.contract.test.tsx | apps/portal/tests/features/Announcements/Announcements.day15.contract.test.tsx |
+| apps/portal/tests/features/Announcements/Announcements.phase19.lazy-editor-dialog.contract.test.ts | apps/portal/tests/features/Announcements/Announcements.phase19.lazy-editor-dialog.contract.test.ts |
+| apps/portal/tests/features/Auth/Login.day18.accessibility.contract.test.ts | apps/portal/tests/features/Auth/Login.day18.accessibility.contract.test.ts |
+| apps/portal/tests/features/Dashboard/Dashboard.day18.empty-actions.contract.test.ts | apps/portal/tests/features/Dashboard/Dashboard.day18.empty-actions.contract.test.ts |
+| apps/portal/tests/features/Dashboard/Dashboard.day18.error.contract.test.ts | apps/portal/tests/features/Dashboard/Dashboard.day18.error.contract.test.ts |
+| apps/portal/tests/features/Dashboard/Dashboard.notifications.test.tsx | apps/portal/tests/features/Dashboard/Dashboard.notifications.test.tsx |
+| apps/portal/tests/features/Dashboard/Dashboard.timeline.smoke.test.tsx | apps/portal/tests/features/Dashboard/Dashboard.timeline.smoke.test.tsx |
+| apps/portal/tests/features/Dashboard/DashboardNew.day18.error.contract.test.ts | apps/portal/tests/features/Dashboard/DashboardNew.day18.error.contract.test.ts |
+| apps/portal/tests/features/Dashboard/UpcomingEvents.participantCard.test.tsx | apps/portal/tests/features/Dashboard/UpcomingEvents.participantCard.test.tsx |
+| apps/portal/tests/features/DesignSystemPreview.test.tsx | apps/portal/tests/features/DesignSystemPreview.test.tsx |
+| apps/portal/tests/features/Events/Events.card-type.test.ts | apps/portal/tests/features/Events/Events.card-type.test.ts |
+| apps/portal/tests/features/Events/Events.create-edit-controls.test.tsx | apps/portal/tests/features/Events/Events.create-edit-controls.test.tsx |
+| apps/portal/tests/features/Events/Events.day18.empty-error.contract.test.tsx | apps/portal/tests/features/Events/Events.day18.empty-error.contract.test.tsx |
+| apps/portal/tests/features/Events/Events.filtering.test.ts | apps/portal/tests/features/Events/Events.filtering.test.ts |
+| apps/portal/tests/features/Events/Events.filters.test.tsx | apps/portal/tests/features/Events/Events.filters.test.tsx |
+| apps/portal/tests/features/Events/Events.invite-details.test.tsx | apps/portal/tests/features/Events/Events.invite-details.test.tsx |
+| apps/portal/tests/features/Events/Events.phase19.lazy-invite-dialog.contract.test.ts | apps/portal/tests/features/Events/Events.phase19.lazy-invite-dialog.contract.test.ts |
+| apps/portal/tests/features/Events/Events.participant-card-layout.test.tsx | apps/portal/tests/features/Events/Events.participant-card-layout.test.tsx |
+| apps/portal/tests/features/Events/Events.participant-permissions.test.tsx | apps/portal/tests/features/Events/Events.participant-permissions.test.tsx |
+| apps/portal/tests/features/Events/Events.participants.test.ts | apps/portal/tests/features/Events/Events.participants.test.ts |
+| apps/portal/tests/features/Events/Events.virtualization.test.ts | apps/portal/tests/features/Events/Events.virtualization.test.ts |
+| apps/portal/tests/features/Gallery/Gallery.day16.contract.test.ts | apps/portal/tests/features/Gallery/Gallery.day16.contract.test.ts |
+| apps/portal/tests/features/Gallery/Gallery.filters.test.tsx | apps/portal/tests/features/Gallery/Gallery.filters.test.tsx |
+| apps/portal/tests/features/Gallery/Gallery.phase19.lazy-upload.contract.test.ts | apps/portal/tests/features/Gallery/Gallery.phase19.lazy-upload.contract.test.ts |
+| apps/portal/tests/features/GuildWar/components/WarHistory.utils.test.ts | apps/portal/tests/features/GuildWar/components/WarHistory.utils.test.ts |
+| apps/portal/tests/features/GuildWar/GuildWar.day16.contract.test.tsx | apps/portal/tests/features/GuildWar/GuildWar.day16.contract.test.tsx |
+| apps/portal/tests/features/GuildWar/GuildWar.permissions.test.tsx | apps/portal/tests/features/GuildWar/GuildWar.permissions.test.tsx |
+| apps/portal/tests/features/GuildWar/GuildWar.sort-controls-size.test.ts | apps/portal/tests/features/GuildWar/GuildWar.sort-controls-size.test.ts |
+| apps/portal/tests/features/GuildWar/GuildWar.sorting.test.ts | apps/portal/tests/features/GuildWar/GuildWar.sorting.test.ts |
+| apps/portal/tests/features/GuildWar/WarAnalytics.chart-colors.test.ts | apps/portal/tests/features/GuildWar/WarAnalytics.chart-colors.test.ts |
+| apps/portal/tests/features/GuildWar/WarAnalytics.detail-panel.test.tsx | apps/portal/tests/features/GuildWar/WarAnalytics.detail-panel.test.tsx |
+| apps/portal/tests/features/GuildWar/WarAnalytics.diagnostics.test.tsx | apps/portal/tests/features/GuildWar/WarAnalytics.diagnostics.test.tsx |
+| apps/portal/tests/features/GuildWar/WarAnalytics.error-retry.test.tsx | apps/portal/tests/features/GuildWar/WarAnalytics.error-retry.test.tsx |
+| apps/portal/tests/features/GuildWar/WarAnalytics.filter-header.test.tsx | apps/portal/tests/features/GuildWar/WarAnalytics.filter-header.test.tsx |
+| apps/portal/tests/features/GuildWar/WarAnalytics.filters.test.tsx | apps/portal/tests/features/GuildWar/WarAnalytics.filters.test.tsx |
+| apps/portal/tests/features/GuildWar/WarAnalytics.formula-editor.test.tsx | apps/portal/tests/features/GuildWar/WarAnalytics.formula-editor.test.tsx |
+| apps/portal/tests/features/GuildWar/WarAnalytics.localization.test.tsx | apps/portal/tests/features/GuildWar/WarAnalytics.localization.test.tsx |
+| apps/portal/tests/features/GuildWar/WarAnalytics.main.test.tsx | apps/portal/tests/features/GuildWar/WarAnalytics.main.test.tsx |
+| apps/portal/tests/features/GuildWar/WarAnalytics.teams-mode.test.tsx | apps/portal/tests/features/GuildWar/WarAnalytics.teams-mode.test.tsx |
+| apps/portal/tests/features/GuildWar/WarAnalytics.utils.localization.test.ts | apps/portal/tests/features/GuildWar/WarAnalytics.utils.localization.test.ts |
+| apps/portal/tests/features/GuildWar/WarHistory.day18.empty-error.contract.test.ts | apps/portal/tests/features/GuildWar/WarHistory.day18.empty-error.contract.test.ts |
+| apps/portal/tests/features/GuildWar/WarHistory.detail-modal.test.tsx | apps/portal/tests/features/GuildWar/WarHistory.detail-modal.test.tsx |
+| apps/portal/tests/features/GuildWar/WarHistory.pie-colors.test.ts | apps/portal/tests/features/GuildWar/WarHistory.pie-colors.test.ts |
+| apps/portal/tests/features/Members/Roster.audio.test.ts | apps/portal/tests/features/Members/Roster.audio.test.ts |
+| apps/portal/tests/features/Members/Roster.audio-controls.test.tsx | apps/portal/tests/features/Members/Roster.audio-controls.test.tsx |
+| apps/portal/tests/features/Members/Members.no-compat-icons-import.contract.test.ts | apps/portal/tests/features/Members/Members.no-compat-icons-import.contract.test.ts |
+| apps/portal/tests/features/Members/Members.phase19.lazy-profile-dialog.contract.test.ts | apps/portal/tests/features/Members/Members.phase19.lazy-profile-dialog.contract.test.ts |
+| apps/portal/tests/features/Members/Roster.hook-order.test.tsx | apps/portal/tests/features/Members/Roster.hook-order.test.tsx |
+| apps/portal/tests/features/Members/Roster.member-detail-panel.test.tsx | apps/portal/tests/features/Members/Roster.member-detail-panel.test.tsx |
+| apps/portal/tests/features/Members/Roster.memo.contract.test.ts | apps/portal/tests/features/Members/Roster.memo.contract.test.ts |
+| apps/portal/tests/features/Members/Roster.modal.test.tsx | apps/portal/tests/features/Members/Roster.modal.test.tsx |
+| apps/portal/tests/features/Profile/Profile.day15.contract.test.tsx | apps/portal/tests/features/Profile/Profile.day15.contract.test.tsx |
+| apps/portal/tests/features/Settings/Settings.day18.contract.test.ts | apps/portal/tests/features/Settings/Settings.day18.contract.test.ts |
+| apps/portal/tests/features/Settings/Settings.localization.test.tsx | apps/portal/tests/features/Settings/Settings.localization.test.tsx |
+| apps/portal/tests/features/Settings/Settings.motion-slider.test.tsx | apps/portal/tests/features/Settings/Settings.motion-slider.test.tsx |
+| apps/portal/tests/features/Tools/Tools.day16.contract.test.tsx | apps/portal/tests/features/Tools/Tools.day16.contract.test.tsx |
+| apps/portal/tests/features/Wiki/Wiki.day16.contract.test.tsx | apps/portal/tests/features/Wiki/Wiki.day16.contract.test.tsx |
+| apps/portal/tests/hooks/useInView.test.tsx | apps/portal/tests/hooks/useInView.test.tsx |
+| apps/portal/tests/hooks/useReducedMotion.test.tsx | apps/portal/tests/hooks/useReducedMotion.test.tsx |
+| apps/portal/tests/hooks/useServerState.members-cache.contract.test.ts | apps/portal/tests/hooks/useServerState.members-cache.contract.test.ts |
+| apps/portal/tests/hooks/useServerState.polling.test.ts | apps/portal/tests/hooks/useServerState.polling.test.ts |
+| apps/portal/tests/i18n/guild-war-analytics-zh-keys.test.ts | apps/portal/tests/i18n/guild-war-analytics-zh-keys.test.ts |
+| apps/portal/tests/i18n/nav-wording.test.ts | apps/portal/tests/i18n/nav-wording.test.ts |
+| apps/portal/tests/i18n/portal-surface-localization.test.ts | apps/portal/tests/i18n/portal-surface-localization.test.ts |
+| apps/portal/tests/i18n/zh-localization-quality.test.ts | apps/portal/tests/i18n/zh-localization-quality.test.ts |
+| apps/portal/tests/i18n/zh-structure.test.ts | apps/portal/tests/i18n/zh-structure.test.ts |
+| apps/portal/tests/lib/api/members.test.ts | apps/portal/tests/lib/api/members.test.ts |
+| apps/portal/tests/lib/api/wars.test.ts | apps/portal/tests/lib/api/wars.test.ts |
+| apps/portal/tests/lib/api/wars.update-member-stats.test.ts | apps/portal/tests/lib/api/wars.update-member-stats.test.ts |
+| apps/portal/tests/lib/permissions.test.ts | apps/portal/tests/lib/permissions.test.ts |
+| apps/portal/tests/lib/queryClient.phase11.defaults.test.ts | apps/portal/tests/lib/queryClient.phase11.defaults.test.ts |
+| apps/portal/tests/lib/utils.member-card-colors.test.ts | apps/portal/tests/lib/utils.member-card-colors.test.ts |
+| apps/portal/tests/mui-shim.material.breakpoints.test.ts | apps/portal/tests/mui-shim.material.breakpoints.test.ts |
+| apps/portal/tests/mui-shim.material.subpaths.test.tsx | apps/portal/tests/mui-shim.material.subpaths.test.tsx |
+| apps/portal/tests/routes/dashboard-route-selection.test.ts | apps/portal/tests/routes/dashboard-route-selection.test.ts |
+| apps/portal/tests/setupTests.ts | apps/portal/tests/setupTests.ts |
+| apps/portal/tests/theme/accessibility-enhancements.selectors.test.ts | apps/portal/tests/theme/accessibility-enhancements.selectors.test.ts |
+| apps/portal/tests/theme/member-card-theme-colors.spec.ts | apps/portal/tests/theme/member-card-theme-colors.spec.ts |
+| apps/portal/tests/theme/theme-background-effects.contract.test.ts | apps/portal/tests/theme/theme-background-effects.contract.test.ts |
+| apps/portal/tests/theme/theme-background-effects-disabled.contract.test.ts | apps/portal/tests/theme/theme-background-effects-disabled.contract.test.ts |
+| apps/portal/tests/theme/theme-background-mode.canvas-policy.test.ts | apps/portal/tests/theme/theme-background-mode.canvas-policy.test.ts |
+| apps/portal/tests/theme/theme-chibi-control-geometry.test.ts | apps/portal/tests/theme/theme-chibi-control-geometry.test.ts |
+| apps/portal/tests/theme/theme-chibi-toy-box.phase4.test.ts | apps/portal/tests/theme/theme-chibi-toy-box.phase4.test.ts |
+| apps/portal/tests/theme/theme-controller.remote-preferences.test.tsx | apps/portal/tests/theme/theme-controller.remote-preferences.test.tsx |
+| apps/portal/tests/theme/theme-controller.state.test.tsx | apps/portal/tests/theme/theme-controller.state.test.tsx |
+| apps/portal/tests/theme/theme-cyberpunk-deepnet.phase4.test.ts | apps/portal/tests/theme/theme-cyberpunk-deepnet.phase4.test.ts |
+| apps/portal/tests/theme/theme-engine.preferences.test.ts | apps/portal/tests/theme/theme-engine.preferences.test.ts |
+| apps/portal/tests/theme/theme-fancy-fx-suppression.phase5.test.ts | apps/portal/tests/theme/theme-fancy-fx-suppression.phase5.test.ts |
+| apps/portal/tests/theme/ThemeFXLayer.cyberpunk-events.phase4.test.tsx | apps/portal/tests/theme/ThemeFXLayer.cyberpunk-events.phase4.test.tsx |
+| apps/portal/tests/theme/ThemeFXLayer.phase2-gates.test.tsx | apps/portal/tests/theme/ThemeFXLayer.phase2-gates.test.tsx |
+| apps/portal/tests/theme/ThemeFXLayer.phase6-rollout.test.tsx | apps/portal/tests/theme/ThemeFXLayer.phase6-rollout.test.tsx |
+| apps/portal/tests/theme/ThemeFXLayer.test.tsx | apps/portal/tests/theme/ThemeFXLayer.test.tsx |
+| apps/portal/tests/theme/theme-fx-quality-gating.phase5.test.ts | apps/portal/tests/theme/theme-fx-quality-gating.phase5.test.ts |
+| apps/portal/tests/theme/theme-minimalistic-gallery.phase4.test.ts | apps/portal/tests/theme/theme-minimalistic-gallery.phase4.test.ts |
+| apps/portal/tests/theme/theme-motion-contract.test.ts | apps/portal/tests/theme/theme-motion-contract.test.ts |
+| apps/portal/tests/theme/theme-motion-mode-resolution.phase5.test.tsx | apps/portal/tests/theme/theme-motion-mode-resolution.phase5.test.tsx |
+| apps/portal/tests/theme/theme-neo-brutalism-hover.test.ts | apps/portal/tests/theme/theme-neo-brutalism-hover.test.ts |
+| apps/portal/tests/theme/theme-neo-graphic-print.phase4.test.ts | apps/portal/tests/theme/theme-neo-graphic-print.phase4.test.ts |
+| apps/portal/tests/theme/theme-post-apocalyptic-wasteland.phase4.test.ts | apps/portal/tests/theme/theme-post-apocalyptic-wasteland.phase4.test.ts |
+| apps/portal/tests/theme/theme-postfx-gates.phase2.test.ts | apps/portal/tests/theme/theme-postfx-gates.phase2.test.ts |
+| apps/portal/tests/theme/theme-registry.split.test.ts | apps/portal/tests/theme/theme-registry.split.test.ts |
+| apps/portal/tests/theme/theme-rollout-flags.phase6.test.ts | apps/portal/tests/theme/theme-rollout-flags.phase6.test.ts |
+| apps/portal/tests/theme/theme-rollout-monitoring.phase6.test.ts | apps/portal/tests/theme/theme-rollout-monitoring.phase6.test.ts |
+| apps/portal/tests/theme/theme-royal-atelier.phase4.test.ts | apps/portal/tests/theme/theme-royal-atelier.phase4.test.ts |
+| apps/portal/tests/theme/theme-runtime-contracts.phase0.test.ts | apps/portal/tests/theme/theme-runtime-contracts.phase0.test.ts |
+| apps/portal/tests/theme/theme-steampunk-foundry.phase4.test.ts | apps/portal/tests/theme/theme-steampunk-foundry.phase4.test.ts |
+| apps/portal/tests/visual/control-shape-audit.spec.ts | apps/portal/tests/visual/control-shape-audit.spec.ts |
+| apps/portal/tests/visual/css-specificity-audit.spec.ts | apps/portal/tests/visual/css-specificity-audit.spec.ts |
+| apps/portal/tests/visual/theme-contrast-audit.spec.ts | apps/portal/tests/visual/theme-contrast-audit.spec.ts |
+| apps/portal/tsconfig.json | apps/portal/tsconfig.json |
+| apps/portal/typecheck_output.txt | apps/portal/typecheck_output.txt |
+| apps/worker/package.json | apps/worker/package.json |
+| apps/worker/src/api/admin/audit-logs.ts | apps/worker/src/api/admin/audit-logs.ts |
+| apps/worker/src/api/admin/audit-logs/[id].ts | apps/worker/src/api/admin/audit-logs/[id].ts |
+| apps/worker/src/api/admin/audit-logs/entity/[entityId].ts | apps/worker/src/api/admin/audit-logs/entity/[entityId].ts |
+| apps/worker/src/api/admin/audit-logs/stats.ts | apps/worker/src/api/admin/audit-logs/stats.ts |
+| apps/worker/src/api/announcements/[id].ts | apps/worker/src/api/announcements/[id].ts |
+| apps/worker/src/api/announcements/[id]/media.ts | apps/worker/src/api/announcements/[id]/media.ts |
+| apps/worker/src/api/announcements/[id]/media/[mediaId].ts | apps/worker/src/api/announcements/[id]/media/[mediaId].ts |
+| apps/worker/src/api/announcements/[id]/pin.ts | apps/worker/src/api/announcements/[id]/pin.ts |
+| apps/worker/src/api/announcements/[id]/toggle-archive.ts | apps/worker/src/api/announcements/[id]/toggle-archive.ts |
+| apps/worker/src/api/announcements/index.ts | apps/worker/src/api/announcements/index.ts |
+| apps/worker/src/api/announcements/restore.ts | apps/worker/src/api/announcements/restore.ts |
+| apps/worker/src/api/auth/api-keys.ts | apps/worker/src/api/auth/api-keys.ts |
+| apps/worker/src/api/auth/api-keys/[id].ts | apps/worker/src/api/auth/api-keys/[id].ts |
+| apps/worker/src/api/auth/change-password.ts | apps/worker/src/api/auth/change-password.ts |
+| apps/worker/src/api/auth/csrf.ts | apps/worker/src/api/auth/csrf.ts |
+| apps/worker/src/api/auth/login.ts | apps/worker/src/api/auth/login.ts |
+| apps/worker/src/api/auth/logout.ts | apps/worker/src/api/auth/logout.ts |
+| apps/worker/src/api/auth/preferences.ts | apps/worker/src/api/auth/preferences.ts |
+| apps/worker/src/api/auth/session.ts | apps/worker/src/api/auth/session.ts |
+| apps/worker/src/api/auth/signup.ts | apps/worker/src/api/auth/signup.ts |
+| apps/worker/src/api/events/[id].ts | apps/worker/src/api/events/[id].ts |
+| apps/worker/src/api/events/[id]/[action].ts | apps/worker/src/api/events/[id]/[action].ts |
+| apps/worker/src/api/events/[id]/attachments.ts | apps/worker/src/api/events/[id]/attachments.ts |
+| apps/worker/src/api/events/[id]/attachments/[mediaId].ts | apps/worker/src/api/events/[id]/attachments/[mediaId].ts |
+| apps/worker/src/api/events/[id]/duplicate.ts | apps/worker/src/api/events/[id]/duplicate.ts |
+| apps/worker/src/api/events/[id]/join.ts | apps/worker/src/api/events/[id]/join.ts |
+| apps/worker/src/api/events/[id]/kick.ts | apps/worker/src/api/events/[id]/kick.ts |
+| apps/worker/src/api/events/[id]/leave.ts | apps/worker/src/api/events/[id]/leave.ts |
+| apps/worker/src/api/events/[id]/participants.ts | apps/worker/src/api/events/[id]/participants.ts |
+| apps/worker/src/api/events/[id]/pin.ts | apps/worker/src/api/events/[id]/pin.ts |
+| apps/worker/src/api/events/[id]/toggle-archive.ts | apps/worker/src/api/events/[id]/toggle-archive.ts |
+| apps/worker/src/api/events/[id]/toggle-lock.ts | apps/worker/src/api/events/[id]/toggle-lock.ts |
+| apps/worker/src/api/events/[id]/toggle-pin.ts | apps/worker/src/api/events/[id]/toggle-pin.ts |
+| apps/worker/src/api/events/index.ts | apps/worker/src/api/events/index.ts |
+| apps/worker/src/api/events/restore.ts | apps/worker/src/api/events/restore.ts |
+| apps/worker/src/api/gallery/[id].ts | apps/worker/src/api/gallery/[id].ts |
+| apps/worker/src/api/gallery/[id]/feature.ts | apps/worker/src/api/gallery/[id]/feature.ts |
+| apps/worker/src/api/gallery/[id]/unfeature.ts | apps/worker/src/api/gallery/[id]/unfeature.ts |
+| apps/worker/src/api/gallery/index.ts | apps/worker/src/api/gallery/index.ts |
+| apps/worker/src/api/health/[[check]].ts | apps/worker/src/api/health/[[check]].ts |
+| apps/worker/src/api/media/[id]/conversions.ts | apps/worker/src/api/media/[id]/conversions.ts |
+| apps/worker/src/api/media/[id]/conversions/retry.ts | apps/worker/src/api/media/[id]/conversions/retry.ts |
+| apps/worker/src/api/media/[key].ts | apps/worker/src/api/media/[key].ts |
+| apps/worker/src/api/media/check-duplicate.ts | apps/worker/src/api/media/check-duplicate.ts |
+| apps/worker/src/api/media/conversions.ts | apps/worker/src/api/media/conversions.ts |
+| apps/worker/src/api/media/reorder.ts | apps/worker/src/api/media/reorder.ts |
+| apps/worker/src/api/members/[id].ts | apps/worker/src/api/members/[id].ts |
+| apps/worker/src/api/members/[id]/[action].ts | apps/worker/src/api/members/[id]/[action].ts |
+| apps/worker/src/api/members/[id]/availability.ts | apps/worker/src/api/members/[id]/availability.ts |
+| apps/worker/src/api/members/[id]/classes.ts | apps/worker/src/api/members/[id]/classes.ts |
+| apps/worker/src/api/members/[id]/media.ts | apps/worker/src/api/members/[id]/media.ts |
+| apps/worker/src/api/members/[id]/media/[mediaId].ts | apps/worker/src/api/members/[id]/media/[mediaId].ts |
+| apps/worker/src/api/members/[id]/media/[mediaId]/set-avatar.ts | apps/worker/src/api/members/[id]/media/[mediaId]/set-avatar.ts |
+| apps/worker/src/api/members/[id]/media/reorder.ts | apps/worker/src/api/members/[id]/media/reorder.ts |
+| apps/worker/src/api/members/[id]/notes.ts | apps/worker/src/api/members/[id]/notes.ts |
+| apps/worker/src/api/members/[id]/progression.ts | apps/worker/src/api/members/[id]/progression.ts |
+| apps/worker/src/api/members/[id]/reset-password.ts | apps/worker/src/api/members/[id]/reset-password.ts |
+| apps/worker/src/api/members/[id]/role.ts | apps/worker/src/api/members/[id]/role.ts |
+| apps/worker/src/api/members/[id]/toggle-active.ts | apps/worker/src/api/members/[id]/toggle-active.ts |
+| apps/worker/src/api/members/[id]/username.ts | apps/worker/src/api/members/[id]/username.ts |
+| apps/worker/src/api/members/[id]/video-urls.ts | apps/worker/src/api/members/[id]/video-urls.ts |
+| apps/worker/src/api/members/[id]/video-urls/[videoId].ts | apps/worker/src/api/members/[id]/video-urls/[videoId].ts |
+| apps/worker/src/api/members/index.ts | apps/worker/src/api/members/index.ts |
+| apps/worker/src/api/members/restore.ts | apps/worker/src/api/members/restore.ts |
+| apps/worker/src/api/poll/handlers.ts | apps/worker/src/api/poll/handlers.ts |
+| apps/worker/src/api/poll/index.ts | apps/worker/src/api/poll/index.ts |
+| apps/worker/src/api/push/index.ts | apps/worker/src/api/push/index.ts |
+| apps/worker/src/api/upload/audio.ts | apps/worker/src/api/upload/audio.ts |
+| apps/worker/src/api/upload/image.ts | apps/worker/src/api/upload/image.ts |
+| apps/worker/src/api/wars/[id].ts | apps/worker/src/api/wars/[id].ts |
+| apps/worker/src/api/wars/[id]/[action].ts | apps/worker/src/api/wars/[id]/[action].ts |
+| apps/worker/src/api/wars/[id]/kick-from-pool.ts | apps/worker/src/api/wars/[id]/kick-from-pool.ts |
+| apps/worker/src/api/wars/[id]/kick-from-team.ts | apps/worker/src/api/wars/[id]/kick-from-team.ts |
+| apps/worker/src/api/wars/[id]/pool-to-team.ts | apps/worker/src/api/wars/[id]/pool-to-team.ts |
+| apps/worker/src/api/wars/[id]/teams/[teamId].ts | apps/worker/src/api/wars/[id]/teams/[teamId].ts |
+| apps/worker/src/api/wars/[id]/teams/index.ts | apps/worker/src/api/wars/[id]/teams/index.ts |
+| apps/worker/src/api/wars/[id]/team-to-pool.ts | apps/worker/src/api/wars/[id]/team-to-pool.ts |
+| apps/worker/src/api/wars/[id]/team-to-team.ts | apps/worker/src/api/wars/[id]/team-to-team.ts |
+| apps/worker/src/api/wars/analytics.ts | apps/worker/src/api/wars/analytics.ts |
+| apps/worker/src/api/wars/analytics-formula-presets.ts | apps/worker/src/api/wars/analytics-formula-presets.ts |
+| apps/worker/src/api/wars/history.ts | apps/worker/src/api/wars/history.ts |
+| apps/worker/src/api/wars/history/[id].ts | apps/worker/src/api/wars/history/[id].ts |
+| apps/worker/src/api/wars/history/[id]/member-stats.ts | apps/worker/src/api/wars/history/[id]/member-stats.ts |
+| apps/worker/src/api/wars/index.ts | apps/worker/src/api/wars/index.ts |
+| apps/worker/src/api/wars/latest.ts | apps/worker/src/api/wars/latest.ts |
+| apps/worker/src/core/api-keys.ts | apps/worker/src/core/api-keys.ts |
+| apps/worker/src/core/broadcast.ts | apps/worker/src/core/broadcast.ts |
+| apps/worker/src/core/csrf.ts | apps/worker/src/core/csrf.ts |
+| apps/worker/src/core/db-schema.ts | apps/worker/src/core/db-schema.ts |
+| apps/worker/src/core/drizzle.ts | apps/worker/src/core/drizzle.ts |
+| apps/worker/src/core/endpoint-factory.ts | apps/worker/src/core/endpoint-factory.ts |
+| apps/worker/src/core/endpoint-registry.ts | apps/worker/src/core/endpoint-registry.ts |
+| apps/worker/src/core/endpoint-registry-adapter.ts | apps/worker/src/core/endpoint-registry-adapter.ts |
+| apps/worker/src/core/errors.ts | apps/worker/src/core/errors.ts |
+| apps/worker/src/core/middleware.ts | apps/worker/src/core/middleware.ts |
+| apps/worker/src/core/rate-limit.ts | apps/worker/src/core/rate-limit.ts |
+| apps/worker/src/core/route-loader.ts | apps/worker/src/core/route-loader.ts |
+| apps/worker/src/core/route-registrar.ts | apps/worker/src/core/route-registrar.ts |
+| apps/worker/src/core/sanitize.ts | apps/worker/src/core/sanitize.ts |
+| apps/worker/src/core/shared.ts | apps/worker/src/core/shared.ts |
+| apps/worker/src/core/types.ts | apps/worker/src/core/types.ts |
+| apps/worker/src/core/utils.ts | apps/worker/src/core/utils.ts |
+| apps/worker/src/core/validation.ts | apps/worker/src/core/validation.ts |
+| apps/worker/src/cron/cleanup-audit-logs.ts | apps/worker/src/cron/cleanup-audit-logs.ts |
+| apps/worker/src/db/schema.ts | apps/worker/src/db/schema.ts |
+| apps/worker/src/declarations.d.ts | apps/worker/src/declarations.d.ts |
+| apps/worker/src/scheduled/session-cleanup.ts | apps/worker/src/scheduled/session-cleanup.ts |
+| apps/worker/src/websocket/ConnectionManager.ts | apps/worker/src/websocket/ConnectionManager.ts |
+| apps/worker/src/worker.ts | apps/worker/src/worker.ts |
+| apps/worker/tests/api/auth/login-session-policy.test.ts | apps/worker/tests/api/auth/login-session-policy.test.ts |
+| apps/worker/tests/api/auth/preferences.test.ts | apps/worker/tests/api/auth/preferences.test.ts |
+| apps/worker/tests/api/events/list-controls.test.ts | apps/worker/tests/api/events/list-controls.test.ts |
+| apps/worker/tests/api/media/key.test.ts | apps/worker/tests/api/media/key.test.ts |
+| apps/worker/tests/api/members/list-pagination.test.ts | apps/worker/tests/api/members/list-pagination.test.ts |
+| apps/worker/tests/api/wars/analytics.test.ts | apps/worker/tests/api/wars/analytics.test.ts |
+| apps/worker/tests/api/wars/analytics-formula-presets.test.ts | apps/worker/tests/api/wars/analytics-formula-presets.test.ts |
+| apps/worker/tests/contracts/list-endpoints-pagination.contract.test.ts | apps/worker/tests/contracts/list-endpoints-pagination.contract.test.ts |
+| apps/worker/tests/core/pagination.test.ts | apps/worker/tests/core/pagination.test.ts |
+| apps/worker/tests/README.md | apps/worker/tests/README.md |
+| apps/worker/tests/test-utils/setup.ts | apps/worker/tests/test-utils/setup.ts |
+| config/drizzle/drizzle.config.ts | config/drizzle/drizzle.config.ts |
+| config/eslint/eslint.config.js | config/eslint/eslint.config.js |
+| config/postcss/postcss.config.js | config/postcss/postcss.config.js |
+| config/tailwind/tailwind.config.js | config/tailwind/tailwind.config.js |
+| config/typescript/tsconfig.node.json | config/typescript/tsconfig.node.json |
+| config/typescript/tsconfig.portal.json | config/typescript/tsconfig.portal.json |
+| config/typescript/tsconfig.root.json | config/typescript/tsconfig.root.json |
+| config/typescript/tsconfig.worker.json | config/typescript/tsconfig.worker.json |
+| config/vite/vite.portal.config.ts | config/vite/vite.portal.config.ts |
+| config/vitest/vitest.portal.config.ts | config/vitest/vitest.portal.config.ts |
+| config/vitest/vitest.workers.config.ts | config/vitest/vitest.workers.config.ts |
+| docs/plans/FRONTEND_REWORK_PART1_ARCHITECTURE.md | docs/plans/FRONTEND_REWORK_PART1_ARCHITECTURE.md |
+| docs/plans/FRONTEND_REWORK_PART2_DESIGN_SYSTEM.md | docs/plans/FRONTEND_REWORK_PART2_DESIGN_SYSTEM.md |
+| docs/plans/FRONTEND_REWORK_PART3_LAYOUT.md | docs/plans/FRONTEND_REWORK_PART3_LAYOUT.md |
+| docs/plans/FRONTEND_REWORK_PART4_TYPOGRAPHY.md | docs/plans/FRONTEND_REWORK_PART4_TYPOGRAPHY.md |
+| docs/plans/FRONTEND_REWORK_PART5_MOTION.md | docs/plans/FRONTEND_REWORK_PART5_MOTION.md |
+| docs/plans/FRONTEND_REWORK_PART6_PERFORMANCE.md | docs/plans/FRONTEND_REWORK_PART6_PERFORMANCE.md |
+| docs/plans/FRONTEND_REWORK_PART8_CHECKLIST.md | docs/plans/FRONTEND_REWORK_PART8_CHECKLIST.md |
+| docs/plans/todo.md | docs/plans/todo.md |
+| docs/product/admin-console.md | docs/product/admin-console.md |
+| docs/product/announcements.md | docs/product/announcements.md |
+| docs/product/auth.md | docs/product/auth.md |
+| docs/product/dashboard.md | docs/product/dashboard.md |
+| docs/product/events.md | docs/product/events.md |
+| docs/product/Global.md | docs/product/Global.md |
+| docs/product/guild-war.md | docs/product/guild-war.md |
+| docs/product/my-profile.md | docs/product/my-profile.md |
+| docs/product/roster.md | docs/product/roster.md |
+| docs/product/settings.md | docs/product/settings.md |
+| docs/product/tools.md | docs/product/tools.md |
+| docs/product/wiki.md | docs/product/wiki.md |
+| docs/reports/accessibility/day18/admin.json | docs/reports/accessibility/day18/admin.json |
+| docs/reports/accessibility/day18/announcements.json | docs/reports/accessibility/day18/announcements.json |
+| docs/reports/accessibility/day18/dashboard.json | docs/reports/accessibility/day18/dashboard.json |
+| docs/reports/accessibility/day18/events.json | docs/reports/accessibility/day18/events.json |
+| docs/reports/accessibility/day18/gallery.json | docs/reports/accessibility/day18/gallery.json |
+| docs/reports/accessibility/day18/guildwar.json | docs/reports/accessibility/day18/guildwar.json |
+| docs/reports/accessibility/day18/members.json | docs/reports/accessibility/day18/members.json |
+| docs/reports/accessibility/day18/profile.json | docs/reports/accessibility/day18/profile.json |
+| docs/reports/accessibility/day18/settings.json | docs/reports/accessibility/day18/settings.json |
+| docs/reports/accessibility/day18/summary.json | docs/reports/accessibility/day18/summary.json |
+| docs/reports/accessibility/day18/tools.json | docs/reports/accessibility/day18/tools.json |
+| docs/reports/accessibility/day18/wiki.json | docs/reports/accessibility/day18/wiki.json |
+| docs/reports/bundle-stats.json | docs/reports/bundle-stats.json |
+| docs/reports/lighthouse/day17/admin.json | docs/reports/lighthouse/day17/admin.json |
+| docs/reports/lighthouse/day17/announcements.json | docs/reports/lighthouse/day17/announcements.json |
+| docs/reports/lighthouse/day17/dashboard.json | docs/reports/lighthouse/day17/dashboard.json |
+| docs/reports/lighthouse/day17/events.json | docs/reports/lighthouse/day17/events.json |
+| docs/reports/lighthouse/day17/gallery.json | docs/reports/lighthouse/day17/gallery.json |
+| docs/reports/lighthouse/day17/guildwar.json | docs/reports/lighthouse/day17/guildwar.json |
+| docs/reports/lighthouse/day17/members.json | docs/reports/lighthouse/day17/members.json |
+| docs/reports/lighthouse/day17/preview.err.log | docs/reports/lighthouse/day17/preview.err.log |
+| docs/reports/lighthouse/day17/preview.log | docs/reports/lighthouse/day17/preview.log |
+| docs/reports/lighthouse/day17/profile.json | docs/reports/lighthouse/day17/profile.json |
+| docs/reports/lighthouse/day17/settings.json | docs/reports/lighthouse/day17/settings.json |
+| docs/reports/lighthouse/day17/tools.json | docs/reports/lighthouse/day17/tools.json |
+| docs/reports/lighthouse/day17/wiki.json | docs/reports/lighthouse/day17/wiki.json |
+| docs/reports/lighthouse-design-system-preview.json | docs/reports/lighthouse-design-system-preview.json |
+| docs/reports/perf/day17/playwright-interactions.network | docs/reports/perf/day17/playwright-interactions.network |
+| docs/reports/perf/day17/playwright-interactions.trace | docs/reports/perf/day17/playwright-interactions.trace |
+| docs/reports/perf/day17/playwright-memory-raw.txt | docs/reports/perf/day17/playwright-memory-raw.txt |
+| docs/reports/perf/day17/playwright-memory-samples.json | docs/reports/perf/day17/playwright-memory-samples.json |
+| docs/reports/perf/day17/playwright-trace.network | docs/reports/perf/day17/playwright-trace.network |
+| docs/reports/perf/day17/playwright-trace.trace | docs/reports/perf/day17/playwright-trace.trace |
+| docs/reports/perf/day17/playwright-trace-stop-output.txt | docs/reports/perf/day17/playwright-trace-stop-output.txt |
+| docs/reports/qa/day20/day20-qa-matrix.json | docs/reports/qa/day20/day20-qa-matrix.json |
+| docs/reports/qa/day20/day20-qa-matrix.md | docs/reports/qa/day20/day20-qa-matrix.md |
+| docs/reports/qa/day20/day20-qa.network | docs/reports/qa/day20/day20-qa.network |
+| docs/reports/qa/day20/day20-qa.stacks | docs/reports/qa/day20/day20-qa.stacks |
+| docs/reports/qa/day20/day20-qa.trace | docs/reports/qa/day20/day20-qa.trace |
+| infra/cloudflare/README.md | infra/cloudflare/README.md |
+| infra/database/d1-schema/D1_Schema.sql | infra/database/d1-schema/D1_Schema.sql |
+| infra/database/d1-schema/d1_schema_optimization_guide.md | infra/database/d1-schema/d1_schema_optimization_guide.md |
+| infra/database/d1-schema/DATABASE_SCHEMA.md | infra/database/d1-schema/DATABASE_SCHEMA.md |
+| infra/database/d1-schema/seed_portal_mock_data.sql | infra/database/d1-schema/seed_portal_mock_data.sql |
+| infra/database/drizzle/0000_free_baron_strucker.sql | infra/database/drizzle/0000_free_baron_strucker.sql |
+| infra/database/drizzle/meta/_journal.json | infra/database/drizzle/meta/_journal.json |
+| infra/database/drizzle/meta/0000_snapshot.json | infra/database/drizzle/meta/0000_snapshot.json |
+| Knowledge_Base.md | Knowledge_Base.md |
+| package.json | package.json |
+| package-lock.json | package-lock.json |
+| packages/shared-api/package.json | packages/shared-api/package.json |
+| packages/shared-api/src/contracts.ts | packages/shared-api/src/contracts.ts |
+| packages/shared-api/src/endpoints.ts | packages/shared-api/src/endpoints.ts |
+| packages/shared-utils/package.json | packages/shared-utils/package.json |
+| packages/shared-utils/src/etag.ts | packages/shared-utils/src/etag.ts |
+| packages/shared-utils/src/pagination.ts | packages/shared-utils/src/pagination.ts |
+| packages/shared-utils/src/response.ts | packages/shared-utils/src/response.ts |
+| Repo_Index.md | Repo_Index.md |
+| scripts/day17_memory_probe.ps1 | scripts/day17_memory_probe.ps1 |
+| scripts/day20_qa_matrix.ps1 | scripts/day20_qa_matrix.ps1 |
+| scripts/enforce-theme-token-usage.mjs | scripts/enforce-theme-token-usage.mjs |
+| scripts/theme-contrast-audit.mjs | scripts/theme-contrast-audit.mjs |
+| scripts/theme-token-guardrail-baseline.json | scripts/theme-token-guardrail-baseline.json |
+| apps/portal/src/components/layout/ThemeAmbientCanvas.tsx | apps/portal/src/components/layout/ThemeAmbientCanvas.tsx |
+| apps/portal/src/components/layout/ThemeBackgroundRenderer.tsx | apps/portal/src/components/layout/ThemeBackgroundRenderer.tsx |
+| apps/portal/src/compat/mui/icons-material.ts | apps/portal/src/compat/mui/icons-material.ts |
+| apps/portal/src/compat/mui/material.ts | apps/portal/src/compat/mui/material.ts |
+| apps/portal/src/features/Admin/components/AdminRoleChangeDialog.tsx | apps/portal/src/features/Admin/components/AdminRoleChangeDialog.tsx |
+| apps/portal/src/features/GuildWar/components/GuildWarActionDialogs.tsx | apps/portal/src/features/GuildWar/components/GuildWarActionDialogs.tsx |
+| apps/portal/src/features/Gallery/components/GalleryPreviewDialog.tsx | apps/portal/src/features/Gallery/components/GalleryPreviewDialog.tsx |
+| apps/portal/src/features/Tools/components/ToolsDialog.tsx | apps/portal/src/features/Tools/components/ToolsDialog.tsx |
+| apps/portal/tests/features/Admin/Admin.phase19.lazy-role-dialog.contract.test.ts | apps/portal/tests/features/Admin/Admin.phase19.lazy-role-dialog.contract.test.ts |
+| apps/portal/tests/features/Events/Events.no-compat-icons-import.contract.test.ts | apps/portal/tests/features/Events/Events.no-compat-icons-import.contract.test.ts |
+| apps/portal/tests/features/Events/Events.no-compat-layout-import.contract.test.ts | apps/portal/tests/features/Events/Events.no-compat-layout-import.contract.test.ts |
+| apps/portal/tests/features/Events/Events.no-compat-material-controls-import.contract.test.ts | apps/portal/tests/features/Events/Events.no-compat-material-controls-import.contract.test.ts |
+| apps/portal/tests/features/Events/Events.no-compat-typography-import.contract.test.ts | apps/portal/tests/features/Events/Events.no-compat-typography-import.contract.test.ts |
+| apps/portal/tests/features/Tools/Tools.phase19.lazy-dialog.contract.test.ts | apps/portal/tests/features/Tools/Tools.phase19.lazy-dialog.contract.test.ts |
+| apps/portal/tests/features/GuildWar/GuildWar.phase19.lazy-action-dialogs.contract.test.ts | apps/portal/tests/features/GuildWar/GuildWar.phase19.lazy-action-dialogs.contract.test.ts |
+| apps/portal/tests/features/phase17.no-direct-shim-imports-src.contract.test.ts | apps/portal/tests/features/phase17.no-direct-shim-imports-src.contract.test.ts |
+| apps/portal/tests/features/phase17.no-mui-shim-imports.contract.test.ts | apps/portal/tests/features/phase17.no-mui-shim-imports.contract.test.ts |
+| apps/portal/tests/features/phase19.guild-war-manual-chunk.contract.test.ts | apps/portal/tests/features/phase19.guild-war-manual-chunk.contract.test.ts |
+| apps/portal/tests/features/phase19.icon-import-alias-cleanup.contract.test.ts | apps/portal/tests/features/phase19.icon-import-alias-cleanup.contract.test.ts |
+| apps/portal/tests/features/phase19.image-loading.contract.test.ts | apps/portal/tests/features/phase19.image-loading.contract.test.ts |
+| apps/portal/tests/features/phase19.lucide-import-optimization.contract.test.ts | apps/portal/tests/features/phase19.lucide-import-optimization.contract.test.ts |
+| apps/portal/tests/features/phase19.radix-deps-audit.contract.test.ts | apps/portal/tests/features/phase19.radix-deps-audit.contract.test.ts |
+| tsconfig.json | tsconfig.json |
+| wrangler.jsonc | wrangler.jsonc |

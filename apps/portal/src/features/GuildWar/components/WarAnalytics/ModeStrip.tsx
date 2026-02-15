@@ -9,9 +9,9 @@
  */
 
 import React from 'react';
-import ShowChartIcon from "@mui/icons-material/ShowChart";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import SettingsIcon from "@mui/icons-material/Settings";
+import ShowChartIcon from "@/ui-bridge/icons-material/ShowChart";
+import BarChartIcon from "@/ui-bridge/icons-material/BarChart";
+import SettingsIcon from "@/ui-bridge/icons-material/Settings";
 import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './AnalyticsContext';
 import type { AnalyticsMode } from './types';

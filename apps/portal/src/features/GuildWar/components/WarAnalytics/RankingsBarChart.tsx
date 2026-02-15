@@ -3,13 +3,13 @@
  */
 
 import { useMemo } from 'react';
-import { BarChart } from '@mui/x-charts/BarChart';
+import { BarChart } from '@/ui-bridge/x-charts/BarChart';
 import {
   alpha,
   useTheme
-} from "@mui/material";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import InfoIcon from "@mui/icons-material/Info";
+} from "@/ui-bridge/material";
+import BarChartIcon from "@/ui-bridge/icons-material/BarChart";
+import InfoIcon from "@/ui-bridge/icons-material/Info";
 import { useTranslation } from 'react-i18next';
 import { CardSkeleton } from '@/components/feedback/Skeleton';
 import { useAnalytics } from './AnalyticsContext';
@@ -83,7 +83,7 @@ export function RankingsBarChart({ members, perWarStats = [], onSelectWar, isLoa
     return map;
   }, [filters.primaryMetric, perWarStats]);
 
-  const handleBarClick = (entry: any) => {
+  const handleBarClick = (entry: { user_id?: number | string } | null | undefined) => {
     if (!entry) return;
     const userId = Number(entry.user_id);
     if (!Number.isFinite(userId)) return;
@@ -136,7 +136,7 @@ export function RankingsBarChart({ members, perWarStats = [], onSelectWar, isLoa
         series={[
           {
             data: values,
-            valueFormatter: (value) => formatNumber(value ?? 0),
+            valueFormatter: (value: number | null) => formatNumber(value ?? 0),
           },
         ]}
         layout="horizontal"
@@ -144,7 +144,7 @@ export function RankingsBarChart({ members, perWarStats = [], onSelectWar, isLoa
         margin={{ top: 10, right: 80, left: 120, bottom: 10 }}
         grid={{ vertical: true }}
         colors={colors}
-        onItemClick={(event, d) => {
+        onItemClick={(_event: unknown, d: { dataIndex?: number | null }) => {
           if (d.dataIndex !== undefined && d.dataIndex !== null) {
             handleBarClick(chartData[d.dataIndex]);
           }
@@ -193,7 +193,7 @@ export function RankingsBarChart({ members, perWarStats = [], onSelectWar, isLoa
                 }
               >
                 <span className="mb-1 text-3xl">
-                  {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
+                  {entry.rank === 1 ? '馃' : entry.rank === 2 ? '馃' : '馃'}
                 </span>
                 <BarChartIcon sx={{ fontSize: 24, color: "primary.main" }} />
                 <span className="text-sm font-bold">{entry.username}</span>

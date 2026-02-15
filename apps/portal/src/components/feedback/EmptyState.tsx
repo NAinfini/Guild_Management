@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Box, Typography, Stack, Paper, useTheme, alpha } from '@mui/material';
-import { SvgIconComponent } from '@mui/icons-material';
+import { Box, Typography, Stack, Paper, useTheme, alpha } from '@/ui-bridge/material';
+import { SvgIconComponent } from '@/ui-bridge/icons-material';
 
 interface EmptyStateProps {
   icon: SvgIconComponent;

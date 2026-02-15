@@ -1,0 +1,7 @@
+﻿/**
+ * Royal theme slot.
+ * TODO: migrate theme values from legacy preset files.
+ */
+[data-theme='royal'] {
+  --color-accent: #bfa44a;
+}

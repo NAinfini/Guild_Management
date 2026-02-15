@@ -22,10 +22,10 @@ import {
   Paid,
   EmojiFlags,
   Castle,
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 import { useTranslation } from 'react-i18next';
 import { buildWarCardMetrics } from './WarHistory.utils';
-import { useTheme } from '@mui/material/styles';
+import { useTheme } from '@/ui-bridge/material/styles';
 
 export function WarHistory() {
   const { t } = useTranslation();
@@ -37,7 +37,12 @@ export function WarHistory() {
     backgroundColor: panel?.bg ?? semanticSurface?.panel ?? theme.palette.background.paper,
     borderColor: panel?.border ?? semanticBorder?.default ?? theme.palette.divider,
   };
-  const { data = [], isLoading } = useWarHistory();
+  const {
+    data = [],
+    isLoading,
+    isError: isWarHistoryError,
+    refetch: refetchWarHistory,
+  } = useWarHistory();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -126,6 +131,8 @@ export function WarHistory() {
     return result;
   };
 
+  const hasActiveFilters = Boolean(query || dateFrom || dateTo);
+
   if (isLoading) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -147,7 +154,7 @@ export function WarHistory() {
                     className="pl-9 h-9 text-sm"
                     placeholder={t('guild_war.history_search_placeholder')}
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
                  />
                </div>
            </div>
@@ -158,7 +165,7 @@ export function WarHistory() {
                     type="date"
                     className="h-9 text-sm"
                     value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDateFrom(e.target.value)}
                 />
            </div>
 
@@ -168,7 +175,7 @@ export function WarHistory() {
                     type="date"
                     className="h-9 text-sm"
                     value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDateTo(e.target.value)}
                 />
            </div>
 
@@ -184,7 +191,23 @@ export function WarHistory() {
         </CardContent>
       </Card>
 
-      <WarHistoryPieCharts data={filtered} />
+      {isWarHistoryError && data.length === 0 ? (
+        <Card sx={panelSx} data-testid="warhistory-error-state">
+          <CardContent className="p-8 text-center space-y-3">
+            <Warning sx={{ fontSize: 36, opacity: 0.35 }} />
+            <p className="text-sm font-semibold">{t('guild_war.historical_archives')}</p>
+            <p className="text-sm text-muted-foreground">{t('common.placeholder_msg')}</p>
+            <div data-testid="warhistory-error-actions" className="flex justify-center gap-2">
+              {/* Retry re-runs the history query so transient API failures recover without route reloads. */}
+              <Button type="button" variant="outline" size="sm" onClick={() => void refetchWarHistory()}>
+                {t('common.retry')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <WarHistoryPieCharts data={filtered} />
+      )}
 
       <Card sx={panelSx}>
         <CardHeader className="pb-2">
@@ -298,10 +321,26 @@ export function WarHistory() {
             );
             })}
 
-            {filtered.length === 0 && (
-                <div className="py-8 text-center text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
-                    {t('common.no_results_found')}
+            {filtered.length === 0 && !isWarHistoryError && (
+              <div className="py-8 text-center text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border space-y-3">
+                <p>{t('common.no_results_found')}</p>
+                <div data-testid="warhistory-empty-actions" className="flex justify-center gap-2">
+                  {hasActiveFilters && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setDateFrom('');
+                        setDateTo('');
+                        setQuery('');
+                      }}
+                    >
+                      {t('common.clear_filters')}
+                    </Button>
+                  )}
                 </div>
+              </div>
             )}
         </CardContent>
       </Card>

@@ -1,0 +1,89 @@
+.pageHeader {
+  display: grid;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--section-gap, 2rem);
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+.pageSubtitle {
+  margin: 0;
+  max-width: 65ch;
+}
+
+.toolCard {
+  height: 100%;
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.toolCard:hover {
+  border-color: color-mix(in srgb, var(--sys-interactive-accent, #7dd3fc) 55%, transparent);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--sys-interactive-accent, #7dd3fc) 16%, transparent);
+  transform: translateY(-1px);
+}
+
+.toolCard:active {
+  transform: scale(0.98);
+}
+
+.toolContent {
+  display: grid;
+  /* Keep card internals on the shared card rhythm token across themes. */
+  gap: var(--card-gap, 1rem);
+  align-content: start;
+  height: 100%;
+}
+
+.iconWrap {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md, 10px);
+  background: color-mix(in srgb, var(--sys-interactive-accent, #7dd3fc) 14%, transparent);
+  color: var(--sys-interactive-accent, #7dd3fc);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.textBlock {
+  display: grid;
+  gap: var(--space-2, 0.5rem);
+}
+
+.toolTitle {
+  margin: 0;
+}
+
+.toolAction {
+  align-self: end;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  transition: transform 150ms ease;
+}
+
+.toolAction:active {
+  transform: scale(0.98);
+}
+
+.dialogPanel {
+  width: min(72rem, calc(100vw - 2rem));
+  max-height: 90vh;
+  overflow: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toolCard,
+  .toolAction {
+    transition: none;
+  }
+
+  .toolCard:hover,
+  .toolCard:active,
+  .toolAction:active {
+    transform: none;
+  }
+}

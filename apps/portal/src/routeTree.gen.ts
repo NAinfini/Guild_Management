@@ -20,6 +20,7 @@ import { Route as LayoutProfileRouteImport } from './routes/_layout/profile'
 import { Route as LayoutGuildWarRouteImport } from './routes/_layout/guild-war'
 import { Route as LayoutGalleryRouteImport } from './routes/_layout/gallery'
 import { Route as LayoutEventsRouteImport } from './routes/_layout/events'
+import { Route as LayoutDesignSystemPreviewRouteImport } from './routes/_layout/design-system-preview'
 import { Route as LayoutAnnouncementsRouteImport } from './routes/_layout/announcements'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 import { Route as LayoutToolsIndexRouteImport } from './routes/_layout/tools/index'
@@ -79,6 +80,12 @@ const LayoutEventsRoute = LayoutEventsRouteImport.update({
   path: '/events',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutDesignSystemPreviewRoute =
+  LayoutDesignSystemPreviewRouteImport.update({
+    id: '/design-system-preview',
+    path: '/design-system-preview',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 const LayoutAnnouncementsRoute = LayoutAnnouncementsRouteImport.update({
   id: '/announcements',
   path: '/announcements',
@@ -105,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/admin': typeof LayoutAdminRoute
   '/announcements': typeof LayoutAnnouncementsRoute
+  '/design-system-preview': typeof LayoutDesignSystemPreviewRoute
   '/events': typeof LayoutEventsRoute
   '/gallery': typeof LayoutGalleryRoute
   '/guild-war': typeof LayoutGuildWarRoute
@@ -120,6 +128,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/admin': typeof LayoutAdminRoute
   '/announcements': typeof LayoutAnnouncementsRoute
+  '/design-system-preview': typeof LayoutDesignSystemPreviewRoute
   '/events': typeof LayoutEventsRoute
   '/gallery': typeof LayoutGalleryRoute
   '/guild-war': typeof LayoutGuildWarRoute
@@ -137,6 +146,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_layout/admin': typeof LayoutAdminRoute
   '/_layout/announcements': typeof LayoutAnnouncementsRoute
+  '/_layout/design-system-preview': typeof LayoutDesignSystemPreviewRoute
   '/_layout/events': typeof LayoutEventsRoute
   '/_layout/gallery': typeof LayoutGalleryRoute
   '/_layout/guild-war': typeof LayoutGuildWarRoute
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin'
     | '/announcements'
+    | '/design-system-preview'
     | '/events'
     | '/gallery'
     | '/guild-war'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin'
     | '/announcements'
+    | '/design-system-preview'
     | '/events'
     | '/gallery'
     | '/guild-war'
@@ -187,6 +199,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_layout/admin'
     | '/_layout/announcements'
+    | '/_layout/design-system-preview'
     | '/_layout/events'
     | '/_layout/gallery'
     | '/_layout/guild-war'
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutEventsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/design-system-preview': {
+      id: '/_layout/design-system-preview'
+      path: '/design-system-preview'
+      fullPath: '/design-system-preview'
+      preLoaderRoute: typeof LayoutDesignSystemPreviewRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/announcements': {
       id: '/_layout/announcements'
       path: '/announcements'
@@ -332,6 +352,7 @@ const LayoutToolsRouteWithChildren = LayoutToolsRoute._addFileChildren(
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
   LayoutAnnouncementsRoute: typeof LayoutAnnouncementsRoute
+  LayoutDesignSystemPreviewRoute: typeof LayoutDesignSystemPreviewRoute
   LayoutEventsRoute: typeof LayoutEventsRoute
   LayoutGalleryRoute: typeof LayoutGalleryRoute
   LayoutGuildWarRoute: typeof LayoutGuildWarRoute
@@ -346,6 +367,7 @@ interface LayoutRouteChildren {
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
   LayoutAnnouncementsRoute: LayoutAnnouncementsRoute,
+  LayoutDesignSystemPreviewRoute: LayoutDesignSystemPreviewRoute,
   LayoutEventsRoute: LayoutEventsRoute,
   LayoutGalleryRoute: LayoutGalleryRoute,
   LayoutGuildWarRoute: LayoutGuildWarRoute,

@@ -1,5 +1,5 @@
 import * as React from "react";
-import MuiSlider, { SliderProps as MuiSliderProps } from "@mui/material/Slider";
+import MuiSlider, { SliderProps as MuiSliderProps } from "@/ui-bridge/material/Slider";
 import { cn } from "@/lib/utils";
 
 function resolveDocumentTheme(): string | null {
@@ -146,7 +146,11 @@ const Slider = React.forwardRef<HTMLSpanElement, MuiSliderProps>(
       }, 220);
     };
 
-    const handleChange: MuiSliderProps["onChange"] = (event, value, activeThumb) => {
+    const handleChange = (
+      event: Event,
+      value: number | number[],
+      activeThumb: number,
+    ) => {
       if (!isDisabled) {
         if (dragStartedAtRef.current === null) {
           dragStartedAtRef.current = typeof performance === "undefined" ? Date.now() : performance.now();
@@ -155,7 +159,7 @@ const Slider = React.forwardRef<HTMLSpanElement, MuiSliderProps>(
       onChange?.(event, value, activeThumb);
     };
 
-    const handleChangeCommitted: MuiSliderProps["onChangeCommitted"] = (event, value) => {
+    const handleChangeCommitted = (event: Event | React.SyntheticEvent, value: number | number[]) => {
       if (!isDisabled) {
         triggerPressureVibration();
         triggerCandySlosh();

@@ -1,0 +1,22 @@
+/*
+ * Label styles define the shared field-title treatment.
+ * The Label primitive applies this for forms and filter controls.
+ */
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  margin: 0;
+  font-family: var(--font-body, Inter, system-ui, sans-serif);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-semibold, 600);
+  letter-spacing: var(--tracking-wide, 0.05em);
+  text-transform: uppercase;
+  color: var(--color-text-primary, rgba(255, 255, 255, 0.95));
+}
+
+.required {
+  color: var(--color-error, #ef4444);
+  font-weight: var(--font-weight-bold, 700);
+}
+

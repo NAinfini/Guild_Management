@@ -26,19 +26,25 @@
   --shape-pill: 999px;
   --shape-circle: 50%;
 
-  /* Control-specific shapes (defaults) */
-  --shape-button: var(--cmp-button-radius, var(--shape-md));
-  --shape-input: var(--cmp-input-radius, var(--shape-md));
-  --shape-card: var(--cmp-card-radius, var(--shape-lg));
-  --shape-dialog: var(--cmp-dialog-radius, var(--shape-xl));
+  /* Control-specific shapes (defaults) - ENHANCED */
+  --shape-button: var(--cmp-button-radius, 12px);
+  --shape-input: var(--cmp-input-radius, 12px);
+  --shape-card: var(--cmp-card-radius, 16px);
+  --shape-dialog: var(--cmp-dialog-radius, 20px);
   --shape-chip: var(--shape-pill);
   --shape-icon-button: var(--shape-circle);
-  --shape-checkbox: var(--shape-sm);
+  --shape-checkbox: 6px;
   --shape-radio: var(--shape-circle);
   --shape-toggle: var(--shape-pill);
   --shape-slider-thumb: var(--shape-circle);
-  --shape-tab: var(--shape-md);
-  --shape-tooltip: var(--shape-md);
+  --shape-tab: 10px;
+  --shape-tooltip: 10px;
+
+  /* Border width tokens */
+  --border-width-thin: 1px;
+  --border-width-default: 1.5px;
+  --border-width-thick: 2px;
+  --border-width-heavy: 3px;
 }
 
 /* ============================================
@@ -46,35 +52,9 @@
    ============================================ */
 
 /**
- * Default: Allow overflow for shadows
- * Only clip when necessary (e.g., animations, effects)
+ * Note: Removed global overflow rules to prevent conflicts.
+ * Components should manage their own overflow as needed.
  */
-
-.ui-button,
-.ui-card,
-.ui-input,
-.ui-chip,
-.ui-tab,
-[data-ui="button"],
-[data-ui="card"],
-[data-ui="input"],
-[data-ui="chip"],
-[data-ui="tab"] {
-  /* Allow shadows to render properly */
-  overflow: visible;
-  /* Ensure proper bounds for effects */
-  position: relative;
-}
-
-/**
- * Containers that need clipping for visual effects
- * Use overflow:clip for better performance than hidden
- */
-
-[data-clip-content="true"],
-[data-theme-signature] {
-  overflow: clip;
-}
 
 /**
  * Special case: Steampunk steam effects need containment

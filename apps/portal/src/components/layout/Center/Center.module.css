@@ -1,0 +1,20 @@
+.center {
+  box-sizing: content-box;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4, 1rem);
+  padding-right: var(--space-4, 1rem);
+}
+
+.narrow {
+  max-width: var(--container-narrow, 900px);
+}
+
+.comfortable {
+  max-width: var(--container-comfortable, 1200px);
+}
+
+.standard {
+  max-width: var(--container-standard, 1400px);
+}
+

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, useTheme, alpha } from '@mui/material';
-import { AutoAwesome } from "@mui/icons-material";
+import { Box, useTheme, alpha } from '@/ui-bridge/material';
+import { AutoAwesome } from "@/ui-bridge/icons-material";
 
 type DecorativeGlyphProps = {
   icon?: any; // MUI icon component
@@ -29,8 +29,9 @@ export const DecorativeGlyph: React.FC<DecorativeGlyphProps> = ({
   bottom,
   left,
 }) => {
-  const theme = useTheme();
-  const resolvedColor = color || theme.palette.text.secondary;
+  const theme = useTheme() as any;
+  const resolvedColor = color || theme?.palette?.text?.secondary || '#94a3b8';
+  const dropShadowBase = theme?.palette?.common?.black || '#000000';
 
   // Use the provided Icon component if available, otherwise default to Sparkles
   const GlyphIcon = Icon || AutoAwesome;
@@ -48,7 +49,7 @@ export const DecorativeGlyph: React.FC<DecorativeGlyphProps> = ({
         left,
         opacity,
         transform: `rotate(${rotation}deg)`,
-        filter: `drop-shadow(0 10px 20px ${alpha(theme.palette.common.black, 0.1)})`,
+        filter: `drop-shadow(0 10px 20px ${alpha(dropShadowBase, 0.1)})`,
         color: resolvedColor,
       }}
     >

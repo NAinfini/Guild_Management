@@ -34,7 +34,7 @@ import {
   MilitaryTech, // Replaces Swords
   Groups, // Replaces Users
   CalendarMonth // Replaces Calendar
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 import { cn } from '../../../../lib/utils'; // Assuming cn utility is available here or I should use the one from nexus
 // The existing file import { cn } from '../../../../lib/cn'; or utils. 
 // I'll check if I should use '../../../../lib/utils' or '../../../../lib/cn' 
@@ -91,7 +91,15 @@ export function WarDetailSidePanel({ warId, open, onClose }: WarDetailSidePanelP
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground animate-pulse">
               <MilitaryTech className="w-12 h-12 mb-4 opacity-20" />
-              <p className="text-sm font-medium">{t('common.loading')}</p>
+              <p
+                data-testid="waranalytics-detail-loading-status"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="text-sm font-medium"
+              >
+                {t('common.loading')}
+              </p>
             </div>
           ) : !war ? (
              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">

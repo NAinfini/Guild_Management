@@ -13,9 +13,9 @@ import {
   Stack,
   Typography,
   alpha,
-} from '@mui/material';
-import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
-import { DashboardCustomize } from '@mui/icons-material';
+} from '@/ui-bridge/material';
+import { createTheme, ThemeProvider as MuiThemeProvider } from '@/ui-bridge/material/styles';
+import { DashboardCustomize } from '@/ui-bridge/icons-material';
 import {
   getThemeModeIcon,
   NEXUS_COLOR_OPTIONS,
@@ -49,7 +49,7 @@ import {
   LayoutViewShowcase,
   AccessibilityShowcase,
   SearchFilterShowcase,
-} from '@/components/system';
+} from './nexus-showcase';
 
 interface ShowcaseComponentProps {
   className?: string;
@@ -347,3 +347,4 @@ export function NexusControlStudio() {
 }
 
 export default NexusControlStudio;
+

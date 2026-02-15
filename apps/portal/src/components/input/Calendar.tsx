@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 
 import * as React from "react";
-import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+import { ChevronLeft, ChevronRight } from "@/ui-bridge/icons-material";
 import { DayPicker } from "react-day-picker";
 import { buttonVariants } from "../button/Button";
 

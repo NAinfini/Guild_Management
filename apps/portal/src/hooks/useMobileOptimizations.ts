@@ -1,4 +1,4 @@
-import { useTheme, useMediaQuery } from '@mui/material';
+import { useTheme, useMediaQuery } from '@/ui-bridge/material';
 import { useEffect, useState } from 'react';
 
 /**

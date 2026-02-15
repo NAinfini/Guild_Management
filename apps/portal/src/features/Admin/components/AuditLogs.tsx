@@ -22,13 +22,13 @@ import {
   MenuItem,
   Alert,
   useTheme,
-} from '@mui/material';
+} from '@/ui-bridge/material';
 import { TableSkeleton } from '@/components';
 import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   Refresh as RefreshIcon,
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useAuditLogs } from '../../../hooks';
 import { formatDateTime } from '../../../lib/utils';
@@ -94,7 +94,7 @@ export function AuditLogs() {
           select
           label={t('admin.filter_type')}
           value={entityType}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setEntityType(e.target.value);
             setCursor(undefined);
           }}
@@ -120,8 +120,42 @@ export function AuditLogs() {
       </Stack>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error instanceof Error ? error.message : t('admin.no_audit_records')}
+        <Alert severity="error" sx={{ mb: 2 }} data-testid="admin-audit-error-state">
+          <Stack spacing={1.5}>
+            <Typography variant="body2">
+              {error instanceof Error ? error.message : t('admin.no_audit_records')}
+            </Typography>
+            <Stack
+              data-testid="admin-audit-error-actions"
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+            >
+              {/* Retry keeps audit recovery in-place without losing current pagination/filter context. */}
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
+                onClick={() => refetch()}
+                disabled={isLoading}
+              >
+                {t('common.retry')}
+              </Button>
+              {entityType ? (
+                // Clear filter resets entity scoping so users can recover broader audit visibility quickly.
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    setEntityType('');
+                    setCursor(undefined);
+                  }}
+                >
+                  {t('common.clear_filters')}
+                </Button>
+              ) : null}
+            </Stack>
+          </Stack>
         </Alert>
       )}
 
@@ -205,10 +239,39 @@ export function AuditLogs() {
               </TableContainer>
 
               {data?.logs.length === 0 && (
-                <Box sx={{ py: 8, textAlign: 'center' }}>
+                <Box sx={{ py: 8, textAlign: 'center' }} data-testid="admin-audit-empty-state">
                   <Typography variant="body2" color="text.secondary">
                     {t('admin.no_audit_records')}
                   </Typography>
+                  <Stack
+                    data-testid="admin-audit-empty-actions"
+                    direction="row"
+                    spacing={1}
+                    justifyContent="center"
+                    sx={{ mt: 2, flexWrap: 'wrap', rowGap: 1 }}
+                  >
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
+                      onClick={() => refetch()}
+                      disabled={isLoading}
+                    >
+                      {t('common.retry')}
+                    </Button>
+                    {entityType ? (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => {
+                          setEntityType('');
+                          setCursor(undefined);
+                        }}
+                      >
+                        {t('common.clear_filters')}
+                      </Button>
+                    ) : null}
+                  </Stack>
                 </Box>
               )}
 

@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 
 import * as React from "react";
-import { Drawer as MuiDrawer, Box, Typography, IconButton } from "@mui/material";
+import { Drawer as MuiDrawer, Box, Typography, IconButton } from "@/ui-bridge/material";
 
 interface DrawerContextValue {
   open: boolean;

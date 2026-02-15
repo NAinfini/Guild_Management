@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CheckCircle, ErrorOutline, HighlightOff, Info } from "@mui/icons-material";
+import { CheckCircle, ErrorOutline, HighlightOff, Info } from "@/ui-bridge/icons-material";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 

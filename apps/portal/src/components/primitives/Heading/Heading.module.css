@@ -1,0 +1,48 @@
+/*
+ * Heading styles map semantic levels to display scale tokens.
+ * These classes are consumed by the Heading primitive and inherited by composed sections.
+ */
+.heading {
+  margin: 0;
+  font-family: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
+  font-weight: var(--font-weight-bold, 700);
+  line-height: var(--leading-tight, 1.2);
+  color: var(--color-text-primary, rgba(255, 255, 255, 0.95));
+}
+
+.level-1 {
+  font-size: var(--font-size-4xl, 2.441rem);
+  letter-spacing: var(--tracking-tight, -0.02em);
+}
+
+.level-2 {
+  font-size: var(--font-size-3xl, 1.953rem);
+  letter-spacing: var(--tracking-tight, -0.02em);
+}
+
+.level-3 {
+  font-size: var(--font-size-2xl, 1.563rem);
+}
+
+.level-4 {
+  font-size: var(--font-size-xl, 1.25rem);
+}
+
+.level-5,
+.level-6 {
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.align-left {
+  text-align: left;
+}
+
+.align-center {
+  text-align: center;
+}
+
+.align-right {
+  text-align: right;
+}
+

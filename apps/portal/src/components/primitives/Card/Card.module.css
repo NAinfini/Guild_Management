@@ -1,0 +1,41 @@
+.card {
+  display: grid;
+  gap: var(--card-gap, 1rem);
+  padding: var(--space-4, 1rem);
+  border-radius: var(--radius-lg, 12px);
+}
+
+.elevated {
+  border: var(--border-width-default, 1px) solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
+  background-color: var(--color-bg-elevated, #14141a);
+  box-shadow: var(--shadow-md, 0 8px 24px rgba(0, 0, 0, 0.35));
+}
+
+.outlined {
+  border: var(--border-width-default, 1px) solid var(--color-border-strong, rgba(255, 255, 255, 0.18));
+  background-color: color-mix(in srgb, var(--color-bg-overlay, #1e1e24) 65%, transparent);
+}
+
+.flat {
+  border: var(--border-width-default, 1px) solid transparent;
+  background-color: color-mix(in srgb, var(--color-bg-base, #0a0a0f) 82%, transparent);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+}
+
+.content {
+  min-width: 0;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2, 0.5rem);
+}
+

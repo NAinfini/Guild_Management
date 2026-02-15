@@ -4,7 +4,9 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@guild/shared-api/*": ["../../packages/shared-api/src/*"],
+      "@guild/shared-utils/*": ["../../packages/shared-utils/src/*"]
     },
     "composite": true,
     "declaration": true,
@@ -14,6 +16,6 @@
     "types": ["vite/client", "node"],
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/**/*.json"],
   "exclude": ["node_modules", "dist"]
 }

@@ -1,0 +1,28 @@
+﻿/**
+ * Design System Entry
+ * Loads foundation tokens and primitives before theme overrides.
+ */
+
+/* 1) Foundation reset */
+@import './primitives/reset.css';
+
+/* 2) Tokens */
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/spacing.css';
+@import './tokens/shadows.css';
+@import './tokens/motion.css';
+@import './tokens/shapes.css';
+
+/* 3) Primitive utilities */
+@import './primitives/layout.css';
+@import './primitives/utilities.css';
+
+/* 4) Theme slots (gradual migration target) */
+@import './themes/neo-brutalism.css';
+@import './themes/cyberpunk.css';
+@import './themes/steampunk.css';
+@import './themes/royal.css';
+@import './themes/chibi.css';
+@import './themes/minimalistic.css';
+@import './themes/post-apocalyptic.css';

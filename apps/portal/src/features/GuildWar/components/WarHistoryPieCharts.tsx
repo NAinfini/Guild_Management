@@ -2,12 +2,12 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/layout/Card';
 import { Badge } from '@/components/data-display/Badge';
-import { PieChart } from '@mui/x-charts/PieChart';
+import { PieChart } from '@/ui-bridge/x-charts/PieChart';
 import {
   EmojiEvents,
   Groups,
   MilitaryTech,
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 import { useTranslation } from 'react-i18next';
 
 interface WarData {
@@ -214,7 +214,7 @@ export function WarHistoryPieCharts({ data }: WarHistoryPieChartsProps) {
                   data: chartData,
                   highlightScope: { fade: 'global', highlight: 'item' },
                   faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
-                  arcLabel: (item) => item.label || '',
+                  arcLabel: (item: { label?: string }) => item.label || '',
                 },
               ]}
               height={260}

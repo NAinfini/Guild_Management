@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Box } from "@mui/material";
+import { Box } from "@/ui-bridge/material";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const badgeVariants = cva(

@@ -1,0 +1,7 @@
+﻿/**
+ * Post-apocalyptic theme slot.
+ * TODO: migrate theme values from legacy preset files.
+ */
+[data-theme='post-apocalyptic'] {
+  --color-accent: #b16a45;
+}

@@ -10,7 +10,7 @@ import {
   Typography,
   Box,
   Fade
-} from "@mui/material";
+} from "@/ui-bridge/material";
 import { buttonVariants } from "../button/Button";
 
 // State management context

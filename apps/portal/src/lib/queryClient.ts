@@ -23,8 +23,8 @@ export const queryClient = new QueryClient({
   }),
   defaultOptions: {
     queries: {
-      // Queries are considered fresh for 30 seconds
-      staleTime: 30000,
+      // Day 11 rework baseline: event-facing queries stay fresh for 2 minutes by default.
+      staleTime: 1000 * 60 * 2,
       
       // Cache data for 5 minutes
       gcTime: 5 * 60 * 1000,
@@ -35,6 +35,9 @@ export const queryClient = new QueryClient({
       
       // Don't refetch on window focus (we have push notifications)
       refetchOnWindowFocus: false,
+      // Re-render only when consumed query fields change.
+      // The runtime supports "tracked" but local typings lag behind; keep behavior with a safe cast.
+      notifyOnChangeProps: 'tracked' as any,
       
       // Don't refetch on mount if data is fresh
 

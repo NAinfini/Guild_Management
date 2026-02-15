@@ -1,0 +1,79 @@
+/*
+ * Skeleton styles define lightweight placeholder blocks for loading states.
+ * Animation classes are motion-safe and disabled under prefers-reduced-motion.
+ */
+.skeleton {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--color-bg-overlay, #1e1e24) 78%, transparent);
+  border-radius: var(--radius-md, 8px);
+}
+
+.text {
+  width: 100%;
+  height: 1em;
+  border-radius: var(--radius-sm, 6px);
+}
+
+.circular {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-full, 9999px);
+}
+
+.rectangular {
+  width: 100%;
+  height: 5rem;
+  border-radius: var(--radius-md, 8px);
+}
+
+.pulse {
+  animation: ds-skeleton-pulse 1.25s ease-in-out infinite;
+}
+
+.wave::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-text-primary, rgba(255, 255, 255, 0.95)) 14%, transparent) 50%,
+    transparent 100%
+  );
+  animation: ds-skeleton-wave 1.4s ease-in-out infinite;
+}
+
+.none {
+  animation: none;
+}
+
+.none::after {
+  display: none;
+}
+
+@keyframes ds-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ds-skeleton-wave {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse,
+  .wave::after {
+    animation: none;
+  }
+}
+

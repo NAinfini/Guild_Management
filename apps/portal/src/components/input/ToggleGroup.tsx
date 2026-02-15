@@ -5,7 +5,7 @@ import * as React from "react";
 import { 
   ToggleButtonGroup, 
   ToggleButton,
-} from "@mui/material";
+} from "@/ui-bridge/material";
 import { toggleVariants } from "./Toggle";
 
 function ToggleGroup({

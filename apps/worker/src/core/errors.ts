@@ -31,6 +31,12 @@ export class ForbiddenError extends AppError {
   }
 }
 
+/**
+ * @deprecated Obsolete candidate: no current references in runtime/tests.
+ * Replacement: throw AppError(message, 400, 'VALIDATION_ERROR', details)
+ * until a dedicated type is needed again.
+ * TODO(remove-by 2026-03-31): remove if still unused.
+ */
 export class ValidationError extends AppError {
   constructor(message: string, details?: unknown) {
     super(message, 400, 'VALIDATION_ERROR', details);
@@ -43,6 +49,12 @@ export class NotFoundError extends AppError {
   }
 }
 
+/**
+ * @deprecated Obsolete candidate: no current references in runtime/tests.
+ * Replacement: throw AppError(message, 409, 'CONFLICT')
+ * until a dedicated type is needed again.
+ * TODO(remove-by 2026-03-31): remove if still unused.
+ */
 export class ConflictError extends AppError {
   constructor(message = 'Resource conflict') {
     super(message, 409, 'CONFLICT');

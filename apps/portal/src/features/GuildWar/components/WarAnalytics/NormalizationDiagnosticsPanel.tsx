@@ -3,10 +3,10 @@ import { useMemo } from 'react';
 import {
   TableBody,
   alpha 
-} from "@mui/material";
-import AnalyticsIcon from "@mui/icons-material/Analytics";
-import InfoIcon from "@mui/icons-material/Info";
-import WarningIcon from "@mui/icons-material/Warning";
+} from "@/ui-bridge/material";
+import AnalyticsIcon from "@/ui-bridge/icons-material/Analytics";
+import InfoIcon from "@/ui-bridge/icons-material/Info";
+import WarningIcon from "@/ui-bridge/icons-material/Warning";
 import { useTranslation } from 'react-i18next';
 import {
   Card,

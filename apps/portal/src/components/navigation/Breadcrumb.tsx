@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { ChevronRight, MoreHoriz } from "@mui/icons-material";
+import { ChevronRight, MoreHoriz } from "@/ui-bridge/icons-material";
 
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />;

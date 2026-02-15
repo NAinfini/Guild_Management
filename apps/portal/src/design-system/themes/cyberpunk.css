@@ -1,0 +1,7 @@
+﻿/**
+ * Cyberpunk theme slot.
+ * TODO: migrate theme values from legacy preset files.
+ */
+[data-theme='cyberpunk'] {
+  --color-accent: #00d9ff;
+}

@@ -1,7 +1,7 @@
 
 import { cn } from "@/lib/utils";
 import React from 'react';
-import { ErrorOutline, Refresh } from "@mui/icons-material";
+import { ErrorOutline, Refresh } from "@/ui-bridge/icons-material";
 import { useTranslation } from 'react-i18next';
 import { Button } from '../button/Button';
 

@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 
 import * as React from "react";
-import { ToggleButton, type ToggleButtonProps } from "@mui/material";
+import { ToggleButton, type ToggleButtonProps } from "@/ui-bridge/material";
 import { VariantProps, cva } from "class-variance-authority";
 
 function resolveDocumentTheme(): string | null {

@@ -1,0 +1,15 @@
+﻿/**
+ * Reset baseline for consistent rendering while keeping app-specific styles intact.
+ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}

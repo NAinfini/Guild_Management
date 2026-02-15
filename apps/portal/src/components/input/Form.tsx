@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 
 import * as React from "react";
-import { FormLabelProps } from "@mui/material/FormLabel";
+import { FormLabelProps } from "@/ui-bridge/material/FormLabel";
 import {
   Controller,
   FormProvider,

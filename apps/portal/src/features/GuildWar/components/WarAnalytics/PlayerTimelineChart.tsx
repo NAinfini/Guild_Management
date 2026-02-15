@@ -6,14 +6,13 @@
  */
 
 import { useMemo } from 'react';
-import { LineChart } from '@mui/x-charts/LineChart';
+import { LineChart } from '@/ui-bridge/x-charts/LineChart';
 import {  alpha,
   useTheme
-} from "@mui/material";
-import PersonIcon from "@mui/icons-material/Person";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import InfoIcon from "@mui/icons-material/Info";
-import { ChartsReferenceLine } from '@mui/x-charts/ChartsReferenceLine';
+} from "@/ui-bridge/material";
+import PersonIcon from "@/ui-bridge/icons-material/Person";
+import CalendarTodayIcon from "@/ui-bridge/icons-material/CalendarToday";
+import InfoIcon from "@/ui-bridge/icons-material/Info";
 import { useTranslation } from 'react-i18next';
 import { CardSkeleton } from '@/components/feedback/Skeleton';
 import { formatWarDateShort, formatNumber } from './utils';
@@ -159,19 +158,7 @@ export function PlayerTimelineChart({ perWarStats, wars, metrics, onSelectWar, i
             strokeWidth: 2.5,
           },
         }}
-      >
-        {averageValue !== null && (
-          <ChartsReferenceLine
-            y={averageValue}
-            lineStyle={{ stroke: 'hsl(var(--muted-foreground))', strokeDasharray: '5 5' }}
-            label={t('guild_war.analytics_average_metric_label', {
-              metric: formatMetricName(selectedMetrics[0]),
-              value: formatNumber(averageValue),
-            })}
-            labelStyle={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-          />
-        )}
-      </LineChart>
+      />
 
       <div className="mt-4 text-center">
         <p className="text-xs text-muted-foreground">
@@ -179,6 +166,12 @@ export function PlayerTimelineChart({ perWarStats, wars, metrics, onSelectWar, i
             metrics: selectedMetrics.length,
             wars: chartData.length,
           })}
+          {averageValue !== null
+            ? ` | ${t('guild_war.analytics_average_metric_label', {
+                metric: formatMetricName(selectedMetrics[0]),
+                value: formatNumber(averageValue),
+              })}`
+            : ''}
         </p>
       </div>
     </div>

@@ -1,0 +1,43 @@
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--page-padding-x, clamp(1rem, 3vw, 2.5rem));
+  padding-right: var(--page-padding-x, clamp(1rem, 3vw, 2.5rem));
+}
+
+.narrow {
+  max-width: var(--container-narrow, 900px);
+}
+
+.comfortable {
+  max-width: var(--container-comfortable, 1200px);
+}
+
+.standard {
+  max-width: var(--container-standard, 1400px);
+}
+
+.wide {
+  max-width: var(--container-wide, 1800px);
+}
+
+.full {
+  max-width: var(--container-full, 100%);
+}
+
+.tight {
+  padding-top: var(--space-4, 1rem);
+  padding-bottom: var(--space-4, 1rem);
+}
+
+.normal {
+  padding-top: var(--space-6, 1.5rem);
+  padding-bottom: var(--space-6, 1.5rem);
+}
+
+.relaxed {
+  padding-top: var(--space-8, 2rem);
+  padding-bottom: var(--space-8, 2rem);
+}
+

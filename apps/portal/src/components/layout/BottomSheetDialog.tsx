@@ -6,7 +6,7 @@ import {
   DialogContent,
   DialogActions,
   Box,
-} from '@mui/material';
+} from '@/ui-bridge/material';
 import { useMobileOptimizations } from '@/hooks';
 
 type BottomSheetDialogProps = DialogProps & {

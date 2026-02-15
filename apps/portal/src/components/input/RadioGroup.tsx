@@ -1,8 +1,8 @@
 import * as React from "react";
-import MuiRadioGroup, { RadioGroupProps as MuiRadioGroupProps } from "@mui/material/RadioGroup";
-import MuiRadio, { RadioProps as MuiRadioProps } from "@mui/material/Radio";
+import MuiRadioGroup, { RadioGroupProps as MuiRadioGroupProps } from "@/ui-bridge/material/RadioGroup";
+import MuiRadio, { RadioProps as MuiRadioProps } from "@/ui-bridge/material/Radio";
 import { cn } from "@/lib/utils";
-import CircleIcon from "@mui/icons-material/Circle"; 
+import CircleIcon from "@/ui-bridge/icons-material/Circle"; 
 
 const RadioGroup = React.forwardRef<HTMLDivElement, MuiRadioGroupProps>(
   ({ className, ...props }, ref) => {

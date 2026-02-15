@@ -1,0 +1,76 @@
+.field {
+  display: grid;
+  gap: var(--space-1, 0.25rem);
+}
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+}
+
+.root {
+  width: 2.65rem;
+  height: 1.5rem;
+  border: var(--border-width-default, 1px) solid var(--cmp-toggle-border, var(--color-border-default, rgba(255, 255, 255, 0.2)));
+  border-radius: 9999px;
+  background: var(--cmp-toggle-bg, var(--color-bg-elevated, #14141a));
+  padding: 0.1rem;
+  display: inline-flex;
+  align-items: center;
+  transition:
+    background-color var(--transition-fast, 150ms ease),
+    border-color var(--transition-fast, 150ms ease),
+    box-shadow var(--transition-fast, 150ms ease);
+}
+
+.root[data-state='checked'] {
+  border-color: var(--cmp-toggle-active-bg, var(--color-accent, #00d9ff));
+  background: color-mix(in srgb, var(--cmp-toggle-active-bg, var(--color-accent, #00d9ff)) 72%, transparent);
+}
+
+.root[data-disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.root:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus, 0 0 0 3px rgba(0, 180, 255, 0.2));
+}
+
+.thumb {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  border: var(--border-width-default, 1px) solid color-mix(in srgb, var(--cmp-toggle-border, #ffffff) 45%, transparent);
+  background: var(--cmp-toggle-thumb, #ffffff);
+  transform: translateX(0);
+  transition: transform var(--transition-fast, 150ms ease);
+  will-change: transform;
+}
+
+.root[data-state='checked'] .thumb {
+  transform: translateX(1.15rem);
+}
+
+.label {
+  color: var(--color-text-primary, rgba(255, 255, 255, 0.95));
+  font-size: var(--font-size-sm, 0.875rem);
+  line-height: var(--leading-normal, 1.5);
+  user-select: none;
+}
+
+.description {
+  margin: 0;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.68));
+  font-size: var(--font-size-xs, 0.75rem);
+  line-height: var(--leading-normal, 1.5);
+}
+
+.error {
+  margin: 0;
+  color: var(--color-error, #ef4444);
+  font-size: var(--font-size-xs, 0.75rem);
+  line-height: var(--leading-normal, 1.5);
+}

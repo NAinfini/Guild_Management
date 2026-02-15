@@ -23,7 +23,7 @@ import {
 } from '@/components/data-display/Table';
 import { formatDateTime, cn } from '../../../lib/utils';
 import { WarHistoryEntry, WarMemberStat } from '../../../types';
-import { Warning, Paid, EmojiFlags, Castle } from '@mui/icons-material';
+import { Warning, Paid, EmojiFlags, Castle } from '@/ui-bridge/icons-material';
 import { useTranslation } from 'react-i18next';
 import { buildWarCardMetrics } from './WarHistory.utils';
 import { useAuthStore } from '@/store';
@@ -343,7 +343,7 @@ export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: War
     return (
       <Input
         value={String(value)}
-        onChange={(event) => setSideMetric(side, metric, event.target.value)}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSideMetric(side, metric, event.target.value)}
         className="h-8 text-right text-xs font-mono"
         inputProps={{ inputMode: 'numeric', min: 0 }}
       />
@@ -391,7 +391,14 @@ export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: War
                       {t('common.cancel')}
                     </Button>
                     <Button size="sm" onClick={handleSave} disabled={isSaving}>
-                      {isSaving ? t('common.loading') : t('common.save')}
+                      <span
+                        data-testid="warhistory-detail-save-status"
+                        role="status"
+                        aria-live="polite"
+                        aria-atomic="true"
+                      >
+                        {isSaving ? t('common.loading') : t('common.save')}
+                      </span>
                     </Button>
                   </>
                 )}
@@ -470,7 +477,7 @@ export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: War
                 {isEditMode ? (
                   <Select
                     value={draft.result}
-                    onChange={(event) =>
+                    onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
                       setDraft((prev) => (prev ? { ...prev, result: event.target.value as WarHistoryEntry['result'] } : prev))
                     }
                   >
@@ -496,7 +503,7 @@ export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: War
                 {isEditMode ? (
                   <Textarea
                     value={draft.notes}
-                    onChange={(event) =>
+                    onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                       setDraft((prev) => (prev ? { ...prev, notes: event.target.value } : prev))
                     }
                     className="min-h-[96px] bg-[var(--cmp-input-bg)] border-[color:var(--cmp-input-border)]"
@@ -581,7 +588,7 @@ export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: War
                             {isEditMode ? (
                               <Input
                                 value={String((member as any)[field] ?? 0)}
-                                onChange={(event) => setMemberMetric(member.id, field, event.target.value)}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMemberMetric(member.id, field, event.target.value)}
                                 className="h-8 text-right text-xs font-mono"
                                 inputProps={{ inputMode: 'numeric', min: 0 }}
                               />
@@ -595,7 +602,7 @@ export function WarHistoryDetail({ war, open, onClose, timezoneOffset = 0 }: War
                           {isEditMode ? (
                             <Input
                               value={member.note ?? ''}
-                              onChange={(event) => setMemberNote(member.id, event.target.value)}
+                              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMemberNote(member.id, event.target.value)}
                               className="h-8 text-xs"
                             />
                           ) : (

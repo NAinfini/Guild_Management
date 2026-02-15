@@ -1,0 +1,25 @@
+export {
+  MultiSelect,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSearch,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from './Select';
+export type {
+  PrimitiveMultiSelectOption,
+  PrimitiveMultiSelectProps,
+  PrimitiveSelectContentProps,
+  PrimitiveSelectGroupProps,
+  PrimitiveSelectItemProps,
+  PrimitiveSelectLabelProps,
+  PrimitiveSelectProps,
+  PrimitiveSelectSearchProps,
+  PrimitiveSelectSeparatorProps,
+  PrimitiveSelectTriggerProps,
+  PrimitiveSelectValueProps,
+} from './Select';

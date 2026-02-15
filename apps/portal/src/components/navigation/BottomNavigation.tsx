@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { motion, useReducedMotion } from 'motion/react';
 import { 
   Dashboard, 
   CalendarToday, 
@@ -21,7 +20,7 @@ import {
   Translate,
   ExpandMore,
   ExpandLess,
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 
 import { useAuthStore } from '@/store';
 import { canAccessAdminArea, getEffectiveRole } from '@/lib/permissions';
@@ -37,7 +36,7 @@ import {
   ButtonBase,
   Divider,
   Grid
-} from '@mui/material';
+} from '@/ui-bridge/material';
 import {
   useThemeController,
   NEXUS_THEME_OPTIONS,
@@ -57,33 +56,11 @@ export function BottomNavigation() {
   const theme = useTheme();
   const themeController = useThemeController();
   const motionTokens = useMotionTokens();
-  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const prefersReducedMotion = useReducedMotion() || themeController.reducedMotion;
+  const smallMobileQuery = theme?.breakpoints?.down ? theme.breakpoints.down('sm') : '(max-width: 600px)';
+  const isSmallMobile = useMediaQuery(smallMobileQuery);
   const effectiveRole = getEffectiveRole(user?.role, viewRole);
   const canSeeAdmin = canAccessAdminArea(effectiveRole);
-  const motionEase = React.useMemo<[number, number, number, number]>(() => {
-    const match = motionTokens.ease.trim().match(/^cubic-bezier\(([^)]+)\)$/i);
-    if (!match?.[1]) {
-      return [0.22, 1, 0.36, 1];
-    }
-
-    const values = match[1]
-      .split(',')
-      .map((part) => Number.parseFloat(part.trim()))
-      .filter((part) => Number.isFinite(part));
-
-    if (values.length !== 4) {
-      return [0.22, 1, 0.36, 1];
-    }
-
-    return [values[0]!, values[1]!, values[2]!, values[3]!];
-  }, [motionTokens.ease]);
   const motionFastMs = Math.max(0, Math.round(motionTokens.fastMs));
-  const motionMediumMs = Math.max(0, Math.round(motionTokens.mediumMs));
-  const motionFastSec = motionFastMs / 1000;
-  const motionMediumSec = motionMediumMs / 1000;
-  const navDelayStepSec = motionFastSec / 5;
-  const navDelayCapSec = motionMediumSec;
   const pressTapScale = Math.max(0.9, Math.min(1, motionTokens.pressScale));
 
   const handleLanguageChange = (lng: 'en' | 'zh') => {
@@ -120,7 +97,7 @@ export function BottomNavigation() {
           bottom: 0, 
           left: 0, 
           right: 0, 
-          zIndex: theme.zIndex.appBar,
+          zIndex: theme?.zIndex?.appBar ?? 1100,
           display: { lg: 'none' },
           borderTop: theme.custom?.border,
           bgcolor: 'background.paper',
@@ -136,25 +113,10 @@ export function BottomNavigation() {
           height: { xs: 60, sm: 64 },
           px: { xs: 0.5, sm: 1 }
         }}>
-          {mainNav.map((item, index) => {
+          {mainNav.map((item) => {
             const active = isActive(item.href);
             return (
-              <motion.div
-                key={item.href}
-                style={{ flex: 1, height: '100%' }}
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
-                animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-                transition={
-                  prefersReducedMotion
-                    ? undefined
-                    : {
-                        duration: motionMediumSec,
-                        delay: Math.min(index * navDelayStepSec, navDelayCapSec),
-                        ease: motionEase,
-                      }
-                }
-                whileTap={prefersReducedMotion ? undefined : { scale: pressTapScale }}
-              >
+              <Box key={item.href} sx={{ flex: 1, height: '100%' }}>
                 <ButtonBase
                   className="control"
                   data-ui="nav"
@@ -203,17 +165,11 @@ export function BottomNavigation() {
                       {item.label}
                   </Typography>
                 </ButtonBase>
-              </motion.div>
+              </Box>
             );
           })}
 
-          <motion.div
-            style={{ flex: 1, height: '100%' }}
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
-            animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-            transition={prefersReducedMotion ? undefined : { duration: motionMediumSec, delay: navDelayCapSec, ease: motionEase }}
-            whileTap={prefersReducedMotion ? undefined : { scale: pressTapScale }}
-          >
+          <Box sx={{ flex: 1, height: '100%' }}>
             <ButtonBase
               className="control"
               data-ui="nav"
@@ -260,7 +216,7 @@ export function BottomNavigation() {
                  {t('common.more')}
               </Typography>
             </ButtonBase>
-          </motion.div>
+          </Box>
         </Box>
       </Paper>
 
@@ -321,23 +277,8 @@ export function BottomNavigation() {
               gap: { xs: 1.5, sm: 2 },
               mb: { xs: 2, sm: 3 }
             }}>
-                {moreItems.map((item, index) => (
-                  <motion.div
-                    key={item.href}
-                    initial={prefersReducedMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}
-                    animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
-                    transition={
-                      prefersReducedMotion
-                        ? undefined
-                        : {
-                            duration: motionMediumSec,
-                            delay: Math.min(index * navDelayStepSec, navDelayCapSec),
-                            ease: motionEase,
-                          }
-                    }
-                    whileHover={prefersReducedMotion ? undefined : { y: motionTokens.liftPx }}
-                    whileTap={prefersReducedMotion ? undefined : { scale: pressTapScale }}
-                  >
+                {moreItems.map((item) => (
+                  <Box key={item.href}>
                     <ButtonBase
                        className="control"
                        data-ui="button"
@@ -380,7 +321,7 @@ export function BottomNavigation() {
                            {item.label}
                        </Typography>
                     </ButtonBase>
-                  </motion.div>
+                  </Box>
                 ))}
             </Box>
 

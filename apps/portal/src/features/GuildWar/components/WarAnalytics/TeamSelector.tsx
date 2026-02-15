@@ -10,7 +10,7 @@ import { cn } from '../../../../lib/utils';
 import {
   Groups,
   ErrorOutline
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 
 interface TeamOption {
   teamId: number;
@@ -77,7 +77,7 @@ export function TeamSelector({ teamStats }: TeamSelectorProps) {
                     <Checkbox 
                       checked={selected} 
                       onChange={() => toggleTeam(team.teamId)}
-                      onClick={(event) => event.stopPropagation()}
+                      onClick={(event: React.MouseEvent<HTMLButtonElement>) => event.stopPropagation()}
                       id={`team-${team.teamId}`}
                     />
                     <div className="flex-1 flex items-center justify-between">

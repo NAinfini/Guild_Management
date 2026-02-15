@@ -1,0 +1,77 @@
+﻿/**
+ * Color tokens used by new primitives and composed components.
+ * Theme files can override accent/surface values per theme identity.
+ */
+:root {
+  --color-bg-base: #0a0a0f;
+  --color-bg-elevated: #14141a;
+  --color-bg-overlay: #1e1e24;
+
+  --color-text-primary: rgba(255, 255, 255, 0.95);
+  --color-text-secondary: rgba(255, 255, 255, 0.65);
+  --color-text-tertiary: rgba(255, 255, 255, 0.45);
+  --color-text-disabled: rgba(255, 255, 255, 0.25);
+
+  --color-accent: #00d9ff;
+  --color-accent-hover: #00b8d9;
+  --color-accent-active: #0097b3;
+
+  --color-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-border-default: rgba(255, 255, 255, 0.12);
+  --color-border-strong: rgba(255, 255, 255, 0.18);
+
+  --color-success: #10b981;
+  --color-success-bg: rgba(16, 185, 129, 0.1);
+  --color-warning: #f59e0b;
+  --color-warning-bg: rgba(245, 158, 11, 0.1);
+  --color-error: #ef4444;
+  --color-error-bg: rgba(239, 68, 68, 0.1);
+  --color-info: #3b82f6;
+  --color-info-bg: rgba(59, 130, 246, 0.1);
+}
+
+/**
+ * Theme accent overrides extracted from legacy preset identities.
+ * The active `data-theme` on document root drives these values into all primitives.
+ */
+[data-theme='neo-brutalism'] {
+  --color-accent: #ffd300;
+  --color-accent-hover: #e6be00;
+  --color-accent-active: #cca900;
+}
+
+[data-theme='cyberpunk'] {
+  --color-accent: #00d9ff;
+  --color-accent-hover: #00b8d9;
+  --color-accent-active: #0097b3;
+}
+
+[data-theme='steampunk'] {
+  --color-accent: #d4a574;
+  --color-accent-hover: #bc8f63;
+  --color-accent-active: #a07854;
+}
+
+[data-theme='royal'] {
+  --color-accent: #bfa44a;
+  --color-accent-hover: #a98f3f;
+  --color-accent-active: #8f7835;
+}
+
+[data-theme='chibi'] {
+  --color-accent: #ff8bc2;
+  --color-accent-hover: #ff6fb3;
+  --color-accent-active: #e05e9b;
+}
+
+[data-theme='minimalistic'] {
+  --color-accent: #7a8794;
+  --color-accent-hover: #697581;
+  --color-accent-active: #58636f;
+}
+
+[data-theme='post-apocalyptic'] {
+  --color-accent: #b16a45;
+  --color-accent-hover: #9b5d3b;
+  --color-accent-active: #834d32;
+}

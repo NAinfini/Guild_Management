@@ -1,8 +1,69 @@
 /**
- * Theme Styles - Individual Theme Files
+ * Theme Presets - Central Import Hub
+ * ===================================
  *
- * Each theme has its own CSS file for better maintainability.
- * Import order: base interactions → individual themes
+ * ARCHITECTURE:
+ * -------------
+ * This file orchestrates the loading of all theme-related CSS.
+ * It's imported by ThemeController.tsx when a theme is activated.
+ *
+ * LOADING ORDER (CRITICAL):
+ * --------------------------
+ * 1. Component tokens (_component-tokens.css)
+ *    - Defines CSS variables for buttons, inputs, cards, etc.
+ *    - Used by all themes as foundation
+ *
+ * 2. Global improvements (_global-improvements.css)
+ *    - Cross-theme polish (simplified to avoid conflicts)
+ *    - NO global element selectors (e.g., button, input)
+ *
+ * 3. Base interactions (_interactions-base.css)
+ *    - Shared hover/focus/active states
+ *    - Foundation for theme-specific animations
+ *
+ * 4. Effects (../effects.css)
+ *    - Background effects (currently disabled for performance)
+ *
+ * 5. Individual themes (neo-brutalism.css, cyberpunk.css, etc.)
+ *    - Theme-specific colors, shadows, effects
+ *    - 7 themes total: Neo-Brutalism, Steampunk, Cyberpunk, Royal, Chibi, Minimalistic, Post-Apocalyptic
+ *
+ * 6. Member card colors (_member-card-colors.css)
+ *    - Theme-aware colors for game classes (Bushi, Onmyoji, Samurai, Shinobi)
+ *
+ * 7. Enhancements (_theme-enhancements.css)
+ *    - Comprehensive token overrides
+ *    - Control styling per theme
+ *
+ * 8. Shape unification (_shape-unification.css)
+ *    - Consistent border-radius system
+ *    - Overflow management (simplified)
+ *
+ * 9. Control animations (_control-animations.css)
+ *    - Theme-specific button/input/card animations
+ *    - Only triggers on user interaction (hover/click/focus)
+ *
+ * 10. Theme transitions (_theme-transitions.css)
+ *     - Smooth transitions when switching themes
+ *
+ * 11. Context-aware theming (_context-aware-theming.css)
+ *     - Time-based and event-based theme adjustments
+ *
+ * 12. Customization (_theme-customization.css)
+ *     - User preference controls
+ *
+ * 13. Performance optimizations (_performance-optimizations.css)
+ *     - GPU acceleration, will-change, etc.
+ *
+ * IMPORTANT RULES:
+ * ----------------
+ * - DO NOT add global element selectors (*, button, input) in any of these files
+ * - DO NOT use !important unless absolutely necessary
+ * - Use data attributes ([data-ui="button"]) instead of element selectors
+ * - All colors must use CSS variables (--sys-*, --cmp-*, --theme-*)
+ * - Test all 7 themes after making changes
+ *
+ * See: apps/portal/src/theme/README.md for full documentation
  */
 
 /* Component token definitions (base layer) */

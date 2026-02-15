@@ -31,3 +31,5 @@ yarn.lock
 *.sw?
 *.backup
 lint_output.json
+typecheck_output.txt
+**/typecheck_output.txt

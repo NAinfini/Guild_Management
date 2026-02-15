@@ -12,7 +12,7 @@ import {
   Grid,
   useTheme,
   alpha
-} from '@mui/material';
+} from '@/ui-bridge/material';
 import { 
   Refresh, 
   Palette, 
@@ -23,7 +23,7 @@ import {
   Check,
   ContentCopy,
   Build
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 import { useTranslation } from 'react-i18next';
 import { sanitizeHtml } from '../../../lib/utils';
 
@@ -107,7 +107,7 @@ export function StyleBuilder() {
                         label={t('tools.input_label')} 
                         placeholder={t('tools.input_placeholder')} 
                         value={text} 
-                        onChange={(e) => setText(e.target.value)} 
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setText(e.target.value)} 
                         fullWidth 
                      />
                      
@@ -200,7 +200,14 @@ export function StyleBuilder() {
   );
 }
 
-function StyleChip({ icon: Icon, label, active, onClick }: any) {
+interface StyleChipProps {
+  icon: React.ElementType;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+function StyleChip({ icon: Icon, label, active, onClick }: StyleChipProps) {
     const theme = useTheme();
     return (
         <Chip 

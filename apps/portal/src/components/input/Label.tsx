@@ -1,5 +1,5 @@
 import * as React from "react";
-import FormLabel, { FormLabelProps } from "@mui/material/FormLabel";
+import FormLabel, { FormLabelProps } from "@/ui-bridge/material/FormLabel";
 import { cn } from "@/lib/utils";
 
 const Label = React.forwardRef<HTMLLabelElement, FormLabelProps>(

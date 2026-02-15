@@ -10,3 +10,5 @@ export { usePush } from './usePush';
 export { useWebSocket } from './useWebSocket';
 export { useLocaleDate } from './useLocaleDate';
 export { useFilteredList } from './useFilteredList';
+export { useReducedMotion } from './useReducedMotion';
+export { useInView } from './useInView';

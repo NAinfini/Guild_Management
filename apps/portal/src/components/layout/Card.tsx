@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Paper, PaperProps, Typography } from "@mui/material";
+import { Paper, PaperProps, Typography } from "@/ui-bridge/material";
 
 function Card({ className, ...props }: PaperProps) {
   return (

@@ -5,7 +5,7 @@ import * as React from "react";
 import { 
   Tooltip as MuiTooltip, 
   TooltipProps as MuiTooltipProps,
-} from "@mui/material";
+} from "@/ui-bridge/material";
 
 // We maintain the sub-component pattern to match expectations, 
 // even if MUI's Tooltip is a single component.

@@ -1,9 +1,45 @@
-@import "tailwindcss" source(".");
-@import './theme/layout.css';
+/**
+ * Portal Entry Stylesheet
+ * ========================
+ *
+ * ARCHITECTURE:
+ * -------------
+ * This file orchestrates the CSS loading order for the entire portal.
+ * ORDER MATTERS! Imports must be in this specific sequence:
+ *
+ * 1. Tailwind CSS - Base utilities and components
+ * 2. Layout utilities - Layout helper classes
+ * 3. CSS variables - Theme tokens and design system
+ * 4. Theme presets - Loaded via ThemeController (not here)
+ * 5. Component styles - Loaded by MUI automatically
+ *
+ * CRITICAL RULES:
+ * ---------------
+ * - ALL @import statements MUST be at the top (PostCSS requirement)
+ * - DO NOT add @import after any CSS rules (will cause build errors)
+ * - DO NOT add global element selectors (*, button, input) - causes MUI conflicts
+ * - DO NOT add !important unless absolutely necessary
+ *
+ * MAKING CHANGES:
+ * ---------------
+ * 1. Read apps/portal/src/theme/README.md first
+ * 2. Check Knowledge_Base.md for established patterns
+ * 3. Test build after changes: npm run build --workspace=apps/portal
+ * 4. Verify all 7 themes work correctly
+ *
+ * See: apps/portal/src/theme/README.md for full architecture docs
+ */
 
-/* ============================================
-   NEXUS THEME VARIABLES (Base & Dark Mode)
-   ============================================ */
+/* ========== IMPORTS (MUST BE FIRST) ========== */
+
+@import "tailwindcss" source(".");
+/* Phase 1 architecture bridge: load new design-system foundation in parallel. */
+@import './design-system/index.css';
+/* Day 2 parity checkpoint: legacy theme layout/enhancement imports removed. */
+
+/* ========== CSS VARIABLES & THEME TOKENS ========== */
+
+/* Dark mode variant declaration */
 @custom-variant dark (&:is(.dark *));
 
 :root {

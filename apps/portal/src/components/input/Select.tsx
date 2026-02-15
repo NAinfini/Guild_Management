@@ -8,8 +8,8 @@ import {
   MenuItemProps as MuiMenuItemProps,
   ListItemIcon,
   ListItemText
-} from "@mui/material";
-import { KeyboardArrowDown, Check } from "@mui/icons-material";
+} from "@/ui-bridge/material";
+import { KeyboardArrowDown, Check } from "@/ui-bridge/icons-material";
 import { cn } from "@/lib/utils";
 
 // Re-export MuiSelectProps for consumers
@@ -21,7 +21,7 @@ const Select = React.forwardRef<HTMLDivElement, SelectProps>(
       <MuiSelect
         ref={ref}
         displayEmpty
-        IconComponent={(iconProps) => (
+        IconComponent={(iconProps: React.ComponentProps<typeof KeyboardArrowDown>) => (
           <KeyboardArrowDown 
             {...iconProps} 
             className={cn("h-4 w-4 opacity-50 mr-2", iconProps.className)} 

@@ -1,11 +1,12 @@
-
-import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+﻿
+import React, { Suspense, lazy, useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { AutoSizer } from 'react-virtualized-auto-sizer';
+import { List as VirtualList } from 'react-window';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'motion/react';
 import { isWithinInterval, formatDistanceToNow } from 'date-fns';
 import { getOptimizedMediaUrl, getAvatarInitial } from '@/lib/media-conversion';
 import { sanitizeHtml, cn } from '@/lib/utils';
-import { useOnline } from '@/hooks/useOnline';
 import { useFilteredList } from '@/hooks/useFilteredList';
 import type { User } from '@/types';
 import { formatPower } from '@/lib/utils';
@@ -14,30 +15,86 @@ import {
   Card,
   CardContent,
   Button,
+  PrimitiveButton,
   Badge,
   Slider,
   Skeleton,
-  Dialog,
-  DialogContent,
-  DialogTitle,
 } from '@/components';
 
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import VolumeOffIcon from '@mui/icons-material/VolumeOff';
-import ImageIcon from '@mui/icons-material/Image';
-import CloseIcon from '@mui/icons-material/Close';
-import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PeopleIcon from '@mui/icons-material/People';
+import {
+  Volume2,
+  VolumeX,
+  Image,
+  Play,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 
-import { PageFilterBar, MarkdownContent } from '@/components';
+import { PageFilterBar } from '@/components';
 import { useUIStore } from '../../store';
 import type { RosterFilterState } from '../../hooks/useFilterPresets';
 import { useMembers } from '../../hooks/useServerState';
 import { storage, STORAGE_KEYS } from '../../lib/storage';
 import { membersAPI } from '../../lib/api';
+
+const VIRTUAL_MEMBER_THRESHOLD = 200;
+const VIRTUAL_MEMBER_ROW_HEIGHT = 120;
+
+type LegacyIconProps = React.SVGProps<SVGSVGElement> & { sx?: Record<string, unknown> };
+
+function resolveLegacyIconColor(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  switch (value) {
+    case 'primary.main':
+      return '#7c3aed';
+    case 'error.main':
+      return '#ef4444';
+    case 'warning.main':
+      return '#f59e0b';
+    default:
+      return value;
+  }
+}
+
+function toLegacyIcon(Icon: LucideIcon) {
+  return function LegacyIcon({ sx, style, ...rest }: LegacyIconProps) {
+    const nextStyle: React.CSSProperties = { ...(style ?? {}) };
+    if (sx && typeof sx === 'object') {
+      for (const [key, value] of Object.entries(sx)) {
+        if (value == null || typeof value === 'object') {
+          continue;
+        }
+        if (key === 'fontSize') {
+          nextStyle.width = value as React.CSSProperties['width'];
+          nextStyle.height = value as React.CSSProperties['height'];
+          continue;
+        }
+        if (key === 'ml') {
+          nextStyle.marginLeft = typeof value === 'number' ? `${value * 8}px` : (value as React.CSSProperties['marginLeft']);
+          continue;
+        }
+        if (key === 'color') {
+          const resolvedColor = resolveLegacyIconColor(value);
+          if (resolvedColor) {
+            nextStyle.color = resolvedColor;
+          }
+          continue;
+        }
+        (nextStyle as Record<string, unknown>)[key] = value;
+      }
+    }
+    return <Icon {...rest} style={nextStyle} aria-hidden={rest['aria-hidden'] ?? true} />;
+  };
+}
+
+const VolumeUpIcon = toLegacyIcon(Volume2);
+const VolumeOffIcon = toLegacyIcon(VolumeX);
+const ImageIcon = toLegacyIcon(Image);
+const PlayArrowIcon = toLegacyIcon(Play);
+const PeopleIcon = toLegacyIcon(Users);
+const RosterProfileDialog = lazy(() => import('./components/RosterProfileDialog'));
 
 // Helper to determine active status based on availability
 function getAvailabilityStatus(member: User): 'active' | 'inactive' | 'unknown' {
@@ -83,6 +140,45 @@ function getAvailabilityStatus(member: User): 'active' | 'inactive' | 'unknown' 
 
   // 3. Fallback to global active status if no specific availability data
   return member.active_status === 'active' ? 'unknown' : 'inactive';
+}
+
+function applyRosterFilters(members: User[], filters: RosterFilterState): User[] {
+  return members.filter((member) => {
+    if (filters.roles.length > 0 && !filters.roles.includes(member.role || '')) {
+      return false;
+    }
+
+    if (filters.classes.length > 0) {
+      const memberClasses = member.classes || [];
+      const hasClassMatch = memberClasses.some((value) => filters.classes.includes(value));
+      if (!hasClassMatch) {
+        return false;
+      }
+    }
+
+    const power = member.power || 0;
+    if (power < filters.powerRange[0] || power > filters.powerRange[1]) {
+      return false;
+    }
+
+    if (filters.status !== 'all') {
+      const availability = getAvailabilityStatus(member);
+      if (availability !== filters.status) {
+        return false;
+      }
+    }
+
+    if (filters.hasMedia) {
+      const imageCount = member.media_counts?.images || 0;
+      const videoCount = member.media_counts?.videos || 0;
+      const mediaCount = member.media?.length || 0;
+      if (imageCount + videoCount + mediaCount <= 0) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 }
 
 const DEFAULT_ROSTER_FILTERS: RosterFilterState = {
@@ -164,8 +260,93 @@ function useGlobalAudio() {
   return { play, stop, activeId, playOnHover };
 }
 
+export function shouldUseVirtualMemberList(memberCount: number): boolean {
+  return memberCount >= VIRTUAL_MEMBER_THRESHOLD;
+}
+
+function VirtualMemberRow({
+  index,
+  style,
+  members,
+  onSelect,
+  onHoverAudio,
+  onLeaveAudio,
+  activeAudioId,
+}: {
+  index: number;
+  style: React.CSSProperties;
+  members: User[];
+  onSelect: (member: User) => void;
+  onHoverAudio: (member: User) => void;
+  onLeaveAudio: (memberId: string) => void;
+  activeAudioId: string | null;
+}) {
+  const member = members[index];
+  if (!member) {
+    return null;
+  }
+
+  const isPlaying = activeAudioId === member.id;
+
+  return (
+    <div style={style} className="pb-2">
+      <Card
+        className="h-[112px] cursor-pointer border border-border bg-card transition-all hover:border-primary hover:shadow-md"
+        onClick={() => onSelect(member)}
+        onMouseEnter={() => onHoverAudio(member)}
+        onMouseLeave={() => onLeaveAudio(member.id)}
+      >
+        {/* Virtual row card uses 8px-grid spacing to match roster card rhythm in non-virtual mode. */}
+        <CardContent className="h-full p-4">
+          <div className="flex h-full items-center gap-4">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted/50">
+              {member.avatar_url ? (
+                <img
+                  src={getOptimizedMediaUrl(member.avatar_url, 'image')}
+                  alt={member.username}
+                  width={64}
+                  height={64}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary text-xl font-black">
+                  {getAvatarInitial(member.username)}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-black">{member.username}</div>
+              <div
+                className="truncate text-xs font-semibold text-muted-foreground"
+                dangerouslySetInnerHTML={sanitizeHtml(member.title_html || '')}
+              />
+              <div className="mt-2 flex items-center gap-2">
+                <Badge variant="secondary" className="text-[0.65rem] font-bold">
+                  {formatPower(member.power)}
+                </Badge>
+                {isPlaying ? (
+                  <Badge variant="default" className="text-[0.6rem] uppercase tracking-wide">
+                    Audio
+                  </Badge>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export function Roster() {
-  const { data: members = [], isLoading } = useMembers();
+  const {
+    data: members = [],
+    isLoading,
+    isError = false,
+    refetch,
+  } = useMembers();
   const { audioSettings, setAudioSettings, setPageTitle } = useUIStore();
   const { t } = useTranslation();
   const audioController = useGlobalAudio();
@@ -174,6 +355,7 @@ export function Roster() {
     setPageTitle(t('nav.roster'));
   }, [setPageTitle, t]);
 
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<'power' | 'name' | 'class'>('power');
   const [selectedMember, setSelectedMember] = useState<User | null>(null);
@@ -192,6 +374,14 @@ export function Roster() {
     storage.set(STORAGE_KEYS.ROSTER_FILTERS, filters);
   }, [filters]);
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setSearch(searchInput);
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput]);
+
   const memberSortFn = useMemo(() => {
     if (sort === 'power') return (a: any, b: any) => (b.power || 0) - (a.power || 0);
     if (sort === 'name') return (a: any, b: any) => a.username.localeCompare(b.username);
@@ -199,8 +389,13 @@ export function Roster() {
     return undefined;
   }, [sort]);
 
+  const membersAfterAdvancedFilters = useMemo(
+    () => applyRosterFilters(members || [], filters),
+    [filters, members],
+  );
+
   const filteredMembers = useFilteredList({
-    items: members || [],
+    items: membersAfterAdvancedFilters,
     searchText: search,
     searchFields: ['username', 'wechat_name'] as any,
     sortFn: memberSortFn,
@@ -214,6 +409,7 @@ export function Roster() {
   }, [members]);
 
   const [page, setPage] = useState(1);
+  const useVirtualList = shouldUseVirtualMemberList(filteredMembers.length);
   // Responsive pageSize handling isn't strictly necessary to be exact, simplified:
   const pageSize = 24; 
   const totalPages = Math.max(1, Math.ceil(filteredMembers.length / pageSize));
@@ -238,6 +434,7 @@ export function Roster() {
     (filters.hasMedia ? 1 : 0) +
     (filters.powerRange[0] > 0 || filters.powerRange[1] < 999999999 ? 1 : 0)
   ) > 0;
+  const hasSearchFilter = search.trim().length > 0;
 
   const resolveMemberAudioUrl = useCallback(async (member: User): Promise<string | null> => {
     return resolveRosterHoverAudioUrl(member, audioUrlCacheRef.current, membersAPI.get);
@@ -276,6 +473,28 @@ export function Roster() {
      );
   }
 
+  // Query-failure fallback gives users a direct recovery path before entering filter/roster flows.
+  if (isError && (!members || members.length === 0)) {
+    return (
+      <div data-testid="roster-error-state" className="p-8 text-center space-y-3">
+        <h3 className="text-xl font-black">{t('roster.empty_title')}</h3>
+        <p className="text-muted-foreground">{t('common.placeholder_msg')}</p>
+        <div data-testid="roster-error-actions">
+          <PrimitiveButton
+            type="button"
+            variant="secondary"
+            // Retry routes back into TanStack Query refetch so roster flow can recover without navigation.
+            onClick={() => {
+              void refetch?.();
+            }}
+          >
+            {t('common.retry')}
+          </PrimitiveButton>
+        </div>
+      </div>
+    );
+  }
+
   if (!isLoading && (!members || members.length === 0)) {
     return (
       <div className="p-8 text-center space-y-2">
@@ -290,8 +509,8 @@ export function Roster() {
       <div className="min-h-[420px] flex flex-col rounded-none sm:rounded-2xl md:rounded-3xl border-0 sm:border border-border bg-card">
         
         <PageFilterBar
-          search={search}
-          onSearchChange={setSearch}
+          search={searchInput}
+          onSearchChange={setSearchInput}
           searchPlaceholder={t('roster.search_placeholder')}
           category={sort}
           onCategoryChange={(v) => setSort(v as any)}
@@ -319,65 +538,112 @@ export function Roster() {
                     onChange={(_e: any, v: number | number[]) => setAudioSettings({ volume: typeof v === 'number' ? v : v[0] })}
                     className="w-32 min-w-[128px] mr-1"
                 />
-                <Button
+                <div data-testid="roster-audio-divider" className="h-5 w-px bg-border/70" aria-hidden="true" />
+                {/* Primitive button preserves keyboard/button semantics for audio control tests and a11y. */}
+                <PrimitiveButton
                     variant="ghost"
-                    size="icon"
                     aria-label={t('roster.audio_mute')}
                     className={cn("h-6 w-6 p-0 shrink-0", audioSettings.mute ? "text-destructive" : "text-primary")}
                     onClick={() => setAudioSettings({ mute: !audioSettings.mute })}
                 >
                     {audioSettings.mute ? <VolumeOffIcon sx={{ fontSize: 18 }} /> : <VolumeUpIcon sx={{ fontSize: 18 }} />}
-                </Button>
+                </PrimitiveButton>
             </div>
           }
         />
 
-        <div className="flex-1 p-3 sm:p-4 md:p-6 bg-background">
+        <div className="flex-1 p-4 sm:p-4 md:p-6 bg-background">
           {filteredMembers.length > 0 ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {pagedMembers.map((member) => (
-                  <RosterCard
-                    key={member.id}
-                    member={member}
-                    onClick={() => setSelectedMember(member)}
-                    audio={audioController}
-                    onHoverAudio={handleMemberHover}
-                    onLeaveAudio={handleMemberLeave}
-                  />
-                ))}
-              </div>
-
-              {totalPages > 1 && (
-                <div className="flex justify-between items-center pt-4">
-                  <span className="text-sm font-bold text-muted-foreground">
-                    {page} / {totalPages}
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page <= 1}
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    >
-                      {t('common.prev')}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page >= totalPages}
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    >
-                      {t('common.next')}
-                    </Button>
+              {useVirtualList ? (
+                <div className="space-y-2" data-testid="roster-virtual-list">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Virtualized roster view ({filteredMembers.length})
+                  </p>
+                  <div className="h-[70vh] min-h-[560px] rounded-xl border border-border/60 p-2">
+                    <AutoSizer
+                      renderProp={({ height, width }) => (
+                        <VirtualList
+                          rowCount={filteredMembers.length}
+                          rowHeight={VIRTUAL_MEMBER_ROW_HEIGHT}
+                          rowComponent={VirtualMemberRow as any}
+                          rowProps={{
+                            members: filteredMembers,
+                            onSelect: setSelectedMember,
+                            onHoverAudio: handleMemberHover,
+                            onLeaveAudio: handleMemberLeave,
+                            activeAudioId: audioController.activeId,
+                          } as any}
+                          style={{ height: height ?? 0, width: width ?? 0 }}
+                        />
+                      )}
+                    />
                   </div>
                 </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    {pagedMembers.map((member) => (
+                      <RosterCard
+                        key={member.id}
+                        member={member}
+                        onClick={() => setSelectedMember(member)}
+                        audio={audioController}
+                        onHoverAudio={handleMemberHover}
+                        onLeaveAudio={handleMemberLeave}
+                      />
+                    ))}
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="flex justify-between items-center pt-4">
+                      <span className="text-sm font-bold text-muted-foreground">
+                        {page} / {totalPages}
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={page <= 1}
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        >
+                          {t('common.prev')}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={page >= totalPages}
+                          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        >
+                          {t('common.next')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center opacity-50 gap-4 min-h-[300px]">
                  <PeopleIcon sx={{ fontSize: 48, opacity: 0.5 }} />
                 <h3 className="text-xl font-bold">{t('roster.empty_title')}</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-md">{t('roster.empty_hint')}</p>
+                <div data-testid="roster-empty-actions">
+                  {/* Empty-state reset action routes users back to an unfiltered roster in one click. */}
+                  {(hasAdvancedFilters || hasSearchFilter) ? (
+                    <PrimitiveButton
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        setFilters(DEFAULT_ROSTER_FILTERS);
+                        setSearchInput('');
+                        setSearch('');
+                      }}
+                    >
+                      {t('common.clear_filters')}
+                    </PrimitiveButton>
+                  ) : null}
+                </div>
             </div>
           )}
         </div>
@@ -394,33 +660,37 @@ export function Roster() {
 
       <AnimatePresence>
         {selectedMember && (
-          <ProfileModal 
-            member={selectedMember} 
-            onClose={() => {
-              setSelectedMember(null);
-              hoveredMemberIdRef.current = null;
-              audioController.stop();
-            }} 
-          />
+          <Suspense fallback={null}>
+            <RosterProfileDialog
+              member={selectedMember}
+              onClose={() => {
+                setSelectedMember(null);
+                hoveredMemberIdRef.current = null;
+                audioController.stop();
+              }}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
     </div>
   );
 }
 
-function RosterCard({
-  member,
-  onClick,
-  audio,
-  onHoverAudio,
-  onLeaveAudio,
-}: {
+type RosterCardProps = {
   member: User;
   onClick: () => void;
   audio: ReturnType<typeof useGlobalAudio>;
   onHoverAudio: (member: User) => void;
   onLeaveAudio: (memberId: string) => void;
-}) {
+};
+
+const RosterCard = React.memo(function RosterCard({
+  member,
+  onClick,
+  audio,
+  onHoverAudio,
+  onLeaveAudio,
+}: RosterCardProps) {
   const { t } = useTranslation();
   const isPlaying = audio.activeId === member.id;
   
@@ -459,6 +729,10 @@ function RosterCard({
                <img
                  src={getOptimizedMediaUrl(member.avatar_url, 'image')}
                  alt={member.username}
+                 width={320}
+                 height={320}
+                 loading="lazy"
+                 decoding="async"
                  className="w-full h-full object-cover"
                />
              ) : (
@@ -526,212 +800,16 @@ function RosterCard({
       </CardContent>
     </Card>
   );
-}
+}, (prevProps, nextProps) => {
+  // Keep roster cards stable unless the rendered member or active-audio state changes.
+  return (
+    prevProps.member === nextProps.member &&
+    prevProps.audio.activeId === nextProps.audio.activeId &&
+    prevProps.onClick === nextProps.onClick &&
+    prevProps.onHoverAudio === nextProps.onHoverAudio &&
+    prevProps.onLeaveAudio === nextProps.onLeaveAudio
+  );
+});
 
-function ProfileModal({ member, onClose }: { member: User, onClose: () => void }) {
-   const [activeIndex, setActiveIndex] = useState(0);
-   const { t } = useTranslation();
+RosterCard.displayName = 'RosterCard';
 
-   const mediaList = useMemo(() => {
-      if (member.media && member.media.length > 0) return member.media;
-      return [] as any[];
-   }, [member]);
-
-   const activeItem = mediaList.length > 0 ? mediaList[activeIndex] : null;
-
-   const handleNext = (e?: React.MouseEvent) => {
-      e?.stopPropagation();
-      if (mediaList.length === 0) return;
-      setActiveIndex((prev) => (prev + 1) % mediaList.length);
-   };
-
-   const handlePrev = (e?: React.MouseEvent) => {
-      e?.stopPropagation();
-      if (mediaList.length === 0) return;
-      setActiveIndex((prev) => (prev - 1 + mediaList.length) % mediaList.length);
-   };
-
-   return (
-      <Dialog open onOpenChange={(open: boolean) => !open && onClose()}>
-        <DialogContent
-          data-testid="roster-member-detail-panel"
-          hideCloseButton
-          maxWidth={false}
-          fullWidth
-          className="w-[min(1800px,calc(100vw-1rem))] max-w-none h-[calc(100vh-3rem)] max-h-[calc(100vh-3rem)] p-0 overflow-hidden rounded-2xl border border-[color:var(--cmp-dialog-border)]"
-        >
-          <DialogTitle className="sr-only">Profile of {member.username}</DialogTitle>
-          <div className="relative flex h-full w-full flex-col">
-            <section
-              className="shrink-0 border-b p-4 sm:p-6"
-              style={{
-                backgroundColor: 'var(--cmp-dialog-bg)',
-                borderColor: 'var(--cmp-dialog-border)',
-                color: 'var(--sys-text-primary)',
-              }}
-            >
-              <div className="flex items-start justify-between gap-3 mb-5">
-                <div className="flex items-start gap-3 min-w-0">
-                  <div
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border shrink-0"
-                    style={{
-                      borderColor: 'color-mix(in srgb, var(--sys-text-primary) 14%, transparent)',
-                      backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 72%, transparent)',
-                    }}
-                  >
-                    {member.avatar_url ? (
-                      <img
-                        src={getOptimizedMediaUrl(member.avatar_url, 'image')}
-                        className="w-full h-full object-cover"
-                        alt={member.username}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-primary font-black text-2xl">
-                        {getAvatarInitial(member.username)}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <h2 className="text-2xl sm:text-3xl font-black leading-tight truncate">{member.username}</h2>
-                    <div
-                      className="font-semibold text-primary mt-1 text-sm sm:text-base"
-                      dangerouslySetInnerHTML={sanitizeHtml(member.title_html || t('roster.operative_title'))}
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onClose}
-                  className="h-8 w-8 rounded-full shrink-0"
-                  aria-label={t('common.close')}
-                >
-                  <CloseIcon sx={{ fontSize: 18 }} />
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-2 mb-4">
-                <div
-                  className="flex items-center gap-1 px-2 py-1 border rounded-full"
-                  style={{
-                    backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 68%, transparent)',
-                    borderColor: 'color-mix(in srgb, var(--sys-text-primary) 14%, transparent)',
-                  }}
-                >
-                  <ElectricBoltIcon sx={{ fontSize: 14, color: 'warning.main' }} />
-                  <span className="text-xs font-mono font-bold text-[color:var(--sys-text-primary)]">{formatPower(member.power)}</span>
-                </div>
-
-                <div
-                  className="px-2 py-1 rounded-full text-[0.65rem] font-black border uppercase"
-                  style={
-                    member.active_status === 'active'
-                      ? {
-                          backgroundColor: 'color-mix(in srgb, var(--color-status-success-bg) 84%, transparent)',
-                          color: 'var(--color-status-success-fg)',
-                          borderColor: 'color-mix(in srgb, var(--color-status-success) 36%, transparent)',
-                        }
-                      : {
-                          backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 74%, transparent)',
-                          color: 'var(--sys-text-secondary)',
-                          borderColor: 'color-mix(in srgb, var(--sys-text-primary) 18%, transparent)',
-                        }
-                  }
-                >
-                  {member.active_status}
-                </div>
-              </div>
-
-              <div
-                className="rounded-xl border p-3 sm:p-4"
-                style={{
-                  backgroundColor: 'color-mix(in srgb, var(--sys-surface-raised) 72%, transparent)',
-                  borderColor: 'color-mix(in srgb, var(--sys-text-primary) 12%, transparent)',
-                }}
-              >
-                <MarkdownContent
-                  content={member.bio}
-                  fallback={t('roster.no_bio')}
-                  className="text-sm text-[color:var(--sys-text-secondary)] leading-relaxed"
-                />
-              </div>
-            </section>
-
-            <div
-              className="relative flex-1 min-w-0 flex items-center justify-center p-4 sm:p-6 lg:p-8"
-              style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 62%, transparent)' }}
-            >
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute left-3 sm:left-5 z-20 rounded-full h-10 w-10 sm:h-12 sm:w-12"
-                onClick={handlePrev}
-                disabled={mediaList.length === 0}
-                aria-label={t('common.prev')}
-              >
-                <ChevronLeftIcon sx={{ fontSize: 30 }} />
-              </Button>
-
-              {activeItem ? (
-                <motion.div
-                  key={activeIndex}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.35 }}
-                  className="relative max-w-full max-h-full flex items-center justify-center"
-                >
-                  <img
-                    src={getOptimizedMediaUrl(activeItem.url || activeItem.thumbnail, activeItem.type)}
-                    className="max-w-full max-h-[78vh] object-contain rounded-xl border"
-                    style={{
-                      borderColor: 'color-mix(in srgb, var(--sys-text-primary) 14%, transparent)',
-                      boxShadow: '0 22px 40px color-mix(in srgb, var(--sys-surface-sunken) 80%, transparent)',
-                    }}
-                    alt=""
-                  />
-                  {activeItem.type === 'video' && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div
-                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border flex items-center justify-center backdrop-blur-sm"
-                        style={{
-                          backgroundColor: 'color-mix(in srgb, var(--sys-surface-raised) 54%, transparent)',
-                          borderColor: 'color-mix(in srgb, var(--sys-text-primary) 30%, transparent)',
-                        }}
-                      >
-                        <PlayArrowIcon sx={{ fontSize: 40, ml: 0.25 }} />
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              ) : (
-                <div
-                  className="w-full max-w-2xl h-64 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3"
-                  style={{
-                    borderColor: 'color-mix(in srgb, var(--sys-text-primary) 20%, transparent)',
-                    color: 'var(--sys-text-secondary)',
-                    backgroundColor: 'color-mix(in srgb, var(--sys-surface-raised) 40%, transparent)',
-                  }}
-                >
-                  <ImageIcon sx={{ fontSize: 56 }} />
-                  <span className="font-semibold">{t('gallery.empty')}</span>
-                </div>
-              )}
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-3 sm:right-5 z-20 rounded-full h-10 w-10 sm:h-12 sm:w-12"
-                onClick={handleNext}
-                disabled={mediaList.length === 0}
-                aria-label={t('common.next')}
-              >
-                <ChevronRightIcon sx={{ fontSize: 30 }} />
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-   );
-}

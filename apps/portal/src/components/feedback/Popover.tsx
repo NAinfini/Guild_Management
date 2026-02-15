@@ -6,7 +6,7 @@ import {
   Popover as MuiPopover, 
   PopoverProps as MuiPopoverProps,
   Box
-} from "@mui/material";
+} from "@/ui-bridge/material";
 
 // Sub-component state management
 interface PopoverContextValue {

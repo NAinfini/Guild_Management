@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 import * as React from "react";
 import { Command as CommandPrimitive } from "cmdk";
-import { Search } from "@mui/icons-material";
+import { Search } from "@/ui-bridge/icons-material";
 import {
   Dialog,
   DialogContent,

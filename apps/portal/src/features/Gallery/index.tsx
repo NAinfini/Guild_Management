@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { convertToWebP } from '../../lib/media-conversion';
 import { 
   Card, 
@@ -11,23 +11,17 @@ import {
   Stack, 
   IconButton, 
   Grid,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   useTheme,
   alpha,
   Pagination
-} from '@mui/material';
+} from '@/ui-bridge/material';
 import {
   Photo as ImageIcon,
   Add as PlusIcon,
   Delete as TrashIcon,
   CloudUpload as UploadIcon,
-  Close as CloseIcon,
   ZoomIn as ZoomInIcon,
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 import { CardGridSkeleton } from '@/components';
 import { PageFilterBar } from '@/components';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +34,10 @@ import {
   canUploadGalleryMedia,
   getEffectiveRole,
 } from '../../lib/permissions';
+
+const GalleryUploadDialog = lazy(() => import('./components/GalleryUploadDialog'));
+const GalleryDeleteDialog = lazy(() => import('./components/GalleryDeleteDialog'));
+const GalleryPreviewDialog = lazy(() => import('./components/GalleryPreviewDialog'));
 
 export function Gallery() {
   const { t, i18n } = useTranslation();
@@ -66,7 +64,7 @@ export function Gallery() {
   const localeTag = i18n.language.startsWith('zh') ? 'zh-CN' : 'en-US';
 
   // Fetch gallery images
-  const { data: galleryData, isLoading } = useQuery({
+  const { data: galleryData, isLoading, isError, refetch } = useQuery({
     queryKey: ['gallery', page, search, startDate, endDate],
     queryFn: () => galleryAPI.list({ 
       page, 
@@ -80,12 +78,21 @@ export function Gallery() {
   const images = galleryData?.images || [];
   const totalItems = galleryData?.pagination?.total || 0;
   const totalPages = galleryData?.pagination?.pages || 1;
+  const hasActiveFilters = Boolean(search || startDate || endDate);
 
 
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
   }, [search, startDate, endDate]);
+
+  const handleClearFilters = () => {
+    // Empty-state reset returns the gallery list to an unfiltered baseline in one click.
+    setSearch('');
+    setStartDate('');
+    setEndDate('');
+    setPage(1);
+  };
 
 
   // Delete mutation
@@ -239,6 +246,37 @@ export function Gallery() {
 
       {isLoading ? (
         <CardGridSkeleton count={8} aspectRatio="4/3" />
+      ) : isError ? (
+        <Box
+          data-testid="gallery-error-state"
+          sx={{
+            py: 8,
+            px: 4,
+            textAlign: 'center',
+            border: '2px dashed',
+            borderColor: 'divider',
+            borderRadius: 4,
+            bgcolor: 'action.hover',
+          }}
+        >
+          <ImageIcon sx={{ fontSize: 48, opacity: 0.3, mb: 2 }} />
+          <Typography variant="overline" display="block" color="text.secondary" fontWeight={900} letterSpacing="0.2em">
+            {t('gallery.title')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {t('common.placeholder_msg')}
+          </Typography>
+          <Stack data-testid="gallery-error-actions" direction="row" spacing={2} justifyContent="center" sx={{ mt: 3, flexWrap: 'wrap', rowGap: 1 }}>
+            <Button variant="contained" onClick={() => refetch()}>
+              {t('common.retry')}
+            </Button>
+            {canUpload ? (
+              <Button variant="outlined" onClick={() => setUploadDialogOpen(true)} startIcon={<PlusIcon sx={{ fontSize: 16 }} />}>
+                {t('gallery.upload')}
+              </Button>
+            ) : null}
+          </Stack>
+        </Box>
       ) : (<>
         <Grid container spacing={3}>
           {images.map(img => {
@@ -268,7 +306,7 @@ export function Gallery() {
                     <IconButton
                       className="delete-btn"
                       size="small"
-                      onClick={(e) => { e.stopPropagation(); setDeleteDialog(img.gallery_id); }}
+                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); setDeleteDialog(img.gallery_id); }}
                       disabled={deleteMutation.isPending}
                       sx={{ 
                         position: 'absolute', 
@@ -291,8 +329,12 @@ export function Gallery() {
                       component="img" 
                       src={imageUrl} 
                       alt={img.title || t('gallery.alt_image')} 
+                      width={800}
+                      height={600}
+                      loading="lazy"
+                      decoding="async"
                       sx={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }} 
-                      onContextMenu={(e) => e.preventDefault()}
+                      onContextMenu={(e: React.MouseEvent<HTMLImageElement>) => e.preventDefault()}
                     />
                     <Box 
                       className="overlay"
@@ -305,7 +347,7 @@ export function Gallery() {
                       }}
                     >
                       <IconButton 
-                        onClick={(e) => { e.stopPropagation(); setPreviewImage(img); }}
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); setPreviewImage(img); }}
                         sx={{ 
                           bgcolor: 'background.paper', 
                           transform: 'scale(0.8)',
@@ -345,6 +387,23 @@ export function Gallery() {
                 <Typography variant="overline" display="block" color="text.secondary" fontWeight={900} letterSpacing="0.2em">
                   {t('gallery.empty')}
                 </Typography>
+                <Stack data-testid="gallery-empty-actions" direction="row" spacing={2} justifyContent="center" sx={{ mt: 3, flexWrap: 'wrap', rowGap: 1 }}>
+                  {canUpload ? (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<PlusIcon sx={{ fontSize: 16 }} />}
+                      onClick={() => setUploadDialogOpen(true)}
+                    >
+                      {t('gallery.upload')}
+                    </Button>
+                  ) : null}
+                  {hasActiveFilters ? (
+                    <Button variant="outlined" size="small" onClick={handleClearFilters}>
+                      {t('common.clear_filters')}
+                    </Button>
+                  ) : null}
+                </Stack>
               </Box>
             </Grid>
           )}
@@ -353,7 +412,7 @@ export function Gallery() {
           <Pagination 
             count={totalPages} 
             page={page} 
-            onChange={(_, p) => setPage(p)} 
+            onChange={(_event: React.ChangeEvent<unknown>, p: number) => setPage(p)} 
             color="primary" 
             size="large"
             showFirstButton 
@@ -362,135 +421,38 @@ export function Gallery() {
         </Box>
       </>)}
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteDialog !== null}
-        onClose={() => setDeleteDialog(null)}
-        PaperProps={{ sx: { borderRadius: 4, border: `1px solid ${theme.palette.divider}` } }}
-      >
-        <DialogTitle>
-          <Typography variant="overline" fontWeight={900} letterSpacing="0.1em">
-            {t('gallery.delete_title')}
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {t('gallery.delete_confirm')}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeleteDialog(null)} color="inherit">
-            {t('common.cancel')}
-          </Button>
-          <Button onClick={() => deleteDialog !== null && handleDelete(deleteDialog)} variant="contained" color="error">
-            {t('common.delete')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {deleteDialog !== null ? (
+        <Suspense fallback={null}>
+          <GalleryDeleteDialog
+            open={deleteDialog !== null}
+            dividerColor={theme.palette.divider}
+            t={t}
+            onClose={() => setDeleteDialog(null)}
+            onConfirm={() => deleteDialog !== null && handleDelete(deleteDialog)}
+          />
+        </Suspense>
+      ) : null}
 
-      {/* Upload Dialog */}
-      <Dialog
-        open={uploadDialogOpen}
-        onClose={() => setUploadDialogOpen(false)}
-        PaperProps={{ sx: { borderRadius: 4, border: `1px solid ${theme.palette.divider}` } }}
-      >
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="overline" fontWeight={900} letterSpacing="0.1em">
-            {t('gallery.upload_title')}
-          </Typography>
-          <IconButton size="small" onClick={() => setUploadDialogOpen(false)}>
-            <CloseIcon sx={{ fontSize: 18 }} />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <Box
-            sx={{
-              p: 4,
-              border: '2px dashed',
-              borderColor: isDragOver ? 'primary.main' : 'divider',
-              borderRadius: 3,
-              textAlign: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              bgcolor: isDragOver ? 'action.hover' : 'transparent',
-              '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' }
-            }}
-            onClick={() => fileInputRef.current?.click()}
+      {uploadDialogOpen ? (
+        <Suspense fallback={null}>
+          <GalleryUploadDialog
+            open={uploadDialogOpen}
+            onClose={() => setUploadDialogOpen(false)}
+            fileInputRef={fileInputRef}
+            onFileSelect={handleFileSelect}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-          >
-            <UploadIcon sx={{ fontSize: 48, opacity: 0.5, mb: 2, color: isDragOver ? theme.palette.primary.main : 'inherit' }} />
-            <Typography variant="body2" fontWeight={700} mb={1}>
-              {t('gallery.drop_files')}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {t('gallery.file_types')}
-            </Typography>
-          </Box>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            style={{ display: 'none' }}
-            onChange={handleFileSelect}
+            isDragOver={isDragOver}
           />
-        </DialogContent>
-      </Dialog>
+        </Suspense>
+      ) : null}
 
-      {/* Preview Modal */}
-      <Dialog
-        open={!!previewImage}
-        onClose={() => setPreviewImage(null)}
-        maxWidth="xl"
-        PaperProps={{
-          sx: {
-            bgcolor: 'transparent',
-            boxShadow: 'none',
-            overflow: 'visible',
-            backgroundImage: 'none'
-          }
-        }}
-        slotProps={{
-           backdrop: {
-              sx: { backdropFilter: 'blur(5px)', bgcolor: 'rgba(0,0,0,0.8)' }
-           }
-        }}
-      >
-        <Box sx={{ position: 'relative', outline: 'none' }}>
-           <IconButton 
-              onClick={() => setPreviewImage(null)}
-              sx={{ 
-                 position: 'absolute', top: -40, right: 0, 
-                 color: 'white', bgcolor: 'rgba(255,255,255,0.1)',
-                 '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
-              }}
-           >
-              <CloseIcon sx={{ fontSize: 24 }} />
-           </IconButton>
-           {previewImage && (
-              <Box sx={{ position: 'relative' }}>
-                <img 
-                   src={previewImage.r2_key ? `/api/media/${encodeURIComponent(previewImage.r2_key)}` : ''}
-                   alt={previewImage.title || t('gallery.alt_image')}
-                   style={{ 
-                      maxWidth: '90vw', 
-                      maxHeight: '90vh', 
-                      borderRadius: 8,
-                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-                   }} 
-                   onContextMenu={(e) => e.preventDefault()}
-                />
-                <Box sx={{ position: 'absolute', bottom: -40, left: 0, right: 0, textAlign: 'center' }}>
-                    <Typography variant="subtitle1" fontWeight={700} color="white">
-                        {previewImage?.title || t('gallery.untitled')}
-                    </Typography>
-                </Box>
-              </Box>
-           )}
-        </Box>
-      </Dialog>
+      {previewImage ? (
+        <Suspense fallback={null}>
+          <GalleryPreviewDialog previewImage={previewImage} onClose={() => setPreviewImage(null)} t={t} />
+        </Suspense>
+      ) : null}
     </Box>
   );
 }

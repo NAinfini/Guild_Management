@@ -4,8 +4,8 @@ import { format } from "date-fns";
 import { enUS, zhCN } from "date-fns/locale";
 import DOMPurify from "dompurify";
 import i18n, { getDateFormat } from "../i18n/config";
-import { Theme } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { Theme } from "@/ui-bridge/material";
+import { alpha } from "@/ui-bridge/material/styles";
 import { GAME_CLASS_COLORS } from "@/theme/tokens";
 
 export function cn(...inputs: ClassValue[]) {
@@ -79,9 +79,9 @@ export function getClassBaseColor(className?: string): string {
 
   // Determine class type
   let classType: 'mingjin' | 'qiansi' | 'pozhu' | 'lieshi' = 'mingjin';
-  if (normalized.startsWith('qiansi') || raw.startsWith('牵丝')) classType = 'qiansi';
-  else if (normalized.startsWith('pozhu') || raw.startsWith('破竹')) classType = 'pozhu';
-  else if (normalized.startsWith('lieshi') || raw.startsWith('裂石')) classType = 'lieshi';
+  if (normalized.startsWith('qiansi') || raw.startsWith('鐗典笣')) classType = 'qiansi';
+  else if (normalized.startsWith('pozhu') || raw.startsWith('鐮寸')) classType = 'pozhu';
+  else if (normalized.startsWith('lieshi') || raw.startsWith('瑁傜煶')) classType = 'lieshi';
 
   // Try to read CSS variable from current theme
   if (typeof window !== 'undefined') {

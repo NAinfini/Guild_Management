@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 
 import * as React from "react";
-import { Divider as MuiDivider, DividerProps as MuiDividerProps } from "@mui/material";
+import { Divider as MuiDivider, DividerProps as MuiDividerProps } from "@/ui-bridge/material";
 
 function Separator({
   className,

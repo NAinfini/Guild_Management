@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader } from '@/components/layout/Card';
@@ -6,17 +6,17 @@ import { WarHistoryEntry, WarMemberStat } from '@/types';
 import { cn } from '@/lib/utils';
 import { format, isValid, parseISO } from 'date-fns';
 import { enUS, zhCN } from 'date-fns/locale';
-import SportsMmaIcon from '@mui/icons-material/SportsMma';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined';
-import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import { IconButton } from '@mui/material';
+import SportsMmaIcon from '@/ui-bridge/icons-material/SportsMma';
+import EmojiEventsIcon from '@/ui-bridge/icons-material/EmojiEvents';
+import EmojiEventsOutlinedIcon from '@/ui-bridge/icons-material/EmojiEventsOutlined';
+import FavoriteBorderIcon from '@/ui-bridge/icons-material/FavoriteBorder';
+import OpenInNewIcon from '@/ui-bridge/icons-material/OpenInNew';
+import PaidOutlinedIcon from '@/ui-bridge/icons-material/PaidOutlined';
+import ShieldOutlinedIcon from '@/ui-bridge/icons-material/ShieldOutlined';
+import TrendingUpIcon from '@/ui-bridge/icons-material/TrendingUp';
+import ChevronLeftIcon from '@/ui-bridge/icons-material/ChevronLeft';
+import ChevronRightIcon from '@/ui-bridge/icons-material/ChevronRight';
+import { IconButton } from '@/ui-bridge/material';
 
 interface RecentWarsProps {
   history: WarHistoryEntry[];
@@ -53,14 +53,25 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
 
   if (!currentWar) {
     return (
-      <Card className="h-full border border-[color:var(--cmp-card-border)] bg-[color:var(--cmp-card-bg)] backdrop-blur-sm gap-0">
-        <CardHeader className="px-3.5 pt-2 pb-1.5 border-b border-[color:var(--cmp-card-border)]">
+      <Card data-testid="dashboard-recentwars-empty-state" className="h-full border border-[color:var(--cmp-card-border)] bg-[color:var(--cmp-card-bg)] backdrop-blur-sm gap-0">
+        <CardHeader className="px-4 pt-2 pb-2 border-b border-[color:var(--cmp-card-border)]">
           <h3 className="text-sm font-semibold tracking-wide text-foreground">
             {t('dashboard.recent_wars.title')}
           </h3>
         </CardHeader>
         <CardContent className="p-6 flex items-center justify-center h-full">
-          <p className="text-sm text-muted-foreground">{t('dashboard.no_war_data')}</p>
+          <div className="text-center space-y-3">
+            <p className="text-sm text-muted-foreground">{t('dashboard.no_war_data')}</p>
+            <div data-testid="dashboard-recentwars-empty-actions">
+              {/* Empty-state action routes users to guild-war screens where war records are created and reviewed. */}
+              <Link
+                to="/guild-war"
+                className="inline-flex items-center justify-center rounded-md border border-[color:var(--cmp-card-border)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-foreground hover:bg-[color:var(--sys-interactive-hover)] transition-colors"
+              >
+                {t('nav.guild_war')}
+              </Link>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -93,10 +104,11 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
   return (
     <Card className="h-full border border-[color:var(--cmp-card-border)] bg-[color:var(--cmp-card-bg)] backdrop-blur-sm flex flex-col gap-0">
       <CardHeader
-        className="px-3.5 pt-2 pb-1.5 border-b border-[color:var(--cmp-card-border)]"
+        // Header padding is normalized to 8px-grid increments for visual consistency.
+        className="px-4 pt-2 pb-2 border-b border-[color:var(--cmp-card-border)]"
         style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-elevated) 35%, transparent)' }}
       >
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <SportsMmaIcon sx={{ fontSize: 16 }} className="text-foreground/80" />
             <div className="flex flex-col">
@@ -104,7 +116,7 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
                 {t('dashboard.recent_wars.title')}
               </h3>
               {warDateTime && (
-                <span className="text-[0.6rem] text-muted-foreground font-mono mt-0.5">
+                <span className="text-[0.6rem] text-muted-foreground font-mono mt-1">
                   {warDateTime}
                 </span>
               )}
@@ -165,9 +177,9 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
         </div>
       </CardHeader>
 
-      <CardContent className="px-4 pt-3 pb-4 flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-2.5">
+      <CardContent className="px-4 pt-4 pb-4 flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-2">
             <GuildScoreCard
               name={t('dashboard.war.our_guild')}
               kills={currentWar.own_stats.kills}
@@ -182,7 +194,7 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <StatsColumn
               creditsLabel={t('dashboard.stats.credits')}
               towersLabel={t('dashboard.stats.towers')}
@@ -205,13 +217,13 @@ export const RecentWars: React.FC<RecentWarsProps> = ({ history }) => {
             />
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
               <EmojiEventsIcon sx={{ fontSize: 16 }} style={getToneIconStyle('warning')} />
               <span className="text-[0.95rem] font-semibold text-foreground">{t('dashboard.recent_wars.mvp')}</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <HighlightCard
                   label={t('dashboard.recent_wars.top_kda')}
                   member={topKDA}
@@ -258,7 +270,7 @@ const GuildScoreCard = ({
 }) => (
   <div
     className={cn(
-      'rounded-xl border px-3 py-2.5 min-h-[88px] flex flex-col justify-between',
+      'rounded-xl border px-4 py-2 min-h-[88px] flex flex-col justify-between',
       variant === 'ours'
         ? 'border-[color:var(--color-status-success)] bg-[color:var(--color-status-success-bg)]'
         : variant === 'opponent'
@@ -311,7 +323,7 @@ const StatsColumn = ({
   distance?: number;
 }) => (
   <div>
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <StatRow icon={<PaidOutlinedIcon sx={{ fontSize: 16 }} style={getToneIconStyle('warning')} />} label={creditsLabel} value={credits.toLocaleString()} />
       <StatRow icon={<ShieldOutlinedIcon sx={{ fontSize: 16 }} style={getToneIconStyle('info')} />} label={towersLabel} value={towers} />
       <StatRow icon={<FavoriteBorderIcon sx={{ fontSize: 16 }} style={getToneIconStyle('error')} />} label={baseHpLabel} value={`${baseHp}%`} />
@@ -350,7 +362,7 @@ const HighlightCard = ({
   tone: Tone;
 }) => (
   <div
-    className={cn('rounded-lg border-2 p-3 transition-all hover:shadow-md')}
+    className={cn('rounded-lg border-2 p-4 transition-all duration-150 active:scale-[0.98] hover:shadow-md')}
     style={{
       ...getToneCardStyle(tone),
       borderStyle: 'solid', // Force solid border

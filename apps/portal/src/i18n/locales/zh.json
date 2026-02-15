@@ -382,7 +382,10 @@
     "kick": "移除",
     "delete_title": "删除活动",
     "filter_war": "公会战",
-    "filter_archived": "历史"
+    "filter_archived": "历史",
+    "invite_email": "通过邮箱邀请",
+    "invalid_email": "请输入有效的邮箱地址。",
+    "invite_sent": "邀请已发送，等待处理。"
   },
   "announcements": {
     "title": "公告发布",
@@ -1160,4 +1163,3 @@
     "unknown_uploader": "未知"
   }
 }
-

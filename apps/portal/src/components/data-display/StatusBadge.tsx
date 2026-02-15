@@ -1,5 +1,5 @@
 import React from 'react';
-import { Chip } from '@mui/material';
+import { Chip } from '@/ui-bridge/material';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 

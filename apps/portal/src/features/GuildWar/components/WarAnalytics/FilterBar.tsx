@@ -10,17 +10,17 @@
  * - Rankings/Teams mode-specific controls
  */
 
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties, type ChangeEvent, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import PeopleIcon from '@mui/icons-material/People';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import ShieldIcon from '@mui/icons-material/Shield';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import SettingsIcon from '@mui/icons-material/Settings';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import SearchIcon from '@mui/icons-material/Search';
-import CloseIcon from '@mui/icons-material/Close';
+import PeopleIcon from '@/ui-bridge/icons-material/People';
+import EmojiEventsIcon from '@/ui-bridge/icons-material/EmojiEvents';
+import ShieldIcon from '@/ui-bridge/icons-material/Shield';
+import BarChartIcon from '@/ui-bridge/icons-material/BarChart';
+import SettingsIcon from '@/ui-bridge/icons-material/Settings';
+import CalendarMonthIcon from '@/ui-bridge/icons-material/CalendarMonth';
+import KeyboardArrowDownIcon from '@/ui-bridge/icons-material/KeyboardArrowDown';
+import SearchIcon from '@/ui-bridge/icons-material/Search';
+import CloseIcon from '@/ui-bridge/icons-material/Close';
 
 import { useAnalytics } from './AnalyticsContext';
 import { MetricFormulaEditor } from './MetricFormulaEditor';
@@ -119,6 +119,12 @@ const ANALYTICS_CHECKBOX_SELECTED_SX = {
   '&.Mui-checked': {
     color: 'var(--color-status-success)',
   },
+};
+
+type SelectChangeLikeEvent = {
+  target: {
+    value: unknown;
+  };
 };
 
 // ============================================================================
@@ -230,7 +236,9 @@ export function FilterBar({ wars, members = [], isLoading = false }: FilterBarPr
               <Switch
                 id="participation-only"
                 checked={filters.participationOnly}
-                onChange={(_, checked) => updateFilters({ participationOnly: checked })}
+                onChange={(_event: ChangeEvent<HTMLInputElement>, checked: boolean) =>
+                  updateFilters({ participationOnly: checked })
+                }
               />
               <Label htmlFor="participation-only" className="cursor-pointer text-xs font-medium">
                 {t('guild_war.analytics_participated_only')}
@@ -250,7 +258,9 @@ export function FilterBar({ wars, members = [], isLoading = false }: FilterBarPr
               <Switch
                 id="opponent-normalized"
                 checked={filters.opponentNormalized}
-                onChange={(_, checked) => updateFilters({ opponentNormalized: checked })}
+                onChange={(_event: ChangeEvent<HTMLInputElement>, checked: boolean) =>
+                  updateFilters({ opponentNormalized: checked })
+                }
               />
               <Label htmlFor="opponent-normalized" className="cursor-pointer text-xs font-medium">
                 {t('guild_war.analytics_opponent_normalized')}
@@ -291,9 +301,9 @@ export function FilterBar({ wars, members = [], isLoading = false }: FilterBarPr
                 <div className="min-w-[180px]">
                   <Select
                     value={filters.primaryMetric}
-                    onChange={(e: any) => handleMetricChange(e.target.value as MetricType)}
+                    onChange={(e: SelectChangeLikeEvent) => handleMetricChange(e.target.value as MetricType)}
                     displayEmpty
-                    renderValue={(selected: any) => {
+                    renderValue={(selected: unknown) => {
                       if (!selected) return <span className="text-muted-foreground">{t('guild_war.analytics_primary_metric')}</span>;
                       return formatMetricName(selected as MetricType);
                     }}
@@ -312,9 +322,11 @@ export function FilterBar({ wars, members = [], isLoading = false }: FilterBarPr
                 <div className="min-w-[130px]">
                   <Select
                     value={filters.aggregation}
-                    onChange={(e: any) => updateFilters({ aggregation: e.target.value as AggregationType })}
+                    onChange={(e: SelectChangeLikeEvent) =>
+                      updateFilters({ aggregation: e.target.value as AggregationType })
+                    }
                     displayEmpty
-                    renderValue={(selected: any) => {
+                    renderValue={(selected: unknown) => {
                        if (!selected) return <span className="text-muted-foreground">{t('guild_war.analytics_aggregation')}</span>;
                        // Simplified label update
                        const labels: Record<string, string> = {
@@ -336,9 +348,11 @@ export function FilterBar({ wars, members = [], isLoading = false }: FilterBarPr
                 <div className="min-w-[110px]">
                   <Select
                     value={String(rankingsMode.topN)}
-                    onChange={(e: any) => updateRankingsMode({ topN: parseInt(e.target.value as string, 10) })}
+                    onChange={(e: SelectChangeLikeEvent) =>
+                      updateRankingsMode({ topN: parseInt(e.target.value as string, 10) })
+                    }
                     displayEmpty
-                    renderValue={(selected: any) => {
+                    renderValue={(selected: unknown) => {
                        if (!selected) return <span className="text-muted-foreground">{t('guild_war.analytics_show_top_n')}</span>;
                        const labels: Record<string, string> = {
                           "5": t('guild_war.analytics_top_n_5'),
@@ -363,7 +377,9 @@ export function FilterBar({ wars, members = [], isLoading = false }: FilterBarPr
                 <Switch
                   id="show-total"
                   checked={teamsMode.showTotal}
-                  onChange={(_, checked) => updateTeamsMode({ showTotal: checked })}
+                  onChange={(_event: ChangeEvent<HTMLInputElement>, checked: boolean) =>
+                    updateTeamsMode({ showTotal: checked })
+                  }
                 />
                 <Label htmlFor="show-total" className="cursor-pointer text-xs font-medium">
                   {teamsMode.showTotal ? t('common.total') : t('common.average')}
@@ -439,9 +455,9 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
     <div className="min-w-[140px]">
       <Select 
         value={value} 
-        onChange={(e: any) => onChange(e.target.value as string)}
-        renderValue={(selected: any) => {
-             const label = presetOptions.find(p => p.value === selected)?.label || selected;
+        onChange={(e: SelectChangeLikeEvent) => onChange(e.target.value as string)}
+        renderValue={(selected: unknown) => {
+             const label = presetOptions.find(p => p.value === selected)?.label ?? String(selected ?? '');
              return (
                <div className="flex items-center gap-2">
                  <CalendarMonthIcon sx={{ fontSize: 16 }} className="opacity-50" />
@@ -570,7 +586,7 @@ export function WarMultiSelector({ wars, selected, onChange, isLoading }: WarMul
                     id={`war-${war.war_id}`}
                     checked={isSelected}
                     onChange={() => handleToggle(war.war_id)}
-                    onClick={(event) => event.stopPropagation()}
+                    onClick={(event: MouseEvent<HTMLButtonElement>) => event.stopPropagation()}
                     className="mt-1"
                     sx={isSelected ? ANALYTICS_CHECKBOX_SELECTED_SX : undefined}
                   />
@@ -680,7 +696,7 @@ function MetricMultiSelector({
                      <Checkbox
                        checked={isSelected}
                        id={`metric-${metric}`}
-                       onClick={(event) => event.stopPropagation()}
+                       onClick={(event: MouseEvent<HTMLButtonElement>) => event.stopPropagation()}
                        sx={isSelected ? ANALYTICS_CHECKBOX_SELECTED_SX : undefined}
                      />
                      <Label htmlFor={`metric-${metric}`} className="flex-1 cursor-pointer">

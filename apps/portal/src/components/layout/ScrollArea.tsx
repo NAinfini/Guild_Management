@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 
 import * as React from "react";
-import { Box } from "@mui/material";
+import { Box } from "@/ui-bridge/material";
 
 function ScrollArea({
   className,

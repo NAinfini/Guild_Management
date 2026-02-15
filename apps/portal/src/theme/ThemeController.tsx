@@ -15,8 +15,8 @@ import {
   StyledEngineProvider,
   ThemeProvider as MuiThemeProvider,
   Typography,
-} from '@mui/material';
-import { alpha, createTheme, ThemeOptions } from '@mui/material/styles';
+} from '@/ui-bridge/material';
+import { alpha, createTheme, ThemeOptions, type Theme as MuiTheme } from '@/ui-bridge/material/styles';
 import {
   Architecture,
   HorizontalRule,
@@ -26,8 +26,8 @@ import {
   Palette,
   PrecisionManufacturing,
   WorkspacePremium,
-} from '@mui/icons-material';
-import type { SvgIconComponent } from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
+import type { SvgIconComponent } from '@/ui-bridge/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store';
 import { themePreferencesAPI } from '@/lib/api/themePreferences';
@@ -636,7 +636,7 @@ interface ThemeControllerProps {
 
 const GlobalScrollbar = () => (
   <GlobalStyles
-    styles={(theme) => ({
+    styles={(theme: MuiTheme) => ({
       body: {
         backgroundColor: 'var(--color-bg-primary) !important',
         color: 'var(--color-text-primary)',

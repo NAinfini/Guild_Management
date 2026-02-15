@@ -21,7 +21,7 @@ import {
   MusicNote,
   Remove,
   ChevronLeft
-} from '@mui/icons-material';
+} from '@/ui-bridge/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useForm, Controller } from 'react-hook-form';
 
@@ -32,11 +32,12 @@ import { PROGRESSION_CATEGORIES, clampLevel } from '../../lib/progression';
 import { useAuthStore, useUIStore } from '../../store';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useUpdateMember } from '../../hooks/useServerState';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { authAPI, mediaAPI, membersAPI } from '../../lib/api';
 import { User, DayAvailability, ProgressionData, ClassType } from '../../types';
 import { convertToOpus } from '../../lib/media-conversion';
 import { GAME_CLASS_COLORS } from '@/theme/tokens';
-import { alpha } from '@mui/material/styles';
+import { alpha } from '@/ui-bridge/material/styles';
 
 // Nexus Primitives
 // Nexus Primitives
@@ -58,7 +59,8 @@ import {
   ToggleGroup, 
   ToggleGroupItem,
   Label,
-  Separator
+  Separator,
+  PrimitiveInput
 } from '@/components';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -178,7 +180,8 @@ function ProfileGuestState() {
               {t('common.placeholder_msg')}
             </AlertDescription>
           </Alert>
-          <div className="flex flex-wrap gap-3">
+          {/* Action cluster uses 8px-grid spacing so auth CTAs align with the rework rhythm. */}
+          <div className="flex flex-wrap gap-4">
             <Link to="/login">
               <Button className="font-black uppercase tracking-wide">
                 {t('login.action_login')}
@@ -224,7 +227,7 @@ export function Profile() {
   if (!user) return <ProfileGuestState />;
 
   return (
-    <div className="max-w-[1400px] mx-auto pb-10 px-4 sm:px-8">
+    <div data-testid="profile-page" className="max-w-[1400px] mx-auto pb-10 px-4 sm:px-8">
       <div className="mb-6 flex justify-end">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
              <TabsList className="w-full md:w-auto overflow-x-auto justify-start rounded-full p-1 gap-1">
@@ -261,14 +264,39 @@ export function Profile() {
   );
 }
 
-function ProfilePreview({ user, onUpdate }: { user: User, onUpdate: (id: string, updates: Partial<User>) => void }) {
+export function ProfilePreview({
+  user,
+  onUpdate,
+}: {
+  user: User;
+  onUpdate: (id: string, updates: Partial<User>) => Promise<void> | void;
+}) {
   const { t } = useTranslation();
+  const prefersReducedMotion = useReducedMotion();
   const avatarInitial = (user.username || '?').trim().charAt(0).toUpperCase() || '?';
   const availabilitySummary = getPrimaryAvailabilitySummary(user.availability, t);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const handleAvatarClick = () => {
-    const url = prompt(t('profile.prompt_avatar'), user.avatar_url || '');
-    if (url !== null && url !== user.avatar_url) onUpdate(user.id, { avatar_url: url });
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setAvatarUploading(true);
+    try {
+      // Avatar upload is normalized to backend media key and persisted to the profile avatar_url field.
+      const uploaded = await mediaAPI.uploadImage(file, 'avatar');
+      await onUpdate(user.id, {
+        avatar_url: `/api/media/${encodeURIComponent(uploaded.r2Key)}`,
+      });
+    } finally {
+      setAvatarUploading(false);
+      event.target.value = '';
+    }
   };
 
   return (
@@ -278,10 +306,15 @@ function ProfilePreview({ user, onUpdate }: { user: User, onUpdate: (id: string,
             <img
                src={getOptimizedMediaUrl(user.avatar_url, 'image')}
                alt={user.username}
+               width={512}
+               height={512}
+               loading="eager"
+               decoding="async"
+               fetchPriority="high"
                className="w-full h-full object-cover"
             />
           ) : (
-            <div
+           <div 
               className="w-full h-full flex items-center justify-center"
               style={{
                 background:
@@ -296,12 +329,38 @@ function ProfilePreview({ user, onUpdate }: { user: User, onUpdate: (id: string,
           )}
           <div 
              onClick={handleAvatarClick}
+             data-testid="profile-avatar-upload-button"
              className="absolute inset-0 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 cursor-pointer transition-opacity duration-200"
-             style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 72%, transparent)' }}
+             style={{
+               backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 72%, transparent)',
+               // Respect reduced-motion preference for hover overlays to avoid unnecessary opacity animation.
+               transitionDuration: prefersReducedMotion ? '0ms' : '150ms',
+               transitionTimingFunction: 'ease',
+             }}
           >
              <PhotoCamera className="w-8 h-8 text-[color:var(--sys-text-inverse)]" />
-             <span className="text-xs text-[color:var(--sys-text-inverse)] font-black uppercase tracking-widest">{t('profile.update_identity')}</span>
-          </div>
+              <span className="text-xs text-[color:var(--sys-text-inverse)] font-black uppercase tracking-widest">
+                {avatarUploading ? t('common.loading') : t('profile.update_identity')}
+              </span>
+           </div>
+           {/* Live region mirrors avatar upload state so loading/progress text is announced outside hover-only UI. */}
+           <span
+             data-testid="profile-avatar-upload-status"
+             role="status"
+             aria-live="polite"
+             aria-atomic="true"
+             className="sr-only"
+           >
+             {avatarUploading ? t('common.loading') : t('profile.update_identity')}
+           </span>
+           <input
+             ref={avatarInputRef}
+             data-testid="profile-avatar-upload-input"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarFileChange}
+          />
        </div>
        
        <CardContent className="p-6">
@@ -377,7 +436,7 @@ function CompletionStatus({ user }: { user: User }) {
      >
         <VerifiedUser className="h-4 w-4" />
         <AlertDescription className="text-[color:var(--color-status-success-fg)]">
-            <span className="block text-xs font-black uppercase mb-0.5">{t('completion.complete')}</span>
+            <span className="block text-xs font-black uppercase mb-1">{t('completion.complete')}</span>
             <span className="text-xs font-bold opacity-80">{t('completion.complete_desc')}</span>
         </AlertDescription>
      </Alert>
@@ -392,7 +451,7 @@ function CompletionStatus({ user }: { user: User }) {
       }}
     >
        <CardContent className="p-4">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-4 mb-4">
              <div
                className="w-8 h-8 rounded-lg flex items-center justify-center"
                style={{
@@ -533,7 +592,15 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
                {mediaList.map((m: any) => (
                   <div key={m.id} className="relative aspect-square rounded-xl overflow-hidden bg-[color:var(--sys-surface-sunken)] group">
                      {m.type === 'image' ? (
-                        <img src={getOptimizedMediaUrl(m.url, 'image')} className="w-full h-full object-cover" alt="" />
+                        <img
+                          src={getOptimizedMediaUrl(m.url, 'image')}
+                          className="w-full h-full object-cover"
+                          alt=""
+                          width={320}
+                          height={320}
+                          loading="lazy"
+                          decoding="async"
+                        />
                      ) : (
                         <div className="w-full h-full flex items-center justify-center">
                            <Videocam className="w-8 h-8" style={{ color: 'color-mix(in srgb, var(--sys-text-inverse) 60%, transparent)' }} />
@@ -543,7 +610,14 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                        style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 72%, transparent)' }}
                      >
-                         <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDeleteMedia(m.id)}>
+                         <Button
+                           variant="destructive"
+                           size="icon"
+                           className="h-8 w-8"
+                           onClick={() => handleDeleteMedia(m.id)}
+                           aria-label={t('common.delete')}
+                         >
+                             {/* Icon-only destructive action exposes an explicit name for assistive tech. */}
                              <Delete className="w-4 h-4" />
                          </Button>
                      </div>
@@ -575,7 +649,14 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
                    className="w-fit font-extrabold"
                  >
                    <CloudUpload className="w-4 h-4 mr-2" />
-                   {audioUploading ? t('common.loading') : t('media.choose_file')}
+                   <span
+                     data-testid="profile-audio-upload-status"
+                     role="status"
+                     aria-live="polite"
+                     aria-atomic="true"
+                   >
+                     {audioUploading ? t('common.loading') : t('media.choose_file')}
+                   </span>
                  </Button>
                  {audioUrl && (
                    <audio
@@ -591,7 +672,7 @@ function MediaEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, up
   );
 }
 
-function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, updates: Partial<User>) => void }) {
+function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, updates: Partial<User>) => Promise<void> | void }) {
   const { t } = useTranslation();
   const { register, handleSubmit, control, watch, formState: { isDirty } } = useForm({
     defaultValues: {
@@ -641,7 +722,7 @@ function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, 
           </div>
 
           <div>
-             <h4 className="text-sm font-black uppercase mb-3" style={{ color: 'var(--color-status-warning)' }}>{t('profile.label_spec')}</h4>
+             <h4 className="text-sm font-black uppercase mb-4" style={{ color: 'var(--color-status-warning)' }}>{t('profile.label_spec')}</h4>
              <Controller
                 name="classes"
                 control={control}
@@ -705,7 +786,7 @@ function ProfileEditor({ user, onUpdate }: { user: User, onUpdate: (id: string, 
                                                       }
                                                   })
                                               }}
-                                              onClick={(e) => {
+                                              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                                   e.preventDefault();
                                                   if (isSelected) {
                                                     field.onChange(selectedClasses.filter((c: string) => c !== opt.id));
@@ -907,7 +988,7 @@ function AvailabilityEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
                     <Input 
                         type="date" 
                         value={vacationStart} 
-                        onChange={(e) => { setVacationStart(e.target.value); setIsDirty(true); }} 
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setVacationStart(e.target.value); setIsDirty(true); }} 
                     />
                 </div>
                 <div className="space-y-2 flex-1">
@@ -915,7 +996,7 @@ function AvailabilityEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
                     <Input 
                         type="date" 
                         value={vacationEnd} 
-                        onChange={(e) => { setVacationEnd(e.target.value); setIsDirty(true); }} 
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setVacationEnd(e.target.value); setIsDirty(true); }} 
                     />
                 </div>
              </div>
@@ -1006,18 +1087,27 @@ function ProgressionEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
         <CardContent className="p-6 flex flex-col gap-6">
           {activeCategory?.groups.map((group) => (
             <div key={group.key}>
-              <h4 className="text-sm font-black text-muted-foreground uppercase mb-3 px-1">
+              <h4 className="text-sm font-black text-muted-foreground uppercase mb-4 px-1">
                 {t(group.titleKey)}
               </h4>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {group.items.map((item) => {
                   const level = (progression[category] as any)[item.key] || 0;
+                  // Progression tile spacing follows the same 8px rhythm as other profile cards.
                   return (
-                    <div key={item.key} className="p-4 rounded-xl bg-card border border-border flex flex-col items-center gap-3 transition-colors hover:border-primary/50">
+                    <div key={item.key} className="p-4 rounded-xl bg-card border border-border flex flex-col items-center gap-4 transition-colors hover:border-primary/50">
                         <div className="relative">
                           <div className="w-24 h-24 rounded-xl bg-muted border border-border overflow-hidden">
                             {item.icon ? (
-                              <img src={item.icon} alt={t(item.nameKey)} className="w-full h-full object-cover" />
+                              <img
+                                src={item.icon}
+                                alt={t(item.nameKey)}
+                                className="w-full h-full object-cover"
+                                width={96}
+                                height={96}
+                                loading="lazy"
+                                decoding="async"
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-2xl font-black text-muted-foreground/60">
                                 {t(item.nameKey).trim().charAt(0)}
@@ -1032,10 +1122,22 @@ function ProgressionEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
                           {t(item.nameKey)}
                         </span>
                         <div className="flex items-center gap-1">
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updateLevel(category, item.key, -1)}>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => updateLevel(category, item.key, -1)}
+                            aria-label={`${t(item.nameKey)} -`}
+                          >
                             <Remove className="w-3.5 h-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updateLevel(category, item.key, 1)}>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => updateLevel(category, item.key, 1)}
+                            aria-label={`${t(item.nameKey)} +`}
+                          >
                             <Add className="w-3.5 h-3.5" />
                           </Button>
                         </div>
@@ -1050,7 +1152,7 @@ function ProgressionEditor({ user, onUpdate }: { user: User, onUpdate: any }) {
   );
 }
 
-function AccountSettings({ user, onChangePassword, onUpdate, onLogout }: { user: User, onUpdate: any, onChangePassword: any, onLogout: any }) {
+export function AccountSettings({ user, onChangePassword, onUpdate, onLogout }: { user: User, onUpdate: any, onChangePassword: any, onLogout: any }) {
   const { t } = useTranslation();
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
@@ -1082,24 +1184,49 @@ function AccountSettings({ user, onChangePassword, onUpdate, onLogout }: { user:
             <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t('account.subtitle')}</p>
         </div>
         <CardContent className="p-6 flex flex-col gap-8">
-           <form onSubmit={handlePasswordChange} className="space-y-6">
+           <form onSubmit={handlePasswordChange} className="space-y-6" data-testid="profile-password-form">
               <div className="space-y-2">
                   <Label>{t('account.current_password')}</Label>
-                  <Input type="password" value={currentPass} onChange={(e) => setCurrentPass(e.target.value)} required />
+                  {/* Password fields use primitive input so validation tests can target native input semantics reliably. */}
+                  <PrimitiveInput
+                    data-testid="account-current-password"
+                    type="password"
+                    value={currentPass}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentPass(e.target.value)}
+                    required
+                  />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                  <div className="space-y-2">
                     <Label>{t('account.new_password')}</Label>
-                    <Input type="password" value={newPass} onChange={(e) => setNewPass(e.target.value)} required />
+                    <PrimitiveInput
+                      data-testid="account-new-password"
+                      type="password"
+                      value={newPass}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPass(e.target.value)}
+                      required
+                    />
                  </div>
                  <div className="space-y-2">
                     <Label>{t('account.confirm_password')}</Label>
-                    <Input type="password" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} required />
+                    <PrimitiveInput
+                      data-testid="account-confirm-password"
+                      type="password"
+                      value={confirmPass}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPass(e.target.value)}
+                      required
+                    />
                  </div>
               </div>
 
               {message && (
-                <Alert className={cn(
+                // Password change feedback is exposed as live regions so screen readers announce success/error immediately.
+                <Alert
+                data-testid="profile-password-feedback"
+                role={message.type === 'error' ? 'alert' : 'status'}
+                aria-live={message.type === 'error' ? 'assertive' : 'polite'}
+                aria-atomic="true"
+                className={cn(
                     "border-l-4"
                 )}
                 style={
@@ -1119,7 +1246,7 @@ function AccountSettings({ user, onChangePassword, onUpdate, onLogout }: { user:
                 </Alert>
               )}
 
-              <Button type="submit" disabled={changing} size="lg" className="w-full sm:w-auto font-black">
+              <Button type="submit" disabled={changing} size="lg" className="w-full sm:w-auto font-black" data-testid="profile-password-submit">
                 <VpnKey className="w-4 h-4 mr-2" /> {t('account.update_password')}
               </Button>
            </form>

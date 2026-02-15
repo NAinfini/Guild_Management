@@ -5,19 +5,20 @@ import { enUS, zhCN } from 'date-fns/locale';
 import { Event } from '@/types';
 import { Card, CardContent, CardHeader } from '@/components/layout/Card';
 import { Badge } from '@/components/data-display/Badge';
-import { Tooltip, IconButton, Zoom, useTheme } from '@mui/material';
+import { Tooltip, IconButton, Zoom, useTheme } from '@/ui-bridge/material';
 import { cn } from '@/lib/utils';
+import { Link } from '@tanstack/react-router';
 import { useAuthStore } from '@/store';
 import { useJoinEvent, useLeaveEvent } from '@/hooks/useServerState';
 import { TeamMemberCard } from '@/components/data-display';
 
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import GroupIcon from '@mui/icons-material/Group';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import LockIcon from '@mui/icons-material/Lock';
-import AddIcon from '@mui/icons-material/Add';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import CalendarTodayIcon from '@/ui-bridge/icons-material/CalendarToday';
+import AccessTimeIcon from '@/ui-bridge/icons-material/AccessTime';
+import GroupIcon from '@/ui-bridge/icons-material/Group';
+import ContentCopyIcon from '@/ui-bridge/icons-material/ContentCopy';
+import LockIcon from '@/ui-bridge/icons-material/Lock';
+import AddIcon from '@/ui-bridge/icons-material/Add';
+import ExitToAppIcon from '@/ui-bridge/icons-material/ExitToApp';
 
 interface UpcomingEventsProps {
   events: Event[];
@@ -76,9 +77,9 @@ export const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events }) => {
   }, [events]);
 
   return (
-    <Card className="h-full bg-[color:var(--cmp-card-bg)] backdrop-blur-md border border-[color:var(--cmp-card-border)] flex flex-col relative overflow-hidden gap-0">
+    <Card className="bg-[color:var(--cmp-card-bg)] backdrop-blur-md border border-[color:var(--cmp-card-border)] flex flex-col relative overflow-hidden gap-0">
       <CardHeader
-        className="px-4 pt-3 pb-2.5 border-b border-[color:var(--cmp-card-border)]"
+        className="px-4 pt-4 pb-2 border-b border-[color:var(--cmp-card-border)]"
       >
         <div className="flex items-center justify-between">
           <span className="text-sm font-bold uppercase tracking-wide">{t('dashboard.upcoming_events')}</span>
@@ -133,18 +134,19 @@ export const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events }) => {
             return (
               <div
                 key={event.id}
-                className="group relative rounded-xl border border-[color:var(--cmp-card-border)] hover:border-[color:var(--sys-interactive-accent)] transition-all duration-300 overflow-hidden"
+                // Card motion is capped at 150ms and includes press feedback for consistent micro-interactions.
+                className="group relative rounded-xl border border-[color:var(--cmp-card-border)] hover:border-[color:var(--sys-interactive-accent)] transition-all duration-150 active:scale-[0.98] overflow-hidden"
                 style={{ backgroundColor: 'color-mix(in srgb, var(--sys-surface-sunken) 32%, transparent)' }}
               >
                 <div
                   className={cn(
-                    'absolute left-0 top-0 bottom-0 w-1 transition-colors duration-300',
+                    'absolute left-0 top-0 bottom-0 w-1 transition-colors duration-150',
                     isJoined ? 'bg-primary' : 'bg-[color:var(--sys-border-subtle)] group-hover:bg-primary/50'
                   )}
                 />
 
                 <div className="p-4 pl-6">
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="uppercase text-[9px] font-black tracking-wider h-5 border" style={eventTypeStyle}>
                         {getEventTypeLabel(t, event.type)}
@@ -267,9 +269,18 @@ export const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events }) => {
             );
           })
         ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div data-testid="dashboard-upcoming-empty-state" className="flex flex-col items-center justify-center py-12 text-center">
             <CalendarTodayIcon sx={{ fontSize: 48, opacity: 0.2, mb: 2 }} />
             <p className="text-sm text-muted-foreground">{t('dashboard.no_upcoming_events')}</p>
+            <div data-testid="dashboard-upcoming-empty-actions" className="mt-3">
+              {/* Empty-state action routes users to the full events page where they can create or join operations. */}
+              <Link
+                to="/events"
+                className="inline-flex items-center justify-center rounded-md border border-[color:var(--cmp-card-border)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-foreground hover:bg-[color:var(--sys-interactive-hover)] transition-colors"
+              >
+                {t('nav.events')}
+              </Link>
+            </div>
           </div>
         )}
       </CardContent>

@@ -1,0 +1,119 @@
+.grid {
+  display: grid;
+  width: 100%;
+}
+
+.gap-tight {
+  gap: var(--space-3, 0.75rem);
+}
+
+.gap-normal {
+  gap: var(--space-4, 1rem);
+}
+
+.gap-relaxed {
+  gap: var(--space-6, 1.5rem);
+}
+
+.cols-mobile-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.cols-mobile-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cols-mobile-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cols-mobile-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cols-mobile-6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.cols-mobile-12 {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .cols-tablet-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  .cols-tablet-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cols-tablet-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cols-tablet-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .cols-tablet-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .cols-tablet-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .cols-desktop-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  .cols-desktop-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cols-desktop-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cols-desktop-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .cols-desktop-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .cols-desktop-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1536px) {
+  .cols-wide-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  .cols-wide-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cols-wide-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cols-wide-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .cols-wide-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .cols-wide-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+

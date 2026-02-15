@@ -1,6 +1,5 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
-  FormGroup,
   Box,
   Card,
   CardContent,
@@ -9,19 +8,16 @@ import {
   Grid,
   Stack,
   Typography,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   useTheme,
   alpha,
   Divider,
-  Switch as MuiSwitch,
-} from '@mui/material';
-import { Translate, FormatSize, Animation, AccessibilityNew } from '@mui/icons-material';
+} from '@/ui-bridge/material';
+import { Translate, FormatSize, Animation, AccessibilityNew } from '@/ui-bridge/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useUIStore } from '../../store';
 import { Button, Slider } from '@/components';
 import { ThemeSection, ColorSection, useThemeController } from '@/theme/ThemeController';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 const languageOptions = [
   { key: 'en', label: 'settings.language_english' },
@@ -58,9 +54,14 @@ export function Settings() {
     setColorBlindMode,
   } = useThemeController();
   const theme = useTheme();
+  const prefersReducedMotion = useReducedMotion();
   const isChibiTheme = currentTheme === 'chibi';
   const settingsCardRadius = isChibiTheme ? '12px' : 4;
   const settingsOptionRadius = isChibiTheme ? '10px' : 3;
+  // Shared interaction transition for settings cards/rows; disabled when reduced motion is requested.
+  const interactiveTransition = prefersReducedMotion
+    ? 'none'
+    : 'border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease';
   const selectedLanguage = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const [motionIntensityDraft, setMotionIntensityDraft] = React.useState(motionIntensity);
 
@@ -94,7 +95,7 @@ export function Settings() {
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 8, px: { xs: 2, sm: 4 }, position: 'relative', zIndex: 2 }}>
+    <Box data-testid="settings-page" sx={{ maxWidth: 1200, mx: 'auto', pb: 8, px: { xs: 2, sm: 4 }, position: 'relative', zIndex: 2 }}>
       <Stack spacing={{ xs: 3, sm: 4 }}>
         <Typography variant="h4" fontWeight={900} letterSpacing="0.02em">
           {t('settings.title')}
@@ -124,6 +125,7 @@ export function Settings() {
                 borderRadius: settingsCardRadius,
                 borderColor: alpha(theme.palette.secondary.main, 0.2),
                 overflow: 'visible',
+                transition: interactiveTransition,
               }}
             >
               <CardHeader
@@ -140,46 +142,44 @@ export function Settings() {
                 }
               />
               <CardContent sx={{ pt: 0 }}>
-                <RadioGroup
-                  value={selectedLanguage}
-                  onChange={(e) => handleLanguageChange(e.target.value)}
-                >
-                  <Stack spacing={1.25}>
-                    {languageOptions.map((opt) => (
-                      <Box
-                        key={opt.key}
-                        sx={{
-                          border: `1px solid ${selectedLanguage === opt.key ? theme.palette.secondary.main : theme.palette.divider}`,
-                          borderRadius: settingsOptionRadius,
-                          p: 1.25,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          transition: 'all 0.2s',
-                        }}
+                <Stack spacing={1}>
+                  {languageOptions.map((opt) => (
+                    <Box
+                      key={opt.key}
+                      sx={{
+                        border: `1px solid ${selectedLanguage === opt.key ? theme.palette.secondary.main : theme.palette.divider}`,
+                        borderRadius: settingsOptionRadius,
+                        p: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        transition: interactiveTransition,
+                      }}
+                    >
+                      {/* Language switch writes i18n + localStorage immediately so theme-dependent text updates in-place. */}
+                      <Button
+                        type="button"
+                        variant={selectedLanguage === opt.key ? 'default' : 'outline'}
+                        size="sm"
+                        data-testid={`settings-language-${opt.key}`}
+                        onClick={() => handleLanguageChange(opt.key)}
+                        sx={{ flex: 1, justifyContent: 'flex-start' }}
                       >
-                        <FormControlLabel
-                          value={opt.key}
-                          control={<Radio color="secondary" />}
-                          label={
-                            <Stack spacing={0.25}>
-                              <Typography variant="subtitle1" fontWeight={800}>
-                                {t(opt.label)}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {opt.key === 'en' ? t('settings.language_native_english') : t('settings.language_native_chinese')}
-                              </Typography>
-                            </Stack>
-                          }
-                          sx={{ flex: 1, m: 0 }}
-                        />
-                        {selectedLanguage === opt.key && (
-                          <Chip size="small" color="secondary" label={t('settings.active')} sx={{ fontWeight: 800 }} />
-                        )}
-                      </Box>
-                    ))}
-                  </Stack>
-                </RadioGroup>
+                        <Stack spacing={0.25} alignItems="flex-start">
+                          <Typography variant="subtitle1" fontWeight={800}>
+                            {t(opt.label)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {opt.key === 'en' ? t('settings.language_native_english') : t('settings.language_native_chinese')}
+                          </Typography>
+                        </Stack>
+                      </Button>
+                      {selectedLanguage === opt.key && (
+                        <Chip size="small" color="secondary" label={t('settings.active')} sx={{ fontWeight: 800 }} />
+                      )}
+                    </Box>
+                  ))}
+                </Stack>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -200,6 +200,7 @@ export function Settings() {
                 borderRadius: settingsCardRadius,
                 borderColor: alpha(theme.palette.primary.main, 0.2),
                 overflow: 'visible',
+                transition: interactiveTransition,
               }}
             >
               <CardHeader
@@ -216,49 +217,45 @@ export function Settings() {
                 }
               />
               <CardContent sx={{ pt: 0 }}>
-                <RadioGroup
-                  value={String(fontScale)}
-                  onChange={(e) => handleFontSizeChange(Number(e.target.value))}
-                >
-                  <Stack spacing={1.25}>
-                    {FONT_SIZE_OPTIONS.map((opt) => {
-                      const selected = Math.abs(fontScale - opt.value) < 0.001;
-                      return (
-                        <Box
-                          key={opt.value}
-                          sx={{
-                            border: `1px solid ${selected ? theme.palette.primary.main : theme.palette.divider}`,
-                            borderRadius: settingsOptionRadius,
-                            p: 1.25,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            transition: 'all 0.2s',
-                          }}
+                <Stack spacing={1}>
+                  {FONT_SIZE_OPTIONS.map((opt) => {
+                    const selected = Math.abs(fontScale - opt.value) < 0.001;
+                    return (
+                      <Box
+                        key={opt.value}
+                        sx={{
+                          border: `1px solid ${selected ? theme.palette.primary.main : theme.palette.divider}`,
+                          borderRadius: settingsOptionRadius,
+                          p: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          transition: interactiveTransition,
+                        }}
+                      >
+                        <Button
+                          type="button"
+                          variant={selected ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleFontSizeChange(opt.value)}
+                          sx={{ flex: 1, justifyContent: 'flex-start' }}
                         >
-                          <FormControlLabel
-                            value={String(opt.value)}
-                            control={<Radio color="primary" />}
-                            label={
-                              <Stack spacing={0.25}>
-                                <Typography variant="subtitle1" fontWeight={800}>
-                                  {t(opt.label)}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {opt.caption}
-                                </Typography>
-                              </Stack>
-                            }
-                            sx={{ flex: 1, m: 0 }}
-                          />
-                          {selected && (
-                            <Chip size="small" color="primary" label={t('settings.active')} sx={{ fontWeight: 800 }} />
-                          )}
-                        </Box>
-                      );
-                    })}
-                  </Stack>
-                </RadioGroup>
+                          <Stack spacing={0.25} alignItems="flex-start">
+                            <Typography variant="subtitle1" fontWeight={800}>
+                              {t(opt.label)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {opt.caption}
+                            </Typography>
+                          </Stack>
+                        </Button>
+                        {selected && (
+                          <Chip size="small" color="primary" label={t('settings.active')} sx={{ fontWeight: 800 }} />
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Stack>
 
                 <Divider sx={{ my: 2.5 }} />
 
@@ -275,6 +272,7 @@ export function Settings() {
                     })}
                   </Typography>
                   <Slider
+                    aria-label={t('settings.motion_intensity')}
                     value={motionIntensityDraft}
                     min={0}
                     max={1.5}
@@ -286,7 +284,7 @@ export function Settings() {
                       { value: 1.35, label: t('settings.motion_high') },
                     ]}
                     valueLabelDisplay="auto"
-                    valueLabelFormat={(value) => `${Math.round(value * 100)}%`}
+                    valueLabelFormat={(value: number) => `${Math.round(value * 100)}%`}
                     onChange={handleMotionIntensityPreview}
                     onChangeCommitted={handleMotionIntensityCommit}
                     sx={{ pt: 2 }}
@@ -305,28 +303,27 @@ export function Settings() {
                   <Typography variant="caption" color="text.secondary">
                     {t('settings.accessibility_plus_subtitle')}
                   </Typography>
-                  <FormGroup>
-                    <FormControlLabel
-                      control={(
-                        <MuiSwitch
-                          data-testid="high-contrast-toggle"
-                          checked={highContrast}
-                          onChange={(_, checked) => setHighContrast(checked)}
-                        />
-                      )}
-                      label={t('settings.high_contrast_mode')}
-                    />
-                    <FormControlLabel
-                      control={(
-                        <MuiSwitch
-                          data-testid="dyslexia-toggle"
-                          checked={dyslexiaFriendly}
-                          onChange={(_, checked) => setDyslexiaFriendly(checked)}
-                        />
-                      )}
-                      label={t('settings.dyslexia_friendly_font')}
-                    />
-                  </FormGroup>
+                  <Stack spacing={1}>
+                    {/* Toggle buttons keep setting interactions deterministic in tests and route directly to theme controller setters. */}
+                    <Button
+                      type="button"
+                      data-testid="high-contrast-toggle"
+                      variant={highContrast ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setHighContrast(!highContrast)}
+                    >
+                      {t('settings.high_contrast_mode')}
+                    </Button>
+                    <Button
+                      type="button"
+                      data-testid="dyslexia-toggle"
+                      variant={dyslexiaFriendly ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDyslexiaFriendly(!dyslexiaFriendly)}
+                    >
+                      {t('settings.dyslexia_friendly_font')}
+                    </Button>
+                  </Stack>
                   <Stack spacing={0.5}>
                     <Typography variant="caption" color="text.secondary">
                       {t('settings.color_blind_mode')}
@@ -334,6 +331,7 @@ export function Settings() {
                     <Box
                       component="select"
                       data-testid="color-blind-mode-select"
+                      aria-label={t('settings.color_blind_mode')}
                       value={colorBlindMode}
                       onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
                         setColorBlindMode(event.target.value as typeof colorBlindMode)}

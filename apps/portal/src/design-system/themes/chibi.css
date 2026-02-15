@@ -1,0 +1,7 @@
+﻿/**
+ * Chibi theme slot.
+ * TODO: migrate theme values from legacy preset files.
+ */
+[data-theme='chibi'] {
+  --color-accent: #ff8bc2;
+}

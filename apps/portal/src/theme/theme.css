@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   /* Dynamic tokens are injected by ThemeController.tsx */
   /* Fallbacks for SSR or initial load */
   --theme-font-scale: 1;

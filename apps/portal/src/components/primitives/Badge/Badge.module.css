@@ -1,0 +1,66 @@
+/*
+ * Badge styles provide semantic status chips for composed UI blocks.
+ * Variant classes map directly to design-system semantic color tokens.
+ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1, 0.25rem);
+  border-radius: var(--radius-full, 9999px);
+  border: var(--border-width-default, 1px) solid transparent;
+  font-family: var(--font-body, Inter, system-ui, sans-serif);
+  font-weight: var(--font-weight-semibold, 600);
+  letter-spacing: var(--tracking-wide, 0.05em);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.default {
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65));
+  background-color: color-mix(in srgb, var(--color-bg-elevated, #14141a) 78%, transparent);
+  border-color: var(--color-border-default, rgba(255, 255, 255, 0.12));
+}
+
+.success {
+  color: var(--color-success, #10b981);
+  background-color: var(--color-success-bg, rgba(16, 185, 129, 0.1));
+  border-color: color-mix(in srgb, var(--color-success, #10b981) 45%, transparent);
+}
+
+.warning {
+  color: var(--color-warning, #f59e0b);
+  background-color: var(--color-warning-bg, rgba(245, 158, 11, 0.1));
+  border-color: color-mix(in srgb, var(--color-warning, #f59e0b) 45%, transparent);
+}
+
+.error {
+  color: var(--color-error, #ef4444);
+  background-color: var(--color-error-bg, rgba(239, 68, 68, 0.1));
+  border-color: color-mix(in srgb, var(--color-error, #ef4444) 45%, transparent);
+}
+
+.info {
+  color: var(--color-info, #3b82f6);
+  background-color: var(--color-info-bg, rgba(59, 130, 246, 0.1));
+  border-color: color-mix(in srgb, var(--color-info, #3b82f6) 45%, transparent);
+}
+
+.sm {
+  min-height: 1.2rem;
+  padding: 0.1rem 0.45rem;
+  font-size: var(--font-size-xs, 0.75rem);
+}
+
+.md {
+  min-height: 1.4rem;
+  padding: 0.15rem 0.55rem;
+  font-size: var(--font-size-xs, 0.75rem);
+}
+
+.lg {
+  min-height: 1.7rem;
+  padding: 0.2rem 0.7rem;
+  font-size: var(--font-size-sm, 0.875rem);
+}
+

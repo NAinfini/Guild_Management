@@ -1,6 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Box, Button, Typography, Paper, Stack } from '@mui/material';
-import { Warning, Refresh, Home } from "@mui/icons-material";
+import { Box, Button, Typography, Paper, Stack } from '@/ui-bridge/material';
+import { Warning, Refresh, Home } from "@/ui-bridge/icons-material";
 
 interface Props {
   children: ReactNode;

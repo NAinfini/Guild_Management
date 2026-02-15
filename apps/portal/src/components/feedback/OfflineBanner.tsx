@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Alert, AlertTitle, Slide } from '@mui/material';
-import { WifiOff } from "@mui/icons-material";
+import { Alert, AlertTitle, Slide } from '@/ui-bridge/material';
+import { WifiOff } from "@/ui-bridge/icons-material";
 
 export function OfflineBanner() {
   const [online, setOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);

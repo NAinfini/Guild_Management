@@ -5,7 +5,7 @@ import * as React from "react";
 import { 
   Popover as MuiPopover, 
   Box
-} from "@mui/material";
+} from "@/ui-bridge/material";
 
 // HoverCard is essentially a Popover that triggers on hover with a delay.
 
